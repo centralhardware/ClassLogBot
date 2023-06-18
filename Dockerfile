@@ -2,7 +2,7 @@ FROM maven:3.9.1-amazoncorretto-20 as maven
 
 COPY ./ ./
 
-RUN mvn package -pl '!book2parts'
+RUN mvn package
 
 FROM bitnami/java:20
 
