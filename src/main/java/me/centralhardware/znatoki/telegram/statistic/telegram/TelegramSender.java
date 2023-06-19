@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 
 @Component
@@ -27,11 +28,10 @@ public class TelegramSender {
     @Setter
     private AbsSender absSender;
 
-    private static final ReplyKeyboardMarkup removeMarkup = ReplyKeyboardMarkup.builder()
-            .clearKeyboard()
-            .build();
-
     public void sendText(String text, Update update){
+        ReplyKeyboardRemove removeMarkup = new ReplyKeyboardRemove();
+        removeMarkup.setRemoveKeyboard(true);
+
         SendMessage message = SendMessage.builder()
                 .chatId(telegramUtil.getFrom(update).getId())
                 .text(text)
