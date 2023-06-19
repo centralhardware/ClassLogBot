@@ -6,6 +6,7 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -32,6 +33,8 @@ public class TelegramUtil {
             return update.getMessage().getFrom().getId();
         } else if (update.hasCallbackQuery()){
             return update.getCallbackQuery().getFrom().getId();
+        } else if (update.hasInlineQuery()){
+            return update.getInlineQuery().getFrom().getId();
         }
 
         throw new IllegalStateException();
@@ -42,6 +45,8 @@ public class TelegramUtil {
             return update.getMessage().getFrom();
         } else if (update.hasCallbackQuery()){
             return update.getCallbackQuery().getFrom();
+        } else if (update.hasInlineQuery()){
+            return update.getInlineQuery().getFrom();
         }
 
         throw new IllegalStateException();
@@ -52,6 +57,8 @@ public class TelegramUtil {
             return update.getMessage().getText();
         } else if (update.hasCallbackQuery()){
             return update.getCallbackQuery().getData();
+        } else if (update.hasInlineQuery()){
+            return update.getInlineQuery().getQuery();
         }
 
         throw new IllegalStateException();
@@ -83,7 +90,9 @@ public class TelegramUtil {
             action = "receiveText";
         } else if (update.hasCallbackQuery()){
             action = "receiveCallback";
-        } else {
+        } else if (update.hasInlineQuery()){
+            action = "receiveInlineQuery";
+        }else {
             throw new IllegalStateException();
         }
 
@@ -108,7 +117,8 @@ public class TelegramUtil {
                     lastName: {},
                     isPremium: {},
                     action: {},
-                    text: {}
+                    text: {}б
+                    lang: {}
                 """,
                 entry.dateTime(),
                 entry.chatId(),
@@ -116,8 +126,9 @@ public class TelegramUtil {
                 entry.firstName(),
                 entry.lastName(),
                 entry.isPremium(),
-                entry.lang(),
-                entry.text());
+                entry.action(),
+                entry.text(),
+                entry.lang());
     }
 
     private static final Map<Class<?>, String> clazz2action = Map.ofEntries(
@@ -143,6 +154,8 @@ public class TelegramUtil {
             chatId = sendChatAction.getChatId();
             text = sendChatAction.getActionType().toString();
         } else if (object instanceof AnswerCallbackQuery){
+            return;
+        } else if (object instanceof AnswerInlineQuery){
             return;
         } else {
             throw new IllegalStateException();
@@ -170,7 +183,8 @@ public class TelegramUtil {
                     lastName: {},
                     isPremium: {},
                     action: {},
-                    text: {}    
+                    text: {},
+                    lang: {}
                 """,
                 entry.dateTime(),
                 entry.chatId(),
@@ -179,7 +193,8 @@ public class TelegramUtil {
                 entry.lastName(),
                 entry.isPremium(),
                 entry.action(),
-                entry.text());
+                entry.text(),
+                entry.lang());
     }
 
     public void logSend(Object send){

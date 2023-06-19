@@ -8,6 +8,7 @@ import com.clickhouse.data.format.BinaryStreamUtils;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -161,6 +163,48 @@ public class Clickhouse {
             BinaryStreamUtils.writeBoolean(stream, bool);
         } else if (value instanceof LocalDateTime dateTime){
             BinaryStreamUtils.writeDateTime(stream, dateTime, TimeZone.getDefault());
+        }
+    }
+
+    public List<Pupil> getPupils(){
+        try (ClickHouseClient client = openConnection()){
+            ClickHouseResponse response = client.read(server)
+                    .format(ClickHouseFormat.RowBinaryWithNamesAndTypes)
+                    .query("SELECT * FROM pupil").execute().get();
+
+            return response.stream()
+                    .map(it -> new Pupil(
+                            it.getValue(0).asInteger(),
+                            it.getValue(1).asString(),
+                            it.getValue(2).asInteger(),
+                            it.getValue(3).asString(),
+                            it.getValue(4).asDateTime(),
+                            it.getValue(5).asDateTime(),
+                            it.getValue(6).asDateTime(),
+                            it.getValue(7).asString(),
+                            it.getValue(8).asString(),
+                            it.getValue(9).asString(),
+                            it.getValue(10).asString(),
+                            it.getValue(11).asString(),
+                            it.getValue(12).asString(),
+                            it.getValue(13).asDateTime(),
+                            it.getValue(14).asString(),
+                            it.getValue(15).asString(),
+                            it.getValue(16).asString(),
+                            it.getValue(17).asString(),
+                            it.getValue(18).asString(),
+                            it.getValue(19).asString(),
+                            it.getValue(20).asString(),
+                            it.getValue(21).asString(),
+                            it.getValue(22).asString(),
+                            it.getValue(23).asInteger(),
+                            it.getValue(24).asInteger(),
+                            it.getValue(25).asBoolean()
+                    ))
+                    .toList();
+
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

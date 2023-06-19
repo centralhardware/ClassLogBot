@@ -8,6 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.handler.CallbackHandler;
+import me.centralhardware.znatoki.telegram.statistic.lucen.Lucen;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
@@ -17,16 +18,22 @@ import me.centralhardware.znatoki.telegram.statistic.validate.PhotoValidator;
 import one.util.streamex.StreamEx;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
+import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
+import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @Slf4j
@@ -39,6 +46,7 @@ public class Bot extends TelegramLongPollingBot {
     private final Redis redis;
     private final Minio minio;
     private final Clickhouse clickhouse;
+    private final Lucen lucen;
 
     private final AmountValidator amountValidator;
     private final EnumValidator enumValidator;
@@ -63,6 +71,7 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
+            if (processInline(update)) return;
             if (processAddTimeCommand(update)) return;
             if (processRegisterCommand(update)) return;
 
@@ -167,6 +176,35 @@ public class Bot extends TelegramLongPollingBot {
                 }
             }
         }
+    }
+
+    private boolean processInline(Update update){
+        if (!update.hasInlineQuery()) return false;
+
+        InlineQuery inlineQuery = update.getInlineQuery();
+        String text = inlineQuery.getQuery();
+
+        AtomicInteger i = new AtomicInteger();
+        List<InlineQueryResultArticle> articles = lucen.search(text)
+                .stream()
+                .map(it -> InlineQueryResultArticle.builder()
+                        .title(it)
+                        .id(String.valueOf(i.getAndIncrement()))
+                        .inputMessageContent(InputTextMessageContent.builder()
+                                .messageText(it)
+                                .disableWebPagePreview(false)
+                                .build())
+                        .build())
+                .toList();
+        AnswerInlineQuery answerInlineQuery = AnswerInlineQuery
+                .builder()
+                .results(articles)
+                .inlineQueryId(inlineQuery.getId())
+                .build();
+
+        sender.send(answerInlineQuery, inlineQuery.getFrom());
+
+        return true;
     }
 
     private boolean processAddTimeCommand(Update update){

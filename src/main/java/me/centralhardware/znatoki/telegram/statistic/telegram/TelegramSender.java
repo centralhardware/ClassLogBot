@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.limiter.Limiter;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -60,6 +61,8 @@ public class TelegramSender {
                     absSender.execute(answerCallbackQuery);
                 } else if (method instanceof SendChatAction sendChatAction){
                     absSender.execute(sendChatAction);
+                } else if (method instanceof AnswerInlineQuery answerInlineQuery){
+                    absSender.execute(answerInlineQuery);
                 }
                 telegramUtil.saveStatisticOutcome(method, user);
 
