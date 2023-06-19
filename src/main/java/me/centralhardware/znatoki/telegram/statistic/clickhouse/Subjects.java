@@ -12,7 +12,7 @@ public enum Subjects {
     GERMAN("немецкий"),
     SOCIAL_SCIENCE("обществознание"),
     BIOLOGY("биология"),
-    CHEMШSTRY("химия"),
+    CHEMISTRY("химия"),
     PRIMARY_SCHOOL("начальная школа"),
     PSYCHOLOGY("психология");
 
