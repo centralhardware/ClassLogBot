@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic;
+package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;

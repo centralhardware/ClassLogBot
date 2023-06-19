@@ -1,8 +1,8 @@
-package me.centralhardware.znatoki.telegram.statistic.clickhouse;
+package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 
 import java.util.Arrays;
 
-public enum Subjects {
+public enum Subject {
 
     MATHEMATICS("математика"),
     RUSSIAN("русский язык"),
@@ -18,7 +18,7 @@ public enum Subjects {
 
     final String rusName;
 
-    Subjects(String name) {
+    Subject(String name) {
         this.rusName = name;
     }
 
@@ -26,8 +26,8 @@ public enum Subjects {
         return rusName;
     }
 
-    public static Subjects of(String name){
-        return Arrays.stream(Subjects.values())
+    public static Subject of(String name){
+        return Arrays.stream(Subject.values())
                 .filter(it -> it.rusName.equals(name))
                 .findFirst()
                 .orElse(null);

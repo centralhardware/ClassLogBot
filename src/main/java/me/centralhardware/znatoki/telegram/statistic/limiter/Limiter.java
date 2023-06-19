@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic;
+package me.centralhardware.znatoki.telegram.statistic.limiter;
 
 import com.google.common.util.concurrent.RateLimiter;
 import lombok.RequiredArgsConstructor;

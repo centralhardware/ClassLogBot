@@ -1,11 +1,11 @@
-package me.centralhardware.znatoki.telegram.statistic.clickhouse;
+package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 
 import lombok.Builder;
 
 import java.time.LocalDateTime;
 
 @Builder
-public record LogEntry (
+public record LogEntry(
         LocalDateTime dateTime,
         Long chatId,
         String username,
@@ -15,4 +15,4 @@ public record LogEntry (
         String lang,
         String action,
         String text
-){ }
+) { }

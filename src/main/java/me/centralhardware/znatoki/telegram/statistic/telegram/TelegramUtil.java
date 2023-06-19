@@ -3,7 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.LogEntry;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;

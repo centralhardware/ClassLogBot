@@ -4,25 +4,25 @@ import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.centralhardware.znatoki.telegram.statistic.Files;
-import me.centralhardware.znatoki.telegram.statistic.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.Subjects;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.Time;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.handler.CallbackHandler;
+import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
+import me.centralhardware.znatoki.telegram.statistic.validate.EnumValidator;
+import me.centralhardware.znatoki.telegram.statistic.validate.PhotoValidator;
 import one.util.streamex.StreamEx;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -37,8 +37,12 @@ public class Bot extends TelegramLongPollingBot {
     private final TelegramUtil telegramUtil;
     private final List<CallbackHandler> callbackHandlers;
     private final Redis redis;
-    private final Files files;
+    private final Minio minio;
     private final Clickhouse clickhouse;
+
+    private final AmountValidator amountValidator;
+    private final EnumValidator enumValidator;
+    private final PhotoValidator photoValidator;
 
     @PostConstruct
     public void init(){
@@ -49,15 +53,13 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         try {
             telegramUtil.saveStatisticIncome(update);
+            telegramUtil.logUpdate(update);
 
             if(sendStartMessage(update)) return;
 
             Long userId = telegramUtil.getUserId(update);
             if (!redis.exists(userId.toString()) && !userId.equals(Long.parseLong(System.getenv("ADMIN_ID")))){
-                SendMessage message = SendMessage.builder()
-                        .text("Доступ запрещен")
-                        .chatId(userId)
-                        .build();
+                sender.sendText("Доступ запрещен", update);
                 return;
             }
 
@@ -94,55 +96,50 @@ public class Bot extends TelegramLongPollingBot {
                 .map(Message::getText)
                 .orElse(null);
 
-        switch (fsmStage.get(userId)){
-            case 1: {
-                fsm.get(userId).setSubject(Subjects.of(text).name());
-                SendMessage message = SendMessage.builder()
-                        .chatId(userId)
-                        .text("Введите фио")
-                        .build();
-                sender.send(message, update.getMessage().getFrom());
-                fsmStage.put(userId, 2);
-                break;
-            }
-            case 2: {
-                fsm.get(userId).setFio(text);
-                SendMessage message = SendMessage.builder()
-                        .chatId(userId)
-                        .text("Введите сумму")
-                        .build();
-                sender.send(message, update.getMessage().getFrom());
-                fsmStage.put(userId, 3);
-                break;
-            }
-            case 3: {
-                fsm.get(userId).setAmount(Integer. parseInt(text));
-                SendMessage message = SendMessage.builder()
-                        .chatId(userId)
-                        .text("Отправьте фото отчётностии")
-                        .build();
-                sender.send(message, update.getMessage().getFrom());
-                fsmStage.put(userId, 4);
-                break;
-            }
-            case 4: {
-                if (!update.getMessage().hasPhoto()){
-                    SendMessage message = SendMessage.builder()
-                            .chatId(userId)
-                            .text("Отправьте фото")
-                            .build();
-                    sender.send(message, update.getMessage().getFrom());
+        switch (fsmStage.get(userId)) {
+            case 1 -> {
+
+                var res = enumValidator.validate(text);
+
+                if (res.isRight()) {
+                    sender.sendText(res.right().get(), update);
                     return;
                 }
 
-                PhotoSize photoSize = update.getMessage().getPhoto().get(0);
+                fsm.get(userId).setSubject(res.getLeft().name());
+                sender.sendText("Введите фио", update);
+                fsmStage.put(userId, 2);
+            }
+            case 2 -> {
+                fsm.get(userId).setFio(text);
+                sender.sendText("Введите сумму", update);
+                fsmStage.put(userId, 3);
+            }
+            case 3 -> {
+                var res = amountValidator.validate(text);
+                if (res.isRight()) {
+                    sender.sendText(res.right().get(), update);
+                    return;
+                }
+
+                fsm.get(userId).setAmount(res.getLeft());
+                sender.sendText("Отправьте фото отчётностии", update);
+                fsmStage.put(userId, 4);
+            }
+            case 4 -> {
+                var res = photoValidator.validate(update);
+
+                if (res.isRight()){
+                    sender.sendText(res.right().get(), update);
+                    return;
+                }
 
                 GetFile getFile = new GetFile();
-                getFile.setFileId(photoSize.getFileId());
+                getFile.setFileId(res.getLeft().getFileId());
                 try {
                     File file = downloadFile(execute(getFile));
 
-                    String id = files.upload(file.getAbsolutePath());
+                    String id = minio.upload(file.getAbsolutePath());
                     fsm.get(userId).setPhotoId(id);
 
                     fsm.get(userId).setPhotoId(id);
@@ -150,6 +147,8 @@ public class Bot extends TelegramLongPollingBot {
                     clickhouse.insert(fsm.get(userId));
                     fsm.remove(userId);
                     fsmStage.remove(userId);
+
+                    sender.sendText("Сохранено", update);
 
                 } catch (TelegramApiException e) {
                     throw new RuntimeException(e);
@@ -182,11 +181,7 @@ public class Bot extends TelegramLongPollingBot {
             fsmStage.put(update.getMessage().getChatId(), 1);
             return true;
         }{
-            SendMessage message = SendMessage.builder()
-                    .chatId(update.getMessage().getChatId())
-                    .text("Введите фио")
-                    .build();
-            sender.send(message, update.getMessage().getFrom());
+            sender.sendText("Введите фио", update);
             fsmStage.put(update.getMessage().getChatId(), 2);
             return true;
         }
@@ -202,9 +197,9 @@ public class Bot extends TelegramLongPollingBot {
         String messasge = update.getMessage().getText();
 
         String chatId = messasge.split(" ")[1];
-        List<Subjects> subjects = Arrays.stream(messasge.replace("/register " + chatId + " ", "")
+        List<Subject> subjects = Arrays.stream(messasge.replace("/register " + chatId + " ", "")
                         .split(" "))
-                .map(Subjects::valueOf)
+                .map(Subject::valueOf)
                 .toList();
 
         ZnatokiUser user = ZnatokiUser.builder()

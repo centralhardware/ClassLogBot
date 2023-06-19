@@ -1,8 +1,9 @@
-package me.centralhardware.znatoki.telegram.statistic.clickhouse;
+package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 
 import java.time.LocalDateTime;
 
-public final class Time {
+public class Time {
+
     private LocalDateTime dateTime;
     private Long chatId;
     private String subject;
@@ -57,4 +58,5 @@ public final class Time {
     public void setPhotoId(String photoId) {
         this.photoId = photoId;
     }
+
 }

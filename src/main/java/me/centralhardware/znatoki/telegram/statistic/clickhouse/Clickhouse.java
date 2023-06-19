@@ -5,12 +5,16 @@ import com.clickhouse.data.ClickHouseDataStreamFactory;
 import com.clickhouse.data.ClickHouseFormat;
 import com.clickhouse.data.ClickHousePipedOutputStream;
 import com.clickhouse.data.format.BinaryStreamUtils;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -163,6 +167,5 @@ public class Clickhouse {
     private ClickHouseClient openConnection(){
         return ClickHouseClient.newInstance(server.getProtocol());
     }
-
 
 }

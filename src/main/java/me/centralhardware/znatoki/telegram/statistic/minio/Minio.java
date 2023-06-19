@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic;
+package me.centralhardware.znatoki.telegram.statistic.minio;
 
 import io.minio.MinioClient;
 import io.minio.UploadObjectArgs;
@@ -9,11 +9,10 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class Files {
+public class Minio {
 
     private final MinioClient minioClient;
 
