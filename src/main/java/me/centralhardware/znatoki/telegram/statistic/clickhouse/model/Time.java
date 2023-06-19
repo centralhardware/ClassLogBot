@@ -1,12 +1,15 @@
 package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Time {
 
     private LocalDateTime dateTime;
     private Long chatId;
     private String subject;
+    private List<String> fios = new ArrayList<>();
     private String fio;
     private Integer amount;
     private String photoId;
@@ -25,6 +28,14 @@ public class Time {
 
     public void setChatId(Long chatId) {
         this.chatId = chatId;
+    }
+
+    public List<String> getFios() {
+        return fios;
+    }
+
+    public void setFios(List<String> fios) {
+        this.fios = fios;
     }
 
     public String getFio() {

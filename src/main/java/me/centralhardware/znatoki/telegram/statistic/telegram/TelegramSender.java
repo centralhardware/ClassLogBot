@@ -29,15 +29,21 @@ public class TelegramSender {
     private AbsSender absSender;
 
     public void sendText(String text, Update update){
-        ReplyKeyboardRemove removeMarkup = new ReplyKeyboardRemove();
-        removeMarkup.setRemoveKeyboard(true);
+        sendText(text, update, true);
+    }
 
-        SendMessage message = SendMessage.builder()
+    public void sendText(String text, Update update, Boolean removeKeyboard){
+        SendMessage.SendMessageBuilder message = SendMessage.builder()
                 .chatId(telegramUtil.getFrom(update).getId())
-                .text(text)
-                .replyMarkup(removeMarkup)
-                .build();
-        send(message, telegramUtil.getFrom(update));
+                .text(text);
+
+        if (removeKeyboard){
+            ReplyKeyboardRemove removeMarkup = new ReplyKeyboardRemove();
+            removeMarkup.setRemoveKeyboard(true);
+            message.replyMarkup(removeMarkup);
+        }
+
+        send(message.build(), telegramUtil.getFrom(update));
     }
 
     public void send(Object method, User user){

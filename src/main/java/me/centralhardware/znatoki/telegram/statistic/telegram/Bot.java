@@ -102,15 +102,22 @@ public class Bot extends TelegramLongPollingBot {
                 var res = enumValidator.validate(text);
 
                 if (res.isRight()) {
-                    sender.sendText(res.right().get(), update);
+                    sender.sendText(res.right().get(), update, false);
                     return;
                 }
 
                 fsm.get(userId).setSubject(res.getLeft().name());
-                sender.sendText("Введите фио", update);
+                sender.sendText("Введите фио. /complete - для окончания ввода", update);
                 fsmStage.put(userId, 2);
             }
             case 2 -> {
+
+                if (!Objects.equals(text, "/complete")){
+                    fsm.get(userId).getFios().add(text);
+                    sender.sendText("ФИО сохранено", update);
+                    return;
+                }
+
                 fsm.get(userId).setFio(text);
                 sender.sendText("Введите сумму", update);
                 fsmStage.put(userId, 3);
@@ -144,7 +151,12 @@ public class Bot extends TelegramLongPollingBot {
 
                     fsm.get(userId).setPhotoId(id);
 
-                    clickhouse.insert(fsm.get(userId));
+                    Time time = fsm.get(userId);
+                    time.getFios().forEach(it -> {
+                        time.setFio(it);
+                        clickhouse.insert(time);
+                    });
+
                     fsm.remove(userId);
                     fsmStage.remove(userId);
 
