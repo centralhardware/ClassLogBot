@@ -14,6 +14,7 @@ import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.EnumValidator;
+import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.PhotoValidator;
 import one.util.streamex.StreamEx;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,7 @@ public class Bot extends TelegramLongPollingBot {
     private final AmountValidator amountValidator;
     private final EnumValidator enumValidator;
     private final PhotoValidator photoValidator;
+    private final FioValidator fioValidator;
 
     @PostConstruct
     public void init(){
@@ -122,6 +124,12 @@ public class Bot extends TelegramLongPollingBot {
             case 2 -> {
 
                 if (!Objects.equals(text, "/complete")){
+                    var fioRes = fioValidator.validate(text);
+
+                    if (fioRes.isRight()){
+                        sender.sendText(fioRes.right().get(), update);
+                        return;
+                    }
                     fsm.get(userId).getFios().add(text);
                     sender.sendText("ФИО сохранено", update);
                     return;

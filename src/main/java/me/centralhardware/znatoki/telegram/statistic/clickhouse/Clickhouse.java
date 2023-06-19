@@ -4,6 +4,7 @@ import com.clickhouse.client.*;
 import com.clickhouse.data.ClickHouseDataStreamFactory;
 import com.clickhouse.data.ClickHouseFormat;
 import com.clickhouse.data.ClickHousePipedOutputStream;
+import com.clickhouse.data.ClickHouseValue;
 import com.clickhouse.data.format.BinaryStreamUtils;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -15,10 +16,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -202,6 +200,23 @@ public class Clickhouse {
                             it.getValue(25).asBoolean()
                     ))
                     .toList();
+
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public boolean exist(String fio){
+        try (ClickHouseClient client = openConnection()){
+            ClickHouseResponse response = client.read(server)
+                    .format(ClickHouseFormat.RowBinaryWithNamesAndTypes)
+                    .query(String.format("SELECT 1 FROM pupil where trim(lowerUTF8(concat(name, ' ', second_name, ' ',  last_name))) = '%s'", fio)).execute().get();
+
+            return response.
+                    stream()
+                    .findFirst()
+                    .map(it -> it.getValue(0))
+                    .map(ClickHouseValue::asInteger)
+                    .orElse(0) == 1;
 
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
