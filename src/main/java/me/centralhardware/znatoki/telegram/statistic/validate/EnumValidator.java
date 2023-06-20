@@ -8,14 +8,14 @@ import org.springframework.stereotype.Component;
 public class EnumValidator implements Validator<String, Subject>{
 
     @Override
-    public Either<Subject, String> validate(String value) {
+    public Either<String, Subject> validate(String value) {
         Subject val = Subject.of(value);
 
         if (val == null){
-            return Either.right("Введите значение использую клавиатуру");
+            return Either.left("Введите значение использую клавиатуру");
         }
 
-        return Either.left(val);
+        return Either.right(val);
 
     }
 

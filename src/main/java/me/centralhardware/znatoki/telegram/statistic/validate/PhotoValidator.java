@@ -11,9 +11,9 @@ import java.util.Comparator;
 public class PhotoValidator implements Validator<Update, PhotoSize>{
 
     @Override
-    public Either<PhotoSize, String> validate(Update value) {
+    public Either<String, PhotoSize> validate(Update value) {
         if (!value.getMessage().hasPhoto()) {
-            return Either.right("Отправьте фото");
+            return Either.left("Отправьте фото");
         }
 
         PhotoSize res = value.getMessage().getPhoto()
@@ -21,7 +21,7 @@ public class PhotoValidator implements Validator<Update, PhotoSize>{
                 .max(Comparator.comparing(PhotoSize::getFileSize))
                 .orElse(null);
 
-        return Either.left(res);
+        return Either.right(res);
     }
 
 }

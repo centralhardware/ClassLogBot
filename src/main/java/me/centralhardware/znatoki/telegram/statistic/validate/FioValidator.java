@@ -14,10 +14,10 @@ public class FioValidator implements Validator<String, String> {
     @Override
     public Either<String, String> validate(String value) {
         if (!clickhouse.exist(value)){
-            return Either.right("ФИО не найдено");
+            return Either.left("ФИО не найдено");
         }
 
-         return Either.left(value);
+         return Either.right(value);
     }
 
 }

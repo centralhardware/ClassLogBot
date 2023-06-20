@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.handler.CallbackHandler;
-import me.centralhardware.znatoki.telegram.statistic.lucen.Lucen;
+import me.centralhardware.znatoki.telegram.statistic.lucen.Lucene;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
@@ -45,7 +45,7 @@ public class Bot extends TelegramLongPollingBot {
     private final Redis redis;
     private final Minio minio;
     private final Clickhouse clickhouse;
-    private final Lucen lucen;
+    private final Lucene lucene;
 
     private final AmountValidator amountValidator;
     private final EnumValidator enumValidator;
@@ -110,13 +110,17 @@ public class Bot extends TelegramLongPollingBot {
 
                 var res = enumValidator.validate(text);
 
-                if (res.isRight()) {
-                    sender.sendText(res.right().get(), update, false);
+                if (res.isLeft()) {
+                    sender.sendText(res.getLeft(), update, false);
                     return;
                 }
 
-                fsm.get(userId).setSubject(res.getLeft().name());
+                fsm.get(userId).setSubject(res.right().get().name());
                 sender.sendText("Введите фио. /complete - для окончания ввода", update);
+                InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
+                                .row().switchToInline().endRow();
+                builder.setText("нажмите для поиска фио");
+                sender.send(builder.build(userId), update.getMessage().getFrom());
                 fsmStage.put(userId, 2);
             }
             case 2 -> {
@@ -124,8 +128,8 @@ public class Bot extends TelegramLongPollingBot {
                 if (!Objects.equals(text, "/complete")){
                     var fioRes = fioValidator.validate(text);
 
-                    if (fioRes.isRight()){
-                        sender.sendText(fioRes.right().get(), update);
+                    if (fioRes.isLeft()){
+                        sender.sendText(fioRes.getLeft(), update);
                         return;
                     }
                     fsm.get(userId).getFios().add(text);
@@ -139,25 +143,25 @@ public class Bot extends TelegramLongPollingBot {
             }
             case 3 -> {
                 var res = amountValidator.validate(text);
-                if (res.isRight()) {
-                    sender.sendText(res.right().get(), update);
+                if (res.isLeft()) {
+                    sender.sendText(res.getLeft(), update);
                     return;
                 }
 
-                fsm.get(userId).setAmount(res.getLeft());
+                fsm.get(userId).setAmount(res.right().get());
                 sender.sendText("Отправьте фото отчётностии", update);
                 fsmStage.put(userId, 4);
             }
             case 4 -> {
                 var res = photoValidator.validate(update);
 
-                if (res.isRight()){
-                    sender.sendText(res.right().get(), update);
+                if (res.isLeft()){
+                    sender.sendText(res.getLeft(), update);
                     return;
                 }
 
                 GetFile getFile = new GetFile();
-                getFile.setFileId(res.getLeft().getFileId());
+                getFile.setFileId(res.right().get().getFileId());
                 try {
                     File file = downloadFile(execute(getFile));
 
@@ -191,7 +195,7 @@ public class Bot extends TelegramLongPollingBot {
         String text = inlineQuery.getQuery();
 
         AtomicInteger i = new AtomicInteger();
-        List<InlineQueryResultArticle> articles = lucen.search(text)
+        List<InlineQueryResultArticle> articles = lucene.search(text)
                 .stream()
                 .map(it -> InlineQueryResultArticle.builder()
                         .title(it)

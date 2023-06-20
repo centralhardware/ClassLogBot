@@ -16,7 +16,7 @@ public record Pupil(
         String hobbies,
         String howToKnow,
         String lastName,
-        LocalDateTime modifiDate,
+        LocalDateTime modifyDate,
         String motherName,
         String name,
         String placeOfWorkFather,
