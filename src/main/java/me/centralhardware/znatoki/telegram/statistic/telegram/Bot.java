@@ -12,6 +12,8 @@ import me.centralhardware.znatoki.telegram.statistic.lucen.Lucene;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
+import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.EnumValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
