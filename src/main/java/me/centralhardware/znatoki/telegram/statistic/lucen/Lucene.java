@@ -2,12 +2,12 @@ package me.centralhardware.znatoki.telegram.statistic.lucen;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import me.centralhardware.znatoki.telegram.statistic.configuration.LuceneConfiguration;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
-import org.apache.lucene.store.Directory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class Lucene {
 
-    private final Directory memoryIndex;
+    private final LuceneConfiguration luceneConfiguration;
 
     public static final String FIO_FIELD = "fio";
 
@@ -26,7 +26,7 @@ public class Lucene {
         Query fuzzyQuery = new FuzzyQuery(new Term(FIO_FIELD, fio), 2);
 
 
-        IndexReader indexReader = DirectoryReader.open(memoryIndex);
+        IndexReader indexReader = DirectoryReader.open(luceneConfiguration.getMemoryIndex());
         IndexSearcher searcher = new IndexSearcher(indexReader);
         TopDocs topDocs = searcher.search(fuzzyQuery, 10);
         List<Document> documents = new ArrayList<>();
