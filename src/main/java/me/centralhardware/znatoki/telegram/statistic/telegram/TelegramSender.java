@@ -12,7 +12,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.bots.AbsSender;
@@ -28,13 +27,13 @@ public class TelegramSender {
     @Setter
     private AbsSender absSender;
 
-    public void sendText(String text, Update update){
-        sendText(text, update, true);
+    public void sendText(String text, User user){
+        sendText(text, user, true);
     }
 
-    public void sendText(String text, Update update, Boolean removeKeyboard){
+    public void sendText(String text, User user, Boolean removeKeyboard){
         SendMessage.SendMessageBuilder message = SendMessage.builder()
-                .chatId(telegramUtil.getFrom(update).getId())
+                .chatId(user.getId())
                 .text(text);
 
         if (removeKeyboard){
@@ -43,7 +42,7 @@ public class TelegramSender {
             message.replyMarkup(removeMarkup);
         }
 
-        send(message.build(), telegramUtil.getFrom(update));
+        send(message.build(), user);
     }
 
     public void send(Object method, User user){
