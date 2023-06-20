@@ -209,7 +209,7 @@ public class Clickhouse {
         try (ClickHouseClient client = openConnection()){
             ClickHouseResponse response = client.read(server)
                     .format(ClickHouseFormat.RowBinaryWithNamesAndTypes)
-                    .query(String.format("SELECT 1 FROM pupil where trim(lowerUTF8(concat(name, ' ', second_name, ' ',  last_name))) = '%s'", fio)).execute().get();
+                    .query(String.format("SELECT 1 FROM pupil where trim(lowerUTF8(concat(name, ' ', second_name, ' ',  last_name))) = '%s' and deleted = false", fio)).execute().get();
 
             return response.
                     stream()
