@@ -242,7 +242,11 @@ public class Bot extends TelegramLongPollingBot {
             fsmStage.put(update.getMessage().getChatId(), 1);
             return true;
         }{
-            sender.sendText("Введите фио", update);
+            sender.sendText("Введите фио. /complete - для окончания ввода", update);
+            InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
+                    .row().switchToInline().endRow();
+            builder.setText("нажмите для поиска фио");
+            sender.send(builder.build(update.getMessage().getChatId()), update.getMessage().getFrom());
             fsmStage.put(update.getMessage().getChatId(), 2);
             return true;
         }
