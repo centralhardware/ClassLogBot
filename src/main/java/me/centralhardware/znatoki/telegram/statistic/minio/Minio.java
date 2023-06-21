@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.minio;
 
+import io.minio.DownloadObjectArgs;
 import io.minio.MinioClient;
 import io.minio.UploadObjectArgs;
 import io.minio.errors.*;
@@ -18,14 +19,15 @@ public class Minio {
 
     public String upload(String file){
         try {
-            return minioClient.uploadObject(
+            minioClient.uploadObject(
                     UploadObjectArgs
                             .builder()
                             .bucket("znatoki")
                             .filename(file)
                             .object(file)
                             .build()
-            ).etag();
+            );
+            return file;
         } catch (ErrorResponseException |
                  InsufficientDataException |
                  InternalException |
