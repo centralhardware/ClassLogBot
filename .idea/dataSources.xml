@@ -22,5 +22,12 @@
       <jdbc-url>jdbc:postgresql://192.168.0.9:5566/postgres</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="postgres@192.168.0.9 [2]" uuid="7b8e5fe8-3a10-4acd-b62e-2513492926be">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://192.168.0.9:5566/postgres</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

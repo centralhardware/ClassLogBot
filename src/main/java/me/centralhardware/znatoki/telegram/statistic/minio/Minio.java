@@ -18,6 +18,7 @@ public class Minio {
     private final MinioClient minioClient;
 
     public String upload(String file){
+        file = file + ".jpg";
         try {
             minioClient.uploadObject(
                     UploadObjectArgs
