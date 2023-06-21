@@ -42,6 +42,7 @@ public class InlineHandler {
                 .results(articles)
                 .inlineQueryId(inlineQuery.getId())
                 .isPersonal(true)
+                .cacheTime(0)
                 .build();
 
         sender.send(answerInlineQuery, inlineQuery.getFrom());
