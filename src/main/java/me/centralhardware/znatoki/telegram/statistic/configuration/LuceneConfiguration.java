@@ -27,7 +27,7 @@ public class LuceneConfiguration {
     @Getter
     private RAMDirectory memoryIndex;
 
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
+    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public void getAnalyzer() throws IOException {
         RAMDirectory index = new RAMDirectory();
         StandardAnalyzer analyzer = new StandardAnalyzer();
