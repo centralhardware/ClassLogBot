@@ -140,8 +140,13 @@ public class Bot extends TelegramLongPollingBot {
                     return;
                 }
 
+                if (storage.getTIme(userId).getFios().isEmpty()){
+                    sender.sendText("Необходимо ввести как минимум одно ФИО", user);
+                    return;
+                }
+
                 storage.getTIme(userId).setFio(text);
-                sender.sendText("Введите сумму", user);
+                sender.sendText("Введите стоимость занятия", user);
                 storage.setStage(userId, 3);
             }
             case 3 -> {
