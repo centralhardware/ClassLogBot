@@ -6,10 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
+import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.EnumValidator;
@@ -27,6 +29,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -177,6 +180,28 @@ public class Bot extends TelegramLongPollingBot {
                     storage.getTIme(userId).setPhotoId(id);
 
                     Time time = storage.getTIme(userId);
+                    ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
+                            .setText(String.format("""
+                                    Предмет: %s,
+                                    ФИО: %s
+                                    стоимость занятия: %s 
+                                    """,
+                                    Subject.valueOf(time.getSubject()).getRusName(),
+                                    String.join(";", time.getFios()),
+                                    time.getAmount().toString()))
+                            .row().button("да").endRow()
+                            .row().button("нет").endRow();
+
+                    sender.send(builder.build(userId), user);
+                    storage.setStage(userId, 5);
+
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            case 5 -> {
+                if (text.equals("да")){
+                    Time time = storage.getTIme(userId);
                     time.getFios().forEach(it -> {
                         time.setFio(it);
                         clickhouse.insert(time);
@@ -184,10 +209,11 @@ public class Bot extends TelegramLongPollingBot {
 
                     storage.remove(userId);
 
-                    sender.sendText("Сохранено", user);
-
-                } catch (TelegramApiException e) {
-                    throw new RuntimeException(e);
+                    sender.sendText("Сохранено", user, true);
+                } else if (text.equals("нет")) {
+                    minio.delete(storage.getTIme(userId).getPhotoId());
+                    storage.remove(userId);
+                    sender.sendText("Удалено", user, true);
                 }
             }
         }

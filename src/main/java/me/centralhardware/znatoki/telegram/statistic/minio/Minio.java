@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.minio;
 
-import io.minio.DownloadObjectArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import io.minio.UploadObjectArgs;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +28,26 @@ public class Minio {
                             .build()
             );
             return file;
+        } catch (ErrorResponseException |
+                 InsufficientDataException |
+                 InternalException |
+                 InvalidKeyException |
+                 InvalidResponseException |
+                 IOException |
+                 NoSuchAlgorithmException |
+                 ServerException |
+                 XmlParserException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void delete(String file){
+        try {
+            minioClient.removeObject(RemoveObjectArgs
+                    .builder()
+                    .bucket("znatoki")
+                    .object(file)
+                    .build());
         } catch (ErrorResponseException |
                  InsufficientDataException |
                  InternalException |
