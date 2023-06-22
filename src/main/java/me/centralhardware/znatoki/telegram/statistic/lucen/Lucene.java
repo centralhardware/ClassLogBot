@@ -25,7 +25,7 @@ public class Lucene {
 
     @SneakyThrows
     public List<Pair<String, String>> search(String fio){
-        Query fuzzyQuery = new FuzzyQuery(new Term(FIO_FIELD, fio), 2);
+        Query fuzzyQuery = new FuzzyQuery(new Term(FIO_FIELD, fio.toLowerCase()), 2);
 
 
         IndexReader indexReader = DirectoryReader.open(luceneConfiguration.getMemoryIndex());
