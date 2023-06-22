@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.configuration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Pupil;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -14,8 +15,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
+import static me.centralhardware.znatoki.telegram.statistic.lucen.Lucene.BIO_FIELD;
 import static me.centralhardware.znatoki.telegram.statistic.lucen.Lucene.FIO_FIELD;
 
 @Component
@@ -38,9 +42,8 @@ public class LuceneConfiguration {
                 .forEach(pupil -> {
                     try {
                         Document document = new Document();
-                        document.add(new TextField(FIO_FIELD, pupil.name().toLowerCase() + " " +
-                                pupil.secondName().toLowerCase() + " " +
-                                pupil.lastName().toLowerCase(), Field.Store.YES));
+                        document.add(new TextField(FIO_FIELD, getFio(pupil) , Field.Store.YES));
+                        document.add(new TextField(BIO_FIELD, getBio(pupil), Field.Store.YES));
                         writter.addDocument(document);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -48,6 +51,16 @@ public class LuceneConfiguration {
                 });
         writter.close();
         this.memoryIndex = index;
+    }
+
+    private String getFio(Pupil pupil){
+        return pupil.name().toLowerCase() + " " +
+                pupil.secondName().toLowerCase() + " " +
+                pupil.lastName().toLowerCase();
+    }
+
+    private String getBio(Pupil pupil){
+        return String.format("%s класс %s лет", pupil.classNumber(), ChronoUnit.YEARS.between(pupil.dateOfBirth(), LocalDateTime.now()));
     }
 
 }

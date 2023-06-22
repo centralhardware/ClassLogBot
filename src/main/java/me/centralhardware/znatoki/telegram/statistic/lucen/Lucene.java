@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.lucen;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import me.centralhardware.znatoki.telegram.statistic.configuration.LuceneConfiguration;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -20,9 +21,10 @@ public class Lucene {
     private final LuceneConfiguration luceneConfiguration;
 
     public static final String FIO_FIELD = "fio";
+    public static final String BIO_FIELD = "bio";
 
     @SneakyThrows
-    public List<String> search(String fio){
+    public List<Pair<String, String>> search(String fio){
         Query fuzzyQuery = new FuzzyQuery(new Term(FIO_FIELD, fio), 2);
 
 
@@ -35,7 +37,7 @@ public class Lucene {
         }
 
         return documents.stream()
-                .map(it -> it.get("fio"))
+                .map(it -> Pair.of(it.get(FIO_FIELD), it.get(BIO_FIELD)))
                 .toList();
     }
 

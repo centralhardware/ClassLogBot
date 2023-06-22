@@ -6,7 +6,7 @@ import com.clickhouse.data.ClickHouseFormat;
 import com.clickhouse.data.ClickHousePipedOutputStream;
 import com.clickhouse.data.ClickHouseValue;
 import com.clickhouse.data.format.BinaryStreamUtils;
-import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Pupil;
@@ -22,53 +22,10 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class Clickhouse {
 
     private final ClickHouseNode server;
-
-    public Clickhouse(ClickHouseNode server){
-        this.server = server;
-
-        createTable();
-    }
-
-    private void createTable(){
-        try (ClickHouseClient client = openConnection()){
-            ClickHouseRequest<?> request = client.read(server);
-            request.query("""
-                    CREATE TABLE IF NOT EXISTS znatoki_statistic
-                    (
-                        date_time DateTime,
-                        chat_id BIGINT,
-                        username Nullable(String),
-                        first_name Nullable(String),
-                        last_name Nullable(String),
-                        lang String,
-                        is_premium bool,
-                        action String,
-                        text VARCHAR(256),
-                    )
-                    engine = MergeTree
-                    ORDER BY date_time
-                    """)
-                    .execute().get();
-            request.query("""
-                    CREATE TABLE IF NOT EXISTS znatoki_statistic_time
-                    (
-                        date_time DateTime,
-                        chat_id BIGINT,
-                        subject String,
-                        fio String,
-                        amount INT,
-                        photoId String
-                    )
-                    engine = MergeTree
-                    ORDER BY date_time
-                    """).execute().get();
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public void insert(LogEntry entry){
         try (ClickHouseClient client = openConnection()){
@@ -168,7 +125,7 @@ public class Clickhouse {
         try (ClickHouseClient client = openConnection()){
             ClickHouseResponse response = client.read(server)
                     .format(ClickHouseFormat.RowBinaryWithNamesAndTypes)
-                    .query("SELECT * FROM pupil").execute().get();
+                    .query("SELECT * FROM pupil WHERE deleted = false").execute().get();
 
             return response.stream()
                     .map(it -> new Pupil(
