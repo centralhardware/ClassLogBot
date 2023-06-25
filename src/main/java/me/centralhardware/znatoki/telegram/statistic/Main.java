@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class Main {
     public static void main(String[] args) {
+        System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
         SpringApplication.run(Main.class, args);
     }
 }
