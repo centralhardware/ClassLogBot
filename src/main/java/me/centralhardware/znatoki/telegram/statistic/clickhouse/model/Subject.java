@@ -15,7 +15,8 @@ public enum Subject {
     CHEMISTRY("химия"),
     PRIMARY_SCHOOL("начальная школа"),
     PSYCHOLOGY("психология"),
-    READING("чтение");
+    READING("чтение"),
+    ART("ИЗО");
 
     final String rusName;
 
