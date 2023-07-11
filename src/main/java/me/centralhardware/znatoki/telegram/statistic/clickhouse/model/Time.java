@@ -3,10 +3,12 @@ package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Time {
 
     private LocalDateTime dateTime;
+    private UUID id;
     private Long chatId;
     private String subject;
     private List<String> fios = new ArrayList<>();
@@ -20,6 +22,14 @@ public class Time {
 
     public void setDateTime(LocalDateTime dateTime) {
         this.dateTime = dateTime;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public Long getChatId() {

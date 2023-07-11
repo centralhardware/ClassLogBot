@@ -78,11 +78,13 @@ public class Clickhouse {
                     .createPipedOutputStream(config, (Runnable) null)){
                 future = request.data(stream.getInputStream()).execute();
                 write(stream, time.getDateTime());
+                write(stream, time.getId());
                 write(stream,time.getChatId());
                 write(stream, time.getSubject());
                 write(stream, time.getFio());
                 write(stream, time.getAmount());
                 write(stream, time.getPhotoId());
+                write(stream, false);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

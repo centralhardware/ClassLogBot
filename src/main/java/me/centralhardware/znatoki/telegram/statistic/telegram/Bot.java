@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -202,8 +202,10 @@ public class Bot extends TelegramLongPollingBot {
             case 5 -> {
                 if (text.equals("да")){
                     Time time = storage.getTIme(userId);
+                    var id = UUID.randomUUID();
                     time.getFios().forEach(it -> {
                         time.setFio(it);
+                        time.setId(id);
                         clickhouse.insert(time);
                     });
 

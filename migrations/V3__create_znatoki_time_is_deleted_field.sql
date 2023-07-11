@@ -1,0 +1,1 @@
+ALTER TABLE default.znatoki_statistic_time ADD COLUMN is_deleted bool DEFAULT false AFTER photoId
