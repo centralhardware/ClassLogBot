@@ -5,9 +5,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -41,9 +41,9 @@ public class Bot extends TelegramLongPollingBot {
     private final List<CommandHandler> commandHandlers;
     private final Redis redis;
     private final Minio minio;
-    private final Clickhouse clickhouse;
     private final Storage storage;
     private final InlineHandler inlineHandler;
+    private final TimeMapper timeMapper;
 
     private final AmountValidator amountValidator;
     private final EnumValidator enumValidator;
@@ -206,7 +206,7 @@ public class Bot extends TelegramLongPollingBot {
                     time.getFios().forEach(it -> {
                         time.setFio(it);
                         time.setId(id);
-                        clickhouse.insert(time);
+                        timeMapper.insertTime(time);
                     });
 
                     storage.remove(userId);

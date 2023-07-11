@@ -2,8 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
+import me.centralhardware.znatoki.telegram.statistic.mapper.StatisticMapper;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -26,7 +26,7 @@ import static java.util.Map.entry;
 @RequiredArgsConstructor
 public class TelegramUtil {
 
-    private final Clickhouse clickhouse;
+    private final StatisticMapper statisticMapper;
 
     public Long getUserId(Update update){
         if (update.hasMessage()){
@@ -108,7 +108,7 @@ public class TelegramUtil {
                 .action(action)
                 .build();
 
-        clickhouse.insert(entry);
+        statisticMapper.insertStatistic(entry);
         log.info("""
                     Save to clickHouse(dateTime: {},
                     chatId; {},
@@ -173,7 +173,7 @@ public class TelegramUtil {
                 .text(text)
                 .build();
 
-        clickhouse.insert(entry);
+        statisticMapper.insertStatistic(entry);
         log.info("""
                     Save to clickHouse(
                     dateTime: {},

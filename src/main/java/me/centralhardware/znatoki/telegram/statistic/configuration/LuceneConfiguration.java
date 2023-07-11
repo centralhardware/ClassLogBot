@@ -2,8 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic.configuration;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.Clickhouse;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.mapper.PupilMapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -26,7 +26,7 @@ import static me.centralhardware.znatoki.telegram.statistic.lucen.Lucene.FIO_FIE
 @RequiredArgsConstructor
 public class LuceneConfiguration {
 
-    private final Clickhouse clickhouse;
+    private final PupilMapper pupilMapper;
 
     @Getter
     private RAMDirectory memoryIndex;
@@ -38,7 +38,7 @@ public class LuceneConfiguration {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writter = new IndexWriter(index, indexWriterConfig);
 
-        clickhouse.getPupils()
+        pupilMapper.getPupils()
                 .forEach(pupil -> {
                     try {
                         Document document = new Document();
