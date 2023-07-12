@@ -52,6 +52,6 @@ public class AddTImeCommand extends CommandHandler{
 
     @Override
     boolean isAcceptable(String data) {
-        return data.equals("/addTime");
+        return data.equalsIgnoreCase("/addTime");
     }
 }

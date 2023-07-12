@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
@@ -20,10 +21,13 @@ import me.centralhardware.znatoki.telegram.statistic.validate.PhotoValidator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import redis.clients.jedis.commands.SetCommands;
 
 import java.io.File;
 import java.util.List;
@@ -51,19 +55,20 @@ public class Bot extends TelegramLongPollingBot {
     private final FioValidator fioValidator;
 
     @PostConstruct
-    public void init(){
+    public void init() {
         sender.setAbsSender(this);
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         try {
+            registerCommands();
             telegramUtil.saveStatisticIncome(update);
             telegramUtil.logUpdate(update);
 
             Long userId = telegramUtil.getUserId(update);
             if (!redis.exists(userId.toString()) &&
-                    !userId.equals(Long.parseLong(System.getenv("ADMIN_ID")))){
+                    !userId.equals(Long.parseLong(System.getenv("ADMIN_ID")))) {
 
                 Boolean isStart = Optional.of(update)
                         .map(Update::getMessage)
@@ -80,12 +85,24 @@ public class Bot extends TelegramLongPollingBot {
 
             if (inlineHandler.processInline(update)) return;
 
-            if (storage.contain(update.getMessage().getChatId())){
+            if (storage.contain(update.getMessage().getChatId())) {
                 completeTime(update);
             }
-        } catch (Throwable t){
-            log.warn("Error while processing update",t);
+        } catch (Throwable t) {
+            log.warn("Error while processing update", t);
         }
+    }
+
+    @SneakyThrows(TelegramApiException.class)
+    public void registerCommands() {
+        var commands = SetMyCommands.builder()
+                .command(BotCommand
+                        .builder()
+                        .command("/addtime")
+                        .description("Добавить запись")
+                        .build())
+                .build();
+        execute(commands);
     }
 
     private boolean processCommand(Update update) {
@@ -93,8 +110,8 @@ public class Bot extends TelegramLongPollingBot {
 
         Message message = update.getMessage();
 
-        for (CommandHandler commandHandler : commandHandlers){
-            if (commandHandler.isAcceptable(message)){
+        for (CommandHandler commandHandler : commandHandlers) {
+            if (commandHandler.isAcceptable(message)) {
                 commandHandler.handle(message);
                 return true;
             }
@@ -103,7 +120,7 @@ public class Bot extends TelegramLongPollingBot {
         return false;
     }
 
-    private void completeTime(Update update){
+    private void completeTime(Update update) {
         Long userId = telegramUtil.getUserId(update);
         String text = Optional.of(update)
                 .map(Update::getMessage)
@@ -124,17 +141,17 @@ public class Bot extends TelegramLongPollingBot {
                 storage.getTIme(userId).setSubject(res.right().get().name());
                 sender.sendText("Введите фио. /complete - для окончания ввода", user);
                 InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
-                                .row().switchToInline().endRow();
+                        .row().switchToInline().endRow();
                 builder.setText("нажмите для поиска фио");
                 sender.send(builder.build(userId), update.getMessage().getFrom());
                 storage.setStage(userId, 2);
             }
             case 2 -> {
 
-                if (!Objects.equals(text, "/complete")){
+                if (!Objects.equals(text, "/complete")) {
                     var fioRes = fioValidator.validate(text);
 
-                    if (fioRes.isLeft()){
+                    if (fioRes.isLeft()) {
                         sender.sendText(fioRes.getLeft(), user);
                         return;
                     }
@@ -143,7 +160,7 @@ public class Bot extends TelegramLongPollingBot {
                     return;
                 }
 
-                if (storage.getTIme(userId).getFios().isEmpty()){
+                if (storage.getTIme(userId).getFios().isEmpty()) {
                     sender.sendText("Необходимо ввести как минимум одно ФИО", user);
                     return;
                 }
@@ -166,7 +183,7 @@ public class Bot extends TelegramLongPollingBot {
             case 4 -> {
                 var res = photoValidator.validate(update);
 
-                if (res.isLeft()){
+                if (res.isLeft()) {
                     sender.sendText(res.getLeft(), user);
                     return;
                 }
@@ -182,10 +199,10 @@ public class Bot extends TelegramLongPollingBot {
                     Time time = storage.getTIme(userId);
                     ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
                             .setText(String.format("""
-                                    Предмет: %s,
-                                    ФИО: %s
-                                    стоимость занятия: %s 
-                                    """,
+                                            Предмет: %s,
+                                            ФИО: %s
+                                            стоимость занятия: %s 
+                                            """,
                                     Subject.valueOf(time.getSubject()).getRusName(),
                                     String.join(";", time.getFios()),
                                     time.getAmount().toString()))
@@ -200,7 +217,7 @@ public class Bot extends TelegramLongPollingBot {
                 }
             }
             case 5 -> {
-                if (text.equals("да")){
+                if (text.equals("да")) {
                     Time time = storage.getTIme(userId);
                     var id = UUID.randomUUID();
                     time.getFios().forEach(it -> {
