@@ -54,15 +54,23 @@ public class Bot extends TelegramLongPollingBot {
     private final PhotoValidator photoValidator;
     private final FioValidator fioValidator;
 
+    @SneakyThrows
     @PostConstruct
     public void init() {
         sender.setAbsSender(this);
+        var commands = SetMyCommands.builder()
+                .command(BotCommand
+                        .builder()
+                        .command("/addtime")
+                        .description("Добавить запись")
+                        .build())
+                .build();
+        execute(commands);
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         try {
-            registerCommands();
             telegramUtil.saveStatisticIncome(update);
             telegramUtil.logUpdate(update);
 
@@ -91,18 +99,6 @@ public class Bot extends TelegramLongPollingBot {
         } catch (Throwable t) {
             log.warn("Error while processing update", t);
         }
-    }
-
-    @SneakyThrows(TelegramApiException.class)
-    public void registerCommands() {
-        var commands = SetMyCommands.builder()
-                .command(BotCommand
-                        .builder()
-                        .command("/addtime")
-                        .description("Добавить запись")
-                        .build())
-                .build();
-        execute(commands);
     }
 
     private boolean processCommand(Update update) {
