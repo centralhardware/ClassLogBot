@@ -30,7 +30,7 @@ public interface PupilMapper {
 
     @Select("""
             SELECT 1
-            FROM pupil 
+            FROM pupil
             WHERE trim(lowerUTF8(concat(name, ' ', second_name, ' ',  last_name))) = #{fio} 
                 AND deleted = FALSE
             """)
