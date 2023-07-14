@@ -23,6 +23,11 @@ public class AddTImeCommand extends CommandHandler{
     public void handle(Message message) {
         ZnatokiUser user = redis.get(message.getChatId().toString(), ZnatokiUser.class);
 
+        if (storage.contain(message.getChatId())){
+            sender.sendText("Сначала сохраните текущую запись", message.getFrom());
+            return;
+        }
+
         Time time = new Time();
         time.setDateTime(LocalDateTime.now());
         time.setChatId(message.getChatId());
