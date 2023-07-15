@@ -223,16 +223,18 @@ public class Bot extends TelegramLongPollingBot {
                     });
 
                     var logUser = new User();
-                    user.setId(Long.parseLong("LOG_CHAT"));
-                    user.setUserName("logger");
+                    logUser.setId(Long.parseLong(System.getenv("LOG_CHAT")));
+                    logUser.setUserName("logger");
+                    logUser.setLanguageCode("ru");
                     sender.sendText(String.format("""
                                             Время: %s,
                                             Предмет: %s
                                             Ученики: %s
-                                            Стоимость: %s
+                                            Стоимость: %s,
+                                            Преподаватель; %s 
                                             """,
                                     time.getDateTime().getHour() + ":" + time.getDateTime().getMinute(),
-                                    Subject.of(time.getSubject()).getRusName(),
+                                    Subject.valueOf(time.getSubject()).getRusName(),
                                     String.join(", ", time.getFios()),
                                     time.getAmount()),
                             logUser);

@@ -42,7 +42,9 @@ public interface TimeMapper {
                    amount, 
                    photoId
             FROM znatoki_statistic_time
-            WHERE id = #{userId} AND date_time between toStartOfDay(today()) and date_time
+            WHERE chat_id = #{userId} 
+                AND date_time between toStartOfDay(today()) and date_time
+                AND is_deleted=false
             """)
     @Results({
             @Result(property = "dateTime", column = "date_time"),
@@ -73,6 +75,7 @@ public interface TimeMapper {
             SELECT DISTINCT chat_id
             FROM default.znatoki_statistic_time
             """)
+    @ResultType(Long.class)
     List<Long> getIds();
 
 }

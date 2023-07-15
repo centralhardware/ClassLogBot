@@ -5,6 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -20,7 +21,7 @@ public class DailyReport {
     private final TimeMapper timeMapper;
     private final TelegramSender sender;
 
-//    @Scheduled(cron = "* * 22 * * *")
+    @Scheduled(cron = "* * 22 * * *")
     public void report(){
         timeMapper.getIds()
                 .stream()
@@ -40,7 +41,7 @@ public class DailyReport {
                                             Стоимость: %s
                                             """,
                                 time.getDateTime().getHour() + ":" + time.getDateTime().getMinute(),
-                                Subject.of(time.getSubject()).getRusName(),
+                                Subject.valueOf(time.getSubject()).getRusName(),
                                 String.join(", ", time.getFios()),
                                 time.getAmount()),
                                 user);
@@ -52,6 +53,7 @@ public class DailyReport {
     public User getUser(Time time){
         var user = new User();
         user.setId(time.getChatId());
+        user.setLanguageCode("ru");
         return user;
     }
 
