@@ -230,8 +230,7 @@ public class Bot extends TelegramLongPollingBot {
                                             Время: %s,
                                             Предмет: %s
                                             Ученики: %s
-                                            Стоимость: %s,
-                                            Преподаватель; %s 
+                                            Стоимость: %s
                                             """,
                                     time.getDateTime().getHour() + ":" + time.getDateTime().getMinute(),
                                     Subject.valueOf(time.getSubject()).getRusName(),
