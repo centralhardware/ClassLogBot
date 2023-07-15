@@ -222,6 +222,21 @@ public class Bot extends TelegramLongPollingBot {
                         timeMapper.insertTime(time);
                     });
 
+                    var logUser = new User();
+                    user.setId(Long.parseLong("LOG_CHAT"));
+                    user.setUserName("logger");
+                    sender.sendText(String.format("""
+                                            Время: %s,
+                                            Предмет: %s
+                                            Ученики: %s
+                                            Стоимость: %s
+                                            """,
+                                    time.getDateTime().getHour() + ":" + time.getDateTime().getMinute(),
+                                    Subject.of(time.getSubject()).getRusName(),
+                                    String.join(", ", time.getFios()),
+                                    time.getAmount()),
+                            logUser);
+
                     storage.remove(userId);
 
                     sender.sendText("Сохранено", user, true);
