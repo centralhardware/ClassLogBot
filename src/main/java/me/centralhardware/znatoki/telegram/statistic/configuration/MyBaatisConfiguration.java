@@ -1,9 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.configuration;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.mapper.PupilMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.StatisticMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -31,6 +31,7 @@ public class MyBaatisConfiguration {
         configuration.addMapper(TimeMapper.class);
         configuration.addMapper(StatisticMapper.class);
         configuration.addMapper(PupilMapper.class);
+        configuration.addMapper(TeacherNameMapper.class);
         return new SqlSessionFactoryBuilder().build(configuration);
     }
 
@@ -47,6 +48,11 @@ public class MyBaatisConfiguration {
     @Bean
     public TimeMapper getTimeMapper(SqlSessionFactory sqlSessionFactory){
         return sqlSessionFactory.openSession().getMapper(TimeMapper.class);
+    }
+
+    @Bean
+    public TeacherNameMapper getTeacherNameMapper(SqlSessionFactory sqlSessionFactory){
+        return sqlSessionFactory.openSession().getMapper(TeacherNameMapper.class);
     }
 
 }

@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.mapper.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
@@ -27,13 +28,9 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import redis.clients.jedis.commands.SetCommands;
 
 import java.io.File;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -48,6 +45,7 @@ public class Bot extends TelegramLongPollingBot {
     private final Storage storage;
     private final InlineHandler inlineHandler;
     private final TimeMapper timeMapper;
+    private final TeacherNameMapper teacherNameMapper;
 
     private final AmountValidator amountValidator;
     private final EnumValidator enumValidator;
@@ -230,12 +228,14 @@ public class Bot extends TelegramLongPollingBot {
                                             Время: %s,
                                             Предмет: %s
                                             Ученики: %s
-                                            Стоимость: %s
+                                            Стоимость: %s,
+                                            Преподаватель: %s
                                             """,
-                                    time.getDateTime().getHour() + ":" + time.getDateTime().getMinute(),
+                                    time.getDateTime(),
                                     Subject.valueOf(time.getSubject()).getRusName(),
                                     String.join(", ", time.getFios()),
-                                    time.getAmount()),
+                                    time.getAmount(),
+                                    teacherNameMapper.getFio(userId)),
                             logUser);
 
                     storage.remove(userId);
