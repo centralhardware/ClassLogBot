@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,6 +20,8 @@ public class DailyReport {
 
     private final TimeMapper timeMapper;
     private final TelegramSender sender;
+
+    private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     @Scheduled(cron = "* * 22 * * *")
     public void report(){
@@ -39,7 +42,7 @@ public class DailyReport {
                                             Ученики: %s
                                             Стоимость: %s
                                             """,
-                                time.getDateTime().getHour() + ":" + time.getDateTime().getMinute(),
+                                timeFormatter.format(time.getDateTime()),
                                 Subject.valueOf(time.getSubject()).getRusName(),
                                 String.join(", ", time.getFios()),
                                 time.getAmount()),
