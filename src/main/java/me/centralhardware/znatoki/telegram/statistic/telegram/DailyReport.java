@@ -23,7 +23,7 @@ public class DailyReport {
 
     private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-    @Scheduled(cron = "* * 22 * * *")
+    @Scheduled(cron = "0 0 22 * * *")
     public void report(){
         timeMapper.getIds()
                 .stream()
@@ -49,6 +49,7 @@ public class DailyReport {
                                 user);
                     });
 
+                    sender.sendText("Проверьте правильность внесенных данных",user);
                 });
     }
 
