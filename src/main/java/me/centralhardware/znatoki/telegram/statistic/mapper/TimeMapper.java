@@ -6,6 +6,9 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,14 +39,14 @@ public interface TimeMapper {
     @Select("""
             SELECT date_time,
                    id,
-                   chat_id, 
-                   subject, 
-                   fio, 
-                   amount, 
+                   chat_id,
+                   subject,
+                   fio,
+                   amount,
                    photoId
             FROM znatoki_statistic_time
             WHERE chat_id = #{userId} 
-                AND date_time between toStartOfDay(today()) and date_time
+                AND date_time between toDate(#{startDate}) and toDate(#{endDate})
                 AND is_deleted=false
             """)
     @Results({
@@ -55,11 +58,15 @@ public interface TimeMapper {
             @Result(property = "amount", column = "amount"),
             @Result(property = "photoId", column = "photoId")
     })
-    List<Time> _getTodayTimes(@Param("userId") Long userId);
+    List<Time> _getTimes(@Param("userId") Long userId,
+                         @Param("startDate") LocalDateTime startDate,
+                         @Param("endDate") LocalDateTime endDate);
 
-    default List<Time> getTodayTimes(Long userId) {
+    default List<Time> getTimes(Long userId,
+                                LocalDateTime startDate,
+                                LocalDateTime endDate) {
         Multimap<UUID, Time> times = ArrayListMultimap.create();
-        _getTodayTimes(userId).forEach(it -> times.put(it.getId(), it));
+        _getTimes(userId, startDate, endDate).forEach(it -> times.put(it.getId(), it));
         return times.asMap()
                 .values()
                 .stream()
@@ -68,7 +75,16 @@ public interface TimeMapper {
                     time.setFios(timeCollection.stream().map(Time::getFio).toList());
                     return time;
                 })
+                .sorted(Comparator.comparing(Time::getDateTime))
                 .toList();
+    }
+
+    default List<Time> getTodayTimes(Long chatId){
+        return getTimes(chatId, LocalDateTime.now().with(LocalTime.MIN), LocalDateTime.now());
+    }
+
+    default List<Time> getCuurentMontTimes(Long chatId){
+        return getTimes(chatId, LocalDateTime.now().withDayOfMonth(1), LocalDateTime.now());
     }
 
     @Select("""

@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -61,6 +62,8 @@ public class TelegramSender {
                     absSender.execute(sendChatAction);
                 } else if (method instanceof AnswerInlineQuery answerInlineQuery){
                     absSender.execute(answerInlineQuery);
+                } else if (method instanceof SendDocument sendDocument){
+                    absSender.execute(sendDocument);
                 }
                 telegramUtil.saveStatisticOutcome(method, user);
 

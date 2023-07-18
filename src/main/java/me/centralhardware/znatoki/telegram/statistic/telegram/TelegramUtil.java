@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -156,6 +157,8 @@ public class TelegramUtil {
         } else if (object instanceof AnswerCallbackQuery){
             return;
         } else if (object instanceof AnswerInlineQuery){
+            return;
+        } else if (object instanceof SendDocument){
             return;
         } else {
             throw new IllegalStateException();
