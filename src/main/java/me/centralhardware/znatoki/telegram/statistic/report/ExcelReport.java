@@ -16,7 +16,10 @@ public class ExcelReport {
     private Sheet sheet;
     private int rowIndex = 0;
 
-    public ExcelReport(){
+    private final String fio;
+
+    public ExcelReport(String fio){
+        this.fio = fio;
         this.workbook = new XSSFWorkbook();
     }
 
@@ -38,7 +41,7 @@ public class ExcelReport {
 
     public File create(){
         try {
-            var temp = Files.createTempFile("znatoki_statistic", ".xlsx").toFile();
+            var temp = Files.createTempFile(fio, ".xlsx").toFile();
             try (var outputStream = new FileOutputStream(temp)){
                 workbook.write(outputStream);
                 workbook.close();

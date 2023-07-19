@@ -46,7 +46,7 @@ public interface TimeMapper {
                    amount,
                    photoId
             FROM znatoki_statistic_time
-            WHERE chat_id = #{userId} 
+            WHERE chat_id = #{userId}
                 AND date_time between toDate(#{startDate}) and toDate(#{endDate})
                 AND is_deleted=false
             """)
@@ -85,7 +85,9 @@ public interface TimeMapper {
     }
 
     default List<Time> getCuurentMontTimes(Long chatId){
-        return getTimes(chatId, LocalDateTime.now().withDayOfMonth(1), LocalDateTime.now());
+        return getTimes(chatId,
+                LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0),
+                LocalDateTime.now());
     }
 
     default List<Time> getPrevMonthTimes(Long chatId){
@@ -97,6 +99,7 @@ public interface TimeMapper {
     @Select("""
             SELECT DISTINCT chat_id
             FROM default.znatoki_statistic_time
+            WHERE is_deleted = false
             """)
     @ResultType(Long.class)
     List<Long> getIds();

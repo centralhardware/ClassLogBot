@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 @Component
@@ -29,11 +30,15 @@ public class ReportService {
 
     private List<File> getReport(Function<Long,List<Time>> getTime){
         return timeMapper.getIds()
-                .stream()
-                .map(getTime)
-                .filter(CollectionUtils::isNotEmpty)
-                .map(it -> new MonthReport().generate(it, teacherNameMapper::getFio))
+                .stream().map(id -> {
+                    var times = getTime.apply(id);
+                    if (CollectionUtils.isEmpty(times)) return null;
+
+                    return new MonthReport(teacherNameMapper.getFio(id)).generate(times);
+                })
+                .filter(Objects::nonNull)
                 .toList();
+
     }
 
 }
