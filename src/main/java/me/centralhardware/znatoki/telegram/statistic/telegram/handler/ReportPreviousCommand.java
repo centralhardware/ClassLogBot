@@ -9,7 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 
 @Component
 @RequiredArgsConstructor
-public class ReportCommand extends CommandHandler{
+public class ReportPreviousCommand extends CommandHandler {
 
     private final ReportService reportService;
 
@@ -19,7 +19,7 @@ public class ReportCommand extends CommandHandler{
             return;
         }
 
-        reportService.getReportsCurrent()
+        reportService.getReportPrevious()
                 .forEach(report -> {
                     SendDocument sendDocument = SendDocument
                             .builder()
@@ -32,6 +32,7 @@ public class ReportCommand extends CommandHandler{
 
     @Override
     boolean isAcceptable(String data) {
-        return data.equalsIgnoreCase("/report");
+        return data.equalsIgnoreCase("/reportPrevious");
     }
+
 }

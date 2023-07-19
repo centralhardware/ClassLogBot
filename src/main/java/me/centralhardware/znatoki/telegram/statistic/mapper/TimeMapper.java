@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -85,6 +86,12 @@ public interface TimeMapper {
 
     default List<Time> getCuurentMontTimes(Long chatId){
         return getTimes(chatId, LocalDateTime.now().withDayOfMonth(1), LocalDateTime.now());
+    }
+
+    default List<Time> getPrevMonthTimes(Long chatId){
+        return getTimes(chatId,
+                LocalDateTime.now().minusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0),
+                LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).withHour(0).withMinute(0).withSecond(0));
     }
 
     @Select("""

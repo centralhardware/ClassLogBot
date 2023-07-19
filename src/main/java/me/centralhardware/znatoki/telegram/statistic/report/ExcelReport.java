@@ -26,6 +26,7 @@ public class ExcelReport {
 
     protected void writeRow(String...values){
         Row row = sheet.createRow(rowIndex);
+        this.sheet.autoSizeColumn(rowIndex);
         int i = 0;
         for (String value : values){
             var cell = row.createCell(i);
@@ -37,7 +38,7 @@ public class ExcelReport {
 
     public File create(){
         try {
-            var temp = Files.createTempFile("znatoki_statistic", "xlsx").toFile();
+            var temp = Files.createTempFile("znatoki_statistic", ".xlsx").toFile();
             try (var outputStream = new FileOutputStream(temp)){
                 workbook.write(outputStream);
                 workbook.close();
