@@ -33,6 +33,7 @@ public class MonthlyReport {
                                     .document(new InputFile(report))
                                     .build();
                             sender.send(sendDocument, getUser(id));
+                            report.delete();
                         }));
     }
 

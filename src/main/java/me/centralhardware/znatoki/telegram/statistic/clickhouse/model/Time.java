@@ -1,9 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Time {
 
@@ -11,7 +9,7 @@ public class Time {
     private UUID id;
     private Long chatId;
     private String subject;
-    private List<String> fios = new ArrayList<>();
+    private Set<String> fios = new HashSet<>();
     private String fio;
     private Integer amount;
     private String photoId;
@@ -40,11 +38,11 @@ public class Time {
         this.chatId = chatId;
     }
 
-    public List<String> getFios() {
+    public Set<String> getFios() {
         return fios;
     }
 
-    public void setFios(List<String> fios) {
+    public void setFios(Set<String> fios) {
         this.fios = fios;
     }
 

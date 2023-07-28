@@ -27,6 +27,7 @@ public class ReportPreviousCommand extends CommandHandler {
                             .document(new InputFile(report))
                             .build();
                     sender.send(sendDocument, message.getFrom());
+                    report.delete();
                 });
     }
 

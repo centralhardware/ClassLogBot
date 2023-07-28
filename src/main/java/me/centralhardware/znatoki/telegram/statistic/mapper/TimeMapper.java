@@ -12,6 +12,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Mapper
 public interface TimeMapper {
@@ -73,7 +74,7 @@ public interface TimeMapper {
                 .stream()
                 .map(timeCollection -> {
                     var time = timeCollection.stream().findFirst().get();
-                    time.setFios(timeCollection.stream().map(Time::getFio).toList());
+                    time.setFios(timeCollection.stream().map(Time::getFio).collect(Collectors.toSet()));
                     return time;
                 })
                 .sorted(Comparator.comparing(Time::getDateTime))

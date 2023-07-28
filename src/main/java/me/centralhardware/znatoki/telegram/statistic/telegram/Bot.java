@@ -149,6 +149,12 @@ public class Bot extends TelegramLongPollingBot {
                         sender.sendText(fioRes.getLeft(), user);
                         return;
                     }
+
+                    if (storage.getTIme(userId).getFios().contains(text)){
+                        sender.sendText("Данное ФИО уже добавлено", user);
+                        return;
+                    }
+
                     storage.getTIme(userId).getFios().add(text);
                     sender.sendText("ФИО сохранено", user);
                     return;
