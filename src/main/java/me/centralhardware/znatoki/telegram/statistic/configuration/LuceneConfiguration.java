@@ -33,14 +33,19 @@ public class LuceneConfiguration {
     @Getter
     private RAMDirectory memoryIndex;
 
-    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     public void getAnalyzer() throws IOException {
         log.info("Start update lucene index");
-        RAMDirectory index = new RAMDirectory();
+
+        if (memoryIndex == null){
+            memoryIndex = new RAMDirectory();
+        }
+
         StandardAnalyzer analyzer = new StandardAnalyzer();
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        IndexWriter writter = new IndexWriter(index, indexWriterConfig);
+        IndexWriter writter = new IndexWriter(memoryIndex, indexWriterConfig);
 
+        writter.deleteAll();
         pupilMapper.getPupils()
                 .forEach(pupil -> {
                     try {
@@ -53,7 +58,6 @@ public class LuceneConfiguration {
                     }
                 });
         writter.close();
-        this.memoryIndex = index;
         log.info("Finish update lucene index");
     }
 

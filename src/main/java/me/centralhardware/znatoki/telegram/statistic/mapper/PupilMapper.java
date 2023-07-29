@@ -26,6 +26,7 @@ public interface PupilMapper {
             @Arg(column = "name", javaType = String.class),
             @Arg(column = "second_name", javaType = String.class)
     })
+    @Options(useCache = false)
     List<Pupil> getPupils();
 
     @Select("""
