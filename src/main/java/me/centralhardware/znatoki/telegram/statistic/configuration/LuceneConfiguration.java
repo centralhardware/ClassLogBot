@@ -33,7 +33,7 @@ public class LuceneConfiguration {
     @Getter
     private RAMDirectory memoryIndex;
 
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public void getAnalyzer() throws IOException {
         log.info("Start update lucene index");
 
