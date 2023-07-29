@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.configuration;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.mapper.PupilMapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -24,6 +25,7 @@ import static me.centralhardware.znatoki.telegram.statistic.lucen.Lucene.FIO_FIE
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class LuceneConfiguration {
 
     private final PupilMapper pupilMapper;
@@ -33,6 +35,7 @@ public class LuceneConfiguration {
 
     @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public void getAnalyzer() throws IOException {
+        log.info("Start update lucene index");
         RAMDirectory index = new RAMDirectory();
         StandardAnalyzer analyzer = new StandardAnalyzer();
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
@@ -51,6 +54,7 @@ public class LuceneConfiguration {
                 });
         writter.close();
         this.memoryIndex = index;
+        log.info("Finish update lucene index");
     }
 
     private String getFio(Pupil pupil){
