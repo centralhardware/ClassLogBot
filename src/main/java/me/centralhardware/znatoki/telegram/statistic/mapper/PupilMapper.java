@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Mapper
 public interface PupilMapper {
@@ -18,6 +19,7 @@ public interface PupilMapper {
                     second_name 
             FROM pupil 
             WHERE deleted = false
+            # #{id}
             """)
     @ConstructorArgs({
             @Arg(column = "class_number", javaType = Integer.class),
@@ -26,8 +28,7 @@ public interface PupilMapper {
             @Arg(column = "name", javaType = String.class),
             @Arg(column = "second_name", javaType = String.class)
     })
-    @Options(useCache = false)
-    List<Pupil> getPupils();
+    List<Pupil> getPupils(@Param("id") UUID id);
 
     @Select("""
             SELECT 1

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static me.centralhardware.znatoki.telegram.statistic.lucen.Lucene.BIO_FIELD;
@@ -46,7 +47,7 @@ public class LuceneConfiguration {
         IndexWriter writter = new IndexWriter(memoryIndex, indexWriterConfig);
 
         writter.deleteAll();
-        pupilMapper.getPupils()
+        pupilMapper.getPupils(UUID.randomUUID())
                 .forEach(pupil -> {
                     try {
                         Document document = new Document();
