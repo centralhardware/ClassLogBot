@@ -57,6 +57,7 @@ public class LuceneConfiguration {
                         throw new RuntimeException(e);
                     }
                 });
+        writter.commit();
         writter.close();
         log.info("Finish update lucene index");
     }
