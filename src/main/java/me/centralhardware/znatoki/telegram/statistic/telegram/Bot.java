@@ -23,6 +23,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -30,7 +32,9 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -237,12 +241,20 @@ public class Bot extends TelegramLongPollingBot {
                                             Стоимость: %s,
                                             Преподаватель: %s
                                             """,
-                                    time.getDateTime(),
-                                    Subject.valueOf(time.getSubject()).getRusName(),
-                                    String.join(", ", time.getFios()),
+                                    time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")),
+                                    "#" + Subject.valueOf(time.getSubject()).getRusName().replaceAll(" ", "_"),
+                                    time.getFios().stream()
+                                            .map(it -> "#" + it.replaceAll(" ", "_"))
+                                            .collect(Collectors.joining(", ")),
                                     time.getAmount(),
-                                    teacherNameMapper.getFio(userId)),
+                                    "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")),
                             logUser);
+                    SendPhoto sendPhoto = SendPhoto
+                            .builder()
+                            .photo(new InputFile(minio.get(time.getPhotoId()), "отчет"))
+                            .chatId(userId)
+                            .build();
+                    sender.send(sendPhoto, user);
 
                     storage.remove(userId);
 
