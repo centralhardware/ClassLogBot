@@ -195,12 +195,13 @@ public class Bot extends TelegramLongPollingBot {
                 GetFile getFile = new GetFile();
                 getFile.setFileId(res.right().get().getFileId());
                 try {
+                    Time time = storage.getTIme(userId);
+
                     File file = downloadFile(execute(getFile));
 
-                    String id = minio.upload(file.getAbsolutePath());
+                    String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject());
                     storage.getTIme(userId).setPhotoId(id);
 
-                    Time time = storage.getTIme(userId);
                     ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
                             .setText(String.format("""
                                             Предмет: %s,
