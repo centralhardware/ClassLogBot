@@ -27,10 +27,11 @@ public class Minio {
 
     public String upload(File file, LocalDateTime dateTime, String fio, String subject){
         try {
-            var fileNew = Paths.get(String.format("%s/%s/%s/%s:%s-%s-%s-%s.jpg",
+            var fileNew = Paths.get(String.format("%s/%s/%s/%s/%s:%s-%s-%s-%s.jpg",
                     System.getenv("BASE_PATH"),
                     dateTime.getYear(),
                     dateTime.getMonth(),
+                    dateTime.getDayOfMonth(),
                     dateTime.getHour(),
                     dateTime.getMinute(),
                     fio,
