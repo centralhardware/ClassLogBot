@@ -252,9 +252,9 @@ public class Bot extends TelegramLongPollingBot {
                     SendPhoto sendPhoto = SendPhoto
                             .builder()
                             .photo(new InputFile(minio.get(time.getPhotoId()), "отчет"))
-                            .chatId(userId)
+                            .chatId(logUser.getId())
                             .build();
-                    sender.send(sendPhoto, user);
+                    sender.send(sendPhoto, logUser);
 
                     storage.remove(userId);
 
