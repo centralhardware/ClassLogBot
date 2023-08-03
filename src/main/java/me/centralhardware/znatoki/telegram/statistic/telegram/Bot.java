@@ -235,7 +235,11 @@ public class Bot extends TelegramLongPollingBot {
                     logUser.setId(Long.parseLong(System.getenv("LOG_CHAT")));
                     logUser.setUserName("logger");
                     logUser.setLanguageCode("ru");
-                    sender.sendText(String.format("""
+                    SendPhoto sendPhoto = SendPhoto
+                            .builder()
+                            .photo(new InputFile(minio.get(time.getPhotoId()), "отчет"))
+                            .chatId(logUser.getId())
+                            .caption(String.format("""
                                             Время: %s,
                                             Предмет: %s
                                             Ученики: %s
@@ -248,12 +252,7 @@ public class Bot extends TelegramLongPollingBot {
                                             .map(it -> "#" + it.replaceAll(" ", "_"))
                                             .collect(Collectors.joining(", ")),
                                     time.getAmount(),
-                                    "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")),
-                            logUser);
-                    SendPhoto sendPhoto = SendPhoto
-                            .builder()
-                            .photo(new InputFile(minio.get(time.getPhotoId()), "отчет"))
-                            .chatId(logUser.getId())
+                                    "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))
                             .build();
                     sender.send(sendPhoto, logUser);
 
