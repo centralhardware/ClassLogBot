@@ -48,7 +48,7 @@ public interface TimeMapper {
                    photoId
             FROM znatoki_statistic_time
             WHERE chat_id = #{userId}
-                AND date_time between toDate(#{startDate}) and toDate(#{endDate})
+                AND date_time between toDateTime(#{startDate}) and toDateTime(#{endDate})
                 AND is_deleted=false
             """)
     @Results({
