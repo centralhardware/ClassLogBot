@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -37,7 +38,7 @@ public class ReportService {
 
     private List<File> getReport(Function<Long,List<Time>> getTime, Long id){
         var times = getTime.apply(id);
-        if (CollectionUtils.isEmpty(times)) return null;
+        if (CollectionUtils.isEmpty(times)) return Collections.emptyList();
 
         return redis.get(times.get(0).getChatId().toString(), ZnatokiUser.class)
                 .subjects()

@@ -60,12 +60,23 @@ public class Bot extends TelegramLongPollingBot {
     @PostConstruct
     public void init() {
         sender.setAbsSender(this);
+        var addTimeCommand = BotCommand
+                .builder()
+                .command("/addtime")
+                .description("Добавить запись")
+                .build();
+        var reportCommand = BotCommand
+                .builder()
+                .command("/report")
+                .description("Отчет за текущий месяц")
+                .build();
+        var reportPreviousCommand = BotCommand
+                .builder()
+                .command("/reportprevious")
+                .description("Отчет за предыдущий месяц")
+                .build();
         var commands = SetMyCommands.builder()
-                .command(BotCommand
-                        .builder()
-                        .command("/addtime")
-                        .description("Добавить запись")
-                        .build())
+                .commands(List.of(addTimeCommand, reportCommand, reportPreviousCommand))
                 .build();
         execute(commands);
     }

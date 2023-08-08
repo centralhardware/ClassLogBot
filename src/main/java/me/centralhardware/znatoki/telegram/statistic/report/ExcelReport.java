@@ -61,6 +61,7 @@ public class ExcelReport {
         try {
             var temp = Files.createFile(Path.of(fio + " - " + subject.getRusName() + " " + date.format(DateTimeFormatter.ofPattern("MMMM")) + " " +
                     date.getYear() + ".xlsx")).toFile();
+
             try (var outputStream = new FileOutputStream(temp)){
                 workbook.write(outputStream);
                 workbook.close();

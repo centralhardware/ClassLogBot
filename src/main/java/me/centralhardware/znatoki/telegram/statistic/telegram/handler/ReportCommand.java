@@ -8,34 +8,23 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.io.File;
+import java.util.List;
+import java.util.function.Function;
+
 @Component
 @RequiredArgsConstructor
-public class ReportCommand extends CommandHandler{
+public class ReportCommand extends BaseReport{
 
     private final ReportService reportService;
-    private final TimeMapper timeMapper;
-
-    @Override
-    public void handle(Message message) {
-        if (!message.getFrom().getId().equals(Long.parseLong(System.getenv("ADMIN_ID")))){
-            return;
-        }
-
-        timeMapper.getIds()
-                .forEach(it -> reportService.getReportsCurrent(it)
-                        .forEach(report -> {
-                            SendDocument sendDocument = SendDocument
-                                    .builder()
-                                    .chatId(message.getChatId())
-                                    .document(new InputFile(report))
-                                    .build();
-                            sender.send(sendDocument, message.getFrom());
-                            report.delete();
-                        }));
-    }
 
     @Override
     boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/report");
+    }
+
+    @Override
+    protected Function<Long, List<File>> getTime() {
+        return reportService::getReportsCurrent;
     }
 }
