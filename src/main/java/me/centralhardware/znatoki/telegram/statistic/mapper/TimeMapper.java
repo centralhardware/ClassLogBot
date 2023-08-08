@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
@@ -61,8 +62,16 @@ public interface TimeMapper {
             @Result(property = "photoId", column = "photoId")
     })
     List<Time> _getTimes(@Param("userId") Long userId,
-                         @Param("startDate") LocalDateTime startDate,
-                         @Param("endDate") LocalDateTime endDate);
+                         @Param("startDate") String startDate,
+                         @Param("endDate") String endDate);
+
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    default List<Time> _getTimes(Long userId,
+                         LocalDateTime startDate,
+                         LocalDateTime endDate){
+        return _getTimes(userId, dateTimeFormatter.format(startDate), dateTimeFormatter.format(endDate));
+    }
 
     default List<Time> getTimes(Long userId,
                                 LocalDateTime startDate,
