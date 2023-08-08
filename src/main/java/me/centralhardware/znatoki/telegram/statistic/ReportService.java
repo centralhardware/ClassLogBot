@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.mapper.PupilMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
@@ -23,6 +24,7 @@ public class ReportService {
 
     private final TimeMapper timeMapper;
     private final TeacherNameMapper teacherNameMapper;
+    private final PupilMapper pupilMapper;
     private final Redis redis;
 
     public List<File> getReportsCurrent(){
@@ -50,7 +52,7 @@ public class ReportService {
                                         .orElse(null);
                                 if (date == null) return null;
 
-                                return new MonthReport(teacherNameMapper.getFio(id), it, date).generate(times);
+                                return new MonthReport(teacherNameMapper.getFio(id), pupilMapper, it, date).generate(times);
                             })
                             .filter(Objects::nonNull)
                             .toList();

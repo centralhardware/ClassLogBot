@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.report;
 
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.mapper.PupilMapper;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import java.io.File;
@@ -12,8 +13,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MonthReport extends ExcelReport{
 
-    public MonthReport(String fio, Subject subject, LocalDateTime date) {
+    private final PupilMapper pupilMapper;
+
+    public MonthReport(String fio, PupilMapper pupilMapper, Subject subject, LocalDateTime date) {
         super(fio, subject, date);
+
+        this.pupilMapper = pupilMapper;
     }
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
@@ -77,7 +82,7 @@ public class MonthReport extends ExcelReport{
             writeRow(
                     String.valueOf(i.getAndIncrement()),
                     fio,
-                    "",
+                    pupilMapper.getClass(fio).toString(),
                     Integer.toString(individual),
                     Integer.toString(group),
                     dates.keySet().stream().findFirst().get(),

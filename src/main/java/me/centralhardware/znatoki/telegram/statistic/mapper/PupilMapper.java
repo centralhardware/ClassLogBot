@@ -38,6 +38,15 @@ public interface PupilMapper {
             """)
     Integer _exist(@Param("fio") String fio);
 
+    @Select("""
+            SELECT class_number
+            FROM pupil
+            WHERE trim(lowerUTF8(concat(name, ' ', second_name, ' ',  last_name))) = #{fio}
+            ORDER BY create_date
+            LIMIT 1
+            """)
+    Integer getClass(String fio);
+
     default Boolean exist(String fio){
         return Objects.equals(1, _exist(fio));
     }
