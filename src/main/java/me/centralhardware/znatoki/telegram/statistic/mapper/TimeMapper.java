@@ -65,7 +65,7 @@ public interface TimeMapper {
                          @Param("startDate") String startDate,
                          @Param("endDate") String endDate);
 
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     default List<Time> _getTimes(Long userId,
                          LocalDateTime startDate,
