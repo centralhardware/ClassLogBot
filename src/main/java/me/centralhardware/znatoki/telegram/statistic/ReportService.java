@@ -27,40 +27,33 @@ public class ReportService {
     private final PupilMapper pupilMapper;
     private final Redis redis;
 
-    public List<File> getReportsCurrent(){
-        return getReport(timeMapper::getCuurentMontTimes);
+    public List<File> getReportsCurrent(Long id){
+        return getReport(timeMapper::getCuurentMontTimes, id);
     }
 
-    public List<File> getReportPrevious(){
-        return getReport(timeMapper::getPrevMonthTimes);
+    public List<File> getReportPrevious(Long id){
+        return getReport(timeMapper::getPrevMonthTimes, id);
     }
 
-    private List<File> getReport(Function<Long,List<Time>> getTime){
-        return timeMapper.getIds()
-                .stream().map(id -> {
-                    var times = getTime.apply(id);
-                    if (CollectionUtils.isEmpty(times)) return null;
+    private List<File> getReport(Function<Long,List<Time>> getTime, Long id){
+        var times = getTime.apply(id);
+        if (CollectionUtils.isEmpty(times)) return null;
 
-                    return redis.get(times.get(0).getChatId().toString(), ZnatokiUser.class)
-                            .subjects()
-                            .stream()
-                            .map(it -> {
-                                var date = times.stream()
-                                        .filter(time -> Subject.valueOf(time.getSubject()).equals(it))
-                                        .findFirst()
-                                        .map(Time::getDateTime)
-                                        .orElse(null);
-                                if (date == null) return null;
+        return redis.get(times.get(0).getChatId().toString(), ZnatokiUser.class)
+                .subjects()
+                .stream()
+                .map(it -> {
+                    var date = times.stream()
+                            .filter(time -> Subject.valueOf(time.getSubject()).equals(it))
+                            .findFirst()
+                            .map(Time::getDateTime)
+                            .orElse(null);
+                    if (date == null) return null;
 
-                                return new MonthReport(teacherNameMapper.getFio(id), pupilMapper, it, date).generate(times);
-                            })
-                            .filter(Objects::nonNull)
-                            .toList();
+                    return new MonthReport(teacherNameMapper.getFio(id), pupilMapper, it, date).generate(times);
                 })
                 .filter(Objects::nonNull)
-                .flatMap(Collection::stream)
                 .toList();
-
     }
 
 }
