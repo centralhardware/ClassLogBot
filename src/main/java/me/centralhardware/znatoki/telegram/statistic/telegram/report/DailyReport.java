@@ -36,19 +36,17 @@ public class DailyReport {
 
                     sender.sendText("Занятия проведенные за сегодня",user);
 
-                    it.forEach(time -> {
-                        sender.sendText(String.format("""
-                                            Время: %s,
-                                            Предмет: %s
-                                            Ученики: %s
-                                            Стоимость: %s
-                                            """,
-                                timeFormatter.format(time.getDateTime()),
-                                Subject.valueOf(time.getSubject()).getRusName(),
-                                String.join(", ", time.getFios()),
-                                time.getAmount()),
-                                user);
-                    });
+                    it.forEach(time -> sender.sendText(String.format("""
+                                        Время: %s,
+                                        Предмет: %s
+                                        Ученики: %s
+                                        Стоимость: %s
+                                        """,
+                            timeFormatter.format(time.getDateTime()),
+                            Subject.valueOf(time.getSubject()).getRusName(),
+                            String.join(", ", time.getFios()),
+                            time.getAmount()),
+                            user));
 
                     sender.sendText("Проверьте правильность внесенных данных",user);
                 });

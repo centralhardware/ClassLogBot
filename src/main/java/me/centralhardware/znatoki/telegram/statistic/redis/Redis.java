@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -32,7 +31,7 @@ public class Redis {
     }
 
     public <V> V get(String key, Class<V> clazz){
-        return (V) execute(jedis -> {
+        return execute(jedis -> {
             try {
                 return mapper.readValue(jedis.get(key), clazz);
             } catch (JsonProcessingException e) {

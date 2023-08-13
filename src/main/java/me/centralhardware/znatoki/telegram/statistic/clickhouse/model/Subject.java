@@ -1,7 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 
+@Getter
 public enum Subject {
 
     MATHEMATICS("математика"),
@@ -23,10 +26,6 @@ public enum Subject {
 
     Subject(String name) {
         this.rusName = name;
-    }
-
-    public String getRusName() {
-        return rusName;
     }
 
     public static Subject of(String name){

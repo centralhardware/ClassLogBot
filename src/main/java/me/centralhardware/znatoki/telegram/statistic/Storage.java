@@ -21,7 +21,7 @@ public class Storage {
         fsmStage.put(chatId, stage);
     }
 
-    public Time getTIme(Long chatId){
+    public Time getTime(Long chatId){
         return fsm.get(chatId);
     }
 

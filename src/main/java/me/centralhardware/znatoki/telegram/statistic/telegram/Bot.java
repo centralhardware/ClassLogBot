@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram;
 
+import io.vavr.concurrent.Future;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -91,7 +92,7 @@ public class Bot extends TelegramLongPollingBot {
             if (!redis.exists(userId.toString()) &&
                     !userId.equals(Long.parseLong(System.getenv("ADMIN_ID")))) {
 
-                Boolean isStart = Optional.of(update)
+                boolean isStart = Optional.of(update)
                         .map(Update::getMessage)
                         .map(Message::getText)
                         .filter(it -> it.equals("/start"))
@@ -138,103 +139,89 @@ public class Bot extends TelegramLongPollingBot {
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getStage(userId)) {
-            case 1 -> {
-
-                var res = enumValidator.validate(text);
-
-                if (res.isLeft()) {
-                    sender.sendText(res.getLeft(), user, false);
-                    return;
-                }
-
-                storage.getTIme(userId).setSubject(res.right().get().name());
+            case 1 -> enumValidator.validate(text).peekLeft(
+                    error -> sender.sendText(error, user)
+            ).peek(subject -> {
+                storage.getTime(userId).setSubject(subject.name());
                 sender.sendText("Введите фио. /complete - для окончания ввода", user);
                 InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                         .row().switchToInline().endRow();
                 builder.setText("нажмите для поиска фио");
                 sender.send(builder.build(userId), update.getMessage().getFrom());
                 storage.setStage(userId, 2);
-            }
+            });
             case 2 -> {
-
-                if (!Objects.equals(text, "/complete")) {
-                    var fioRes = fioValidator.validate(text);
-
-                    if (fioRes.isLeft()) {
-                        sender.sendText(fioRes.getLeft(), user);
+                if (Objects.equals(text, "/complete")){
+                    if (storage.getTime(userId).getFios().isEmpty()) {
+                        sender.sendText("Необходимо ввести как минимум одно ФИО", user);
                         return;
                     }
 
-                    if (storage.getTIme(userId).getFios().contains(text)){
-                        sender.sendText("Данное ФИО уже добавлено", user);
-                        return;
+                    storage.getTime(userId).setFio(text);
+                    sender.sendText("Введите стоимость занятия", user);
+                    storage.setStage(userId, 3);
+                    return;
+                }
+
+                fioValidator.validate(text).peekLeft(
+                        error -> sender.sendText(error, user)
+                ).peek(
+                        fio -> {
+                            if (storage.getTime(userId).getFios().contains(fio)){
+                                sender.sendText("Данное ФИО уже добавлено", user);
+                                return;
+                            }
+                            storage.getTime(userId).getFios().add(fio);
+                            sender.sendText("ФИО сохранено", user);
+                        }
+                );
+            }
+            case 3 -> amountValidator.validate(text).peekLeft(
+                    error -> sender.sendText(error, user)
+            ).peek(
+                    amount -> {
+                        storage.getTime(userId).setAmount(amount);
+                        sender.sendText("Отправьте фото отчётности", user);
+                        storage.setStage(userId, 4);
                     }
+            );
+            case 4 -> photoValidator.validate(update).peekLeft(
+                    error -> sender.sendText(error, user)
+            ).peek(
+                    report -> {
+                        GetFile getFile = new GetFile();
+                        getFile.setFileId(report.getFileId());
+                        try {
+                            Time time = storage.getTime(userId);
 
-                    storage.getTIme(userId).getFios().add(text);
-                    sender.sendText("ФИО сохранено", user);
-                    return;
-                }
+                            File file = downloadFile(execute(getFile));
 
-                if (storage.getTIme(userId).getFios().isEmpty()) {
-                    sender.sendText("Необходимо ввести как минимум одно ФИО", user);
-                    return;
-                }
+                            String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject());
+                            storage.getTime(userId).setPhotoId(id);
 
-                storage.getTIme(userId).setFio(text);
-                sender.sendText("Введите стоимость занятия", user);
-                storage.setStage(userId, 3);
-            }
-            case 3 -> {
-                var res = amountValidator.validate(text);
-                if (res.isLeft()) {
-                    sender.sendText(res.getLeft(), user);
-                    return;
-                }
+                            ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
+                                    .setText(String.format("""
+                                        Предмет: %s,
+                                        ФИО: %s
+                                        стоимость занятия: %s
+                                        """,
+                                            Subject.valueOf(time.getSubject()).getRusName(),
+                                            String.join(";", time.getFios()),
+                                            time.getAmount().toString()))
+                                    .row().button("да").endRow()
+                                    .row().button("нет").endRow();
 
-                storage.getTIme(userId).setAmount(res.right().get());
-                sender.sendText("Отправьте фото отчётностии", user);
-                storage.setStage(userId, 4);
-            }
-            case 4 -> {
-                var res = photoValidator.validate(update);
+                            sender.send(builder.build(userId), user);
+                            storage.setStage(userId, 5);
 
-                if (res.isLeft()) {
-                    sender.sendText(res.getLeft(), user);
-                    return;
-                }
-
-                GetFile getFile = new GetFile();
-                getFile.setFileId(res.right().get().getFileId());
-                try {
-                    Time time = storage.getTIme(userId);
-
-                    File file = downloadFile(execute(getFile));
-
-                    String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject());
-                    storage.getTIme(userId).setPhotoId(id);
-
-                    ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
-                            .setText(String.format("""
-                                            Предмет: %s,
-                                            ФИО: %s
-                                            стоимость занятия: %s 
-                                            """,
-                                    Subject.valueOf(time.getSubject()).getRusName(),
-                                    String.join(";", time.getFios()),
-                                    time.getAmount().toString()))
-                            .row().button("да").endRow()
-                            .row().button("нет").endRow();
-
-                    sender.send(builder.build(userId), user);
-                    storage.setStage(userId, 5);
-
-                } catch (TelegramApiException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+                        } catch (TelegramApiException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+            );
             case 5 -> {
-                if (text.equals("да")) {
-                    Time time = storage.getTIme(userId);
+                if (Objects.equals(text, "да")) {
+                    var time = storage.getTime(userId);
                     var id = UUID.randomUUID();
                     time.getFios().forEach(it -> {
                         time.setFio(it);
@@ -242,41 +229,47 @@ public class Bot extends TelegramLongPollingBot {
                         timeMapper.insertTime(time);
                     });
 
-                    var logUser = new User();
-                    logUser.setId(Long.parseLong(System.getenv("LOG_CHAT")));
-                    logUser.setUserName("logger");
-                    logUser.setLanguageCode("ru");
-                    SendPhoto sendPhoto = SendPhoto
-                            .builder()
-                            .photo(new InputFile(minio.get(time.getPhotoId()), "отчет"))
-                            .chatId(logUser.getId())
-                            .caption(String.format("""
+                    sendLog(time, userId);
+
+                    storage.remove(userId);
+
+                    sender.sendText("Сохранено", user);
+                } else if (Objects.equals(text, "нет")) {
+                    Future.of(() -> {
+                        minio.delete(storage.getTime(userId).getPhotoId());
+                        storage.remove(userId);
+                        return null;
+                    }).onSuccess(it -> sender.sendText("Удалено", user));
+                }
+            }
+        }
+    }
+
+    private void sendLog(Time time, Long userId){
+        var logUser = new User();
+        logUser.setId(Long.parseLong(System.getenv("LOG_CHAT")));
+        logUser.setUserName("logger");
+        logUser.setLanguageCode("ru");
+        SendPhoto sendPhoto = SendPhoto
+                .builder()
+                .photo(new InputFile(minio.get(time.getPhotoId()), "отчет"))
+                .chatId(logUser.getId())
+                .caption(String.format("""
                                             Время: %s,
                                             Предмет: %s
                                             Ученики: %s
                                             Стоимость: %s,
                                             Преподаватель: %s
                                             """,
-                                    time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")),
-                                    "#" + Subject.valueOf(time.getSubject()).getRusName().replaceAll(" ", "_"),
-                                    time.getFios().stream()
-                                            .map(it -> "#" + it.replaceAll(" ", "_"))
-                                            .collect(Collectors.joining(", ")),
-                                    time.getAmount(),
-                                    "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))
-                            .build();
-                    sender.send(sendPhoto, logUser);
-
-                    storage.remove(userId);
-
-                    sender.sendText("Сохранено", user, true);
-                } else if (text.equals("нет")) {
-                    minio.delete(storage.getTIme(userId).getPhotoId());
-                    storage.remove(userId);
-                    sender.sendText("Удалено", user, true);
-                }
-            }
-        }
+                        time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")),
+                        "#" + Subject.valueOf(time.getSubject()).getRusName().replaceAll(" ", "_"),
+                        time.getFios().stream()
+                                .map(it -> "#" + it.replaceAll(" ", "_"))
+                                .collect(Collectors.joining(", ")),
+                        time.getAmount(),
+                        "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))
+                .build();
+        sender.send(sendPhoto, logUser);
     }
 
     @Getter

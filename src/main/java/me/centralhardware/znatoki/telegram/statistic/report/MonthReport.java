@@ -92,13 +92,11 @@ public class MonthReport extends ExcelReport{
 
             dates.remove(dates.keySet().stream().findFirst().get());
 
-            dates.forEach((date, count) ->{
-                writeRow(
-                        "","", "","","",
-                        date,
-                        count.toString()
-                );
-            });
+            dates.forEach((date, count) -> writeRow(
+                    "","", "","","",
+                    date,
+                    count.toString()
+            ));
         });
 
         writeRow(
