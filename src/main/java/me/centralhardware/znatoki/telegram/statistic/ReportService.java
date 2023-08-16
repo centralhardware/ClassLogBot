@@ -40,6 +40,7 @@ public class ReportService {
         if (CollectionUtils.isEmpty(times)) return Collections.emptyList();
 
         return redis.get(times.get(0).getChatId().toString(), ZnatokiUser.class)
+                .get()
                 .subjects()
                 .stream()
                 .map(it -> {

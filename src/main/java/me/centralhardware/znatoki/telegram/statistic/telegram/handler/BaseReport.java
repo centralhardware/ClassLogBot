@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
 
+import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +21,16 @@ public abstract class BaseReport extends CommandHandler{
     private TimeMapper timeMapper;
     @Autowired
     private Redis redis;
+    @Autowired
+    private Storage storage;
 
     @Override
     public void handle(Message message) {
         var id = message.getFrom().getId();
+
+        if (storage.contain(id)){
+            return;
+        }
 
         if (redis.exists(id.toString()) && !id.equals(Long.parseLong(System.getenv("ADMIN_ID")))){
             getTime().apply(id)
@@ -40,7 +47,7 @@ public abstract class BaseReport extends CommandHandler{
                         .forEach(report -> send(report, message.getFrom())));
     }
 
-    abstract Function<Long, List<File>> getTime();
+    protected abstract Function<Long, List<File>> getTime();
 
 
     private void send(File file, User from){

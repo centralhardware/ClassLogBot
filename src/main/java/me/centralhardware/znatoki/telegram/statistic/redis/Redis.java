@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.redis;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,23 +21,11 @@ public class Redis {
     private final ObjectMapper mapper;
 
     public <V> void put(String key, V value){
-        execute(jedis -> {
-            try {
-                return jedis.set(key, mapper.writeValueAsString(value));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        execute(jedis -> Try.of(() -> jedis.set(key, mapper.writeValueAsString(value))).get());
     }
 
-    public <V> V get(String key, Class<V> clazz){
-        return execute(jedis -> {
-            try {
-                return mapper.readValue(jedis.get(key), clazz);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    public <V> Try<V> get(String key, Class<V> clazz){
+        return execute(jedis -> Try.of(() -> mapper.readValue(jedis.get(key), clazz)));
     }
 
     public <V> void sadd(String key, V value){

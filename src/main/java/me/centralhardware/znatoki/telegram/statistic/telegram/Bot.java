@@ -61,25 +61,20 @@ public class Bot extends TelegramLongPollingBot {
     @PostConstruct
     public void init() {
         sender.setAbsSender(this);
-        var addTimeCommand = BotCommand
-                .builder()
-                .command("/addtime")
-                .description("Добавить запись")
-                .build();
-        var reportCommand = BotCommand
-                .builder()
-                .command("/report")
-                .description("Отчет за текущий месяц")
-                .build();
-        var reportPreviousCommand = BotCommand
-                .builder()
-                .command("/reportprevious")
-                .description("Отчет за предыдущий месяц")
-                .build();
         var commands = SetMyCommands.builder()
-                .commands(List.of(addTimeCommand, reportCommand, reportPreviousCommand))
+                .commands(List.of(createCommand("/addtime", "Добавить запись"),
+                        createCommand("/report", "Отчет за текущий месяц"),
+                        createCommand("/reportprevious", "Отчет за предыдущий месяц")))
                 .build();
         execute(commands);
+    }
+
+    private BotCommand createCommand(String command, String description){
+        return BotCommand
+                .builder()
+                .command(command)
+                .description(description)
+                .build();
     }
 
     @Override
@@ -196,7 +191,12 @@ public class Bot extends TelegramLongPollingBot {
 
                             File file = downloadFile(execute(getFile));
 
-                            String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject());
+                            String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject())
+                                    .onFailure(error -> {
+                                        sender.send("Ошибка при сохранение фотографии. Попробуйте снова", user);
+                                        storage.remove(userId);
+                                    })
+                                    .get();
                             storage.getTime(userId).setPhotoId(id);
 
                             ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
@@ -236,7 +236,8 @@ public class Bot extends TelegramLongPollingBot {
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
                     Future.of(() -> {
-                        minio.delete(storage.getTime(userId).getPhotoId());
+                        minio.delete(storage.getTime(userId).getPhotoId())
+                                .onFailure(error -> sender.send("Ошибка при удаление фотографии", user));
                         storage.remove(userId);
                         return null;
                     }).onSuccess(it -> sender.sendText("Удалено", user));
@@ -252,7 +253,9 @@ public class Bot extends TelegramLongPollingBot {
         logUser.setLanguageCode("ru");
         SendPhoto sendPhoto = SendPhoto
                 .builder()
-                .photo(new InputFile(minio.get(time.getPhotoId()), "отчет"))
+                .photo(new InputFile(minio.get(time.getPhotoId())
+                        .onFailure(error -> sender.sendText("Ошибка во время отправки лога", logUser))
+                        .get(), "отчет"))
                 .chatId(logUser.getId())
                 .caption(String.format("""
                                             Время: %s,
