@@ -64,7 +64,8 @@ public class Bot extends TelegramLongPollingBot {
         var commands = SetMyCommands.builder()
                 .commands(List.of(createCommand("/addtime", "Добавить запись"),
                         createCommand("/report", "Отчет за текущий месяц"),
-                        createCommand("/reportprevious", "Отчет за предыдущий месяц")))
+                        createCommand("/reportprevious", "Отчет за предыдущий месяц"),
+                        createCommand("/reset", "Сбросить состояние")))
                 .build();
         execute(commands);
     }
