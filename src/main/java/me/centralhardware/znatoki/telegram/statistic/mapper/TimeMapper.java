@@ -103,7 +103,7 @@ public interface TimeMapper {
     default List<Time> getPrevMonthTimes(Long chatId){
         return getTimes(chatId,
                 LocalDateTime.now().minusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0),
-                LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).withHour(0).withMinute(0).withSecond(0));
+                LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59));
     }
 
     @Select("""
