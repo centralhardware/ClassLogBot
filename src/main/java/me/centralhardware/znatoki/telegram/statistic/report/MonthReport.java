@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class MonthReport extends ExcelReport{
 
@@ -45,11 +46,9 @@ public class MonthReport extends ExcelReport{
                 "класс",
                 "посетил индивидуально",
                 "посетил групповые",
-                "дата",
-                "количество",
                 "оплата",
                 "Итого",
-                "дополнительные сведения"
+                "Даты посещений"
         );
 
         var fioToTimes = new MultivaluedHashMap<String, Time>();
@@ -76,8 +75,11 @@ public class MonthReport extends ExcelReport{
                 int timeCount =  dates.computeIfAbsent(formatter.format(it.getDateTime()), count -> 0);
                 timeCount++;
                 dates.put(formatter.format(it.getDateTime()), timeCount);
-            });;
+            });
 
+            var datesStr = dates.entrySet().stream()
+                    .map(entry -> String.format("%s(%s)", entry.getKey(), entry.getValue()))
+                    .collect(Collectors.joining(","));
 
             writeRow(
                     String.valueOf(i.getAndIncrement()),
@@ -85,18 +87,10 @@ public class MonthReport extends ExcelReport{
                     pupilMapper.getClass(fio).toString(),
                     Integer.toString(individual),
                     Integer.toString(group),
-                    dates.keySet().stream().findFirst().get(),
-                    dates.values().stream().findFirst().get().toString(),
-                    ""
+                    "",
+                    "",
+                    datesStr
             );
-
-            dates.remove(dates.keySet().stream().findFirst().get());
-
-            dates.forEach((date, count) -> writeRow(
-                    "","", "","","",
-                    date,
-                    count.toString()
-            ));
         });
 
         writeRow(
