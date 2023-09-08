@@ -10,7 +10,7 @@ public interface TeacherNameMapper {
 
     @Select("""
             SELECT fio
-            FROM default.znatoki_statistic_teacher_name
+            FROM znatoki_statistic_teacher_name
             WHERE chat_id = #{chatId}
             """)
     String getFio(@Param("chatId") Long chatId);

@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Param;
 public interface StatisticMapper {
 
     @Insert("""
-            INSERT INTO default.znatoki_statistic (
+            INSERT INTO znatoki_statistic (
                 date_time,
                 chat_id,
                 username,

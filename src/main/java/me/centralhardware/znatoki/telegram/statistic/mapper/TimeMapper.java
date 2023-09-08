@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public interface TimeMapper {
 
     @Insert("""
-            INSERT INTO default.znatoki_statistic_time (
+            INSERT INTO znatoki_statistic_time (
                 date_time,
                 id, 
                 chat_id, 
