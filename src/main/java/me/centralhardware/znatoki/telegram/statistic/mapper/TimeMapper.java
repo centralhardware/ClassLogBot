@@ -108,7 +108,7 @@ public interface TimeMapper {
 
     @Select("""
             SELECT DISTINCT chat_id
-            FROM default.znatoki_statistic_time
+            FROM znatoki_statistic_time
             WHERE is_deleted = false
             """)
     @ResultType(Long.class)
