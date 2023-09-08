@@ -1,1 +1,1 @@
-ALTER TABLE default.znatoki_statistic_time ADD COLUMN id UUID AFTER date_time
+ALTER TABLE znatoki_statistic_time ADD COLUMN id UUID AFTER date_time
