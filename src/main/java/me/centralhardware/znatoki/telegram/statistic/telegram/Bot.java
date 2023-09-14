@@ -76,6 +76,8 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
+            if (processCommand(update)) return;
+
             if (inlineHandler.processInline(update)) return;
 
             if (callbackHandler.processCallback(update)) return;
@@ -89,9 +91,6 @@ public class Bot extends TelegramLongPollingBot {
                 pupilFsm.process(update);
                 return;
             }
-
-            if (processCommand(update)) return;
-
         } catch (Throwable t) {
             log.warn("Error while processing update", t);
         }

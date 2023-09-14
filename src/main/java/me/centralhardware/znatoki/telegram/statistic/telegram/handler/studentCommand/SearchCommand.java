@@ -114,6 +114,6 @@ public class SearchCommand extends CommandHandler {
 
     @Override
     public boolean isAcceptable(String data) {
-        return data.startsWith("/s");
+        return data.startsWith("/s ");
     }
 }
