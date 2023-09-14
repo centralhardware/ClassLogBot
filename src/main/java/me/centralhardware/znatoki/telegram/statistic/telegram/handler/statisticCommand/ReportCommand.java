@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
+package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.ReportService;
@@ -15,7 +15,7 @@ public class ReportCommand extends BaseReport{
     private final ReportService reportService;
 
     @Override
-    boolean isAcceptable(String data) {
+    public boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/report");
     }
 

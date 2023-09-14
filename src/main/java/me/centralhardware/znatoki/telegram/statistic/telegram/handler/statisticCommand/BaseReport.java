@@ -1,8 +1,9 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
+package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.function.Function;
 
 @Component
-public abstract class BaseReport extends CommandHandler{
+public abstract class BaseReport extends CommandHandler {
 
     @Autowired
     private TimeMapper timeMapper;

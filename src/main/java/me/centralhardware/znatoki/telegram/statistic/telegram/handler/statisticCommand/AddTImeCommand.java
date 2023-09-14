@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
+package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
@@ -7,6 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
+import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
-public class AddTImeCommand extends CommandHandler{
+public class AddTImeCommand extends CommandHandler {
 
     private final Redis redis;
     private final Storage storage;
@@ -58,7 +59,7 @@ public class AddTImeCommand extends CommandHandler{
     }
 
     @Override
-    boolean isAcceptable(String data) {
+    public boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/addTime");
     }
 }

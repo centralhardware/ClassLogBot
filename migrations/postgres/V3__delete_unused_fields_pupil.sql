@@ -1,0 +1,11 @@
+ALTER TABLE pupil DROP COLUMN IF EXISTS telephone_father;
+ALTER TABLE pupil DROP COLUMN IF EXISTS telephone_grand_mother;
+ALTER TABLE pupil DROP COLUMN IF EXISTS place_of_work_father;
+ALTER TABLE pupil DROP COLUMN IF EXISTS place_of_work_mother;
+ALTER TABLE pupil DROP COLUMN IF EXISTS congenital_diseases;
+ALTER TABLE pupil DROP COLUMN IF EXISTS address;
+ALTER TABLE pupil DROP COLUMN IF EXISTS email;
+ALTER TABLE pupil DROP COLUMN IF EXISTS father_name;
+ALTER TABLE pupil DROP COLUMN IF EXISTS grand_mother_name;
+ALTER TABLE pupil DROP COLUMN IF EXISTS hobbies;
+ALTER TABLE pupil DROP COLUMN IF EXISTS telephone_mother;

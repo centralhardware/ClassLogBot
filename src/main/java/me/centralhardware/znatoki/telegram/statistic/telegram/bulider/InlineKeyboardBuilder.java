@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.bulider;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,18 @@ public class InlineKeyboardBuilder {
                 text(text).
                 callbackData(callbackData).
                 build());
+        return this;
+    }
+
+    public InlineKeyboardBuilder webApp(String url, String text){
+        row.add(InlineKeyboardButton
+                .builder()
+                .text(text)
+                .webApp(WebAppInfo
+                        .builder()
+                        .url(url)
+                        .build())
+                .build());
         return this;
     }
 

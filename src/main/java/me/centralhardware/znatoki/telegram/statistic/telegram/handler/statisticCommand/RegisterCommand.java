@@ -1,9 +1,10 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
+package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -12,7 +13,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class RegisterCommand extends CommandHandler{
+public class RegisterCommand extends CommandHandler {
 
     private final Redis redis;
 
@@ -40,7 +41,7 @@ public class RegisterCommand extends CommandHandler{
     }
 
     @Override
-    boolean isAcceptable(String data) {
+    public boolean isAcceptable(String data) {
         return data.startsWith("/register");
     }
 }

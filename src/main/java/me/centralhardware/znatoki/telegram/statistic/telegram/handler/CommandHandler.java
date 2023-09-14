@@ -13,7 +13,7 @@ public abstract class CommandHandler {
     public abstract void handle(Message message);
 
 
-    abstract boolean isAcceptable(String data);
+    public abstract boolean isAcceptable(String data);
 
     /**
      * @return True, if giving callbackQuery can be processed by this handler

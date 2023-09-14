@@ -1,12 +1,17 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram;
 
+import io.vavr.control.Try;
+import jakarta.persistence.criteria.From;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.znatoki.telegram.statistic.i18n.ConstantEnum;
 import me.centralhardware.znatoki.telegram.statistic.limiter.Limiter;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.bots.DefaultAbsSender;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
+import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
@@ -15,7 +20,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
-import org.telegram.telegrambots.meta.bots.AbsSender;
+
+import java.io.File;
+import java.util.ResourceBundle;
 
 @Component
 @RequiredArgsConstructor
@@ -25,8 +32,14 @@ public class TelegramSender {
 
     private final TelegramUtil telegramUtil;
     private final Limiter limiter;
+    private final ResourceBundle resourceBundle;
+    private final ReplyKeyboardRemove replyKeyboardRemove;
     @Setter
-    private AbsSender absSender;
+    private DefaultAbsSender absSender;
+
+    public static final String UNABLE_TO_SEND_MESSAGE = "unable to send message";
+    public static final String SEND_MESSAGE_FOR_CHAT = "send message %s for chat %s";
+    private static final String PARSE_MODE_MARKDOWN = "markdown";
 
     public void sendText(String text, User user){
         SendMessage.SendMessageBuilder message = SendMessage.builder()
@@ -38,6 +51,10 @@ public class TelegramSender {
         message.replyMarkup(removeMarkup);
 
         send(message.build(), user);
+    }
+
+    public Try<File> downloadFile(GetFile getFile){
+        return Try.of(() -> absSender.downloadFile(absSender.execute(getFile)));
     }
 
     public void send(Object method, User user){
@@ -66,4 +83,27 @@ public class TelegramSender {
             }
         });
     }
+
+    public void sendMessageFromResource(ConstantEnum key, User from){
+        sendText(resourceBundle.getString(key.getKey()), from);
+    }
+
+    public void sendMessageAndRemoveKeyboard(String text, User user) {
+        send(SendMessage.
+                builder().
+                chatId(user.getId()).
+                text(text).
+                replyMarkup(replyKeyboardRemove).
+                build(), user);
+    }
+
+    public void sendMessageWithMarkdown(String text, User user) {
+        send(SendMessage.
+                builder().
+                chatId(user.getId()).
+                text(text).
+                parseMode(PARSE_MODE_MARKDOWN).
+                build(), user);
+    }
+
 }

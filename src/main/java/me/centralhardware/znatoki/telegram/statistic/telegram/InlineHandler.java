@@ -1,7 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.lucen.Lucene;
+import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -9,6 +10,8 @@ import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,24 +19,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class InlineHandler {
 
-    private final Lucene lucene;
+    private final PupilService pupilService;
     private final TelegramSender sender;
 
-    public boolean processInline(Update update){
+    public boolean processInline(Update update) throws InterruptedException {
         if (!update.hasInlineQuery()) return false;
 
         InlineQuery inlineQuery = update.getInlineQuery();
         String text = inlineQuery.getQuery();
 
         AtomicInteger i = new AtomicInteger();
-        List<InlineQueryResultArticle> articles = lucene.search(text)
+        List<InlineQueryResultArticle> articles = pupilService.search(text)
                 .stream()
                 .map(it -> InlineQueryResultArticle.builder()
-                        .title(it.getLeft())
-                        .description(it.getRight())
+                        .title(getFio(it))
+                        .description(getBio(it))
                         .id(String.valueOf(i.getAndIncrement()))
                         .inputMessageContent(InputTextMessageContent.builder()
-                                .messageText(it.getLeft())
+                                .messageText(getFio(it))
                                 .disableWebPagePreview(false)
                                 .build())
                         .build())
@@ -49,6 +52,16 @@ public class InlineHandler {
         sender.send(answerInlineQuery, inlineQuery.getFrom());
 
         return true;
+    }
+
+    private String getFio(Pupil pupil){
+        return pupil.getName().toLowerCase() + " " +
+                pupil.getSecondName().toLowerCase() + " " +
+                pupil.getLastName().toLowerCase();
+    }
+
+    private String getBio(Pupil pupil){
+        return String.format("%s класс %s лет", pupil.getClassNumber(), ChronoUnit.YEARS.between(pupil.getDateOfBirth(), LocalDateTime.now()));
     }
 
 }

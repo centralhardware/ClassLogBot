@@ -1,13 +1,14 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
+package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
+import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 @Component
 @RequiredArgsConstructor
-public class ResetCommand extends CommandHandler{
+public class ResetCommand extends CommandHandler {
 
     private final Storage storage;
 
@@ -17,7 +18,7 @@ public class ResetCommand extends CommandHandler{
     }
 
     @Override
-    boolean isAcceptable (String data) {
+    public boolean isAcceptable (String data) {
         return data.equalsIgnoreCase("/reset");
     }
 }
