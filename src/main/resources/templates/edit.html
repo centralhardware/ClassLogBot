@@ -120,23 +120,6 @@
             <input type='checkbox' id='phisics' name='phisics' th:checked="${phisics}">
             <label>физика</label><br>
 
-            <label>Хронические заболевания</label><br>
-
-            <input type='radio' id='none' name='diseases' value='none' th:checked="${none}">
-            <label>нету</label><br>
-
-            <input type='radio' id='bronchialAsthma' name='diseases' value='bronchialAsthma' th:checked="${bronchialAsthma}">
-            <label>бронхиальная астма</label><br>
-
-            <input type='radio' id='vegetativeVascularDystonia' value='vegetativeVascularDystonia' name='diseases' th:checked="${vegetativeVascularDystonia}">
-            <label>вегетососудистая дистония</label><br>
-
-            <input type='radio' id='cerebralPalsy' name='diseases' value='cerebralPalsy' th:checked="${cerebralPalsy}">
-            <label>ДЦП</label><br>
-
-            <input type='radio' id='developmentDelay' name='diseases' value='developmentDelay' th:checked="${developmentDelay}">
-            <label>задержка в развитие</label><br>
-
             <input type='hidden' id='sessionId' name='sessionId' th:value='${sessionId}'>
             <input type='submit' class="btn btn-primary" value='Сохранить'>
         </form>
