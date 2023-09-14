@@ -77,7 +77,7 @@ public class PupilFsm implements Fsm{
 
                 if (text.equals(SKIP_COMMAND)){
                     getPupil(chatId).setClassNumber(null);
-                    sender.sendMessageFromResource(MessageConstant.INPUT_ADDRESS, user);
+                    sender.sendMessageFromResource(MessageConstant.INPUT_DATE_IN_FORMAT, user);
                     next(chatId);
                     return;
                 }
@@ -89,7 +89,7 @@ public class PupilFsm implements Fsm{
                         return;
                     }
                     getPupil(chatId).setClassNumber(classNumber);
-                    sender.sendMessageFromResource(MessageConstant.INPUT_ADDRESS, user);
+                    sender.sendMessageFromResource(MessageConstant.INPUT_DATE_IN_FORMAT, user);
                     next(chatId);
                 } else {
                     sender.sendMessageFromResource(MessageConstant.NECESSARY_TO_INPUT_NUMBER, user);
@@ -154,10 +154,17 @@ public class PupilFsm implements Fsm{
 
                 if (text.equals(SKIP_COMMAND)){
                     next(chatId);
-                    sender.sendMessageFromResource(MessageConstant.INPUT_RESPONSIBLE_TEL, user);
+                    ReplyKeyboardBuilder replyKeyboardBuilder = ReplyKeyboardBuilder.
+                            create().
+                            setText(resourceBundle.getString("INPUT_SUBJECTS"));
+                    for (Subject subject : Subject.values()){
+                        replyKeyboardBuilder.
+                                row().button(subject.getRusName()).endRow();
+                    }
+                    sender.send(replyKeyboardBuilder.build(chatId), user);
                     return;
                 }
-                if (!pupilService.existByTelephone(text)){
+                if (pupilService.existByTelephone(text)){
                     sender.sendMessageFromResource(MessageConstant.TEL_ALREADY_EXIST, user);
                     return;
                 }
@@ -211,11 +218,6 @@ public class PupilFsm implements Fsm{
             case INPUT_MOTHER_NAME -> {
                 if (checkCancel(text, user)) return;
 
-                if (text.equals(SKIP_COMMAND)){
-                    next(chatId);
-                    sender.sendMessageFromResource(MessageConstant.INPUT_FATHER_NAME, user);
-                    return;
-                }
                 getPupil(chatId).setMotherName(text);
 
                 getPupil(chatId).setCreated_by(telegramService.findById(chatId).get());

@@ -84,7 +84,7 @@ public class MonthReport extends ExcelReport{
             writeRow(
                     String.valueOf(i.getAndIncrement()),
                     fio,
-                    pupilService.findByFio(fio).getClassNumber().toString(),
+                    Objects.toString(pupilService.findByFio(fio).getClassNumber()),
                     Integer.toString(individual),
                     Integer.toString(group),
                     "",
