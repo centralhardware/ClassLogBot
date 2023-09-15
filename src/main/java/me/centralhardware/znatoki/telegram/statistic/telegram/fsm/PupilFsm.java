@@ -12,7 +12,6 @@ import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
-import me.centralhardware.znatoki.telegram.statistic.utils.TelegramUtils;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -198,8 +197,8 @@ public class PupilFsm implements Fsm{
                     sender.send(replyKeyboardBuilder.build(chatId), user);
                     return;
                 }
-                if (me.centralhardware.znatoki.telegram.statistic.entity.Enum.Subject.validate(text)){
-                    getPupil(chatId).getSubjects().add(me.centralhardware.znatoki.telegram.statistic.entity.Enum.Subject.getConstant(text));
+                if (Subject.validate(text)){
+                    getPupil(chatId).getSubjects().add(Subject.getConstant(text));
                 } else {
                     sender.sendMessageFromResource(MessageConstant.SUBJECT_NOT_FOUND, user);
                 }
@@ -220,7 +219,7 @@ public class PupilFsm implements Fsm{
 
                 getPupil(chatId).setMotherName(text);
 
-                getPupil(chatId).setCreated_by(telegramService.findById(chatId).get());
+                getPupil(chatId).setCreated_by(chatId);
                 sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).toString(), user);
                 storage.remove(chatId);
                 sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);

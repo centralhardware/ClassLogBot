@@ -2,12 +2,10 @@ package me.centralhardware.znatoki.telegram.statistic.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.Subject;
-import me.centralhardware.znatoki.telegram.statistic.utils.MapsUtils;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelegramUtils;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,7 +14,6 @@ import org.hibernate.search.engine.backend.types.Projectable;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
 
-import javax.validation.constraints.Email;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -87,12 +84,10 @@ public class Pupil {
     @Column(name = "modify_date")
     private LocalDateTime modifyDate;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "createdBy")
-    private TelegramUser created_by;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updateBy")
-    private TelegramUser updateBy;
+    @Column
+    private Long created_by;
+    @Column
+    private Long updateBy;
 
     @Column(name = "deleted", columnDefinition = "boolean default false")
     private boolean deleted;

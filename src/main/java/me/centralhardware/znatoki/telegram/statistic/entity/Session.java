@@ -26,16 +26,15 @@ public class Session {
     @JoinColumn(name = "pupil")
     @Getter
     private Pupil pupil;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updateBy")
+    @Column
     @Getter
-    private TelegramUser updateBy;
+    private Long updateBy;
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_date")
     private Date createDate;
 
-    public Session(@NonNull Pupil pupil, @NonNull TelegramUser updateBy) {
+    public Session(@NonNull Pupil pupil, @NonNull Long updateBy) {
         this.pupil = pupil;
         this.updateBy = updateBy;
     }

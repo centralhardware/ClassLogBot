@@ -89,7 +89,7 @@ public class SearchCommand extends CommandHandler {
 
         sender.sendMessageFromResource(MessageConstant.SEARCH_RESULT, message.getFrom());
         for (Pupil pupil : searchResult) {
-            String uuid = sessionService.create(pupil, telegramService.findById(message.getChatId()).get());
+            String uuid = sessionService.create(pupil, message.getChatId());
             String link = String.format("%s/edit?sessionId=%s", Config.getBaseUrl(), uuid);
             InlineKeyboardBuilder inlineKeyboardBuilder = InlineKeyboardBuilder.
                     create().

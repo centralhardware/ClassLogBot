@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statistic
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.Role;
 import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.stereotype.Component;
@@ -26,13 +27,15 @@ public class RegisterCommand extends CommandHandler {
         String messasge = message.getText();
 
         String chatId = messasge.split(" ")[1];
-        List<Subject> subjects = Arrays.stream(messasge.replace("/register " + chatId + " ", "")
+        String role = messasge.split(" ")[2];
+        List<Subject> subjects = Arrays.stream(messasge.replace("/register " + chatId + " " + role + " ", "")
                         .split(" "))
                 .map(Subject::valueOf)
                 .toList();
 
         ZnatokiUser user = ZnatokiUser.builder()
                 .subjects(subjects)
+                .role(Role.of(role))
                 .build();
 
         redis.put(chatId, user);

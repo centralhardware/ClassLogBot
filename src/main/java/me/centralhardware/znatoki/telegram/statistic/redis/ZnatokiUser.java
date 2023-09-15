@@ -7,5 +7,6 @@ import java.util.List;
 
 @Builder
 public record ZnatokiUser(
-        List<Subject> subjects
+        List<Subject> subjects,
+        Role role
 ) { }

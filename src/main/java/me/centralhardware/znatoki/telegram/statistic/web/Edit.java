@@ -8,7 +8,6 @@ import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.utils.DateUtils;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import me.centralhardware.znatoki.telegram.statistic.web.dto.EditForm;
-import org.apache.commons.validator.routines.EmailValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
