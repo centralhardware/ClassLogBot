@@ -3,8 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statistic
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.Role;
-import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;

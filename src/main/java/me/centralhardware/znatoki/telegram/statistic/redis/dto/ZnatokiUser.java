@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.redis;
+package me.centralhardware.znatoki.telegram.statistic.redis.dto;
 
 import lombok.Builder;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;

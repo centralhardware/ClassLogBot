@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.redis;
+package me.centralhardware.znatoki.telegram.statistic.redis.dto;
 
 public enum Role {
 

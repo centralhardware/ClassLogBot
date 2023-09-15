@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.steps.AddTimeSteps;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
@@ -47,14 +48,14 @@ public class AddTImeCommand extends CommandHandler {
 
             user.subjects().forEach(it -> builder.row().button(it.getRusName()).endRow());
             sender.send(builder.build(message.getChatId()), message.getFrom());
-            storage.setStage(message.getChatId(), 1);
+            storage.setStage(message.getChatId(), AddTimeSteps.INPUT_SUBJECT);
         } else {
             sender.sendText("Введите фио. /complete - для окончания ввода", message.getFrom());
             InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                     .row().switchToInline().endRow();
             builder.setText("нажмите для поиска фио");
             sender.send(builder.build(message.getChatId()), message.getFrom());
-            storage.setStage(message.getChatId(), 2);
+            storage.setStage(message.getChatId(), AddTimeSteps.INPUT_FIO);
         }
     }
 

@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.steps.AddPupilSteps;
+import me.centralhardware.znatoki.telegram.statistic.steps.AddTimeSteps;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -12,16 +13,16 @@ import java.util.Map;
 public class Storage {
 
     private final Map<Long, Time> fsmTime = new HashMap<>();
-    private final Map<Long, Integer> fsmTimeStage = new HashMap<>();
+    private final Map<Long, AddTimeSteps> fsmTimeStage = new HashMap<>();
     private final Map<Long, Pupil> fsmPupil = new HashMap<>();
     private final Map<Long, AddPupilSteps> fsmPupilStage = new HashMap<>();
 
 
-    public Integer getStage(Long chatId){
+    public AddTimeSteps getStage(Long chatId){
         return fsmTimeStage.get(chatId);
     }
 
-    public void setStage(Long chatId, Integer stage){
+    public void setStage(Long chatId, AddTimeSteps stage){
         fsmTimeStage.put(chatId, stage);
     }
 

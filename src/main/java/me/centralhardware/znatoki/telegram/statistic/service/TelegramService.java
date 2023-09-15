@@ -3,8 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic.service;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.Role;
-import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

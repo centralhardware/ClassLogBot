@@ -7,6 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
+import me.centralhardware.znatoki.telegram.statistic.steps.AddTimeSteps;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -29,6 +30,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static me.centralhardware.znatoki.telegram.statistic.steps.AddTimeSteps.*;
 
 @Component
 @RequiredArgsConstructor
@@ -57,7 +60,7 @@ public class TimeFsm implements Fsm {
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getStage(userId)) {
-            case 1 -> enumValidator.validate(text).peekLeft(
+            case INPUT_SUBJECT -> enumValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(subject -> {
                 storage.getTime(userId).setSubject(subject.name());
@@ -66,9 +69,9 @@ public class TimeFsm implements Fsm {
                         .row().switchToInline().endRow();
                 builder.setText("нажмите для поиска фио");
                 sender.send(builder.build(userId), update.getMessage().getFrom());
-                storage.setStage(userId, 2);
+                storage.setStage(userId, INPUT_FIO);
             });
-            case 2 -> {
+            case INPUT_FIO -> {
                 if (Objects.equals(text, "/complete")){
                     if (storage.getTime(userId).getFios().isEmpty()) {
                         sender.sendText("Необходимо ввести как минимум одно ФИО", user);
@@ -77,7 +80,7 @@ public class TimeFsm implements Fsm {
 
                     storage.getTime(userId).setFio(text);
                     sender.sendText("Введите стоимость занятия", user);
-                    storage.setStage(userId, 3);
+                    storage.setStage(userId, INPUT_AMOUNT);
                     return;
                 }
 
@@ -94,16 +97,16 @@ public class TimeFsm implements Fsm {
                         }
                 );
             }
-            case 3 -> amountValidator.validate(text).peekLeft(
+            case INPUT_AMOUNT -> amountValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(
                     amount -> {
                         storage.getTime(userId).setAmount(amount);
                         sender.sendText("Отправьте фото отчётности", user);
-                        storage.setStage(userId, 4);
+                        storage.setStage(userId, INPUT_PHOTO);
                     }
             );
-            case 4 -> photoValidator.validate(update).peekLeft(
+            case INPUT_PHOTO -> photoValidator.validate(update).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(
                     report -> {
@@ -140,11 +143,11 @@ public class TimeFsm implements Fsm {
                                 .row().button("нет").endRow();
 
                         sender.send(builder.build(userId), user);
-                        storage.setStage(userId, 5);
+                        storage.setStage(userId, CONFIRM);
 
                     }
             );
-            case 5 -> {
+            case CONFIRM -> {
                 if (Objects.equals(text, "да")) {
                     var time = storage.getTime(userId);
                     var id = UUID.randomUUID();

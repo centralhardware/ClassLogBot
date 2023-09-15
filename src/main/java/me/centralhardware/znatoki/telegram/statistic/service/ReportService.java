@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic;
+package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
@@ -6,9 +6,8 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.report.MonthReport;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 

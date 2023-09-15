@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.ReportService;
+import me.centralhardware.znatoki.telegram.statistic.service.ReportService;
 import org.springframework.stereotype.Component;
 
 import java.io.File;

@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.ReportService;
+import me.centralhardware.znatoki.telegram.statistic.service.ReportService;
 import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.springframework.scheduling.annotation.Scheduled;
