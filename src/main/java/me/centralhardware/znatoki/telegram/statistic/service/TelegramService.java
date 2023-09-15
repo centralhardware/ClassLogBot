@@ -29,7 +29,9 @@ public class TelegramService {
     }
 
     public boolean hasReadRight(Long chatId) {
-        return redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.READ;
+        return redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.READ ||
+                redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.READ_WRITE ||
+                redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.ADMIN;
     }
 
     public boolean isAdmin(Long chatId) {
