@@ -27,7 +27,8 @@ public interface TimeMapper {
                 subject,
                 fio,
                 amount,
-                photoId
+                photoId,
+                pupil_id
             ) VALUES (
                 #{time.dateTime},
                 #{time.id},
@@ -35,7 +36,8 @@ public interface TimeMapper {
                 #{time.subject},
                 #{time.fio},
                 #{time.amount},
-                #{time.photoId}
+                #{time.photoId},
+                #{time.pupilId}
             )
             """)
     void insertTime(@Param("time") Time time);
