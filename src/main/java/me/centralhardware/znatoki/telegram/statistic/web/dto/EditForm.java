@@ -11,6 +11,7 @@ public record EditForm(
         String date_of_record,
         String date_of_birth,
         String telephone,
+        String telephone_responsible,
         String telephone_mother,
         String telephone_father,
         String telephone_grandmother,

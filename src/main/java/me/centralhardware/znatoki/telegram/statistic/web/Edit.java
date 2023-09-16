@@ -143,6 +143,9 @@ public class Edit {
         if (TelephoneUtils.validate(editForm.telephone())) {
             pupil.setTelephone(editForm.telephone());
         }
+        if (TelephoneUtils.validate(editForm.telephone_responsible())) {
+            pupil.setTelephoneResponsible(editForm.telephone_responsible());
+        }
         if (IS_NONE_EMPTY.test(editForm.mother_name())) {
             pupil.setMotherName(editForm.mother_name());
         }
