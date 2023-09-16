@@ -3,7 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
-import me.centralhardware.znatoki.telegram.statistic.mapper.StatisticMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -16,6 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -159,6 +160,8 @@ public class TelegramUtil {
         } else if (object instanceof AnswerInlineQuery){
             return;
         } else if (object instanceof SendDocument){
+            return;
+        } else if (object instanceof ReplyKeyboardRemove){
             return;
         } else {
             throw new IllegalStateException();

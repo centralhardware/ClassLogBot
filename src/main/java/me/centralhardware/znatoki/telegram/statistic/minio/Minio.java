@@ -7,6 +7,7 @@ import io.minio.RemoveObjectArgs;
 import io.minio.UploadObjectArgs;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.Config;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -25,7 +26,7 @@ public class Minio {
     public Try<String> upload(File file, LocalDateTime dateTime, String fio, String subject){
         return Try.of(() -> {
             var fileNew = Paths.get(String.format("%s/%s/%s/%s/%s:%s-%s-%s-%s.jpg",
-                    System.getenv("BASE_PATH"),
+                    Config.getMinioBasePath(),
                     dateTime.getYear(),
                     dateTime.getMonth(),
                     dateTime.getDayOfMonth(),
@@ -47,6 +48,7 @@ public class Minio {
                             .object(fileNew.toFile().getAbsolutePath())
                             .build()
             );
+            //noinspection ResultOfMethodCallIgnored
             fileNew.toFile().delete();
             return fileNew.toFile().getAbsolutePath();
         });

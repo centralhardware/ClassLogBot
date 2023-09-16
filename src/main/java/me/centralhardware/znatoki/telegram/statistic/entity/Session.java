@@ -1,45 +1,34 @@
 package me.centralhardware.znatoki.telegram.statistic.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import me.centralhardware.znatoki.telegram.statistic.utils.TimeStampUtils;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
-@Entity
-@Table
-@NoArgsConstructor
 public class Session {
 
-    private static final int EXPIRATION_TIME = 600000;
-    @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
-    @GeneratedValue
-    @Column(updatable = false, nullable = false)
+    private static final int EXPIRATION_TIME = 600;
     @Getter
     private String uuid;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pupil")
     @Getter
-    private Pupil pupil;
-    @Column
+    private Integer pupil;
     @Getter
     private Long updateBy;
-    @CreationTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_date")
-    private Date createDate;
+    private LocalDateTime createDate;
 
     public Session(@NonNull Pupil pupil, @NonNull Long updateBy) {
-        this.pupil = pupil;
+        this.uuid = UUID.randomUUID().toString();
+        this.pupil = pupil.getId();
         this.updateBy = updateBy;
+        this.createDate= LocalDateTime.now();
     }
 
     public boolean isExpire() {
-        return TimeStampUtils.getTimestamp() - createDate.getTime() > EXPIRATION_TIME;
+        return ChronoUnit.SECONDS.between(createDate, LocalDateTime.now()) > EXPIRATION_TIME;
     }
 }

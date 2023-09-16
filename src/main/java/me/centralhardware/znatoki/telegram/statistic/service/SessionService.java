@@ -1,27 +1,28 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
+import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.entity.Session;
-import me.centralhardware.znatoki.telegram.statistic.repository.SessionRepository;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.SessionMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class SessionService {
 
-    private final SessionRepository sessionRepository;
-
-    public SessionService(SessionRepository sessionRepository) {
-        this.sessionRepository = sessionRepository;
-    }
+    private final SessionMapper sessionMapper;
 
     public String create(Pupil pupil, Long chatId) {
-        return sessionRepository.save(new Session(pupil, chatId)).getUuid();
+        var session = new Session(pupil, chatId);
+        sessionMapper.save(session);
+        return session.getUuid();
     }
 
-    public Optional<Session> findByUuid(String uuid) {
-        return sessionRepository.findByUuid(uuid);
+    public Optional<Session> findByUuid(UUID uuid) {
+        return sessionMapper.findByUUid(uuid);
     }
 
 }

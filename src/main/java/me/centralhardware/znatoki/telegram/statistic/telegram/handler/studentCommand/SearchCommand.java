@@ -11,9 +11,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyb
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelegramUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -72,15 +70,10 @@ public class SearchCommand extends CommandHandler {
         }
 
         String searchText = Arrays.toString(arguments).replace("]", "").replace("[", "");
-        List<Pupil> searchResult = null;
-        try {
-            searchResult = pupilService.search(searchText)
-                    .stream()
-                    .filter(not(Pupil::isDeleted))
-                    .toList();
-        } catch (InterruptedException e) {
-            log.warn("", e);
-        }
+        List<Pupil> searchResult = pupilService.search(searchText)
+                .stream()
+                .filter(not(Pupil::isDeleted))
+                .toList();
 
         if (CollectionUtils.isEmpty(searchResult)){
             sender.sendMessageFromResource(MessageConstant.NOTHING_FOUND, message.getFrom());

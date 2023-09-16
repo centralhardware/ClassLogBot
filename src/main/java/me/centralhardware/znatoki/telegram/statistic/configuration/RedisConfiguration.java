@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.configuration;
 
+import me.centralhardware.znatoki.telegram.statistic.Config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import redis.clients.jedis.JedisPool;
@@ -9,8 +10,7 @@ public class RedisConfiguration {
 
     @Bean
     public JedisPool getJedis(){
-        return new JedisPool(System.getenv("REDIS_HOST"),
-                Integer.parseInt(System.getenv("REDIS_PORT")));
+        return new JedisPool(Config.getRedisHost(), Config.getRedisPort());
     }
 
 }

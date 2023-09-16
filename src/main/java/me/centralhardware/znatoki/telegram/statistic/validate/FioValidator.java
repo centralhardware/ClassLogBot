@@ -13,7 +13,7 @@ public class FioValidator implements Validator<String, String> {
 
     @Override
     public Either<String, String> validate(String value) {
-        if (pupilService.findByFio(value) == null){
+        if (pupilService.findByFioAndId(value) == null){
             return Either.left("ФИО не найдено");
         }
 

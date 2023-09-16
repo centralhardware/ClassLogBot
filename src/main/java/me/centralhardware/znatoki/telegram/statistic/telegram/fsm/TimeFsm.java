@@ -2,12 +2,12 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
-import me.centralhardware.znatoki.telegram.statistic.mapper.TeacherNameMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
-import me.centralhardware.znatoki.telegram.statistic.steps.AddTimeSteps;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -16,6 +16,7 @@ import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.EnumValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.PhotoValidator;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -78,7 +79,6 @@ public class TimeFsm implements Fsm {
                         return;
                     }
 
-                    storage.getTime(userId).setFio(text);
                     sender.sendText("Введите стоимость занятия", user);
                     storage.setStage(userId, INPUT_AMOUNT);
                     return;
@@ -92,7 +92,9 @@ public class TimeFsm implements Fsm {
                                 sender.sendText("Данное ФИО уже добавлено", user);
                                 return;
                             }
-                            storage.getTime(userId).getFios().add(fio);
+                            Integer id = Integer.valueOf(text.split(" ")[0]);
+                            String name = text.replace(id + " ", "");
+                            storage.getTime(userId).getFios().add(Pair.of(name, id));
                             sender.sendText("ФИО сохранено", user);
                         }
                 );
@@ -137,7 +139,7 @@ public class TimeFsm implements Fsm {
                                         стоимость занятия: %s
                                         """,
                                         Subject.valueOf(time.getSubject()).getRusName(),
-                                        String.join(";", time.getFios()),
+                                        String.join(";", time.getFios().stream().map(Pair::getLeft).toList()),
                                         time.getAmount().toString()))
                                 .row().button("да").endRow()
                                 .row().button("нет").endRow();
@@ -152,7 +154,8 @@ public class TimeFsm implements Fsm {
                     var time = storage.getTime(userId);
                     var id = UUID.randomUUID();
                     time.getFios().forEach(it -> {
-                        time.setFio(it);
+                        time.setFio(it.getLeft());
+                        time.setPupilId(it.getRight());
                         time.setId(id);
                         timeMapper.insertTime(time);
                     });
@@ -176,7 +179,7 @@ public class TimeFsm implements Fsm {
 
     private void sendLog(me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time time, Long userId){
         var logUser = new User();
-        logUser.setId(Long.parseLong(System.getenv("LOG_CHAT")));
+        logUser.setId(Config.getLogChatId());
         logUser.setUserName("logger");
         logUser.setLanguageCode("ru");
         SendPhoto sendPhoto = SendPhoto
@@ -195,7 +198,7 @@ public class TimeFsm implements Fsm {
                         time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")),
                         "#" + Subject.valueOf(time.getSubject()).getRusName().replaceAll(" ", "_"),
                         time.getFios().stream()
-                                .map(it -> "#" + it.replaceAll(" ", "_"))
+                                .map(it -> "#" + it.getLeft().replaceAll(" ", "_"))
                                 .collect(Collectors.joining(", ")),
                         time.getAmount(),
                         "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))

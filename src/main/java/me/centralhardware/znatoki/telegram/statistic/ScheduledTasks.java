@@ -37,16 +37,17 @@ public class ScheduledTasks {
         log.info("start checking birthday");
         pupilService.getAll().forEach(pupil -> {
             log.info("check {}, date of birth = {}", pupil.getId(), pupil.getDateOfBirth());
-            if (DateUtils.isBirthday(pupil.getDateOfBirth())) {
-                log.info("birthday user today");
-                telegramService.getReadRightUser().forEach(id -> sender.send(SendMessage.builder().
-                        chatId(id.toString()).
-                        text(String.format("День рождения у %s %s %s телефон: %s",
-                                pupil.getSecondName(),
-                                pupil.getName(),
-                                pupil.getLastName(),
-                                pupil.getTelephone())).build(), getUser(id)));
-            }
+
+            if (!DateUtils.isBirthday(pupil.getDateOfBirth())) return;
+
+            log.info("birthday user today");
+            telegramService.getReadRightUser().forEach(id -> sender.send(SendMessage.builder().
+                    chatId(id.toString()).
+                    text(String.format("День рождения у %s %s %s телефон: %s",
+                            pupil.getSecondName(),
+                            pupil.getName(),
+                            pupil.getLastName(),
+                            pupil.getTelephone())).build(), getUser(id)));
         });
         log.info("finish checking birthday");
     }

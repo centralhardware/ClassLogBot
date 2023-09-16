@@ -1,9 +1,10 @@
-package me.centralhardware.znatoki.telegram.statistic.mapper;
+package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;
@@ -21,11 +22,11 @@ public interface TimeMapper {
     @Insert("""
             INSERT INTO znatoki_statistic_time (
                 date_time,
-                id, 
-                chat_id, 
-                subject, 
-                fio, 
-                amount, 
+                id,
+                chat_id,
+                subject,
+                fio,
+                amount,
                 photoId
             ) VALUES (
                 #{time.dateTime},
@@ -45,6 +46,7 @@ public interface TimeMapper {
                    chat_id,
                    subject,
                    fio,
+                   pupil_id,
                    amount,
                    photoId
             FROM znatoki_statistic_time
@@ -58,6 +60,7 @@ public interface TimeMapper {
             @Result(property = "chatId", column = "chat_id"),
             @Result(property = "subject", column = "subject"),
             @Result(property = "fio", column = "fio"),
+            @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
             @Result(property = "photoId", column = "photoId")
     })
@@ -83,7 +86,7 @@ public interface TimeMapper {
                 .stream()
                 .map(timeCollection -> {
                     var time = timeCollection.stream().findFirst().get();
-                    time.setFios(timeCollection.stream().map(Time::getFio).collect(Collectors.toSet()));
+                    time.setFios(timeCollection.stream().map(it -> Pair.of(it.getFio(), it.getPupilId())).collect(Collectors.toSet()));
                     return time;
                 })
                 .sorted(Comparator.comparing(Time::getDateTime))

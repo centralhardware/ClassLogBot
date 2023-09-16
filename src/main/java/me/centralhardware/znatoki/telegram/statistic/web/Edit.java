@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import static me.centralhardware.znatoki.telegram.statistic.web.WebConstant.ERROR_MESSAGE;
@@ -26,8 +27,6 @@ import static me.centralhardware.znatoki.telegram.statistic.web.WebConstant.ERRO
 
 @Controller
 public class Edit {
-
-    private final static Logger log = LoggerFactory.getLogger(Edit.class);
     private final ResourceBundle resourceBundle;
     public static final String ERROR_PAGE_NAME = "error";
 
@@ -42,7 +41,7 @@ public class Edit {
 
     @RequestMapping(value = "/edit", method = RequestMethod.GET)
     public String edit(@RequestParam String sessionId, Model model) {
-        Optional<Session> s = sessionService.findByUuid(sessionId);
+        Optional<Session> s = sessionService.findByUuid(UUID.fromString(sessionId));
         if (s.isPresent()) {
             if (s.get().isExpire()) {
                 model.addAttribute(ERROR_TITLE, resourceBundle.getString("SESSION_EXPIRE"));
@@ -54,9 +53,9 @@ public class Edit {
             model.addAttribute(ERROR_MESSAGE, resourceBundle.getString("SESSION_NOT_FOUND"));
             return ERROR_PAGE_NAME;
         }
-        Optional<Session> sessionOptional = sessionService.findByUuid(sessionId);
+        Optional<Session> sessionOptional = sessionService.findByUuid(UUID.fromString(sessionId));
         if (sessionOptional.isPresent()) {
-            Pupil pupil = sessionOptional.get().getPupil();
+            Pupil pupil = pupilService.findById(sessionOptional.get().getPupil()).get();
             model.addAttribute(EditForm.FIELD_NAME, pupil.getName());
             model.addAttribute(EditForm.FIELD_SECOND_NAME, pupil.getSecondName());
             model.addAttribute(EditForm.FIELD_LAST_NAME, pupil.getLastName());
@@ -92,7 +91,7 @@ public class Edit {
 
     @RequestMapping(value = "/save", method = RequestMethod.GET)
     public String save(EditForm editForm, Model model){
-        Optional<Session> optionalSession = sessionService.findByUuid(editForm.sessionId());
+        Optional<Session> optionalSession = sessionService.findByUuid(UUID.fromString(editForm.sessionId()));
         if (optionalSession.isPresent()){
             if (optionalSession.get().isExpire()){
                 fillError(model, "SESSION_EXPIRE_GIVE_NEW");
@@ -102,7 +101,7 @@ public class Edit {
             fillError(model, "SESSION_NOT_FOUND_GIVE_NEW");
             return ERROR_PAGE_NAME;
         }
-        Pupil pupil = optionalSession.get().getPupil();
+        Pupil pupil = pupilService.findById(optionalSession.get().getPupil()).get();
         if (IS_NONE_EMPTY.test(editForm.name())) {
             pupil.setName(editForm.name());
         } else {

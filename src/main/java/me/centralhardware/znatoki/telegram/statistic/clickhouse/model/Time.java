@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -14,8 +15,9 @@ public class Time {
     private UUID id;
     private Long chatId;
     private String subject;
-    private Set<String> fios = new HashSet<>();
+    private Set<Pair<String, Integer>> fios = new HashSet<>();
     private String fio;
+    private Integer pupilId;
     private Integer amount;
     private String photoId;
 

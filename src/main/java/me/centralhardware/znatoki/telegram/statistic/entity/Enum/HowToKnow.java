@@ -4,6 +4,7 @@ import lombok.Getter;
 
 import java.util.Arrays;
 
+@Getter
 public enum HowToKnow {
 
     SIGNBOARD("Вывеска"),
@@ -18,7 +19,6 @@ public enum HowToKnow {
     ADVERTISING_ON_TV("Реклама на ТВ"),
     INSTAGRAM("инстаграм");
 
-    @Getter
     final String rusName;
 
     HowToKnow(String rusName) {

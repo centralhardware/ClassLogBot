@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.i18n;
 
 import lombok.Getter;
 
+@Getter
 public enum MessageConstant implements ConstantEnum{
 
     CANCEL_ADD_PUPIL("CANCEL_ADD_PUPIL"),
@@ -30,7 +31,6 @@ public enum MessageConstant implements ConstantEnum{
     RIGHT_SUCCESS_UPDATE("RIGH_SUCCESS_UPDATE"),
     DATABASE_NOT_CONTAIN_TEL("DATABASE_NOT_CONTAIN_TEL");
 
-    @Getter
     final String key;
 
     MessageConstant(String key){

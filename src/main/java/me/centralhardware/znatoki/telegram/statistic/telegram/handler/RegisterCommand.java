@@ -1,6 +1,7 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
+package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
@@ -20,7 +21,7 @@ public class RegisterCommand extends CommandHandler {
 
     @Override
     public void handle(Message message) {
-        if (!message.getFrom().getId().equals(Long.parseLong(System.getenv("ADMIN_ID")))){
+        if (!message.getFrom().getId().equals(Config.getAdminId())){
             return;
         }
 

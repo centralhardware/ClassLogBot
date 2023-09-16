@@ -52,7 +52,7 @@ public class PupilService {
 
     @SuppressWarnings("unchecked")
     @Transactional
-    public List<Pupil> search(String text) throws InterruptedException {
+    public List<Pupil> search(String text) {
         var query  = text.toLowerCase();
 
         SearchSession session = Search.session(entityManager);
@@ -84,6 +84,10 @@ public class PupilService {
         if (result.isEmpty())           return Optional.empty();
         if (result.get().isDeleted())   return Optional.empty();
         return result;
+    }
+
+    public Pupil findByFioAndId(String fio){
+        return repository.findByFioAndId(fio);
     }
 
     public Pupil findByFio(String fio){

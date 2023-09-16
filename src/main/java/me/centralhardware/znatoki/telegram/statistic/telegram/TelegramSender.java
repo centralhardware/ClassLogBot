@@ -1,7 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import io.vavr.control.Try;
-import jakarta.persistence.criteria.From;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.mapper;
+package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
 
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
 import org.apache.ibatis.annotations.Insert;

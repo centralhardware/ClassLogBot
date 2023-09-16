@@ -1,7 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
+import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
-import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,13 +34,13 @@ public abstract class BaseReport extends CommandHandler {
             return;
         }
 
-        if (redis.exists(id.toString()) && !id.equals(Long.parseLong(System.getenv("ADMIN_ID")))){
+        if (redis.exists(id.toString()) && !id.equals(Config.getAdminId())){
             getTime().apply(id)
                     .forEach(it -> send(it, message.getFrom()));
             return;
         }
 
-        if (!id.equals(Long.parseLong(System.getenv("ADMIN_ID")))){
+        if (!id.equals(Config.getAdminId())){
             return;
         }
 
@@ -58,6 +59,7 @@ public abstract class BaseReport extends CommandHandler {
                 .document(new InputFile(file))
                 .build();
         sender.send(sendDocument, from);
+        //noinspection ResultOfMethodCallIgnored
         file.delete();
     }
 

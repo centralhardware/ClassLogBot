@@ -1,8 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService;
-import me.centralhardware.znatoki.telegram.statistic.mapper.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
@@ -44,8 +44,7 @@ public class MonthlyReport {
                 .flatMap(Collection::stream)
                 .toList();
 
-        Stream.of(System.getenv("REPORT_SEND_TO").split(","))
-                .map(Long::valueOf)
+        Config.getReportSendTo()
                 .forEach(id -> reports.
                         forEach(report -> {
                             SendDocument sendDocument = SendDocument
@@ -55,6 +54,7 @@ public class MonthlyReport {
                                     .build();
                             sender.send(sendDocument, getUser(id));
                         }));
+        //noinspection ResultOfMethodCallIgnored
         reports.forEach(File::delete);
     }
 

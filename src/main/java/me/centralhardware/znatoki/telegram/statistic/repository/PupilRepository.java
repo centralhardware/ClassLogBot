@@ -22,8 +22,17 @@ public interface PupilRepository extends CrudRepository<Pupil, Integer> {
     @Query(value = """
         SELECT *
         FROM pupil
-        WHERE lower(trim(concat(name, ' ', second_name, ' ', last_name))) = :fio
-        ORDER BY date_of_record DESC 
+        WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = :fio
+        ORDER BY date_of_record DESC
+        LIMIT 1
+    """, nativeQuery = true)
+    Pupil findByFioAndId(@Param("fio") String fio);
+
+    @Query(value = """
+        SELECT *
+        FROM pupil
+        WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = :fio
+        ORDER BY date_of_record DESC
         LIMIT 1
     """, nativeQuery = true)
     Pupil findByFio(@Param("fio") String fio);

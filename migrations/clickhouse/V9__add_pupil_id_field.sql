@@ -1,0 +1,1 @@
+ALTER TABLE znatoki_statistic_time ADD COLUMN pupil_id text default 0;

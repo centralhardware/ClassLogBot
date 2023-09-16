@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PupilFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm;
@@ -112,8 +113,8 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     @Getter
-    private final String botUsername = System.getenv("BOT_USERNAME");
+    private final String botUsername = Config.getTelegramUsername();
 
     @Getter
-    private final String botToken = System.getenv("BOT_TOKEN");
+    private final String botToken = Config.getTelegramToken();
 }

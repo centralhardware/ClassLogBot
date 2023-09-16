@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.mapper;
+package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
