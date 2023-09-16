@@ -2,8 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import me.centralhardware.znatoki.telegram.statistic.entity.Session;
 import org.apache.ibatis.annotations.*;
-import org.apache.ibatis.type.LocalDateTimeTypeHandler;
-
+;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,7 +17,7 @@ public interface SessionMapper {
     @Results({
             @Result(property = "uuid", column = "uuid"),
             @Result(property = "pupil", column = "pupil"),
-            @Result(property = "createDate", column = "create_date", typeHandler = LocalDateTimeTypeHandler.class),
+            @Result(property = "createDate", column = "create_date"),
             @Result(property = "updateBy", column = "update_by")
     })
     Optional<Session> findByUUid(@Param("id") UUID id);
