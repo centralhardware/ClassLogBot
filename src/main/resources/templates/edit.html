@@ -6,125 +6,121 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
 </head>
 <body>
-<div class="table-responsive">
-    <div class="container">
-        <h2>Редактирование ученика</h2>
-        <form action='/save' method='get' accept-charset='UTF-8'>
-            <div class="form-group">
-                <label for='name' class="control-label">Имя</label><br>
-                <input type='text' class="form-control" required="required" id='name' name='name' th:value='${name}'><br>
-            </div>
-            <div class="form-group">
-                <label for='secondName'>Фамилия</label><br>
-                <input type='text' class="form-control" required="required" id='secondName' name='secondName' th:value='${secondName}'><br>
-            </div>
-            <div class="form-group">
-                <label for='lastName'>Отчество</label><br>
-                <input type='text' class="form-control" id='lastName' name='lastName' th:value='${lastName}'><br>
-            </div>
-            <div class="form-group">
-                <label for='classNumber'>Класс</label><br>
-                <input type='number' class="form-control" required="required" id='classNumber' name='classNumber' th:value='${classNumber}'><br>
-            </div>
-            <div class="form-group">
-                <label for='address'>Адрес</label><br>
-                <input type='text' class="form-control" required="required" id='address' name='address' th:value='${address}'><br>
-            </div>
-            <div class="form-group">
-                <label for='date_of_record'>дата записи</label><br>
-                <input type='date' class="form-control" required="required" id='date_of_record' name='date_of_record' th:value='${date_of_record}'><br>
-            </div>
-            <div class="form-group">
-                <label for='date_of_birth'>Дата рождения</label><br>
-                <input type='date' class="form-control" required="required" id='date_of_birth' name='date_of_birth' th:value='${date_of_birth}'><br>
-            </div>
-            <div class="form-group">
-                <label for='telephone'>Телефон</label><br>
-                <input type='tel' class="form-control" id='telephone' name='telephone' th:value='${telephone}'><br>
-            </div>
-            <div class="form-group">
-                <label for='telephone_mother'>Телефон матери</label><br>
-                <input type='tel' class="form-control" id='telephone_mother' name='telephone_mother' th:value='${telephone_mother}'><br>
-            </div>
-            <div class="form-group">
-                <label for='telephone_father'>Телефон отца</label><br>
-                <input type='tel' class="form-control" id='telephone_father' name='telephone_father' th:value='${telephone_father}'><br>
-            </div>
-            <div class="form-group">
-                <label for='telephone_grandmother'>Телефон бабушки</label><br>
-                <input type='tel' class="form-control" id='telephone_grandmother' name='telephone_grandmother' th:value='${telephone_grandmother}'><br>
-            </div>
-            <div class="form-group">
-                <label for='email'>Email</label><br>
-                <input type='email' class="form-control" id='email' name='email' th:value='${email}'><br>
-            </div>
-            <div class="form-group">
-                <label for='place_of_work_mother'>Место работы матери</label><br>
-                <input type='text' class="form-control" id='place_of_work_mother' name='place_of_work_mother' th:value='${place_of_work_mother}'><br>
-            </div>
-            <div class="form-group">
-                <label for='place_of_work_father'>Место работы отца</label> <br>
-                <input type='text' class="form-control" id='place_of_work_father' name='place_of_work_father' th:value='${place_of_work_father}'><br>
-            </div>
-            <div class="form-group">
-                <label for='mother_name'>Имя матери</label> <br>
-                <input type='text' class="form-control" id='mother_name' name='mother_name' th:value='${mother_name}'><br>
-            </div>
-            <div class="form-group">
-                <label for='father_name'>Место работы матери</label> <br>
-                <input type='text'  class="form-control"  id='father_name' name='father_name' th:value='${father_name}'><br>
-            </div>
-            <div class="form-group">
-                <label for='grandmother_name'>Место работы бабушки</label> <br>
-                <input type='text' class="form-control" id='grandmother_name' name='grandmother_name' th:value='${grandmother_name}'><br>
-            </div>
 
-            <label>Предметы</label><br>
-
-            <input type='checkbox' id='chemistry' name='chemistry' th:checked="${chemistry}">
-            <label>химия</label><br>
-
-            <input type='checkbox' id='biology' name='biology' th:checked="${biology}">
-            <label>биология</label><br>
-
-            <input type='checkbox' id='german' name='german' th:checked="${german}">
-            <label>немецкий язык</label><br>
-
-            <input type='checkbox' id='english' name='english' th:checked="${english}">
-            <label>английский язык</label><br>
-
-            <input type='checkbox' id='primary_classes' name='primary_classes' th:checked="${primary_classes}">
-            <label>начальные классы</label><br>
-
-            <input type='checkbox' id='russian' name='russian' th:checked="${russian}">
-            <label>русский язык</label><br>
-
-            <input type='checkbox' id='mathematics' name='mathematics' th:checked="${mathematics}">
-            <label>математика</label><br>
-
-            <input type='checkbox' id='social_studies' name='social_studies' th:checked="${social_studies}">
-            <label>обществознание</label><br>
-
-            <input type='checkbox' id='history' name='history' th:checked="${history}">
-            <label>история</label><br>
-
-            <input type='checkbox' id='geography' name='geography' th:checked="${geography}">
-            <label>география</label><br>
-
-            <input type='checkbox' id='speech_therapy' name='speech_therapy' th:checked="${speech_therapy}">
-            <label>логопед</label><br>
-
-            <input type='checkbox' id='psychology' name='psychology' th:checked="${psychology}">
-            <label>психология</label><br>
-
-            <input type='checkbox' id='phisics' name='phisics' th:checked="${phisics}">
-            <label>физика</label><br>
-
-            <input type='hidden' id='sessionId' name='sessionId' th:value='${sessionId}'>
-            <input type='submit' class="btn btn-primary" value='Сохранить'>
-        </form>
+<h2>Редактирование ученика</h2>
+<form action='/save' method='get' accept-charset='UTF-8'>
+    <div class="form-group">
+        <label for='name' class="control-label">Имя</label><br>
+        <input type='text' class="form-control" required="required" id='name' name='name' th:value='${name}'><br>
     </div>
-</div>
+    <div class="form-group">
+        <label for='secondName'>Фамилия</label><br>
+        <input type='text' class="form-control" required="required" id='secondName' name='secondName' th:value='${secondName}'><br>
+    </div>
+    <div class="form-group">
+        <label for='lastName'>Отчество</label><br>
+        <input type='text' class="form-control" id='lastName' name='lastName' th:value='${lastName}'><br>
+    </div>
+    <div class="form-group">
+        <label for='classNumber'>Класс</label><br>
+        <input type='number' class="form-control" required="required" id='classNumber' name='classNumber' th:value='${classNumber}'><br>
+    </div>
+    <div class="form-group">
+        <label for='address'>Адрес</label><br>
+        <input type='text' class="form-control" required="required" id='address' name='address' th:value='${address}'><br>
+    </div>
+    <div class="form-group">
+        <label for='date_of_record'>дата записи</label><br>
+        <input type='date' class="form-control" required="required" id='date_of_record' name='date_of_record' th:value='${date_of_record}'><br>
+    </div>
+    <div class="form-group">
+        <label for='date_of_birth'>Дата рождения</label><br>
+        <input type='date' class="form-control" required="required" id='date_of_birth' name='date_of_birth' th:value='${date_of_birth}'><br>
+    </div>
+    <div class="form-group">
+        <label for='telephone'>Телефон</label><br>
+        <input type='tel' class="form-control" id='telephone' name='telephone' th:value='${telephone}'><br>
+    </div>
+    <div class="form-group">
+        <label for='telephone_mother'>Телефон матери</label><br>
+        <input type='tel' class="form-control" id='telephone_mother' name='telephone_mother' th:value='${telephone_mother}'><br>
+    </div>
+    <div class="form-group">
+        <label for='telephone_father'>Телефон отца</label><br>
+        <input type='tel' class="form-control" id='telephone_father' name='telephone_father' th:value='${telephone_father}'><br>
+    </div>
+    <div class="form-group">
+        <label for='telephone_grandmother'>Телефон бабушки</label><br>
+        <input type='tel' class="form-control" id='telephone_grandmother' name='telephone_grandmother' th:value='${telephone_grandmother}'><br>
+    </div>
+    <div class="form-group">
+        <label for='email'>Email</label><br>
+        <input type='email' class="form-control" id='email' name='email' th:value='${email}'><br>
+    </div>
+    <div class="form-group">
+        <label for='place_of_work_mother'>Место работы матери</label><br>
+        <input type='text' class="form-control" id='place_of_work_mother' name='place_of_work_mother' th:value='${place_of_work_mother}'><br>
+    </div>
+    <div class="form-group">
+        <label for='place_of_work_father'>Место работы отца</label> <br>
+        <input type='text' class="form-control" id='place_of_work_father' name='place_of_work_father' th:value='${place_of_work_father}'><br>
+    </div>
+    <div class="form-group">
+        <label for='mother_name'>Имя матери</label> <br>
+        <input type='text' class="form-control" id='mother_name' name='mother_name' th:value='${mother_name}'><br>
+    </div>
+    <div class="form-group">
+        <label for='father_name'>Место работы матери</label> <br>
+        <input type='text'  class="form-control"  id='father_name' name='father_name' th:value='${father_name}'><br>
+    </div>
+    <div class="form-group">
+        <label for='grandmother_name'>Место работы бабушки</label> <br>
+        <input type='text' class="form-control" id='grandmother_name' name='grandmother_name' th:value='${grandmother_name}'><br>
+    </div>
 
+    <label>Предметы</label><br>
+
+    <input type='checkbox' id='chemistry' name='chemistry' th:checked="${chemistry}">
+    <label>химия</label><br>
+
+    <input type='checkbox' id='biology' name='biology' th:checked="${biology}">
+    <label>биология</label><br>
+
+    <input type='checkbox' id='german' name='german' th:checked="${german}">
+    <label>немецкий язык</label><br>
+
+    <input type='checkbox' id='english' name='english' th:checked="${english}">
+    <label>английский язык</label><br>
+
+    <input type='checkbox' id='primary_classes' name='primary_classes' th:checked="${primary_classes}">
+    <label>начальные классы</label><br>
+
+    <input type='checkbox' id='russian' name='russian' th:checked="${russian}">
+    <label>русский язык</label><br>
+
+    <input type='checkbox' id='mathematics' name='mathematics' th:checked="${mathematics}">
+    <label>математика</label><br>
+
+    <input type='checkbox' id='social_studies' name='social_studies' th:checked="${social_studies}">
+    <label>обществознание</label><br>
+
+    <input type='checkbox' id='history' name='history' th:checked="${history}">
+    <label>история</label><br>
+
+    <input type='checkbox' id='geography' name='geography' th:checked="${geography}">
+    <label>география</label><br>
+
+    <input type='checkbox' id='speech_therapy' name='speech_therapy' th:checked="${speech_therapy}">
+    <label>логопед</label><br>
+
+    <input type='checkbox' id='psychology' name='psychology' th:checked="${psychology}">
+    <label>психология</label><br>
+
+    <input type='checkbox' id='phisics' name='phisics' th:checked="${phisics}">
+    <label>физика</label><br>
+
+    <input type='hidden' id='sessionId' name='sessionId' th:value='${sessionId}'>
+    <input type='submit' class="btn btn-primary" value='Сохранить'>
+</form>
 </body>
 </html>
