@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -110,14 +111,14 @@ public class Edit {
             return ERROR_PAGE_NAME;
         }
         if (IS_NONE_EMPTY.test(editForm.date_of_record())) {
-            LocalDateTime dateOfRecord = LocalDateTime.parse(editForm.date_of_record(), DateUtils.dateFormat);
+            LocalDateTime dateOfRecord = LocalDate.parse(editForm.date_of_record(), DateUtils.dateFormat).atStartOfDay();
             pupil.setDateOfRecord(dateOfRecord);
         } else {
             fillError(model, "EMPTY_FIELD_DATE_OF_RECORD");
             return ERROR_PAGE_NAME;
         }
         if (IS_NONE_EMPTY.test(editForm.date_of_birth())) {
-            LocalDateTime dateOfBirth = LocalDateTime.parse(editForm.date_of_birth(),DateUtils.dateFormat);
+            LocalDateTime dateOfBirth = LocalDate.parse(editForm.date_of_birth(),DateUtils.dateFormat).atStartOfDay();
             pupil.setDateOfBirth(dateOfBirth);
         } else {
             fillError(model, "EMPTY_FIELD_DATE_OF_BIRTH");
