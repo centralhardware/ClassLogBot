@@ -46,8 +46,6 @@ public class PupilFsm implements Fsm{
 
         switch (storage.getPupilStage(chatId)){
             case INPUT_FIO -> {
-                if (checkCancel(text, user)) return;
-
                 String[] words = text.split(" ");
                 if (!(words.length >= 2 && words.length <= 3)) {
                     sender.sendMessageFromResource(MessageConstant.INPUT_FIO_REQUIRED_FORMAT, user);
@@ -71,8 +69,6 @@ public class PupilFsm implements Fsm{
                 sender.sendMessageFromResource(MessageConstant.INPUT_CLASS, user);
             }
             case INPUT_CLASS_NUMBER -> {
-                if (checkCancel(text, user)) return;
-
                 if (text.equals(SKIP_COMMAND)){
                     getPupil(chatId).setClassNumber(null);
                     sender.sendMessageFromResource(MessageConstant.INPUT_DATE_IN_FORMAT, user);
@@ -94,8 +90,6 @@ public class PupilFsm implements Fsm{
                 }
             }
             case INPUT_DATE_OF_RECORD -> {
-                if (checkCancel(text, user)) return;
-
                 LocalDate date;
                 try {
                     date = LocalDate.parse(text, dateFormat);
@@ -113,8 +107,6 @@ public class PupilFsm implements Fsm{
                 sender.sendMessageFromResource(MessageConstant.INPUT_DATE_OF_BIRTH_IN_FORMAT, user);
             }
             case INPUT_DATE_OF_BIRTH -> {
-                if (checkCancel(text, user)) return;
-
                 LocalDate date;
                 try {
                     date = LocalDate.parse(text, dateFormat);
@@ -127,8 +119,6 @@ public class PupilFsm implements Fsm{
                 sender.sendMessageFromResource(MessageConstant.INPUT_PUPIL_TEL, user);
             }
             case INPUT_TELEPHONE -> {
-                if (checkCancel(text, user)) return;
-
                 if (text.equals(SKIP_COMMAND)){
                     next(chatId);
                     getPupil(chatId).setTelephone("");
@@ -148,8 +138,6 @@ public class PupilFsm implements Fsm{
                 }
             }
             case INPUT_TELEPHONE_OF_RESPONSIBLE -> {
-                if (checkCancel(text, user)) return;
-
                 if (text.equals(SKIP_COMMAND)){
                     next(chatId);
                     ReplyKeyboardBuilder replyKeyboardBuilder = ReplyKeyboardBuilder.
@@ -182,8 +170,6 @@ public class PupilFsm implements Fsm{
                 }
             }
             case INPUT_HOW_TO_KNOW -> {
-                if (checkCancel(text, user)) return;
-
                 if (HowToKnow.validate(text)){
                     getPupil(chatId).setHowToKnow(HowToKnow.getConstant(text));
                     next(chatId);
@@ -193,9 +179,9 @@ public class PupilFsm implements Fsm{
                 }
             }
             case INPUT_MOTHER_NAME -> {
-                if (checkCancel(text, user)) return;
-
-                getPupil(chatId).setMotherName(text);
+                if (!text.equals("/skip")){
+                    getPupil(chatId).setMotherName(text);
+                }
 
                 getPupil(chatId).setCreated_by(chatId);
                 sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).toString(), user);
@@ -219,19 +205,7 @@ public class PupilFsm implements Fsm{
     }
 
 
-    private static final String CANCEL_COMMAND = "/cancel";
     private static final String SKIP_COMMAND = "/skip";
-
-    private boolean checkCancel(String message, User user) {
-        if (message.equals(CANCEL_COMMAND)){
-            storage.remove(user.getId());
-            sender.sendMessageFromResource(MessageConstant.CANCEL_ADD_PUPIL, user);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
 
     @Override
     public boolean isActive(Long chatId) {
