@@ -126,4 +126,9 @@ public class Pupil {
     public long getAge(){
         return ChronoUnit.YEARS.between(dateOfBirth, LocalDateTime.now());
     }
+
+    public String getFio(){
+        return String.format("%s %s %s", name, lastName, secondName);
+    }
+
 }

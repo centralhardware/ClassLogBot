@@ -23,7 +23,7 @@ public class Minio {
 
     private final MinioClient minioClient;
 
-    public Try<String> upload(File file, LocalDateTime dateTime, String fio, String subject){
+    public Try<String> upload(File file, LocalDateTime dateTime, String fio, String subject, String bucket){
         return Try.of(() -> {
             var fileNew = Paths.get(String.format("%s/%s/%s/%s/%s:%s-%s-%s-%s.jpg",
                     Config.getMinioBasePath(),
@@ -43,7 +43,7 @@ public class Minio {
             minioClient.uploadObject(
                     UploadObjectArgs
                             .builder()
-                            .bucket("znatoki")
+                            .bucket(bucket)
                             .filename(fileNew.toFile().getAbsolutePath())
                             .object(fileNew.toFile().getAbsolutePath())
                             .build()
@@ -54,21 +54,21 @@ public class Minio {
         });
     }
 
-    public Try<Void> delete(String file){
+    public Try<Void> delete(String file, String bucket){
         return Try.of(() -> {
             minioClient.removeObject(RemoveObjectArgs
                     .builder()
-                    .bucket("znatoki")
+                    .bucket(bucket)
                     .object(file)
                     .build());
             return null;
         });
     }
 
-    public Try<InputStream> get(String file){
+    public Try<InputStream> get(String file, String bucket){
         return Try.of(() -> new ByteArrayInputStream(minioClient.getObject(GetObjectArgs
                 .builder()
-                .bucket("znatoki")
+                .bucket(bucket)
                 .object(file)
                 .build()).readAllBytes()));
     }

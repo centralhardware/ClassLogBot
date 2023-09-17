@@ -4,7 +4,9 @@ import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
@@ -26,6 +28,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,6 +47,7 @@ public class TimeFsm implements Fsm {
     private final Minio minio;
 
     private final TimeMapper timeMapper;
+    private final PaymentMapper paymentMapper;
     private final TeacherNameMapper teacherNameMapper;
 
     private final EnumValidator enumValidator;
@@ -124,7 +128,7 @@ public class TimeFsm implements Fsm {
                                 })
                                 .get();
 
-                        String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject())
+                        String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject(), "znatoki")
                                 .onFailure(error -> {
                                     sender.sendText("Ошибка при сохранение фотографии. Попробуйте снова", user);
                                     storage.remove(userId);
@@ -158,6 +162,11 @@ public class TimeFsm implements Fsm {
                         time.setPupilId(it.getRight());
                         time.setId(id);
                         timeMapper.insertTime(time);
+                        var payment = new Payment();
+                        payment.setDateTime(LocalDateTime.now());
+                        payment.setPupilId(time.getPupilId());
+                        payment.setAmount(time.getAmount() * -1);
+                        paymentMapper.insert(payment);
                     });
 
                     sendLog(time, userId);
@@ -167,7 +176,7 @@ public class TimeFsm implements Fsm {
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
                     Future.of(() -> {
-                        minio.delete(storage.getTime(userId).getPhotoId())
+                        minio.delete(storage.getTime(userId).getPhotoId(), "znatoki")
                                 .onFailure(error -> sender.send("Ошибка при удаление фотографии", user));
                         storage.remove(userId);
                         return null;
@@ -184,7 +193,7 @@ public class TimeFsm implements Fsm {
         logUser.setLanguageCode("ru");
         SendPhoto sendPhoto = SendPhoto
                 .builder()
-                .photo(new InputFile(minio.get(time.getPhotoId())
+                .photo(new InputFile(minio.get(time.getPhotoId(), "znatoki")
                         .onFailure(error -> sender.sendText("Ошибка во время отправки лога", logUser))
                         .get(), "отчет"))
                 .chatId(logUser.getId())

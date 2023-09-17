@@ -56,11 +56,29 @@ public class Storage {
         fsmPupilStage.put(chatId, step);
     }
 
+    public AddPayment getPaymentStage(Long chatId){
+        return fsmPaymentStage.get(chatId);
+    }
+
+    public void setPaymentStage(Long chatId, AddPayment stage){
+        fsmPaymentStage.put(chatId, stage);
+    }
+
+    public Payment getPayment(Long chatId){
+        return fsmPayment.get(chatId);
+    }
+
+    public void setPayment(Long chatId, Payment payment){
+        fsmPayment.put(chatId, payment);
+    }
+
     public void remove(Long chatId){
         fsmTime.remove(chatId);
         fsmTimeStage.remove(chatId);
         fsmPupil.remove(chatId);
         fsmPupilStage.remove(chatId);
+        fsmPayment.remove(chatId);
+        fsmPaymentStage.remove(chatId);
     }
 
     public boolean contain(Long chaId){

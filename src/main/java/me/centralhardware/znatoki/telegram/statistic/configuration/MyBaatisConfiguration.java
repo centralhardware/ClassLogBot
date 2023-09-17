@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.configuration;
 import com.clickhouse.jdbc.ClickHouseDataSource;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Config;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
@@ -30,6 +31,7 @@ public class MyBaatisConfiguration {
         configurationClickhouse.addMapper(TimeMapper.class);
         configurationClickhouse.addMapper(StatisticMapper.class);
         configurationClickhouse.addMapper(TeacherNameMapper.class);
+        configurationClickhouse.addMapper(PaymentMapper.class);
 
         return new SqlSessionFactoryBuilder().build(configurationClickhouse);
     }
@@ -64,6 +66,11 @@ public class MyBaatisConfiguration {
     @Bean
     public TeacherNameMapper getTeacherNameMapper(@Qualifier("sqlSessionFactoryClickhouse") SqlSessionFactory sqlSessionFactory){
         return sqlSessionFactory.openSession().getMapper(TeacherNameMapper.class);
+    }
+
+    @Bean
+    public PaymentMapper getPaymentMapper(@Qualifier("sqlSessionFactoryClickhouse") SqlSessionFactory sqlSessionFactory){
+        return sqlSessionFactory.openSession().getMapper(PaymentMapper.class);
     }
 
     @Bean

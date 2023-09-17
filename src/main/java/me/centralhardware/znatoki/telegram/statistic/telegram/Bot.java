@@ -7,6 +7,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PupilFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
@@ -34,6 +35,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private final TimeFsm timeFsm;
     private final PupilFsm pupilFsm;
+    private final PaymentFsm paymentFsm;
 
     @SneakyThrows
     @PostConstruct
@@ -92,6 +94,12 @@ public class Bot extends TelegramLongPollingBot {
                 pupilFsm.process(update);
                 return;
             }
+
+            if(paymentFsm.isActive(update.getMessage().getChatId())){
+                paymentFsm.process(update);
+                return;
+            }
+
         } catch (Throwable t) {
             log.warn("Error while processing update", t);
         }
