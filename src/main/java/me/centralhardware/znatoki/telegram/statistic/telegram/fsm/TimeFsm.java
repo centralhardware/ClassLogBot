@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static me.centralhardware.znatoki.telegram.statistic.steps.AddTimeSteps.*;
+import static me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime.*;
 
 @Component
 @RequiredArgsConstructor
@@ -189,6 +189,7 @@ public class TimeFsm implements Fsm {
                         .get(), "отчет"))
                 .chatId(logUser.getId())
                 .caption(String.format("""
+                                            #занятие
                                             Время: %s,
                                             Предмет: %s
                                             Ученики: %s
@@ -208,6 +209,6 @@ public class TimeFsm implements Fsm {
 
     @Override
     public boolean isActive(Long chatId) {
-        return storage.contain(chatId);
+        return storage.containTime(chatId);
     }
 }

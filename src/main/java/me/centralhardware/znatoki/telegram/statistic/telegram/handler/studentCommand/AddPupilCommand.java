@@ -25,6 +25,11 @@ public class AddPupilCommand extends CommandHandler {
             return;
         }
 
+        if (storage.contain(message.getChatId())){
+            sender.sendText("Сначала сохраните текущую запись", message.getFrom());
+            return;
+        }
+
         storage.createPupil(message.getChatId());
         sender.sendMessageAndRemoveKeyboard(resourceBundle.getString("INPUT_FIO_IN_FORMAT"), message.getFrom());
     }

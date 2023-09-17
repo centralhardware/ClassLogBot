@@ -1,6 +1,6 @@
-package me.centralhardware.znatoki.telegram.statistic.steps;
+package me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps;
 
-public enum AddPupilSteps{
+public enum AddPupil {
 
     INPUT_FIO,
     INPUT_CLASS_NUMBER,
@@ -12,7 +12,7 @@ public enum AddPupilSteps{
     INPUT_HOW_TO_KNOW,
     INPUT_MOTHER_NAME;
 
-    public AddPupilSteps next() {
+    public AddPupil next() {
         return values()[(ordinal() + 1) % values().length];
     }
 

@@ -1,9 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic;
 
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
-import me.centralhardware.znatoki.telegram.statistic.steps.AddPupilSteps;
-import me.centralhardware.znatoki.telegram.statistic.steps.AddTimeSteps;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPupil;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -13,16 +15,19 @@ import java.util.Map;
 public class Storage {
 
     private final Map<Long, Time> fsmTime = new HashMap<>();
-    private final Map<Long, AddTimeSteps> fsmTimeStage = new HashMap<>();
+    private final Map<Long, AddTime> fsmTimeStage = new HashMap<>();
+
     private final Map<Long, Pupil> fsmPupil = new HashMap<>();
-    private final Map<Long, AddPupilSteps> fsmPupilStage = new HashMap<>();
+    private final Map<Long, AddPupil> fsmPupilStage = new HashMap<>();
 
+    private final Map<Long, Payment> fsmPayment = new HashMap<>();
+    private final Map<Long, AddPayment> fsmPaymentStage = new HashMap<>();
 
-    public AddTimeSteps getStage(Long chatId){
+    public AddTime getStage(Long chatId){
         return fsmTimeStage.get(chatId);
     }
 
-    public void setStage(Long chatId, AddTimeSteps stage){
+    public void setStage(Long chatId, AddTime stage){
         fsmTimeStage.put(chatId, stage);
     }
 
@@ -40,14 +45,14 @@ public class Storage {
 
     public void createPupil(Long chatId){
         fsmPupil.put(chatId, new Pupil());
-        fsmPupilStage.put(chatId, AddPupilSteps.INPUT_FIO);
+        fsmPupilStage.put(chatId, AddPupil.INPUT_FIO);
     }
 
-    public AddPupilSteps getPupilStage(Long chatId){
+    public AddPupil getPupilStage(Long chatId){
         return fsmPupilStage.get(chatId);
     }
 
-    public void setPupilStage(Long chatId, AddPupilSteps step){
+    public void setPupilStage(Long chatId, AddPupil step){
         fsmPupilStage.put(chatId, step);
     }
 
@@ -59,11 +64,19 @@ public class Storage {
     }
 
     public boolean contain(Long chaId){
-        return fsmTime.containsKey(chaId);
+        return fsmTime.containsKey(chaId) || fsmPupil.containsKey(chaId) || fsmPayment.containsKey(chaId);
     }
 
     public boolean containsPupil(Long chatId){
         return fsmPupil.containsKey(chatId);
+    }
+
+    public boolean containTime(Long chatId){
+        return fsmTime.containsKey(chatId);
+    }
+
+    public boolean containsPayment(Long chatId){
+        return fsmPayment.containsKey(chatId);
     }
 
 }
