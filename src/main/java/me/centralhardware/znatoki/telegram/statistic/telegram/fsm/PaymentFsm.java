@@ -157,7 +157,7 @@ public class PaymentFsm implements Fsm {
                                 Время: %s,
                                 Ученик: %s
                                 оплачено: %s,
-                                Преподаватель: %s
+                                Принял оплату: %s
                                 """,
                         payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")),
                         "#" + pupilService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_"),

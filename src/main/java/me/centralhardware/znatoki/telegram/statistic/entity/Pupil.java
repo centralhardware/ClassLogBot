@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
-import me.centralhardware.znatoki.telegram.statistic.entity.Enum.Subject;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelegramUtils;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import org.hibernate.annotations.CreationTimestamp;
@@ -64,11 +63,6 @@ public class Pupil {
     private String telephone;
     @Column(length = 11)
     private String telephoneResponsible;
-    @ElementCollection(targetClass= Subject.class, fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING) // Possibly optional (I'm not sure) but defaults to ORDINAL.
-    @CollectionTable(name="subjects")
-    @Column() // Column name in person_interest
-    private final Set<Subject>  subjects = new HashSet<>(Subject.values().length);
     @Enumerated(EnumType.STRING)
     private HowToKnow howToKnow;
     @Column
@@ -109,7 +103,6 @@ public class Pupil {
                 "дата рождения=" +              TelegramUtils.makeBold(dateFormatter.format(dateOfBirth)) +
                 "телефон=" +                    TelephoneUtils.format(telephone) +
                 "телефон ответственного=" +     TelephoneUtils.format( telephoneResponsible) +
-                "предметы=" +                   TelegramUtils.makeBold(subjects.toString()) +
                 "как узнал=" +                  TelegramUtils.makeBold(know) +
                 "имя матери=" +                 TelegramUtils.makeBold(nameMother) +
                 "дата создания=" +              TelegramUtils.makeBold(dateFormatter.format(createDate)) +

@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.web;
 
-import me.centralhardware.znatoki.telegram.statistic.entity.Enum.Subject;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.entity.Session;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
@@ -8,8 +7,6 @@ import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.utils.DateUtils;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import me.centralhardware.znatoki.telegram.statistic.web.dto.EditForm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,19 +62,6 @@ public class Edit {
             model.addAttribute(EditForm.FIELD_TELEPHONE, pupil.getTelephone());
             model.addAttribute(EditForm.TELEPHONE_RESPONSIBLE, pupil.getTelephoneResponsible());
             model.addAttribute(EditForm.FIELD_MOTHER_NAME, pupil.getMotherName());
-            model.addAttribute(EditForm.FIELD_CHEMISTRY, pupil.getSubjects().contains(Subject.CHEMISTRY));
-            model.addAttribute(EditForm.FIELD_BIOLOGY, pupil.getSubjects().contains(Subject.BIOLOGY));
-            model.addAttribute(EditForm.FIELD_GERMAN, pupil.getSubjects().contains(Subject.GERMAN));
-            model.addAttribute(EditForm.FIELD_ENGLISH, pupil.getSubjects().contains(Subject.ENGLISH));
-            model.addAttribute(EditForm.FIELD_PRIMARY_CLASSES, pupil.getSubjects().contains(Subject.PRIMARY_CLASSES));
-            model.addAttribute(EditForm.FIELD_RUSSIAN, pupil.getSubjects().contains(Subject.RUSSIAN));
-            model.addAttribute(EditForm.FIELD_MATHEMATICS, pupil.getSubjects().contains(Subject.MATHEMATICS));
-            model.addAttribute(EditForm.FIELD_SOCIAL_STUDIES, pupil.getSubjects().contains(Subject.SOCIAL_STUDIES));
-            model.addAttribute(EditForm.FIELD_HISTORY, pupil.getSubjects().contains(Subject.HISTORY));
-            model.addAttribute(EditForm.FIELD_GEOLOGY, pupil.getSubjects().contains(Subject.GEOGRAPHY));
-            model.addAttribute(EditForm.FIELD_SPEACH_THEOROPY, pupil.getSubjects().contains(Subject.SPEECH_THERAPIST));
-            model.addAttribute(EditForm.FIELD_PSYCHOLOGY, pupil.getSubjects().contains(Subject.PSYCHOLOGY));
-            model.addAttribute(EditForm.FIELD_PHISICS, pupil.getSubjects().contains(Subject.PHYSICS));
             model.addAttribute(EditForm.FIELD_SESSOIN_ID, sessionOptional.get().getUuid());
             return "edit";
         }
@@ -87,7 +71,6 @@ public class Edit {
     }
 
     private static final Predicate<String> IS_NONE_EMPTY = str -> !str.isEmpty();
-    private static final Predicate<Optional<String>> IS_CHECKBOX_ON = str -> str.isPresent() && str.get().equals("on");
 
     @RequestMapping(value = "/save", method = RequestMethod.GET)
     public String save(EditForm editForm, Model model){
@@ -148,45 +131,6 @@ public class Edit {
         }
         if (IS_NONE_EMPTY.test(editForm.mother_name())) {
             pupil.setMotherName(editForm.mother_name());
-        }
-        if (IS_CHECKBOX_ON.test(editForm.chemistry())) {
-            pupil.getSubjects().add(Subject.CHEMISTRY);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.biology())) {
-            pupil.getSubjects().add(Subject.BIOLOGY);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.german())) {
-            pupil.getSubjects().add(Subject.GERMAN);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.english())) {
-            pupil.getSubjects().add(Subject.ENGLISH);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.primary_classes())) {
-            pupil.getSubjects().add(Subject.PRIMARY_CLASSES);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.russian())) {
-            pupil.getSubjects().add(Subject.RUSSIAN);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.mathematics())) {
-            pupil.getSubjects().add(Subject.MATHEMATICS);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.social_studies())) {
-            pupil.getSubjects().add(Subject.SOCIAL_STUDIES);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.history())) {
-            pupil.getSubjects().add(Subject.HISTORY);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.geography())) {
-            pupil.getSubjects().add(Subject.GEOGRAPHY);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.speech_therapy())) {
-            pupil.getSubjects().add(Subject.SPEECH_THERAPIST);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.psychology())) {
-            pupil.getSubjects().add(Subject.PSYCHOLOGY);
-        }
-        if (IS_CHECKBOX_ON.test(editForm.psychology())) {
-            pupil.getSubjects().add(Subject.PHYSICS);
         }
         pupil.setUpdateBy(optionalSession.get().getUpdateBy());
         pupilService.save(pupil);

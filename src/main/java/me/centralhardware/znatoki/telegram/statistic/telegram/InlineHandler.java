@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -22,11 +23,13 @@ public class InlineHandler {
     private final PupilService pupilService;
     private final TelegramSender sender;
 
-    public boolean processInline(Update update) throws InterruptedException {
+    public boolean processInline(Update update) {
         if (!update.hasInlineQuery()) return false;
 
         InlineQuery inlineQuery = update.getInlineQuery();
         String text = inlineQuery.getQuery();
+
+        if (StringUtils.isBlank(text)) return true;
 
         AtomicInteger i = new AtomicInteger();
         List<InlineQueryResultArticle> articles = pupilService.search(text)

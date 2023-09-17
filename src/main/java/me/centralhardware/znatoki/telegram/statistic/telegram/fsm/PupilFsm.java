@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
-import me.centralhardware.znatoki.telegram.statistic.entity.Enum.Subject;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
@@ -155,10 +154,10 @@ public class PupilFsm implements Fsm{
                     next(chatId);
                     ReplyKeyboardBuilder replyKeyboardBuilder = ReplyKeyboardBuilder.
                             create().
-                            setText(resourceBundle.getString("INPUT_SUBJECTS"));
-                    for (Subject subject : Subject.values()){
+                            setText(resourceBundle.getString("INPUT_HOW_TO_KNOW"));
+                    for (HowToKnow howToKnow : HowToKnow.values()){
                         replyKeyboardBuilder.
-                                row().button(subject.getRusName()).endRow();
+                                row().button(howToKnow.getRusName()).endRow();
                     }
                     sender.send(replyKeyboardBuilder.build(chatId), user);
                     return;
@@ -172,35 +171,14 @@ public class PupilFsm implements Fsm{
                     next(chatId);
                     ReplyKeyboardBuilder replyKeyboardBuilder = ReplyKeyboardBuilder.
                             create().
-                            setText(resourceBundle.getString("INPUT_SUBJECTS"));
-                    for (Subject subject : Subject.values()){
-                        replyKeyboardBuilder.
-                                row().button(subject.getRusName()).endRow();
-                    }
-                    sender.send(replyKeyboardBuilder.build(chatId), user);
-                } else {
-                    sender.sendMessageFromResource(MessageConstant.INPUT_RIGHT_TEL_NUMBER, user);
-                }
-            }
-            case INPUT_SUBJECT -> {
-                if (checkCancel(text, user)) return;
-
-                if (text.equals("/complete")){
-                    next(chatId);
-                    ReplyKeyboardBuilder replyKeyboardBuilder = ReplyKeyboardBuilder.
-                            create().
                             setText(resourceBundle.getString("INPUT_HOW_TO_KNOW"));
                     for (HowToKnow howToKnow : HowToKnow.values()){
                         replyKeyboardBuilder.
                                 row().button(howToKnow.getRusName()).endRow();
                     }
                     sender.send(replyKeyboardBuilder.build(chatId), user);
-                    return;
-                }
-                if (Subject.validate(text)){
-                    getPupil(chatId).getSubjects().add(Subject.getConstant(text));
                 } else {
-                    sender.sendMessageFromResource(MessageConstant.SUBJECT_NOT_FOUND, user);
+                    sender.sendMessageFromResource(MessageConstant.INPUT_RIGHT_TEL_NUMBER, user);
                 }
             }
             case INPUT_HOW_TO_KNOW -> {
