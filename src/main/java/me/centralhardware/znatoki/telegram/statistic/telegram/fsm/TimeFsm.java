@@ -166,6 +166,7 @@ public class TimeFsm implements Fsm {
                         payment.setDateTime(LocalDateTime.now());
                         payment.setPupilId(time.getPupilId());
                         payment.setAmount(time.getAmount() * -1);
+                        payment.setTimeId(time.getId());
                         paymentMapper.insert(payment);
                     });
 

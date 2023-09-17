@@ -12,13 +12,15 @@ public interface PaymentMapper {
                 chat_id,
                 pupil_id,
                 amount,
-                photoId
+                photoId,
+                time_id
             ) VALUES (
                 #{payment.dateTime},
                 #{payment.chatId},
                 #{payment.pupilId},
                 #{payment.amount},
-                #{payment.photoId}
+                #{payment.photoId},
+                #{payment.timeId}
             )
             """)
     void insert(@Param("payment")Payment payment);
