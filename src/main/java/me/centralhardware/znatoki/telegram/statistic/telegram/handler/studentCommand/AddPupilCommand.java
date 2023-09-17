@@ -26,7 +26,7 @@ public class AddPupilCommand extends CommandHandler {
         }
 
         if (storage.contain(message.getChatId())){
-            sender.sendText("Сначала сохраните текущую запись", message.getFrom());
+            sender.sendText("Сначала сохраните текущую запись", message.getFrom(), false);
             return;
         }
 

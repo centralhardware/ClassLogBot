@@ -41,13 +41,19 @@ public class TelegramSender {
     private static final String PARSE_MODE_MARKDOWN = "markdown";
 
     public void sendText(String text, User user){
+        sendText(text, user, true);
+    }
+
+    public void sendText(String text, User user, Boolean removeKeyboard){
         SendMessage.SendMessageBuilder message = SendMessage.builder()
                 .chatId(user.getId())
                 .text(text);
 
-        ReplyKeyboardRemove removeMarkup = new ReplyKeyboardRemove();
-        removeMarkup.setRemoveKeyboard(true);
-        message.replyMarkup(removeMarkup);
+        if (removeKeyboard){
+            ReplyKeyboardRemove removeMarkup = new ReplyKeyboardRemove();
+            removeMarkup.setRemoveKeyboard(true);
+            message.replyMarkup(removeMarkup);
+        }
 
         send(message.build(), user);
     }
