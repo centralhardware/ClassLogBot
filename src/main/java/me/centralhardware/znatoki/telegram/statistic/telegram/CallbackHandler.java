@@ -3,11 +3,11 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
-import me.centralhardware.znatoki.telegram.statistic.web.Edit;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -18,12 +18,11 @@ import java.util.UUID;
 public class CallbackHandler {
 
     private final TelegramService telegramService;
-    private final TelegramUtil telegramUtil;
     private final PupilService pupilService;
     private final TelegramSender sender;
 
     private final TimeMapper timeMapper;
-
+    private final PaymentMapper paymentMapper;
 
     public static final String USER_INFO_COMMAND        = "/user_info";
     public static final String DELETE_USER_COMMAND      = "/Љdelete_user";
@@ -63,6 +62,7 @@ public class CallbackHandler {
 
             var id = UUID.fromString(text.replace("timeDelete-", ""));
             timeMapper.setDeleted(id, true);
+            paymentMapper.setDeleteByTimeId(id, true);
 
             var keyboard = InlineKeyboardBuilder.create()
                     .setText("?")
@@ -77,6 +77,7 @@ public class CallbackHandler {
 
             var id = UUID.fromString(text.replace("timeRestore-", ""));
             timeMapper.setDeleted(id, false);
+            paymentMapper.setDeleteByTimeId(id, false);
 
             var keyboard = InlineKeyboardBuilder.create()
                     .setText("?")
