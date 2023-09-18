@@ -93,21 +93,21 @@ public class Pupil {
         String nameMother       = motherName        == null? "" : motherName;
         String updated          = updateBy          == null? "" : updateBy.toString();
 
-        return "id=" +                          TelegramUtil.makeBold(id)+
-                "фамилия=" +                    TelegramUtil.makeBold(secondName) +
-                "имя=" +                        TelegramUtil.makeBold(name) +
-                "отчество=" +                   TelegramUtil.makeBold(lastName) +
-                "класс=" +                      TelegramUtil.makeBold(classNumber) +
-                "дата записи=" +                TelegramUtil.makeBold(dateFormatter.format(dateOfRecord)) +
-                "дата рождения=" +              TelegramUtil.makeBold(dateFormatter.format(dateOfBirth)) +
-                "телефон=" +                    TelephoneUtils.format(telephone) +
-                "телефон ответственного=" +     TelephoneUtils.format( telephoneResponsible) +
-                "как узнал=" +                  TelegramUtil.makeBold(know) +
-                "имя матери=" +                 TelegramUtil.makeBold(nameMother) +
-                "дата создания=" +              TelegramUtil.makeBold(dateFormatter.format(createDate)) +
-                "дата изменения=" +             TelegramUtil.makeBold(dateFormatter.format(modifyDate)) +
-                "создано=" + created_by + "\n" +
-                "редактировано=" +              updated + "\n";
+        return "id=" +                            TelegramUtil.makeBold(id)+
+                "\nфамилия=" +                    TelegramUtil.makeBold(secondName) +
+                "\nимя=" +                        TelegramUtil.makeBold(name) +
+                "\nотчество=" +                   TelegramUtil.makeBold(lastName) +
+                "\nкласс=" +                      TelegramUtil.makeBold(classNumber) +
+                "\nдата записи=" +                TelegramUtil.makeBold(dateFormatter.format(dateOfRecord)) +
+                "\nдата рождения=" +              TelegramUtil.makeBold(dateFormatter.format(dateOfBirth)) +
+                "\nтелефон=" +                    TelephoneUtils.format(telephone) +
+                "\nтелефон ответственного=" +     TelephoneUtils.format( telephoneResponsible) +
+                "\nкак узнал=" +                  TelegramUtil.makeBold(know) +
+                "\nимя матери=" +                 TelegramUtil.makeBold(nameMother) +
+                "\nдата создания=" +              TelegramUtil.makeBold(dateFormatter.format(createDate)) +
+                "\nдата изменения=" +             TelegramUtil.makeBold(dateFormatter.format(modifyDate)) +
+                "\nсоздано=" + created_by +
+                "\nредактировано=" +              updated + "\n";
     }
 
     public void incrementClassNumber(){

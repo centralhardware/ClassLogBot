@@ -242,7 +242,7 @@ public class TelegramUtil {
      * @return text wrapped in markdown bold symbol
      */
     public static String makeBold(String text) {
-        return BOLD_MAKER + text + BOLD_MAKER + "\n";
+        return BOLD_MAKER + text + BOLD_MAKER;
     }
 
     /**
