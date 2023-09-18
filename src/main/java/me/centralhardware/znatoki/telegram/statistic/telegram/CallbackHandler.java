@@ -35,7 +35,7 @@ public class CallbackHandler {
         var text = callbackQuery.getData();
         var from = callbackQuery.getFrom();
 
-        Long chatId = callbackQuery.getMessage().getChatId();
+        Long chatId = callbackQuery.getFrom().getId();
         if (text.startsWith(USER_INFO_COMMAND)){
             if (!telegramService.hasReadRight(chatId)){
                 sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, from);
