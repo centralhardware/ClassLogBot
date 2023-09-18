@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.bulider;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
@@ -78,5 +80,18 @@ public class InlineKeyboardBuilder {
                 build();
     }
 
+    public EditMessageText build(CallbackQuery callbackQuery) {
+        return EditMessageText
+                .builder()
+                .chatId(callbackQuery.getMessage().getChatId())
+                .inlineMessageId(callbackQuery.getInlineMessageId())
+                .text(text)
+                .messageId(callbackQuery.getMessage().getMessageId())
+                .replyMarkup(InlineKeyboardMarkup
+                        .builder()
+                        .keyboard(keyboard)
+                        .build())
+                .build();
+    }
 
 }

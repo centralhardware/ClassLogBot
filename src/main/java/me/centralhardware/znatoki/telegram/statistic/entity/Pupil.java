@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
-import me.centralhardware.znatoki.telegram.statistic.utils.TelegramUtils;
+import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,7 +16,6 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordFie
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
 
 @Entity
 @Indexed
@@ -94,19 +93,19 @@ public class Pupil {
         String nameMother       = motherName        == null? "" : motherName;
         String updated          = updateBy          == null? "" : updateBy.toString();
 
-        return "id=" +                          TelegramUtils.makeBold(id)+
-                "фамилия=" +                    TelegramUtils.makeBold(secondName) +
-                "имя=" +                        TelegramUtils.makeBold(name) +
-                "отчество=" +                   TelegramUtils.makeBold(lastName) +
-                "класс=" +                      TelegramUtils.makeBold(classNumber) +
-                "дата записи=" +                TelegramUtils.makeBold(dateFormatter.format(dateOfRecord)) +
-                "дата рождения=" +              TelegramUtils.makeBold(dateFormatter.format(dateOfBirth)) +
+        return "id=" +                          TelegramUtil.makeBold(id)+
+                "фамилия=" +                    TelegramUtil.makeBold(secondName) +
+                "имя=" +                        TelegramUtil.makeBold(name) +
+                "отчество=" +                   TelegramUtil.makeBold(lastName) +
+                "класс=" +                      TelegramUtil.makeBold(classNumber) +
+                "дата записи=" +                TelegramUtil.makeBold(dateFormatter.format(dateOfRecord)) +
+                "дата рождения=" +              TelegramUtil.makeBold(dateFormatter.format(dateOfBirth)) +
                 "телефон=" +                    TelephoneUtils.format(telephone) +
                 "телефон ответственного=" +     TelephoneUtils.format( telephoneResponsible) +
-                "как узнал=" +                  TelegramUtils.makeBold(know) +
-                "имя матери=" +                 TelegramUtils.makeBold(nameMother) +
-                "дата создания=" +              TelegramUtils.makeBold(dateFormatter.format(createDate)) +
-                "дата изменения=" +             TelegramUtils.makeBold(dateFormatter.format(modifyDate)) +
+                "как узнал=" +                  TelegramUtil.makeBold(know) +
+                "имя матери=" +                 TelegramUtil.makeBold(nameMother) +
+                "дата создания=" +              TelegramUtil.makeBold(dateFormatter.format(createDate)) +
+                "дата изменения=" +             TelegramUtil.makeBold(dateFormatter.format(modifyDate)) +
                 "создано=" + created_by + "\n" +
                 "редактировано=" +              updated + "\n";
     }

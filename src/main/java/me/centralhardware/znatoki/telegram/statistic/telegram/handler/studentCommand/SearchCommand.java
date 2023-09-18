@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler.studentCommand;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
@@ -7,9 +8,9 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
+import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
-import me.centralhardware.znatoki.telegram.statistic.utils.TelegramUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -36,32 +37,17 @@ import static me.centralhardware.znatoki.telegram.statistic.telegram.CallbackHan
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SearchCommand extends CommandHandler {
 
     private final PupilService pupilService;
-    private final TelegramUtils telegramUtils;
+    private final TelegramUtil telegramUtils;
     private final SessionService sessionService;
     private final TelegramService telegramService;
 
-    public SearchCommand(PupilService pupilService,
-                         TelegramUtils telegramUtils,
-                         SessionService sessionService,
-                         TelegramService telegramService1) {
-//        super("/s",
-//                """
-//                выполнить поиск ученика по текстовым полям. Аргументы: поисковый запрос. Пример:
-//
-//                <code> /s Михаил </code>
-//                """, telegramService, statisticService);
-        this.pupilService       = pupilService;
-        this.telegramUtils      = telegramUtils;
-        this.sessionService = sessionService;
-        this.telegramService = telegramService1;
-    }
-
     @Override
     public void handle(Message message) {
-        if (!telegramUtils.checkReadAccess(message.getFrom(), "/s")) return;
+        if (!telegramUtils.checkReadAccess(message.getFrom(), "/s", sender)) return;
 
         var arguments = message.getText().replace("/s", "").trim().split(" ");
         if (arguments.length == 1 && StringUtils.isBlank(arguments[0])){

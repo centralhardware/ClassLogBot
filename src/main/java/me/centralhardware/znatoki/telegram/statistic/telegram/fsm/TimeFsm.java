@@ -215,6 +215,12 @@ public class TimeFsm implements Fsm {
                         "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))
                 .build();
         sender.send(sendPhoto, logUser);
+        var keybard = InlineKeyboardBuilder.create()
+                .setText("?")
+                .row()
+                .button("удалить", "timeDelete-" + time.getId())
+                .endRow().build(userId);
+        sender.send(keybard, logUser);
     }
 
     @Override

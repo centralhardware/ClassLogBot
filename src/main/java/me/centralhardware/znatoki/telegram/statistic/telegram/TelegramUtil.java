@@ -3,7 +3,11 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
+import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -12,14 +16,18 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.bots.AbsSender;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static java.util.Map.entry;
 
@@ -29,6 +37,7 @@ import static java.util.Map.entry;
 public class TelegramUtil {
 
     private final StatisticMapper statisticMapper;
+    private final Redis redis;
 
     public Long getUserId(Update update){
         if (update.hasMessage()){
@@ -163,6 +172,8 @@ public class TelegramUtil {
             return;
         } else if (object instanceof ReplyKeyboardRemove){
             return;
+        }else if (object instanceof EditMessageText){
+            return;
         } else {
             throw new IllegalStateException();
         }
@@ -222,6 +233,57 @@ public class TelegramUtil {
                     sendChatAction.getChatId());
         }
     }
+
+    private static final String BOLD_MAKER = "*";
+
+
+    /**
+     * @param text message to make bold
+     * @return text wrapped in markdown bold symbol
+     */
+    public static String makeBold(String text) {
+        return BOLD_MAKER + text + BOLD_MAKER + "\n";
+    }
+
+    /**
+     * @param text number to make bold
+     * @return text wrapped in markdown bold symbol
+     */
+    public static String makeBold(Integer text) {
+        if (text == null) return "";
+
+        return BOLD_MAKER + text + BOLD_MAKER;
+    }
+
+    public static final String UNAUTHORIZED_ACCESS_USER_TRY_TO_EXECUTE = "unauthorized access - user %s %s %s %s try to execute %s ";
+
+    private boolean checkAccess(User user, String right, String operation, TelegramSender sender) {
+        var znatokiUser = redis.get(user.getId().toString(), ZnatokiUser.class)
+                .getOrElseThrow(() -> new IllegalStateException());
+
+        boolean authorized = false;
+        if (right.equals("read")) {
+            authorized = znatokiUser.role() == Role.ADMIN ||
+                    znatokiUser.role() == Role.READ ||
+                    znatokiUser.role() == Role.READ_WRITE;
+        }
+
+        if (!authorized) {
+            sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
+            log.warn(String.format(UNAUTHORIZED_ACCESS_USER_TRY_TO_EXECUTE,
+                    user.getUserName(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getId(),
+                    operation));
+        }
+        return authorized;
+    }
+
+    public boolean checkReadAccess(User user, String operation, TelegramSender sender) {
+        return checkAccess(user, "read", operation, sender);
+    }
+
 
 
 }

@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.utils;
 
+import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.text.MaskFormatter;
@@ -23,7 +24,7 @@ public class TelephoneUtils {
             String phoneMask = "#-###-###-##-##";
             MaskFormatter maskFormatter = new MaskFormatter(phoneMask);
             maskFormatter.setValueContainsLiteralCharacters(false);
-            return TelegramUtils.makeBold(maskFormatter.valueToString(telephone));
+            return TelegramUtil.makeBold(maskFormatter.valueToString(telephone));
         } catch (ParseException ignored) {
         }
         return "";
