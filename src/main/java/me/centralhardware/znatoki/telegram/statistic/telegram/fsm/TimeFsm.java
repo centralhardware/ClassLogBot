@@ -219,7 +219,7 @@ public class TimeFsm implements Fsm {
                 .setText("?")
                 .row()
                 .button("удалить", "timeDelete-" + time.getId())
-                .endRow().build(userId);
+                .endRow().build(logUser.getId());
         sender.send(keybard, logUser);
     }
 
