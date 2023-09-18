@@ -1,9 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
-import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,6 +25,8 @@ public abstract class BaseReport extends CommandHandler {
     private Redis redis;
     @Autowired
     private Storage storage;
+    @Autowired
+    private TelegramService telegramService;
 
     @Override
     public void handle(Message message) {
@@ -34,13 +36,13 @@ public abstract class BaseReport extends CommandHandler {
             return;
         }
 
-        if (redis.exists(id.toString()) && !id.equals(Config.getAdminId())){
+        if (redis.exists(id.toString()) && !telegramService.isAdmin(id)){
             getTime().apply(id)
                     .forEach(it -> send(it, message.getFrom()));
             return;
         }
 
-        if (!id.equals(Config.getAdminId())){
+        if (!telegramService.isAdmin(id)){
             return;
         }
 

@@ -15,8 +15,6 @@ public class Config {
     private static final Double telegramRateLimit = Double.valueOf(System.getenv("TELEGRAM_RATE_LIMIT"));
 
     @Getter
-    private static final Long adminId               = Long.valueOf(System.getenv("TELEGRAM_ADMIN"));
-    @Getter
     private static final String baseUrl             = System.getenv("BASE_URL");
     @Getter
     private static final Long logChatId = Long.parseLong(System.getenv("LOG_CHAT"));

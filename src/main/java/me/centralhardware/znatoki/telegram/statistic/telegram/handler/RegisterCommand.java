@@ -1,12 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -18,10 +17,11 @@ import java.util.List;
 public class RegisterCommand extends CommandHandler {
 
     private final Redis redis;
+    private final TelegramService telegramService;
 
     @Override
     public void handle(Message message) {
-        if (!message.getFrom().getId().equals(Config.getAdminId())){
+        if (!telegramService.isAdmin(message.getChatId())){
             return;
         }
 
