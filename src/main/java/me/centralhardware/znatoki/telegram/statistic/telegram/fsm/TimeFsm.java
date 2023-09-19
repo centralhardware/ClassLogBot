@@ -192,6 +192,11 @@ public class TimeFsm implements Fsm {
         logUser.setId(Config.getLogChatId());
         logUser.setUserName("logger");
         logUser.setLanguageCode("ru");
+        var keybard = InlineKeyboardBuilder.create()
+                .setText("?")
+                .row()
+                .button("удалить", "timeDelete-" + time.getId())
+                .endRow().build();
         SendPhoto sendPhoto = SendPhoto
                 .builder()
                 .photo(new InputFile(minio.get(time.getPhotoId(), "znatoki")
@@ -213,14 +218,9 @@ public class TimeFsm implements Fsm {
                                 .collect(Collectors.joining(", ")),
                         time.getAmount(),
                         "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))
+                .replyMarkup(keybard)
                 .build();
         sender.send(sendPhoto, logUser);
-        var keybard = InlineKeyboardBuilder.create()
-                .setText("?")
-                .row()
-                .button("удалить", "timeDelete-" + time.getId())
-                .endRow().build(logUser.getId());
-        sender.send(keybard, logUser);
     }
 
     @Override

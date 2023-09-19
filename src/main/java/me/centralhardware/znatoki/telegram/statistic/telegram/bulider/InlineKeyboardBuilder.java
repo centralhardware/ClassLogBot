@@ -68,6 +68,13 @@ public class InlineKeyboardBuilder {
         return this;
     }
 
+    public InlineKeyboardMarkup build(){
+        return InlineKeyboardMarkup.
+                builder().
+                keyboard(keyboard).
+                build();
+    }
+
     public SendMessage build(Long chatId) {
         return SendMessage.
                 builder().

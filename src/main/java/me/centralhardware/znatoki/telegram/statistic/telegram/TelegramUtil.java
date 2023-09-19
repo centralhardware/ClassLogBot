@@ -16,6 +16,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -173,6 +174,8 @@ public class TelegramUtil {
         } else if (object instanceof ReplyKeyboardRemove){
             return;
         }else if (object instanceof EditMessageText){
+            return;
+        }else if (object instanceof EditMessageReplyMarkup){
             return;
         } else {
             throw new IllegalStateException();

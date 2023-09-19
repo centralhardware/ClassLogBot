@@ -9,6 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.UUID;
@@ -64,12 +65,16 @@ public class CallbackHandler {
             timeMapper.setDeleted(id, true);
             paymentMapper.setDeleteByTimeId(id, true);
 
-            var keyboard = InlineKeyboardBuilder.create()
-                    .setText("?")
-                    .row()
-                    .button("восстановить", "timeRestore-" + id)
-                    .endRow().build(callbackQuery);
-            sender.send(keyboard, from);
+            var editMessageReplyMarkup = EditMessageReplyMarkup
+                    .builder()
+                    .messageId(callbackQuery.getMessage().getMessageId())
+                    .chatId(callbackQuery.getMessage().getChatId())
+                    .replyMarkup(InlineKeyboardBuilder.create()
+                            .row()
+                            .button("восстановить", "timeRestore-" + id)
+                            .endRow().build())
+                    .build();
+            sender.send(editMessageReplyMarkup, from);
         } else if (text.startsWith("timeRestore-")){
             if (!telegramService.isAdmin(chatId)){
                 sender.sendText("Доступ запрещен", callbackQuery.getFrom());
@@ -79,12 +84,17 @@ public class CallbackHandler {
             timeMapper.setDeleted(id, false);
             paymentMapper.setDeleteByTimeId(id, false);
 
-            var keyboard = InlineKeyboardBuilder.create()
-                    .setText("?")
-                    .row()
-                    .button("удалить", "timeDelete-" + id)
-                    .endRow().build(callbackQuery);
-            sender.send(keyboard, from);
+            var editMessageReplyMarkup = EditMessageReplyMarkup
+                    .builder()
+                    .messageId(callbackQuery.getMessage().getMessageId())
+                    .chatId(callbackQuery.getMessage().getChatId())
+                    .replyMarkup(InlineKeyboardBuilder.create()
+                            .setText("?")
+                            .row()
+                            .button("удалить", "timeDelete-" + id)
+                            .endRow().build())
+                    .build();
+            sender.send(editMessageReplyMarkup, from);
         }
         return true;
     }
