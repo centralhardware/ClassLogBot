@@ -43,7 +43,7 @@ public class CallbackHandler {
             }
             var pupilOptional = pupilService.findById(Integer.parseInt(callbackQuery.getData().replace(USER_INFO_COMMAND,"")));
             pupilOptional.ifPresentOrElse(
-                    pupil -> sender.sendMessageWithMarkdown(pupil.toString(), callbackQuery.getFrom()),
+                    pupil -> sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getSubjectsForPupil(pupil.getId())), callbackQuery.getFrom()),
                     () -> sender.sendMessageFromResource(MessageConstant.USER_NOT_FOUND, callbackQuery.getFrom())
             );
         } else if (text.startsWith(DELETE_USER_COMMAND)){

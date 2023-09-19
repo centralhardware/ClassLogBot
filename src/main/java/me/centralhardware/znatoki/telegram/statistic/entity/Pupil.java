@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
@@ -16,6 +17,8 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordFie
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Indexed
@@ -87,8 +90,7 @@ public class Pupil {
 
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    @Override
-    public String toString() {
+    public String getInfo(List<Subject> subjects) {
         String know             = howToKnow         == null? "" : howToKnow.toString();
         String nameMother       = motherName        == null? "" : motherName;
         String updated          = updateBy          == null? "" : updateBy.toString();
@@ -103,6 +105,7 @@ public class Pupil {
                 "\nтелефон=" +                    TelephoneUtils.format(telephone) +
                 "\nтелефон ответственного=" +     TelephoneUtils.format( telephoneResponsible) +
                 "\nкак узнал=" +                  TelegramUtil.makeBold(know) +
+                "\nПредметы=" +                   TelegramUtil.makeBold(subjects.stream().map(Subject::getRusName).collect(Collectors.joining(","))) +
                 "\nимя матери=" +                 TelegramUtil.makeBold(nameMother) +
                 "\nдата создания=" +              TelegramUtil.makeBold(dateFormatter.format(createDate)) +
                 "\nдата изменения=" +             TelegramUtil.makeBold(dateFormatter.format(modifyDate)) +

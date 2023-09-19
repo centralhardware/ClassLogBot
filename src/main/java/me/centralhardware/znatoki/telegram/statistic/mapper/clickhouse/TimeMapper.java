@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.commons.lang3.tuple.Pair;
@@ -123,5 +124,12 @@ public interface TimeMapper {
             ALTER TABLE znatoki_statistic_time UPDATE is_deleted = #{is_deleted} WHERE id = #{id}
             """)
     void setDeleted(@Param("id") UUID timeId, @Param("is_deleted") Boolean isDeleted);
+
+    @Select("""
+            SELECT DISTINCT subject
+            FROM znatoki_statistic_time
+            WHERE toInt32(pupil_id) = toInt32(#{id})
+            """)
+    List<Subject> getSubjectsForPupil(@Param("id") Integer id);
 
 }
