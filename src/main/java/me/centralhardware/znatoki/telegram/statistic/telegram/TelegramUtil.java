@@ -23,12 +23,9 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
-import org.telegram.telegrambots.meta.bots.AbsSender;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static java.util.Map.entry;
 
@@ -153,32 +150,42 @@ public class TelegramUtil {
     public void saveStatisticOutcome(Object object, User user){
         String chatId;
         String text;
-        if (object instanceof SendMessage sendMessage){
-            chatId = sendMessage.getChatId();
-            text = sendMessage.getText();
-        } else if (object instanceof SendPhoto sendPhoto){
-            chatId = sendPhoto.getChatId();
-            text = sendPhoto.getCaption();
-        } else if (object instanceof DeleteMessage deleteMessage){
-            chatId = deleteMessage.getChatId();
-            text = deleteMessage.getMessageId().toString();
-        } else if (object instanceof SendChatAction sendChatAction){
-            chatId = sendChatAction.getChatId();
-            text = sendChatAction.getActionType().toString();
-        } else if (object instanceof AnswerCallbackQuery){
-            return;
-        } else if (object instanceof AnswerInlineQuery){
-            return;
-        } else if (object instanceof SendDocument){
-            return;
-        } else if (object instanceof ReplyKeyboardRemove){
-            return;
-        }else if (object instanceof EditMessageText){
-            return;
-        }else if (object instanceof EditMessageReplyMarkup){
-            return;
-        } else {
-            throw new IllegalStateException();
+        switch (object) {
+            case SendMessage sendMessage -> {
+                chatId = sendMessage.getChatId();
+                text = sendMessage.getText();
+            }
+            case SendPhoto sendPhoto -> {
+                chatId = sendPhoto.getChatId();
+                text = sendPhoto.getCaption();
+            }
+            case DeleteMessage deleteMessage -> {
+                chatId = deleteMessage.getChatId();
+                text = deleteMessage.getMessageId().toString();
+            }
+            case SendChatAction sendChatAction -> {
+                chatId = sendChatAction.getChatId();
+                text = sendChatAction.getActionType().toString();
+            }
+            case AnswerCallbackQuery answerCallbackQuery -> {
+                return;
+            }
+            case AnswerInlineQuery answerInlineQuery -> {
+                return;
+            }
+            case SendDocument sendDocument -> {
+                return;
+            }
+            case ReplyKeyboardRemove replyKeyboardRemove -> {
+                return;
+            }
+            case EditMessageText editMessageText -> {
+                return;
+            }
+            case EditMessageReplyMarkup editMessageReplyMarkup -> {
+                return;
+            }
+            case null, default -> throw new IllegalStateException();
         }
 
         var entry = LogEntry.builder()

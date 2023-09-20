@@ -92,12 +92,12 @@ public class TimeFsm implements Fsm {
                         error -> sender.sendText(error, user)
                 ).peek(
                         fio -> {
-                            if (storage.getTime(userId).getFios().contains(fio)){
+                            Integer id = Integer.valueOf(text.split(" ")[0]);
+                            String name = text.replace(id + " ", "");
+                            if (storage.getTime(userId).getFios().contains(Pair.of(id, name))){
                                 sender.sendText("Данное ФИО уже добавлено", user);
                                 return;
                             }
-                            Integer id = Integer.valueOf(text.split(" ")[0]);
-                            String name = text.replace(id + " ", "");
                             storage.getTime(userId).getFios().add(Pair.of(name, id));
                             sender.sendText("ФИО сохранено", user);
                         }
