@@ -29,7 +29,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 
 @Component
@@ -59,18 +58,16 @@ public class PaymentFsm implements Fsm {
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getPaymentStage(userId)){
-            case INPUT_PUPIL -> {
-                fioValidator.validate(text).peekLeft(
-                        error -> sender.sendText(error, user)
-                ).peek(
-                        fio -> {
-                            Integer id = Integer.valueOf(text.split(" ")[0]);
-                            storage.getPayment(userId).setPupilId(id);
-                            storage.setPaymentStage(userId, AddPayment.INPUT_AMOUNT);
-                            sender.sendText("Введите сумму оплаты", user);
-                        }
-                );
-            }
+            case INPUT_PUPIL -> fioValidator.validate(text).peekLeft(
+                    error -> sender.sendText(error, user)
+            ).peek(
+                    fio -> {
+                        Integer id = Integer.valueOf(text.split(" ")[0]);
+                        storage.getPayment(userId).setPupilId(id);
+                        storage.setPaymentStage(userId, AddPayment.INPUT_AMOUNT);
+                        sender.sendText("Введите сумму оплаты", user);
+                    }
+            );
             case INPUT_AMOUNT -> amountValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(

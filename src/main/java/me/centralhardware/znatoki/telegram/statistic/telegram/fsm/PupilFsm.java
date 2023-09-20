@@ -15,7 +15,6 @@ import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;

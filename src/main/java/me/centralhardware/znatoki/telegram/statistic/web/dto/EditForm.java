@@ -1,7 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.web.dto;
 
-import java.util.Optional;
-
 public record EditForm(
         String name,
         String secondName,
