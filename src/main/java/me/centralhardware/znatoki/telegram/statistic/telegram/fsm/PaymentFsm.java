@@ -8,6 +8,8 @@ import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
@@ -39,6 +41,7 @@ public class PaymentFsm implements Fsm {
     private final Storage storage;
     private final TelegramSender sender;
     private final Minio minio;
+    private final Redis redis;
 
     private final TeacherNameMapper teacherNameMapper;
     private final PaymentMapper paymentMapper;
@@ -119,6 +122,7 @@ public class PaymentFsm implements Fsm {
             case CONFIRM -> {
                 if (Objects.equals(text, "да")) {
                     var payment = storage.getPayment(userId);
+                    payment.setOrganizationId(redis.get(userId.toString(), ZnatokiUser.class).get().organizationId());
 
                     sendLog(payment, userId);
 

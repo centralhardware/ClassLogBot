@@ -16,5 +16,6 @@ public class Payment {
     private Integer amount;
     private String photoId;
     private UUID timeId;
+    private UUID organizationId;
 
 }

@@ -10,6 +10,8 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMa
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -45,6 +47,7 @@ public class TimeFsm implements Fsm {
     private final TelegramUtil telegramUtil;
     private final TelegramSender sender;
     private final Minio minio;
+    private final Redis redis;
 
     private final TimeMapper timeMapper;
     private final PaymentMapper paymentMapper;
@@ -137,14 +140,11 @@ public class TimeFsm implements Fsm {
                         storage.getTime(userId).setPhotoId(id);
 
                         ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
-                                .setText(String.format("""
-                                        Предмет: %s,
-                                        ФИО: %s
-                                        стоимость занятия: %s
-                                        """,
-                                        Subject.valueOf(time.getSubject()).getRusName(),
-                                        String.join(";", time.getFios().stream().map(Pair::getLeft).toList()),
-                                        time.getAmount().toString()))
+                                .setText(STR."""
+                                        Предмет: \{Subject.valueOf(time.getSubject()).getRusName()}
+                                        ФИО:\{String.join(";", time.getFios().stream().map(Pair::getLeft).toList())}
+                                        стоимость занятия: \{time.getAmount().toString()}
+                                        """)
                                 .row().button("да").endRow()
                                 .row().button("нет").endRow();
 
@@ -161,12 +161,14 @@ public class TimeFsm implements Fsm {
                         time.setFio(it.getLeft());
                         time.setPupilId(it.getRight());
                         time.setId(id);
+                        time.setOrganizationId(redis.get(userId.toString(), ZnatokiUser.class).get().organizationId());
                         timeMapper.insertTime(time);
                         var payment = new Payment();
                         payment.setDateTime(LocalDateTime.now());
                         payment.setPupilId(time.getPupilId());
                         payment.setAmount(time.getAmount() * -1);
                         payment.setTimeId(time.getId());
+                        payment.setOrganizationId(redis.get(userId.toString(), ZnatokiUser.class).get().organizationId());
                         paymentMapper.insert(payment);
                     });
 
@@ -181,7 +183,7 @@ public class TimeFsm implements Fsm {
                                 .onFailure(error -> sender.send("Ошибка при удаление фотографии", user));
                         storage.remove(userId);
                         return null;
-                    }).onSuccess(it -> sender.sendText("Удалено", user));
+                    }).onSuccess(error -> sender.sendText("Удалено", user));
                 }
             }
         }

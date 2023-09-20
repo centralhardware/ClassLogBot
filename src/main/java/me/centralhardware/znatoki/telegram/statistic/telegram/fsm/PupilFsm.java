@@ -7,6 +7,9 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
+import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
@@ -31,6 +34,9 @@ public class PupilFsm implements Fsm{
     private final PupilService pupilService;
     private final ResourceBundle resourceBundle;
     private final TelegramSender sender;
+    private Redis redis;
+
+    private final TimeMapper timeMapper;
 
     @Override
     public void process(Update update) {
@@ -182,8 +188,9 @@ public class PupilFsm implements Fsm{
                     getPupil(chatId).setMotherName(text);
                 }
 
+                getPupil(chatId).setOrganizationId(redis.get(chatId.toString(), ZnatokiUser.class).get().organizationId());
                 getPupil(chatId).setCreated_by(chatId);
-                sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).toString(), user);
+                sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).getInfo(timeMapper.getSubjectsForPupil(getPupil(chatId).getId())), user);
                 storage.remove(chatId);
                 sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
             }

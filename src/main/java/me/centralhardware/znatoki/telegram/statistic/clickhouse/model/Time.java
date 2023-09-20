@@ -20,5 +20,6 @@ public class Time {
     private Integer pupilId;
     private Integer amount;
     private String photoId;
+    private UUID organizationId;
 
 }
