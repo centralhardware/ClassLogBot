@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.repository.PupilRepository;
@@ -16,16 +17,13 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PupilService {
 
 
     private final PupilRepository repository;
     private final EntityManager entityManager;
 
-    public PupilService(PupilRepository repository, EntityManager entityManager) {
-        this.repository = repository;
-        this.entityManager = entityManager;
-    }
 
     public Map<String, String> getTelephone(){
         List<Pupil> list = repository.findAll();
@@ -33,7 +31,7 @@ public class PupilService {
         list.forEach(it -> {
             if (it.getTelephone() == null) return;
             if (it.isDeleted()) return;
-            result.put(it.getTelephone(),  String.format("%s %s %s", it.getName(), it.getSecondName(), it.getLastName()));
+            result.put(it.getTelephone(),  it.getFio());
         });
         return result;
     }

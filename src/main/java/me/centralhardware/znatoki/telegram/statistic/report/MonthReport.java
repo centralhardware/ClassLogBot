@@ -33,7 +33,7 @@ public class MonthReport extends ExcelReport{
 
         newSheet("отчет");
 
-        writeTitle("Отчет по оплате и посещаемости занятий по " + subject.getRusName(), 6);
+        writeTitle(STR."Отчет по оплате и посещаемости занятий по \{subject.getRusName()}", 6);
         writeTitle("Преподаватель: " + fio, 6);
 
         LocalDateTime dateTime = times.get(0).getDateTime();

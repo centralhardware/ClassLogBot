@@ -38,8 +38,6 @@ public class TelegramSender {
     @Setter
     private DefaultAbsSender absSender;
 
-    public static final String UNABLE_TO_SEND_MESSAGE = "unable to send message";
-    public static final String SEND_MESSAGE_FOR_CHAT = "send message %s for chat %s";
     private static final String PARSE_MODE_MARKDOWN = "markdown";
 
     public void sendText(String text, User user){

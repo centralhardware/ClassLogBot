@@ -4,7 +4,7 @@ COPY ./ ./
 
 RUN mvn package
 
-FROM bitnami/java:20
+FROM openjdk:21-slim
 
 WORKDIR /znatokiBot
 

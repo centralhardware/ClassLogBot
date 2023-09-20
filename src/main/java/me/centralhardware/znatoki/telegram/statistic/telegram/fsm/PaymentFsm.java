@@ -152,17 +152,13 @@ public class PaymentFsm implements Fsm {
                         .onFailure(error -> sender.sendText("Ошибка во время отправки лога", logUser))
                         .get(), "отчет"))
                 .chatId(logUser.getId())
-                .caption(String.format("""
+                .caption(STR."""
                                 #оплата
-                                Время: %s,
-                                Ученик: %s
-                                оплачено: %s,
-                                Принял оплату: %s
-                                """,
-                        payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")),
-                        "#" + pupilService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_"),
-                        payment.getAmount(),
-                        "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))
+                                Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
+                                Ученик: #\{pupilService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
+                                оплачено: \{payment.getAmount()},
+                                Принял оплату: #\{teacherNameMapper.getFio(userId).replaceAll(" ", "_")}
+                                """)
                 .build();
         sender.send(sendPhoto, logUser);
     }

@@ -20,6 +20,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.lang.StringTemplate.STR;
+
 @Entity
 @Indexed
 @Table
@@ -95,27 +97,29 @@ public class Pupil {
         String nameMother       = motherName        == null? "" : motherName;
         String updated          = updateBy          == null? "" : updateBy.toString();
 
-        return "id=" +                            TelegramUtil.makeBold(id)+
-                "\nфамилия=" +                    TelegramUtil.makeBold(secondName) +
-                "\nимя=" +                        TelegramUtil.makeBold(name) +
-                "\nотчество=" +                   TelegramUtil.makeBold(lastName) +
-                "\nкласс=" +                      TelegramUtil.makeBold(classNumber) +
-                "\nдата записи=" +                TelegramUtil.makeBold(dateFormatter.format(dateOfRecord)) +
-                "\nдата рождения=" +              TelegramUtil.makeBold(dateFormatter.format(dateOfBirth)) +
-                "\nтелефон=" +                    TelephoneUtils.format(telephone) +
-                "\nтелефон ответственного=" +     TelephoneUtils.format( telephoneResponsible) +
-                "\nкак узнал=" +                  TelegramUtil.makeBold(know) +
-                "\nПредметы=" +                   TelegramUtil.makeBold(subjects.stream().map(Subject::getRusName).collect(Collectors.joining(","))) +
-                "\nимя матери=" +                 TelegramUtil.makeBold(nameMother) +
-                "\nдата создания=" +              TelegramUtil.makeBold(dateFormatter.format(createDate)) +
-                "\nдата изменения=" +             TelegramUtil.makeBold(dateFormatter.format(modifyDate)) +
-                "\nсоздано=" + created_by +
-                "\nредактировано=" +              updated + "\n";
+        return STR."""
+                id=\{TelegramUtil.makeBold(id)}
+                фамилия=\{TelegramUtil.makeBold(secondName)}
+                имя=\{TelegramUtil.makeBold(name)}
+                отчество=\{TelegramUtil.makeBold(lastName)}
+                класс=\{TelegramUtil.makeBold(classNumber)}
+                дата записи=\{TelegramUtil.makeBold(dateFormatter.format(dateOfRecord))}
+                дата рождения=\{TelegramUtil.makeBold(dateFormatter.format(dateOfBirth))}
+                телефон=\{TelephoneUtils.format(telephone)}
+                телефон ответственного=\{TelephoneUtils.format( telephoneResponsible)}
+                как узнал=\{TelegramUtil.makeBold(know)}
+                Предметы=\{TelegramUtil.makeBold(subjects.stream().map(Subject::getRusName).collect(Collectors.joining(",")))}
+                имя матери=\{TelegramUtil.makeBold(nameMother)}
+                дата создания=\{TelegramUtil.makeBold(dateFormatter.format(createDate))}
+                дата изменения=\{TelegramUtil.makeBold(dateFormatter.format(modifyDate))}
+                создано=\{created_by}
+                редактировано=\{updated}
+                """;
     }
 
     public void incrementClassNumber(){
         classNumber++;
-        log.info("class number incremented to {} for pupil {} {} {}", classNumber, name, secondName, lastName);
+        log.info(STR."class number incremented to \{classNumber} for pupil \{name} \{secondName} \{lastName}");
     }
 
     public long getAge(){
@@ -123,7 +127,7 @@ public class Pupil {
     }
 
     public String getFio(){
-        return String.format("%s %s %s", name, lastName, secondName);
+        return STR."\{name} \{lastName} \{secondName}";
     }
 
 }

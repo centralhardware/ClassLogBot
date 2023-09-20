@@ -203,21 +203,16 @@ public class TimeFsm implements Fsm {
                         .onFailure(error -> sender.sendText("Ошибка во время отправки лога", logUser))
                         .get(), "отчет"))
                 .chatId(logUser.getId())
-                .caption(String.format("""
-                                            #занятие
-                                            Время: %s,
-                                            Предмет: %s
-                                            Ученики: %s
-                                            Стоимость: %s,
-                                            Преподаватель: %s
-                                            """,
-                        time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")),
-                        "#" + Subject.valueOf(time.getSubject()).getRusName().replaceAll(" ", "_"),
-                        time.getFios().stream()
-                                .map(it -> "#" + it.getLeft().replaceAll(" ", "_"))
-                                .collect(Collectors.joining(", ")),
-                        time.getAmount(),
-                        "#" + teacherNameMapper.getFio(userId).replaceAll(" ", "_")))
+                .caption(STR."""
+                        #занятие
+                        Время: \{time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
+                        Предмет: #\{Subject.valueOf(time.getSubject()).getRusName().replaceAll(" ", "_")}
+                        Ученики: \{time.getFios().stream()
+                                    .map(it -> "#" + it.getLeft().replaceAll(" ", "_"))
+                                    .collect(Collectors.joining(", "))}
+                        Стоимость: \{time.getAmount()}
+                        Преподаватель: #\{teacherNameMapper.getFio(userId).replaceAll(" ", "_")}
+                        """)
                 .replyMarkup(keybard)
                 .build();
         sender.send(sendPhoto, logUser);
