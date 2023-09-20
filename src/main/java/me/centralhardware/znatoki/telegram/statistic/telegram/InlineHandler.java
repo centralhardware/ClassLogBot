@@ -59,9 +59,9 @@ public class InlineHandler {
 
     private String getFio(Pupil pupil){
         return pupil.getId() + " " +
-                pupil.getName().toLowerCase() + " " +
-                pupil.getSecondName().toLowerCase() + " " +
-                pupil.getLastName().toLowerCase();
+                pupil.getName() + " " +
+                pupil.getSecondName() + " " +
+                pupil.getLastName();
     }
 
     private String getBio(Pupil pupil){
