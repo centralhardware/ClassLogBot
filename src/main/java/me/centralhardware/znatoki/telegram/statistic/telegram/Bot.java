@@ -7,6 +7,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PupilFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm;
@@ -28,6 +29,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private final TelegramSender sender;
     private final TelegramUtil telegramUtil;
+    private final TelegramService telegramService;
     private final List<CommandHandler> commandHandlers;
     private final Redis redis;
     private final InlineHandler inlineHandler;
@@ -66,7 +68,7 @@ public class Bot extends TelegramLongPollingBot {
 
             Long userId = telegramUtil.getUserId(update);
             if (!redis.exists(userId.toString()) &&
-                    !userId.equals(Long.parseLong(System.getenv("ADMIN_ID")))) {
+                    !telegramService.isAdmin(userId)) {
 
                 boolean isStart = Optional.of(update)
                         .map(Update::getMessage)
