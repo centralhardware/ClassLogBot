@@ -1,9 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.Config;
-import me.centralhardware.znatoki.telegram.statistic.service.ReportService;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
+import me.centralhardware.znatoki.telegram.statistic.service.ReportService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,40 +22,40 @@ public class MonthlyReport {
     private final ReportService reportService;
     private final TimeMapper timeMapper;
     private final TelegramSender sender;
+    private final OrganizationMapper organizationMapper;
 
     @Scheduled(cron = "0 0 10 1 * *")
     public void report() {
-        var reports = timeMapper.getIds()
-                .stream()
-                .map(id -> {
-                    List<File> files = reportService.getReportPrevious(id);
+        organizationMapper.getOwners()
+                .forEach(org -> timeMapper.getIds(org.getId())
+                            .stream()
+                            .map(id -> {
+                                List<File> files = reportService.getReportPrevious(id);
 
-                    files.forEach(file -> {
-                        SendDocument sendDocument = SendDocument
-                                .builder()
-                                .chatId(id)
-                                .document(new InputFile(file))
-                                .build();
-                        sender.send(sendDocument, getUser(id));
-                    });
+                                files.forEach(file -> {
+                                    SendDocument sendDocument = SendDocument
+                                            .builder()
+                                            .chatId(id)
+                                            .document(new InputFile(file))
+                                            .build();
+                                    sender.send(sendDocument, getUser(id));
+                                });
 
-                    return files;
-                })
-                .flatMap(Collection::stream)
-                .toList();
+                                return files;
+                            })
+                            .flatMap(Collection::stream)
+                            .forEach(report -> {
+                                SendDocument sendDocument = SendDocument
+                                        .builder()
+                                        .chatId(org.getOwner())
+                                        .document(new InputFile(report))
+                                        .build();
+                                sender.send(sendDocument, getUser(org.getOwner()));
+                                //noinspection ResultOfMethodCallIgnored
+                                report.delete();
+                            })
+                );
 
-        Config.getReportSendTo()
-                .forEach(id -> reports.
-                        forEach(report -> {
-                            SendDocument sendDocument = SendDocument
-                                    .builder()
-                                    .chatId(id)
-                                    .document(new InputFile(report))
-                                    .build();
-                            sender.send(sendDocument, getUser(id));
-                        }));
-        //noinspection ResultOfMethodCallIgnored
-        reports.forEach(File::delete);
     }
 
     public User getUser(Long chatId) {

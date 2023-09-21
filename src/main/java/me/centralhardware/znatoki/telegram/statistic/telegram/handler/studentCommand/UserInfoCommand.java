@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
@@ -26,6 +28,7 @@ public class UserInfoCommand extends CommandHandler {
 
     private final PupilService pupilService;
     private final TelegramUtil telegramUtils;
+    private final Redis redis;
 
     @Override
     public void handle(Message message) {
@@ -34,7 +37,15 @@ public class UserInfoCommand extends CommandHandler {
         var arguments = message.getText().replace("/i ", "");
         Optional<Pupil> pupilOptional = pupilService.findById(Integer.valueOf(arguments));
         pupilOptional.ifPresentOrElse(
-                pupil -> sender.sendMessageWithMarkdown(pupil.toString(), message.getFrom()),
+                pupil -> {
+                    var orgId = redis.get(message.getFrom().getId().toString(), ZnatokiUser.class);
+                    if (!pupil.getOrganizationId().equals(orgId)){
+                        sender.sendText("Доступ запрещен", message.getFrom());
+                        return;
+                    }
+
+                    sender.sendMessageWithMarkdown(pupil.toString(), message.getFrom());
+                },
                 () -> sender.sendMessageFromResource(MessageConstant.PUPIL_NOT_FOUND, message.getFrom())
         );
     }

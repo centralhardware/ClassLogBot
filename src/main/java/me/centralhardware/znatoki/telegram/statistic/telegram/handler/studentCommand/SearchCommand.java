@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
@@ -44,6 +46,7 @@ public class SearchCommand extends CommandHandler {
     private final TelegramUtil telegramUtils;
     private final SessionService sessionService;
     private final TelegramService telegramService;
+    private final Redis redis;
 
     @Override
     public void handle(Message message) {
@@ -55,10 +58,12 @@ public class SearchCommand extends CommandHandler {
             return;
         }
 
+        var orgId = redis.get(message.getFrom().getId().toString(), ZnatokiUser.class).get().organizationId();
         String searchText = Arrays.toString(arguments).replace("]", "").replace("[", "");
         List<Pupil> searchResult = pupilService.search(searchText)
                 .stream()
                 .filter(not(Pupil::isDeleted))
+                .filter(it -> it.getOrganizationId().equals(orgId))
                 .toList();
 
         if (CollectionUtils.isEmpty(searchResult)){

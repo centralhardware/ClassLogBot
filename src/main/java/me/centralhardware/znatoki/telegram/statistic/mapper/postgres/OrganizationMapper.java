@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
 import java.util.UUID;
 
 @Mapper
@@ -32,5 +33,11 @@ public interface OrganizationMapper {
             WHERE owner = #{id}
             """)
     Organization getByOwner(@Param("id") Long id);
+
+    @Select("""
+            SELECT *
+            FROM organization
+            """)
+    List<Organization> getOwners();
 
 }

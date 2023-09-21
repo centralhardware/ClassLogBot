@@ -2,6 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,7 @@ public class InlineHandler {
 
     private final PupilService pupilService;
     private final TelegramSender sender;
+    private final Redis redis;
 
     public boolean processInline(Update update) {
         if (!update.hasInlineQuery()) return false;
@@ -34,6 +37,7 @@ public class InlineHandler {
         AtomicInteger i = new AtomicInteger();
         List<InlineQueryResultArticle> articles = pupilService.search(text)
                 .stream()
+                .filter(it -> it.getOrganizationId().equals(redis.get(inlineQuery.getFrom().getId().toString(), ZnatokiUser.class).get().organizationId()))
                 .map(it -> InlineQueryResultArticle.builder()
                         .title(getFio(it))
                         .description(getBio(it))

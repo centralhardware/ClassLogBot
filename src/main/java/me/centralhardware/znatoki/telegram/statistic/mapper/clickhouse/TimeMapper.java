@@ -55,6 +55,35 @@ public interface TimeMapper {
                    amount,
                    photoId
             FROM znatoki_statistic_time
+            WHERE id = #{id}
+                AND is_deleted=false
+            """)
+    @Results({
+            @Result(property = "dateTime", column = "date_time"),
+            @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
+            @Result(property = "chatId", column = "chat_id"),
+            @Result(property = "subject", column = "subject"),
+            @Result(property = "fio", column = "fio"),
+            @Result(property = "pupilId", column = "pupil_id"),
+            @Result(property = "amount", column = "amount"),
+            @Result(property = "photoId", column = "photoId")
+    })
+    List<Time> _getTimesById(@Param("id") UUID id);
+
+    default List<Time> getTimes(UUID id){
+        return convert(_getTimesById(id));
+    }
+
+    @Select("""
+            SELECT date_time,
+                   id,
+                   chat_id,
+                   subject,
+                   fio,
+                   pupil_id,
+                   amount,
+                   photoId
+            FROM znatoki_statistic_time
             WHERE chat_id = #{userId}
                 AND date_time between toDateTime(#{startDate}) and toDateTime(#{endDate})
                 AND is_deleted=false
@@ -69,23 +98,27 @@ public interface TimeMapper {
             @Result(property = "amount", column = "amount"),
             @Result(property = "photoId", column = "photoId")
     })
-    List<Time> _getTimes(@Param("userId") Long userId,
-                         @Param("startDate") String startDate,
-                         @Param("endDate") String endDate);
+    List<Time> _getTimesByChatId(@Param("userId") Long userId,
+                             @Param("startDate") String startDate,
+                             @Param("endDate") String endDate);
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    default List<Time> _getTimes(Long userId,
-                         LocalDateTime startDate,
-                         LocalDateTime endDate){
-        return _getTimes(userId, dateTimeFormatter.format(startDate), dateTimeFormatter.format(endDate));
+    default List<Time> _getTimesByChatId(Long userId,
+                                     LocalDateTime startDate,
+                                     LocalDateTime endDate){
+        return _getTimesByChatId(userId, dateTimeFormatter.format(startDate), dateTimeFormatter.format(endDate));
     }
 
     default List<Time> getTimes(Long userId,
                                 LocalDateTime startDate,
                                 LocalDateTime endDate) {
+        return convert(_getTimesByChatId(userId, startDate, endDate));
+    }
+
+    default List<Time> convert(List<Time> rawTimes){
         Multimap<UUID, Time> times = ArrayListMultimap.create();
-        _getTimes(userId, startDate, endDate).forEach(it -> times.put(it.getId(), it));
+        rawTimes.forEach(it -> times.put(it.getId(), it));
         return times.asMap()
                 .values()
                 .stream()
@@ -97,6 +130,8 @@ public interface TimeMapper {
                 .sorted(Comparator.comparing(Time::getDateTime))
                 .toList();
     }
+
+
 
     default List<Time> getTodayTimes(Long chatId){
         return getTimes(chatId, LocalDateTime.now().with(LocalTime.MIN), LocalDateTime.now());
@@ -117,10 +152,10 @@ public interface TimeMapper {
     @Select("""
             SELECT DISTINCT chat_id
             FROM znatoki_statistic_time
-            WHERE is_deleted = false
+            WHERE is_deleted = false AND organization_id = #{org_id}
             """)
     @ResultType(Long.class)
-    List<Long> getIds();
+    List<Long> getIds(@Param("org_id") UUID orgId);
 
     @Update("""
             ALTER TABLE znatoki_statistic_time UPDATE is_deleted = #{is_deleted} WHERE id = #{id}

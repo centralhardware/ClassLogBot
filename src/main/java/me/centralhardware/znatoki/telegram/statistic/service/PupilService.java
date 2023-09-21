@@ -25,8 +25,8 @@ public class PupilService {
     private final EntityManager entityManager;
 
 
-    public Map<String, String> getTelephone(){
-        List<Pupil> list = repository.findAll();
+    public Map<String, String> getTelephone(UUID organizationId){
+        List<Pupil> list = repository.findByOrganizationId(organizationId);
         Map<String, String> result = new HashMap<>();
         list.forEach(it -> {
             if (it.getTelephone() == null) return;

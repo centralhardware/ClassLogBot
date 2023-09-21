@@ -41,7 +41,7 @@ public class ScheduledTasks {
             if (!DateUtils.isBirthday(pupil.getDateOfBirth())) return;
 
             log.info("birthday user today");
-            telegramService.getReadRightUser().forEach(id -> sender.send(SendMessage.builder().
+            telegramService.getReadRightUser(pupil.getOrganizationId()).forEach(id -> sender.send(SendMessage.builder().
                     chatId(id.toString()).
                     text(String.format("День рождения у %s %s %s телефон: %s",
                             pupil.getSecondName(),

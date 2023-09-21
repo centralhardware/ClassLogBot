@@ -7,11 +7,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface PupilRepository extends CrudRepository<Pupil, Integer> {
 
     List<Pupil> findAll();
+
+    List<Pupil> findByOrganizationId(UUID organizationId);
 
     List<Pupil> findAllByNameAndSecondNameAndLastName(String name, String secondName, String lastName);
 

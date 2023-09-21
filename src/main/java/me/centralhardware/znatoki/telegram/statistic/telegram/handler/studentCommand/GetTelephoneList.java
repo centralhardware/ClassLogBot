@@ -3,6 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.handler.studentCo
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
@@ -24,16 +26,18 @@ public class GetTelephoneList extends CommandHandler {
 
     private final PupilService pupilService;
     private final TelegramUtil telegramUtils;
+    private final Redis redis;
 
     @Override
     public void handle(Message message) {
         if (!telegramUtils.checkReadAccess(message.getFrom(), "/show_telephone_list", sender)) return;
 
-        if (pupilService.getTelephone().isEmpty()){
+        var orgId = redis.get(message.getFrom().getId().toString(), ZnatokiUser.class).get().organizationId();
+        if (pupilService.getTelephone(orgId).isEmpty()){
             sender.sendMessageFromResource(MessageConstant.DATABASE_NOT_CONTAIN_TEL, message.getFrom());
             return;
         }
-        pupilService.getTelephone().forEach((telephone,fio) -> {
+        pupilService.getTelephone(orgId).forEach((telephone,fio) -> {
             if (StringUtils.isBlank(telephone)) return;
 
             sender.sendText(telephone + " " + fio, message.getFrom());

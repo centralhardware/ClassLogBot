@@ -8,6 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,8 +18,8 @@ public class TelegramService {
     private final Redis redis;
     private final TimeMapper timeMapper;
 
-    public List<Long> getReadRightUser() {
-        return timeMapper.getIds().stream()
+    public List<Long> getReadRightUser(UUID orgId) {
+        return timeMapper.getIds(orgId).stream()
                 .filter(this::hasReadRight)
                 .collect(Collectors.toList());
     }

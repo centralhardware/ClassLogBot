@@ -5,6 +5,8 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -21,6 +23,7 @@ public class CallbackHandler {
     private final TelegramService telegramService;
     private final PupilService pupilService;
     private final TelegramSender sender;
+    private final Redis redis;
 
     private final TimeMapper timeMapper;
     private final PaymentMapper paymentMapper;
@@ -34,6 +37,7 @@ public class CallbackHandler {
         var callbackQuery = update.getCallbackQuery();
         var text = callbackQuery.getData();
         var from = callbackQuery.getFrom();
+        var znatokiUser = redis.get(from.getId().toString(), ZnatokiUser.class).get();
 
         Long chatId = callbackQuery.getFrom().getId();
         if (text.startsWith(USER_INFO_COMMAND)){
@@ -43,7 +47,14 @@ public class CallbackHandler {
             }
             var pupilOptional = pupilService.findById(Integer.parseInt(callbackQuery.getData().replace(USER_INFO_COMMAND,"")));
             pupilOptional.ifPresentOrElse(
-                    pupil -> sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getSubjectsForPupil(pupil.getId())), callbackQuery.getFrom()),
+                    pupil -> {
+                        if (!pupil.getOrganizationId().equals(znatokiUser.organizationId())){
+                            sender.sendText("Доступ запрещен", callbackQuery.getFrom());
+                            return;
+                        }
+
+                        sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getSubjectsForPupil(pupil.getId())), callbackQuery.getFrom());
+                    },
                     () -> sender.sendMessageFromResource(MessageConstant.USER_NOT_FOUND, callbackQuery.getFrom())
             );
         } else if (text.startsWith(DELETE_USER_COMMAND)){
@@ -51,7 +62,14 @@ public class CallbackHandler {
                 sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, from);
                 return true;
             }
+
             pupilService.findById(Integer.parseInt(text.replace(DELETE_USER_COMMAND,""))).ifPresent(pupil -> {
+
+                if (!pupil.getOrganizationId().equals(znatokiUser.organizationId())){
+                    sender.sendText("Доступ запрещен", callbackQuery.getFrom());
+                    return;
+                }
+
                 pupil.setDeleted(true);
                 pupilService.save(pupil);
                 sender.sendMessageFromResource(MessageConstant.PUPIL_DELETED, from);
@@ -62,6 +80,13 @@ public class CallbackHandler {
             }
 
             var id = UUID.fromString(text.replace("timeDelete-", ""));
+
+            var time = timeMapper.getTimes(id).getFirst();
+            if (!time.getOrganizationId().equals(znatokiUser.organizationId())){
+                sender.sendText("Доступ запрещен", callbackQuery.getFrom());
+                return true;
+            }
+
             timeMapper.setDeleted(id, true);
             paymentMapper.setDeleteByTimeId(id, true);
 
@@ -81,6 +106,13 @@ public class CallbackHandler {
             }
 
             var id = UUID.fromString(text.replace("timeRestore-", ""));
+
+            var time = timeMapper.getTimes(id).getFirst();
+            if (!time.getOrganizationId().equals(znatokiUser.organizationId())){
+                sender.sendText("Доступ запрещен", callbackQuery.getFrom());
+                return true;
+            }
+
             timeMapper.setDeleted(id, false);
             paymentMapper.setDeleteByTimeId(id, false);
 
