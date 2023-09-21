@@ -1,7 +1,8 @@
-FROM maven:3.9.4-amazoncorretto-21-debian as maven
+FROM openjdk:21-slim as maven
 
 COPY ./ ./
 
+RUN apt install maven
 RUN mvn package
 
 FROM openjdk:21-slim
