@@ -25,22 +25,30 @@ public class TelegramService {
     }
 
     public boolean hasWriteRight(Long chatId) {
-        return redis.getUser(chatId).get().role() == Role.READ_WRITE ||
-                redis.getUser(chatId).get().role() == Role.ADMIN;
+        var role = getRole(chatId);
+        return role == Role.READ_WRITE ||
+                role == Role.ADMIN;
     }
 
     public boolean hasReadRight(Long chatId) {
-        return redis.getUser(chatId).get().role() == Role.READ ||
-                redis.getUser(chatId).get().role() == Role.READ_WRITE ||
-                redis.getUser(chatId.toString()).get().role() == Role.ADMIN;
+        var role = getRole(chatId);
+        return role == Role.READ ||
+                role == Role.READ_WRITE ||
+                role == Role.ADMIN;
     }
 
     public boolean isAdmin(Long chatId) {
-        return redis.getUser(chatId).get().role() == Role.ADMIN;
+        return getRole(chatId) == Role.ADMIN;
     }
 
     public boolean isUnauthorized(Long chatId) {
-        return redis.getUser(chatId).get().role() == Role.UNAUTHORIZED;
+        return getRole(chatId) == Role.UNAUTHORIZED;
+    }
+
+    private Role getRole(Long chatId){
+        return redis.getUser(chatId)
+                .map(ZnatokiUser::role)
+                .getOrElse(Role.UNAUTHORIZED);
     }
 
 }
