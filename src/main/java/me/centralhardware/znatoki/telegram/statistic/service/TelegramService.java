@@ -25,22 +25,22 @@ public class TelegramService {
     }
 
     public boolean hasWriteRight(Long chatId) {
-        return redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.READ_WRITE ||
-                redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.ADMIN;
+        return redis.getUser(chatId).get().role() == Role.READ_WRITE ||
+                redis.getUser(chatId).get().role() == Role.ADMIN;
     }
 
     public boolean hasReadRight(Long chatId) {
-        return redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.READ ||
-                redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.READ_WRITE ||
-                redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.ADMIN;
+        return redis.getUser(chatId).get().role() == Role.READ ||
+                redis.getUser(chatId).get().role() == Role.READ_WRITE ||
+                redis.getUser(chatId.toString()).get().role() == Role.ADMIN;
     }
 
     public boolean isAdmin(Long chatId) {
-        return redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.ADMIN;
+        return redis.getUser(chatId).get().role() == Role.ADMIN;
     }
 
     public boolean isUnauthorized(Long chatId) {
-        return redis.get(chatId.toString(), ZnatokiUser.class).get().role() == Role.UNAUTHORIZED;
+        return redis.getUser(chatId).get().role() == Role.UNAUTHORIZED;
     }
 
 }

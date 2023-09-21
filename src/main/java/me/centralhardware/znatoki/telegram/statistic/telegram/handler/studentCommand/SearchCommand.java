@@ -58,7 +58,7 @@ public class SearchCommand extends CommandHandler {
             return;
         }
 
-        var orgId = redis.get(message.getFrom().getId().toString(), ZnatokiUser.class).get().organizationId();
+        var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();
         String searchText = Arrays.toString(arguments).replace("]", "").replace("[", "");
         List<Pupil> searchResult = pupilService.search(searchText)
                 .stream()

@@ -161,14 +161,14 @@ public class TimeFsm implements Fsm {
                         time.setFio(it.getLeft());
                         time.setPupilId(it.getRight());
                         time.setId(id);
-                        time.setOrganizationId(redis.get(userId.toString(), ZnatokiUser.class).get().organizationId());
+                        time.setOrganizationId(redis.getUser(userId).get().organizationId());
                         timeMapper.insertTime(time);
                         var payment = new Payment();
                         payment.setDateTime(LocalDateTime.now());
                         payment.setPupilId(time.getPupilId());
                         payment.setAmount(time.getAmount() * -1);
                         payment.setTimeId(time.getId());
-                        payment.setOrganizationId(redis.get(userId.toString(), ZnatokiUser.class).get().organizationId());
+                        payment.setOrganizationId(redis.getUser(userId).get().organizationId());
                         paymentMapper.insert(payment);
                     });
 

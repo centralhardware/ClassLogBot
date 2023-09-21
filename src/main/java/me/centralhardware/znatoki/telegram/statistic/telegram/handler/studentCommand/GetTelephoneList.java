@@ -32,7 +32,7 @@ public class GetTelephoneList extends CommandHandler {
     public void handle(Message message) {
         if (!telegramUtils.checkReadAccess(message.getFrom(), "/show_telephone_list", sender)) return;
 
-        var orgId = redis.get(message.getFrom().getId().toString(), ZnatokiUser.class).get().organizationId();
+        var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();
         if (pupilService.getTelephone(orgId).isEmpty()){
             sender.sendMessageFromResource(MessageConstant.DATABASE_NOT_CONTAIN_TEL, message.getFrom());
             return;

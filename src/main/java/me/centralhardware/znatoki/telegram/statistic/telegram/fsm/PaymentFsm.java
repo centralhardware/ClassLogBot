@@ -122,7 +122,7 @@ public class PaymentFsm implements Fsm {
             case CONFIRM -> {
                 if (Objects.equals(text, "да")) {
                     var payment = storage.getPayment(userId);
-                    payment.setOrganizationId(redis.get(userId.toString(), ZnatokiUser.class).get().organizationId());
+                    payment.setOrganizationId(redis.getUser(userId).get().organizationId());
 
                     sendLog(payment, userId);
 

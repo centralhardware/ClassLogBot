@@ -37,7 +37,7 @@ public class CallbackHandler {
         var callbackQuery = update.getCallbackQuery();
         var text = callbackQuery.getData();
         var from = callbackQuery.getFrom();
-        var znatokiUser = redis.get(from.getId().toString(), ZnatokiUser.class).get();
+        var znatokiUser = redis.getUser(from.getId()).get();
 
         Long chatId = callbackQuery.getFrom().getId();
         if (text.startsWith(USER_INFO_COMMAND)){

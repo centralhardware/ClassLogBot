@@ -4,10 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -24,8 +26,12 @@ public class Redis {
         execute(jedis -> Try.of(() -> jedis.set(key, mapper.writeValueAsString(value))).get());
     }
 
-    public <V> Try<V> get(String key, Class<V> clazz){
+    private  <V> Try<V> get(String key, Class<V> clazz){
         return execute(jedis -> Try.of(() -> mapper.readValue(jedis.get(key), clazz)));
+    }
+
+    public Try<ZnatokiUser> getUser(Long chatId){
+        return get(chatId.toString(), ZnatokiUser.class);
     }
 
     public <V> void sadd(String key, V value){

@@ -47,7 +47,7 @@ public abstract class BaseReport extends CommandHandler {
             return;
         }
 
-        timeMapper.getIds(redis.get(id.toString(), ZnatokiUser.class).get().organizationId())
+        timeMapper.getIds(redis.getUser(id).get().organizationId())
                 .forEach(it -> getTime().apply(it)
                         .forEach(report -> send(report, message.getFrom())));
     }

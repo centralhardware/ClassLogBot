@@ -23,7 +23,7 @@ public class AddTImeCommand extends CommandHandler {
 
     @Override
     public void handle(Message message) {
-        ZnatokiUser user = redis.get(message.getChatId().toString(), ZnatokiUser.class)
+        ZnatokiUser user = redis.getUser(message.getChatId())
                 .onFailure(error -> sender.sendText("Внутрення ошибка", message.getFrom()))
                 .get();
 

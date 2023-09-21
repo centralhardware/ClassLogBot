@@ -38,7 +38,7 @@ public class ReportService {
         var times = getTime.apply(id);
         if (CollectionUtils.isEmpty(times)) return Collections.emptyList();
 
-        return redis.get(times.get(0).getChatId().toString(), ZnatokiUser.class)
+        return redis.getUser(times.get(0).getChatId())
                 .get()
                 .subjects()
                 .stream()

@@ -40,7 +40,7 @@ public class UserInfoCommand extends CommandHandler {
         Optional<Pupil> pupilOptional = pupilService.findById(Integer.valueOf(arguments));
         pupilOptional.ifPresentOrElse(
                 pupil -> {
-                    var orgId = redis.get(message.getFrom().getId().toString(), ZnatokiUser.class).get().organizationId();
+                    var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();
                     if (!pupil.getOrganizationId().equals(orgId)){
                         sender.sendText("Доступ запрещен", message.getFrom());
                         return;

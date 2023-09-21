@@ -188,7 +188,7 @@ public class PupilFsm implements Fsm{
                     getPupil(chatId).setMotherName(text);
                 }
 
-                getPupil(chatId).setOrganizationId(redis.get(chatId.toString(), ZnatokiUser.class).get().organizationId());
+                getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
                 getPupil(chatId).setCreated_by(chatId);
                 sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).getInfo(timeMapper.getSubjectsForPupil(getPupil(chatId).getId())), user);
                 storage.remove(chatId);

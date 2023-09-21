@@ -268,7 +268,7 @@ public class TelegramUtil {
     public static final String UNAUTHORIZED_ACCESS_USER_TRY_TO_EXECUTE = "unauthorized access - user %s %s %s %s try to execute %s ";
 
     private boolean checkAccess(User user, String right, String operation, TelegramSender sender) {
-        var znatokiUser = redis.get(user.getId().toString(), ZnatokiUser.class)
+        var znatokiUser = redis.getUser(user.getId())
                 .getOrElseThrow(() -> new IllegalStateException());
 
         boolean authorized = false;

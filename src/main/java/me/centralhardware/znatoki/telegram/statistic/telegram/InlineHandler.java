@@ -37,7 +37,7 @@ public class InlineHandler {
         AtomicInteger i = new AtomicInteger();
         List<InlineQueryResultArticle> articles = pupilService.search(text)
                 .stream()
-                .filter(it -> it.getOrganizationId().equals(redis.get(inlineQuery.getFrom().getId().toString(), ZnatokiUser.class).get().organizationId()))
+                .filter(it -> it.getOrganizationId().equals(redis.getUser(inlineQuery.getFrom().getId()).get().organizationId()))
                 .map(it -> InlineQueryResultArticle.builder()
                         .title(getFio(it))
                         .description(getBio(it))
