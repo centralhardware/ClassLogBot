@@ -9,6 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNa
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.SessionMapper;
+import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.UUID;
 
 @SuppressWarnings("resource")
 @Configuration
@@ -43,6 +45,8 @@ public class MyBaatisConfiguration {
         var configurationPostgres = new org.apache.ibatis.session.Configuration(postgres);
         configurationPostgres.addMapper(SessionMapper.class);
         configurationPostgres.addMapper(OrganizationMapper.class);
+
+        configurationPostgres.getTypeHandlerRegistry().register(UUID.class, UuidTypeHandler.class);
 
         return new SqlSessionFactoryBuilder().build(configurationPostgres);
     }

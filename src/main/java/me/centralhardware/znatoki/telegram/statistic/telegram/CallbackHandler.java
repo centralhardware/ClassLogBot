@@ -81,8 +81,7 @@ public class CallbackHandler {
 
             var id = UUID.fromString(text.replace("timeDelete-", ""));
 
-            var time = timeMapper.getTimes(id).getFirst();
-            if (!time.getOrganizationId().equals(znatokiUser.organizationId())){
+            if (!timeMapper.getOrgId(id).equals(znatokiUser.organizationId())){
                 sender.sendText("Доступ запрещен", callbackQuery.getFrom());
                 return true;
             }
@@ -107,8 +106,7 @@ public class CallbackHandler {
 
             var id = UUID.fromString(text.replace("timeRestore-", ""));
 
-            var time = timeMapper.getTimes(id).getFirst();
-            if (!time.getOrganizationId().equals(znatokiUser.organizationId())){
+            if (!timeMapper.getOrgId(id).equals(znatokiUser.organizationId())){
                 sender.sendText("Доступ запрещен", callbackQuery.getFrom());
                 return true;
             }

@@ -20,6 +20,18 @@ import java.util.stream.Collectors;
 @Mapper
 public interface TimeMapper {
 
+    @Select("""
+            SELECT organization_id
+            FROM znatoki_statistic_time
+            WHERE id = #{id}
+            LIMIT 1
+            """)
+    String __getOrgId(@Param("id") UUID orgId);
+
+    default UUID getOrgId(UUID orgId){
+        return UUID.fromString(__getOrgId(orgId));
+    }
+
     @Insert("""
             INSERT INTO znatoki_statistic_time (
                 date_time,
@@ -53,7 +65,8 @@ public interface TimeMapper {
                    fio,
                    pupil_id,
                    amount,
-                   photoId
+                   photoId,
+                   organization_id
             FROM znatoki_statistic_time
             WHERE id = #{id}
                 AND is_deleted=false
@@ -66,7 +79,8 @@ public interface TimeMapper {
             @Result(property = "fio", column = "fio"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
-            @Result(property = "photoId", column = "photoId")
+            @Result(property = "photoId", column = "photoId"),
+            @Result(property = "organizationId", column = "organization_id", typeHandler = UuidTypeHandler.class)
     })
     List<Time> _getTimesById(@Param("id") UUID id);
 
@@ -82,7 +96,8 @@ public interface TimeMapper {
                    fio,
                    pupil_id,
                    amount,
-                   photoId
+                   photoId,
+                   organization_id
             FROM znatoki_statistic_time
             WHERE chat_id = #{userId}
                 AND date_time between toDateTime(#{startDate}) and toDateTime(#{endDate})
@@ -96,7 +111,8 @@ public interface TimeMapper {
             @Result(property = "fio", column = "fio"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
-            @Result(property = "photoId", column = "photoId")
+            @Result(property = "photoId", column = "photoId"),
+            @Result(property = "organizationId", column = "organization_id", typeHandler = UuidTypeHandler.class)
     })
     List<Time> _getTimesByChatId(@Param("userId") Long userId,
                              @Param("startDate") String startDate,
