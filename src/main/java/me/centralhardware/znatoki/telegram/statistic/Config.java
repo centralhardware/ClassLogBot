@@ -18,10 +18,6 @@ public class Config {
     private static final String baseUrl             = System.getenv("BASE_URL");
     @Getter
     private static final Long logChatId = Long.parseLong(System.getenv("LOG_CHAT"));
-    @Getter
-    private static final List<Long> reportSendTo = Arrays.stream(System.getenv("REPORT_SEND_TO").split(","))
-            .map(Long::parseLong)
-            .toList();
 
     @Getter
     private static final String minioUrl = System.getenv("MINIO_URL");

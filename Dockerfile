@@ -14,7 +14,7 @@ COPY --from=maven target/znatokiStatistic-1.0-SNAPSHOT.jar .
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
-    apt-get install tzdata curl -y
+    apt-get install tzdata curl fontconfig libfreetype6 -y
 
 ENV TZ Asia/Novosibirsk
 
