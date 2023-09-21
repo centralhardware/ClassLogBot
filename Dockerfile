@@ -2,6 +2,7 @@ FROM openjdk:21-slim as maven
 
 COPY ./ ./
 
+RUN apt update
 RUN apt install maven
 RUN mvn package
 
