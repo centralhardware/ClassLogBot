@@ -2,8 +2,8 @@ FROM openjdk:21-slim as maven
 
 COPY ./ ./
 
-RUN apt update -y
-RUN apt install maven
+RUN apt-get -y update
+RUN apt-get install maven -y
 RUN mvn package
 
 FROM openjdk:21-slim
@@ -12,9 +12,9 @@ WORKDIR /znatokiBot
 
 COPY --from=maven target/znatokiStatistic-1.0-SNAPSHOT.jar .
 
-RUN apt update -y && \
-    apt upgrade -y && \
-    apt install tzdata curl
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt-get install tzdata curl -y
 
 ENV TZ Asia/Novosibirsk
 
