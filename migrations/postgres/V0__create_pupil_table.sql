@@ -24,4 +24,4 @@ alter table pupil
     owner to admin;
 
 ALTER SEQUENCE pupil_id_seq
-    RESTART WITH 236;
+    RESTART WITH 237;

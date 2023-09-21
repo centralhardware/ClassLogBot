@@ -25,7 +25,7 @@ public interface PupilRepository extends CrudRepository<Pupil, Integer> {
     @Query(value = """
         SELECT *
         FROM pupil
-        WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = :fio
+        WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = lower(:fio)
         ORDER BY date_of_record DESC
         LIMIT 1
     """, nativeQuery = true)
@@ -34,7 +34,7 @@ public interface PupilRepository extends CrudRepository<Pupil, Integer> {
     @Query(value = """
         SELECT *
         FROM pupil
-        WHERE lower(trim(concat(name, ' ', second_name, ' ', last_name))) = :fio
+        WHERE lower(trim(concat(name, ' ', second_name, ' ', last_name))) = lower(:fio)
         ORDER BY date_of_record DESC
         LIMIT 1
     """, nativeQuery = true)

@@ -165,7 +165,7 @@ public interface TimeMapper {
     @Select("""
             SELECT DISTINCT subject
             FROM znatoki_statistic_time
-            WHERE toInt32(pupil_id) = toInt32(#{id})
+            WHERE toInt32(pupil_id) = toInt32(#{id}) ANd is_deleted=false
             """)
     List<Subject> getSubjectsForPupil(@Param("id") Integer id);
 
