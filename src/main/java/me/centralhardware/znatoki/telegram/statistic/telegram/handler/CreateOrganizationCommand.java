@@ -2,6 +2,9 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
+import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
+import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -12,6 +15,7 @@ import java.util.UUID;
 public class CreateOrganizationCommand extends CommandHandler {
 
     private final OrganizationMapper organizationMapper;
+    private final Redis redis;
 
     @Override
     public void handle(Message message) {
@@ -24,6 +28,13 @@ public class CreateOrganizationCommand extends CommandHandler {
             sender.sendText("Организация уже создана", message.getFrom());
             return;
         }
+
+        var orgId = UUID.randomUUID();
+        var znatokiUser = ZnatokiUser.builder()
+                .organizationId(orgId)
+                .role(Role.ADMIN)
+                .build();
+        redis.put(message.getFrom().getId().toString(), znatokiUser);
 
         var name = message.getText().replace("/createOrg", "").trim();
         organizationMapper.insert(UUID.randomUUID(), name, message.getFrom().getId());

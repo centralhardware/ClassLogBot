@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.lang.StringTemplate.STR;
@@ -71,6 +72,8 @@ public class Pupil {
     private HowToKnow howToKnow;
     @Column
     private String motherName;
+    @Column
+    private UUID organizationId;
 
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
