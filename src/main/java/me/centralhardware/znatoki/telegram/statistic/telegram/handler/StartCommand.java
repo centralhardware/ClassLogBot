@@ -1,23 +1,26 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
 
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.Config;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 @Component
+@RequiredArgsConstructor
 public class StartCommand extends CommandHandler {
+
+    private final OrganizationMapper organizationMapper;
+
     @Override
     public void handle(Message message) {
-        var builder = SendMessage.builder()
-                .chatId(message.getChatId())
-                .text("""
-                        Бот для контроля учебных часов в Знатоках.
+        sender.sendText("""
+                        Бот предназначенный для анализа вашего бизнеса.
                         Автор: @centralhardware
-                        """);
-
-        sender.send(builder.build(), message.getFrom());
-
+                        """, message.getFrom());
+        if (!organizationMapper.exist(message.getFrom().getId())){
+            sender.sendText(Config.getStartTelegraph(), message.getFrom());
+        }
     }
 
     @Override

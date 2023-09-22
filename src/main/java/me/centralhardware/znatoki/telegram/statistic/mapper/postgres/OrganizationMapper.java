@@ -40,4 +40,11 @@ public interface OrganizationMapper {
             """)
     List<Organization> getOwners();
 
+    @Select("""
+            SELECT exists(SELECT id
+                          FROM  organization
+                          WHERE owner = #{owner_id})
+            """)
+    Boolean exist(@Param("owner_id") Long OwnerId);
+
 }

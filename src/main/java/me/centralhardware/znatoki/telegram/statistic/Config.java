@@ -39,4 +39,7 @@ public class Config {
 
     @Getter
     private static final String clickhouseUrl = System.getenv("CLICKHOUSE_URL");
+
+    @Getter
+    private static final String startTelegraph = System.getenv("START_TELEGRAPH");
 }
