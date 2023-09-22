@@ -50,7 +50,7 @@ public class SearchCommand extends CommandHandler {
 
     @Override
     public void handle(Message message) {
-        if (!telegramUtils.checkReadAccess(message.getFrom(), "/s", sender)) return;
+        if (!telegramUtils.checkReadAccess(message.getFrom(), sender)) return;
 
         var arguments = message.getText().replace("/s", "").trim().split(" ");
         if (arguments.length == 1 && StringUtils.isBlank(arguments[0])){

@@ -76,8 +76,11 @@ public class Bot extends TelegramLongPollingBot {
                         .filter(it -> it.equals("/start"))
                         .isPresent();
                 if (isStart) processCommand(update);
+                return;
+            }
 
-                sender.sendText("Доступ запрещен", telegramUtil.getFrom(update));
+            if (redis.getUser(userId) == null){
+                sender.sendText("Вам необходимо создать или присоединиться к организации", telegramUtil.getFrom(update));
                 return;
             }
 

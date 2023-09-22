@@ -34,7 +34,7 @@ public class UserInfoCommand extends CommandHandler {
 
     @Override
     public void handle(Message message) {
-        if (!telegramUtils.checkReadAccess(message.getFrom(), "/i", sender)) return;
+        if (!telegramUtils.checkReadAccess(message.getFrom(), sender)) return;
 
         var arguments = message.getText().replace("/i ", "");
         Optional<Pupil> pupilOptional = pupilService.findById(Integer.valueOf(arguments));

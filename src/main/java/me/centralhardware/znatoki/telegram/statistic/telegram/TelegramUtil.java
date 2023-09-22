@@ -267,11 +267,13 @@ public class TelegramUtil {
         return BOLD_MAKER + text + BOLD_MAKER;
     }
 
-    public static final String UNAUTHORIZED_ACCESS_USER_TRY_TO_EXECUTE = "unauthorized access - user %s %s %s %s try to execute %s ";
-
-    private boolean checkAccess(User user, String right, String operation, TelegramSender sender) {
+    private boolean checkAccess(User user, String right, TelegramSender sender) {
         var znatokiUser = redis.getUser(user.getId())
                 .getOrElseThrow(() -> new IllegalStateException());
+
+        if (znatokiUser == null){
+            sender.sendText("Вам необходимо создать или присоединиться к организации", user);
+        }
 
         boolean authorized = false;
         if (right.equals("read")) {
@@ -281,17 +283,13 @@ public class TelegramUtil {
         }
 
         if (!authorized) {
-            if (organizationMapper.exist(user.getId())){
-                sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
-            } else {
-                sender.sendText("Сначала необходимо создать организацию", user);
-            };
+            sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
         }
         return authorized;
     }
 
-    public boolean checkReadAccess(User user, String operation, TelegramSender sender) {
-        return checkAccess(user, "read", operation, sender);
+    public boolean checkReadAccess(User user, TelegramSender sender) {
+        return checkAccess(user, "read", sender);
     }
 
 
