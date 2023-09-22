@@ -67,14 +67,14 @@ public class Bot extends TelegramLongPollingBot {
             telegramUtil.logUpdate(update);
 
             Long userId = telegramUtil.getUserId(update);
-            if (!telegramService.isAdmin(userId)) {
 
-                boolean isStart = Optional.of(update)
-                        .map(Update::getMessage)
-                        .map(Message::getText)
-                        .filter(it -> it.equals("/start"))
-                        .isPresent();
-                if (isStart) processCommand(update);
+            boolean isStart = Optional.of(update)
+                    .map(Update::getMessage)
+                    .map(Message::getText)
+                    .filter(it -> it.equals("/start"))
+                    .isPresent();
+            if (isStart) {
+                processCommand(update);
                 return;
             }
 
