@@ -143,16 +143,12 @@ public class PaymentFsm implements Fsm {
     }
 
     private void sendLog(Payment payment, Long userId) {
-        var logUser = new User();
-        logUser.setId(Config.getLogChatId());
-        logUser.setUserName("logger");
-        logUser.setLanguageCode("ru");
         SendPhoto sendPhoto = SendPhoto
                 .builder()
                 .photo(new InputFile(minio.get(payment.getPhotoId(), "znatoki-payment")
-                        .onFailure(error -> sender.sendText("Ошибка во время отправки лога", logUser))
+                        .onFailure(error -> sender.sendText("Ошибка во время отправки лога", getLogUser()))
                         .get(), "отчет"))
-                .chatId(logUser.getId())
+                .chatId(getLogUser().getId())
                 .caption(STR."""
                                 #оплата
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
@@ -161,7 +157,7 @@ public class PaymentFsm implements Fsm {
                                 Принял оплату: #\{teacherNameMapper.getFio(userId).replaceAll(" ", "_")}
                                 """)
                 .build();
-        sender.send(sendPhoto, logUser);
+        sender.send(sendPhoto, getLogUser());
     }
 
     @Override

@@ -9,7 +9,6 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
@@ -17,6 +16,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeybo
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.time.DateTimeException;
@@ -34,7 +34,7 @@ public class PupilFsm implements Fsm{
     private final PupilService pupilService;
     private final ResourceBundle resourceBundle;
     private final TelegramSender sender;
-    private Redis redis;
+    private final Redis redis;
 
     private final TimeMapper timeMapper;
 
@@ -191,6 +191,7 @@ public class PupilFsm implements Fsm{
                 getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
                 getPupil(chatId).setCreated_by(chatId);
                 sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).getInfo(timeMapper.getSubjectsForPupil(getPupil(chatId).getId())), user);
+                sendLog(getPupil(chatId));
                 storage.remove(chatId);
                 sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
             }
@@ -217,4 +218,13 @@ public class PupilFsm implements Fsm{
     public boolean isActive(Long chatId) {
         return storage.containsPupil(chatId);
     }
+
+    private void sendLog(Pupil pupil) {
+        var message = SendMessage.builder()
+                .text("#ученик\n" + pupil.getInfo(timeMapper.getSubjectsForPupil(pupil.getId())))
+                .chatId(getLogUser().getId())
+                .build();
+        sender.send(message, getLogUser());
+    }
+
 }

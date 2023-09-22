@@ -6,6 +6,7 @@ import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
+import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
@@ -189,11 +190,7 @@ public class TimeFsm implements Fsm {
         }
     }
 
-    private void sendLog(me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time time, Long userId){
-        var logUser = new User();
-        logUser.setId(Config.getLogChatId());
-        logUser.setUserName("logger");
-        logUser.setLanguageCode("ru");
+    private void sendLog(Time time, Long userId){
         var keybard = InlineKeyboardBuilder.create()
                 .setText("?")
                 .row()
@@ -202,9 +199,9 @@ public class TimeFsm implements Fsm {
         SendPhoto sendPhoto = SendPhoto
                 .builder()
                 .photo(new InputFile(minio.get(time.getPhotoId(), "znatoki")
-                        .onFailure(error -> sender.sendText("Ошибка во время отправки лога", logUser))
+                        .onFailure(error -> sender.sendText("Ошибка во время отправки лога", getLogUser()))
                         .get(), "отчет"))
-                .chatId(logUser.getId())
+                .chatId(getLogUser().getId())
                 .caption(STR."""
                         #занятие
                         Время: \{time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
@@ -217,7 +214,7 @@ public class TimeFsm implements Fsm {
                         """)
                 .replyMarkup(keybard)
                 .build();
-        sender.send(sendPhoto, logUser);
+        sender.send(sendPhoto, getLogUser());
     }
 
     @Override
