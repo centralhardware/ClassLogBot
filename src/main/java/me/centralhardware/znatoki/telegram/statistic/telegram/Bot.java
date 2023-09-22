@@ -67,8 +67,7 @@ public class Bot extends TelegramLongPollingBot {
             telegramUtil.logUpdate(update);
 
             Long userId = telegramUtil.getUserId(update);
-            if (!redis.exists(userId.toString()) &&
-                    !telegramService.isAdmin(userId)) {
+            if (!telegramService.isAdmin(userId)) {
 
                 boolean isStart = Optional.of(update)
                         .map(Update::getMessage)
@@ -79,7 +78,7 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (redis.getUser(userId).getOrElse(() -> null) == null){
+            if (!redis.exists(userId.toString())){
                 sender.sendText("Вам необходимо создать или присоединиться к организации", telegramUtil.getFrom(update));
                 return;
             }
