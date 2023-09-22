@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.OrganizationFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PupilFsm;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm;
@@ -29,7 +30,6 @@ public class Bot extends TelegramLongPollingBot {
 
     private final TelegramSender sender;
     private final TelegramUtil telegramUtil;
-    private final TelegramService telegramService;
     private final List<CommandHandler> commandHandlers;
     private final Redis redis;
     private final InlineHandler inlineHandler;
@@ -38,6 +38,7 @@ public class Bot extends TelegramLongPollingBot {
     private final TimeFsm timeFsm;
     private final PupilFsm pupilFsm;
     private final PaymentFsm paymentFsm;
+    private final OrganizationFsm organizationFsm;
 
     @SneakyThrows
     @PostConstruct
@@ -78,8 +79,11 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (!redis.exists(userId.toString())){
+            if (!redis.exists(userId.toString()) && !organizationFsm.isActive(userId)){
                 sender.sendText("Вам необходимо создать или присоединиться к организации", telegramUtil.getFrom(update));
+                return;
+            } else if (organizationFsm.isActive(userId)){
+                organizationFsm.process(update);
                 return;
             }
 
