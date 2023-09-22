@@ -79,7 +79,7 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (redis.getUser(userId) == null){
+            if (redis.getUser(userId).getOrElse(() -> null) == null){
                 sender.sendText("Вам необходимо создать или присоединиться к организации", telegramUtil.getFrom(update));
                 return;
             }
