@@ -27,9 +27,8 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PupilFsm implements Fsm{
+public class PupilFsm extends Fsm {
 
-    private final Storage storage;
     private final TelegramService telegramService;
     private final PupilService pupilService;
     private final ResourceBundle resourceBundle;

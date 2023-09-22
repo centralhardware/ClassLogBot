@@ -42,11 +42,9 @@ import static me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.A
 
 @Component
 @RequiredArgsConstructor
-public class TimeFsm implements Fsm {
+public class TimeFsm extends Fsm {
 
-    private final Storage storage;
     private final TelegramUtil telegramUtil;
-    private final TelegramSender sender;
     private final Minio minio;
     private final Redis redis;
 

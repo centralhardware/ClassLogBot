@@ -2,7 +2,9 @@ package me.centralhardware.znatoki.telegram.statistic;
 
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddOrganization;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPupil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
@@ -22,6 +24,9 @@ public class Storage {
 
     private final Map<Long, Payment> fsmPayment = new HashMap<>();
     private final Map<Long, AddPayment> fsmPaymentStage = new HashMap<>();
+
+    private final Map<Long, Organization> fsmOrganization = new HashMap<>();
+    private final Map<Long, AddOrganization> fsmOrganizationStage = new HashMap<>();
 
     public AddTime getStage(Long chatId){
         return fsmTimeStage.get(chatId);
@@ -72,6 +77,22 @@ public class Storage {
         fsmPayment.put(chatId, payment);
     }
 
+    public void setOrganizationStage(Long chatId, AddOrganization stage){
+        fsmOrganizationStage.put(chatId, stage);
+    }
+
+    public AddOrganization getOrganizationStage(Long chatId){
+        return fsmOrganizationStage.get(chatId);
+    }
+
+    public void setOrganization(Long chatId, Organization organization){
+        fsmOrganization.put(chatId, organization);
+    }
+
+    public Organization getOrganization(Long chatId){
+        return fsmOrganization.get(chatId);
+    }
+
     public void remove(Long chatId){
         fsmTime.remove(chatId);
         fsmTimeStage.remove(chatId);
@@ -79,6 +100,8 @@ public class Storage {
         fsmPupilStage.remove(chatId);
         fsmPayment.remove(chatId);
         fsmPaymentStage.remove(chatId);
+        fsmOrganization.remove(chatId);
+        fsmOrganizationStage.remove(chatId);
     }
 
     public boolean contain(Long chaId){
@@ -95,6 +118,10 @@ public class Storage {
 
     public boolean containsPayment(Long chatId){
         return fsmPayment.containsKey(chatId);
+    }
+
+    public boolean containsOrganization(Long chatId){
+        return fsmOrganization.containsKey(chatId);
     }
 
 }

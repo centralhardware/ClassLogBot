@@ -18,13 +18,13 @@ public interface OrganizationMapper {
                 name,
                 owner
             ) VALUES (
-                #{id},
-                #{name},
-                #{owner}
+                #{org.id},
+                #{org.name},
+                #{org.owner}
             )
                 
             """)
-    void insert(@Param("id") UUID id, @Param("name") String name, @Param("owner") Long owner);
+    void insert(@Param("org") Organization organization);
 
 
     @Select("""

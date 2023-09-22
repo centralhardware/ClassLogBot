@@ -35,10 +35,9 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class PaymentFsm implements Fsm {
+public class PaymentFsm extends Fsm {
 
     private final TelegramUtil telegramUtil;
-    private final Storage storage;
     private final TelegramSender sender;
     private final Minio minio;
     private final Redis redis;

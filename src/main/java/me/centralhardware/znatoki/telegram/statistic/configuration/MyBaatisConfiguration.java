@@ -8,6 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.Statistic
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.SessionMapper;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.mapping.Environment;
@@ -45,6 +46,7 @@ public class MyBaatisConfiguration {
         var configurationPostgres = new org.apache.ibatis.session.Configuration(postgres);
         configurationPostgres.addMapper(SessionMapper.class);
         configurationPostgres.addMapper(OrganizationMapper.class);
+        configurationPostgres.addMapper(ServicesMapper.class);
 
         configurationPostgres.getTypeHandlerRegistry().register(UUID.class, UuidTypeHandler.class);
 
@@ -87,6 +89,11 @@ public class MyBaatisConfiguration {
     @Bean
     public OrganizationMapper getOrganizationMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
         return sqlSessionFactory.openSession().getMapper(OrganizationMapper.class);
+    }
+
+    @Bean
+    public ServicesMapper getServiceMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
+        return sqlSessionFactory.openSession().getMapper(ServicesMapper.class);
     }
 
 }

@@ -1,15 +1,23 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import me.centralhardware.znatoki.telegram.statistic.Config;
+import me.centralhardware.znatoki.telegram.statistic.Storage;
+import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
-public interface Fsm {
+public abstract class Fsm {
 
-    void process(Update update);
-    boolean isActive(Long chatId);
+    @Autowired
+    protected Storage storage;
+    @Autowired
+    protected TelegramSender sender;
 
-    default User getLogUser(){
+    abstract void process(Update update);
+    abstract boolean isActive(Long chatId);
+
+    protected User getLogUser(){
         var logUser = new User();
         logUser.setId(Config.getLogChatId());
         logUser.setUserName("logger");
