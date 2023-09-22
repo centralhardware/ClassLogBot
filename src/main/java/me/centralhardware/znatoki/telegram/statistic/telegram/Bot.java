@@ -71,7 +71,7 @@ public class Bot extends TelegramLongPollingBot {
             boolean isStart = Optional.of(update)
                     .map(Update::getMessage)
                     .map(Message::getText)
-                    .filter(it -> it.equals("/start"))
+                    .filter(it -> it.equals("/start") || it.equalsIgnoreCase("/createOrg"))
                     .isPresent();
             if (isStart) {
                 processCommand(update);
