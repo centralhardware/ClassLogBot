@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
@@ -36,6 +37,7 @@ public class TelegramUtil {
 
     private final StatisticMapper statisticMapper;
     private final Redis redis;
+    private final OrganizationMapper organizationMapper;
 
     public Long getUserId(Update update){
         if (update.hasMessage()){
@@ -279,13 +281,11 @@ public class TelegramUtil {
         }
 
         if (!authorized) {
-            sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
-            log.warn(String.format(UNAUTHORIZED_ACCESS_USER_TRY_TO_EXECUTE,
-                    user.getUserName(),
-                    user.getFirstName(),
-                    user.getLastName(),
-                    user.getId(),
-                    operation));
+            if (organizationMapper.exist(user.getId())){
+                sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
+            } else {
+                sender.sendText("Сначала необходимо создать организацию", user);
+            };
         }
         return authorized;
     }
