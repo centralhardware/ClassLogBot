@@ -154,10 +154,6 @@ public class PupilFsm extends Fsm {
                     sender.send(replyKeyboardBuilder.build(chatId), user);
                     return;
                 }
-                if (pupilService.existByTelephone(text)){
-                    sender.sendMessageFromResource(MessageConstant.TEL_ALREADY_EXIST, user);
-                    return;
-                }
                 if (TelephoneUtils.validate(text)){
                     getPupil(chatId).setTelephoneResponsible(text);
                     next(chatId);
