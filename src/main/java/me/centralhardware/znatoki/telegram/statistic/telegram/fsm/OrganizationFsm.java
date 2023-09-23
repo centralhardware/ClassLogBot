@@ -58,6 +58,7 @@ public class OrganizationFsm extends Fsm {
 
                 if (!Objects.equals(text, "/complete")){
                     storage.getOrganization(userId).getServices().add(text);
+                    sender.sendText("Услуга сохранена", user);
                     return;
                 }
 
@@ -77,6 +78,11 @@ public class OrganizationFsm extends Fsm {
 
                 redis.put(user.toString(), znatokiUser);
 
+                sender.sendText("""
+                        Организация создана. 
+                        Добавьте клиентов через /addPupil.
+                        Заносите услуги и добавляйте оплату /addTime /addPayment
+                        """, user);
             }
         }
     }
