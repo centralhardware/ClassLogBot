@@ -104,7 +104,7 @@ public class OrganizationFsm extends Fsm {
                                 var s = new Service();
                                 s.setOrgId(org.getId());
                                 s.setName(service);
-                                s.setKey(transcriptor.convert(service).toUpperCase());
+                                s.setKey(transcriptor.convert(service.replace(" ", "_")).toUpperCase());
                                 servicesMapper.insert(s);
                             });
 
