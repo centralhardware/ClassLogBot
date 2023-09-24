@@ -32,11 +32,9 @@ public class AddInvitationCommand extends CommandHandler {
                 .setText("Выберите услуги, которые будет оказывать сотрудник. /complete для завершения");
 
         servicesMapper.getServicesByOrganization(org.getId())
-                .forEach(service -> {
-                    builder.row()
-                            .button(service.getName())
-                            .endRow();
-                });
+                .forEach(service -> builder.row()
+                        .button(service.getName())
+                        .endRow());
 
         storage.setInvitation(message.getFrom().getId(), new Invitation());
         storage.setInvitationStage(message.getFrom().getId(), AddInvitation.INPUT_SERVICES);

@@ -68,11 +68,9 @@ public class OrganizationFsm extends Fsm {
                                     .setText("Введите услуги, которые будет оказывать вы лично. /complete для завершения ввода.");
 
                     storage.getOrganization(userId).getServices()
-                                    .forEach(service -> {
-                                        builder.row()
-                                                .button(service)
-                                                .endRow();
-                                    });
+                                    .forEach(service -> builder.row()
+                                            .button(service)
+                                            .endRow());
 
                     sender.send(builder.build(userId), user);
                     return;

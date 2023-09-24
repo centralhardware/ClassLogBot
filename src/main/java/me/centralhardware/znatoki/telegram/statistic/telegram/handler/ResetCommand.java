@@ -14,6 +14,7 @@ public class ResetCommand extends CommandHandler {
     @Override
     public void handle (Message message) {
         storage.remove(message.getChatId());
+        sender.sendText("Состояние сброшено", message.getFrom());
     }
 
     @Override

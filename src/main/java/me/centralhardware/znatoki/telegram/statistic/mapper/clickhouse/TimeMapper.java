@@ -7,7 +7,6 @@ import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ibatis.annotations.*;
 
-import javax.security.auth.Subject;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;

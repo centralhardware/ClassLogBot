@@ -14,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @RequiredArgsConstructor
 public class AddPaymentCommand extends CommandHandler {
 
-    private final Redis redis;
     private final Storage storage;
 
     @Override
