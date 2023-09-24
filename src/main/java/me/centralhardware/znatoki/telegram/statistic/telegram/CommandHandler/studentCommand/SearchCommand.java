@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler.studentCommand;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.studentCommand;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -6,13 +6,12 @@ import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -22,8 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static java.util.function.Predicate.not;
-import static me.centralhardware.znatoki.telegram.statistic.telegram.CallbackHandler.DELETE_USER_COMMAND;
-import static me.centralhardware.znatoki.telegram.statistic.telegram.CallbackHandler.USER_INFO_COMMAND;
 
 /**
  * show user by text filed using full text search
@@ -84,13 +81,13 @@ public class SearchCommand extends CommandHandler {
                             pupil.getAge(),
                             pupil.getClassNumber())).
                     row().
-                    button("информация", USER_INFO_COMMAND + pupil.getId()).
+                    button("информация", "/user_info" + pupil.getId()).
                     endRow();
             if (telegramService.hasWriteRight(message.getChatId())){
                 inlineKeyboardBuilder.row().webApp(link, "редактировать").endRow();
             }
             inlineKeyboardBuilder.row().
-                    button("удалить", DELETE_USER_COMMAND + pupil.getId()).
+                    button("удалить", "/delete_user" + pupil.getId()).
                     endRow();
             sender.send(inlineKeyboardBuilder.build(message.getChatId()), message.getFrom());
         }

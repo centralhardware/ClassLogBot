@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler;
 
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.apache.commons.lang3.StringUtils;

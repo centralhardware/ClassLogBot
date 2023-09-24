@@ -1,10 +1,10 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;

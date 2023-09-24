@@ -1,11 +1,11 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler.organization;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.organization;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddOrganization;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 

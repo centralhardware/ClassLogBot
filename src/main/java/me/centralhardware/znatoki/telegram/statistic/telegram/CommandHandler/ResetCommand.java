@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;

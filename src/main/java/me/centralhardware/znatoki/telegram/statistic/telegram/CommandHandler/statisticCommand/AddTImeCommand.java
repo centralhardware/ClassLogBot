@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
@@ -9,7 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 

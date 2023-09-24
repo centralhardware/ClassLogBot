@@ -18,6 +18,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.function.Predicate.not;
+
 @Component
 @RequiredArgsConstructor
 public class InlineHandler {
@@ -38,6 +40,7 @@ public class InlineHandler {
         List<InlineQueryResultArticle> articles = pupilService.search(text)
                 .stream()
                 .filter(it -> it.getOrganizationId().equals(redis.getUser(inlineQuery.getFrom().getId()).get().organizationId()))
+                .filter(not(Pupil::isDeleted))
                 .map(it -> InlineQueryResultArticle.builder()
                         .title(getFio(it))
                         .description(getBio(it))

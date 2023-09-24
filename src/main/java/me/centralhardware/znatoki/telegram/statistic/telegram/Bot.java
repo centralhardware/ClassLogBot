@@ -7,8 +7,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.*;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -27,9 +28,9 @@ public class Bot extends TelegramLongPollingBot {
     private final TelegramSender sender;
     private final TelegramUtil telegramUtil;
     private final List<CommandHandler> commandHandlers;
+    private final List<CallbackHandler> callbackHandlers;
     private final Redis redis;
     private final InlineHandler inlineHandler;
-    private final CallbackHandler callbackHandler;
 
     private final TimeFsm timeFsm;
     private final PupilFsm pupilFsm;
@@ -88,7 +89,7 @@ public class Bot extends TelegramLongPollingBot {
 
             if (inlineHandler.processInline(update)) return;
 
-            if (callbackHandler.processCallback(update)) return;
+            if (processCallback(update)) return;
 
             if (timeFsm.isActive(update.getMessage().getChatId())) {
                 timeFsm.process(update);
@@ -123,6 +124,21 @@ public class Bot extends TelegramLongPollingBot {
         for (CommandHandler commandHandler : commandHandlers) {
             if (commandHandler.isAcceptable(message)) {
                 commandHandler.handle(message);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean processCallback(Update update) {
+        if (!update.hasCallbackQuery()) return false;
+
+        var callback = update.getCallbackQuery();
+
+        for (var callbackHandler : callbackHandlers) {
+            if (callbackHandler.isAcceptable(callback)) {
+                callbackHandler.handle(callback);
                 return true;
             }
         }

@@ -1,10 +1,10 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler.studentCommand;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.studentCommand;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 

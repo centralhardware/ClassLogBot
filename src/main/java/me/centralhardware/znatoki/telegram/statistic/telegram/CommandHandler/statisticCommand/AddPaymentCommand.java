@@ -1,12 +1,11 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
+package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
-import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
