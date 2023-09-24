@@ -169,7 +169,7 @@ public class PupilFsm extends Fsm {
                     next(chatId);
                     sender.sendMessageFromResource(MessageConstant.INPUT_MOTHER_NAME, user);
                 } else {
-                    sender.sendMessageFromResource(MessageConstant.NOT_FOUND, user);
+                    sender.sendMessageFromResource(MessageConstant.NOT_FOUND, user, false);
                 }
             }
             case INPUT_MOTHER_NAME -> {

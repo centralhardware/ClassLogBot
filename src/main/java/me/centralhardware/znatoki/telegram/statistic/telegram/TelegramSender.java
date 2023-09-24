@@ -93,8 +93,12 @@ public class TelegramSender {
         });
     }
 
+    public void sendMessageFromResource(ConstantEnum key, User from, Boolean deleteKeyboard){
+        sendText(resourceBundle.getString(key.getKey()), from, deleteKeyboard);
+    }
+
     public void sendMessageFromResource(ConstantEnum key, User from){
-        sendText(resourceBundle.getString(key.getKey()), from);
+        sendMessageFromResource(key, from, true);
     }
 
     public void sendMessageAndRemoveKeyboard(String text, User user) {
