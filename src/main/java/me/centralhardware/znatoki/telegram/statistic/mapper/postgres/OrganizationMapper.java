@@ -5,9 +5,9 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.simpleframework.xml.core.Commit;
 
 import java.util.List;
-import java.util.UUID;
 
 @Mapper
 public interface OrganizationMapper {
@@ -21,9 +21,10 @@ public interface OrganizationMapper {
                 #{org.id},
                 #{org.name},
                 #{org.owner}
-            )
-                
+            );
+            commit
             """)
+    @Commit
     void insert(@Param("org") Organization organization);
 
 

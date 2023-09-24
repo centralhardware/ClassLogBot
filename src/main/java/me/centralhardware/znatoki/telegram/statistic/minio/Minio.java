@@ -23,7 +23,7 @@ public class Minio {
 
     private final MinioClient minioClient;
 
-    public Try<String> upload(File file, LocalDateTime dateTime, String fio, String subject, String bucket){
+    public Try<String> upload(File file, LocalDateTime dateTime, String fio, String service, String bucket){
         return Try.of(() -> {
             var fileNew = Paths.get(String.format("%s/%s/%s/%s/%s:%s-%s-%s-%s.jpg",
                     Config.getMinioBasePath(),
@@ -33,7 +33,7 @@ public class Minio {
                     dateTime.getHour(),
                     dateTime.getMinute(),
                     fio,
-                    subject,
+                    service,
                     UUID.randomUUID()));
 
             Files.createParentDirs(fileNew.toFile());

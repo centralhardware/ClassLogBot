@@ -5,8 +5,8 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -27,6 +27,7 @@ public class CallbackHandler {
 
     private final TimeMapper timeMapper;
     private final PaymentMapper paymentMapper;
+    private final ServicesMapper servicesMapper;
 
     public static final String USER_INFO_COMMAND        = "/user_info";
     public static final String DELETE_USER_COMMAND      = "/Љdelete_user";
@@ -53,7 +54,7 @@ public class CallbackHandler {
                             return;
                         }
 
-                        sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getSubjectsForPupil(pupil.getId())), callbackQuery.getFrom());
+                        sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()), callbackQuery.getFrom());
                     },
                     () -> sender.sendMessageFromResource(MessageConstant.USER_NOT_FOUND, callbackQuery.getFrom())
             );

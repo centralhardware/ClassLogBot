@@ -1,7 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import me.centralhardware.znatoki.telegram.statistic.Config;
-import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.telegrambots.meta.api.objects.Update;

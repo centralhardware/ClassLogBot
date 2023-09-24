@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
@@ -31,6 +31,7 @@ public class UserInfoCommand extends CommandHandler {
     private final TelegramUtil telegramUtils;
     private final Redis redis;
     private final TimeMapper timeMapper;
+    private final ServicesMapper servicesMapper;
 
     @Override
     public void handle(Message message) {
@@ -46,7 +47,7 @@ public class UserInfoCommand extends CommandHandler {
                         return;
                     }
 
-                    sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getSubjectsForPupil(pupil.getId())), message.getFrom());
+                    sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()), message.getFrom());
                 },
                 () -> sender.sendMessageFromResource(MessageConstant.PUPIL_NOT_FOUND, message.getFrom())
         );

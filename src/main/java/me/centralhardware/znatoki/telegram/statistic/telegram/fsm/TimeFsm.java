@@ -2,25 +2,21 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.Config;
-import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
-import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
-import me.centralhardware.znatoki.telegram.statistic.validate.EnumValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.PhotoValidator;
+import me.centralhardware.znatoki.telegram.statistic.validate.ServiceValidator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -51,11 +47,12 @@ public class TimeFsm extends Fsm {
     private final TimeMapper timeMapper;
     private final PaymentMapper paymentMapper;
     private final TeacherNameMapper teacherNameMapper;
+    private final ServicesMapper servicesMapper;
 
-    private final EnumValidator enumValidator;
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
     private final PhotoValidator photoValidator;
+    private final ServiceValidator serviceValidator;
 
     @Override
     public void process(Update update) {
@@ -64,13 +61,14 @@ public class TimeFsm extends Fsm {
                 .map(Update::getMessage)
                 .map(Message::getText)
                 .orElse(null);
+        var znatokiUser = redis.getUser(userId).get();
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getStage(userId)) {
-            case INPUT_SUBJECT -> enumValidator.validate(text).peekLeft(
+            case INPUT_SUBJECT -> serviceValidator.validate(Pair.of(text, znatokiUser.organizationId())).peekLeft(
                     error -> sender.sendText(error, user)
-            ).peek(subject -> {
-                storage.getTime(userId).setSubject(subject.name());
+            ).peek(service -> {
+                storage.getTime(userId).setServiceId(servicesMapper.getServiceId(znatokiUser.organizationId(), service));
                 sender.sendText("Введите фио. /complete - для окончания ввода", user);
                 InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                         .row().switchToInline().endRow();
@@ -130,7 +128,7 @@ public class TimeFsm extends Fsm {
                                 })
                                 .get();
 
-                        String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), time.getSubject(), "znatoki")
+                        String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), servicesMapper.getKeyById(time.getServiceId()), "znatoki")
                                 .onFailure(error -> {
                                     sender.sendText("Ошибка при сохранение фотографии. Попробуйте снова", user);
                                     storage.remove(userId);
@@ -140,7 +138,7 @@ public class TimeFsm extends Fsm {
 
                         ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
                                 .setText(STR."""
-                                        Предмет: \{Subject.valueOf(time.getSubject()).getRusName()}
+                                        Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
                                         ФИО:\{String.join(";", time.getFios().stream().map(Pair::getLeft).toList())}
                                         стоимость занятия: \{time.getAmount().toString()}
                                         """)
@@ -203,7 +201,7 @@ public class TimeFsm extends Fsm {
                 .caption(STR."""
                         #занятие
                         Время: \{time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
-                        Предмет: #\{Subject.valueOf(time.getSubject()).getRusName().replaceAll(" ", "_")}
+                        Предмет: #\{servicesMapper.getNameById(time.getServiceId()).replaceAll(" ", "_")}
                         Ученики: \{time.getFios().stream()
                                     .map(it -> "#" + it.getLeft().replaceAll(" ", "_"))
                                     .collect(Collectors.joining(", "))}

@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.Storage;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;

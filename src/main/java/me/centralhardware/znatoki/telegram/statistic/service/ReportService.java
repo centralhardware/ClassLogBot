@@ -1,12 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.report.MonthReport;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -25,6 +24,7 @@ public class ReportService {
     private final TeacherNameMapper teacherNameMapper;
     private final Redis redis;
     private final PupilService pupilService;
+    private final ServicesMapper servicesMapper;
 
     public List<File> getReportsCurrent(Long id){
         return getReport(timeMapper::getCuurentMontTimes, id);
@@ -40,17 +40,17 @@ public class ReportService {
 
         return redis.getUser(times.get(0).getChatId())
                 .get()
-                .subjects()
+                .services()
                 .stream()
                 .map(it -> {
                     var date = times.stream()
-                            .filter(time -> Subject.valueOf(time.getSubject()).equals(it))
+                            .filter(time -> time.getServiceId().equals(it))
                             .findFirst()
                             .map(Time::getDateTime)
                             .orElse(null);
                     if (date == null) return null;
 
-                    return new MonthReport(teacherNameMapper.getFio(id), pupilService, it, date).generate(times);
+                    return new MonthReport(teacherNameMapper.getFio(id), pupilService, it,servicesMapper.getKeyById(it), date).generate(times);
                 })
                 .filter(Objects::nonNull)
                 .toList();

@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.report;
 
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -20,12 +19,14 @@ public class ExcelReport {
     private int rowIndex = 0;
 
     protected final String fio;
-    protected final Subject subject;
+    protected final Long service;
+    protected final String serviceName;
     protected final LocalDateTime date;
 
-    public ExcelReport(String fio, Subject subject, LocalDateTime date){
+    public ExcelReport(String fio, Long service, String serviceName, LocalDateTime date){
         this.fio = fio;
-        this.subject = subject;
+        this.service = service;
+        this.serviceName = serviceName;
         this.date = date;
         this.workbook = new XSSFWorkbook();
     }
@@ -59,7 +60,7 @@ public class ExcelReport {
 
     public File create(){
         try {
-            var temp = Files.createFile(Path.of(fio + " - " + subject.getRusName() + " " + date.format(DateTimeFormatter.ofPattern("MMMM")) + " " +
+            var temp = Files.createFile(Path.of(fio + " - " + serviceName + " " + date.format(DateTimeFormatter.ofPattern("MMMM")) + " " +
                     date.getYear() + ".xlsx")).toFile();
 
             try (var outputStream = new FileOutputStream(temp)){

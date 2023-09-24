@@ -7,6 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMa
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.InvitationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.SessionMapper;
@@ -37,6 +38,8 @@ public class MyBaatisConfiguration {
         configurationClickhouse.addMapper(TeacherNameMapper.class);
         configurationClickhouse.addMapper(PaymentMapper.class);
 
+        configurationClickhouse.setCacheEnabled(false);
+
         return new SqlSessionFactoryBuilder().build(configurationClickhouse);
     }
 
@@ -44,11 +47,15 @@ public class MyBaatisConfiguration {
     public SqlSessionFactory getSqlSessionPostgres(DataSource dataSource){
         var postgres = new Environment("postgres", new JdbcTransactionFactory(), dataSource);
         var configurationPostgres = new org.apache.ibatis.session.Configuration(postgres);
+
+        configurationPostgres.getTypeHandlerRegistry().register(UUID.class, UuidTypeHandler.class);
+
         configurationPostgres.addMapper(SessionMapper.class);
         configurationPostgres.addMapper(OrganizationMapper.class);
         configurationPostgres.addMapper(ServicesMapper.class);
+        configurationPostgres.addMapper(InvitationMapper.class);
 
-        configurationPostgres.getTypeHandlerRegistry().register(UUID.class, UuidTypeHandler.class);
+        configurationPostgres.setCacheEnabled(false);
 
         return new SqlSessionFactoryBuilder().build(configurationPostgres);
     }
@@ -94,6 +101,11 @@ public class MyBaatisConfiguration {
     @Bean
     public ServicesMapper getServiceMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
         return sqlSessionFactory.openSession().getMapper(ServicesMapper.class);
+    }
+
+    @Bean
+    public InvitationMapper getInvitationMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
+        return sqlSessionFactory.openSession().getMapper(InvitationMapper.class);
     }
 
 }

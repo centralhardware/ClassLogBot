@@ -1,11 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,6 +26,7 @@ public class DailyReport {
     private final TimeMapper timeMapper;
     private final TelegramSender sender;
     private final OrganizationMapper organizationMapper;
+    private final ServicesMapper servicesMapper;
 
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -47,7 +48,7 @@ public class DailyReport {
 
                     it.forEach(time -> sender.sendText(STR."""
                                         Время: \{timeFormatter.format(time.getDateTime())}
-                                        Предмет: \{Subject.valueOf(time.getSubject()).getRusName()}
+                                        Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
                                         Ученики: \{String.join(", ", time.getFios().stream().map(Pair::getLeft).toList())}
                                         Стоимость: \{time.getAmount()}
                             """, user));

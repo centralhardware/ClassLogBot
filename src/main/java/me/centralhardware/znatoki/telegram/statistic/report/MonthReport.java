@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.report;
 
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 
@@ -16,8 +15,8 @@ public class MonthReport extends ExcelReport{
 
     private final PupilService pupilService;
 
-    public MonthReport(String fio, PupilService pupilService, Subject subject, LocalDateTime date) {
-        super(fio, subject, date);
+    public MonthReport(String fio, PupilService pupilService, Long service,String serviceName, LocalDateTime date) {
+        super(fio, service, serviceName, date);
 
         this.pupilService = pupilService;
     }
@@ -27,13 +26,13 @@ public class MonthReport extends ExcelReport{
     public File generate(List<Time> times){
         times = times
                 .stream()
-                .filter(it -> Subject.valueOf(it.getSubject()).equals(this.subject))
+                .filter(it -> it.getServiceId().equals(this.service))
                 .toList();
         if (times.isEmpty()) return null;
 
         newSheet("отчет");
 
-        writeTitle(STR."Отчет по оплате и посещаемости занятий по \{subject.getRusName()}", 6);
+        writeTitle(STR."Отчет по оплате и посещаемости занятий по \{serviceName}", 6);
         writeTitle("Преподаватель: " + fio, 6);
 
         LocalDateTime dateTime = times.get(0).getDateTime();

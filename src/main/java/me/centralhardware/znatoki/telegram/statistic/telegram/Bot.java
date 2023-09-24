@@ -7,11 +7,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.OrganizationFsm;
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm;
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PupilFsm;
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.*;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -39,6 +35,7 @@ public class Bot extends TelegramLongPollingBot {
     private final PupilFsm pupilFsm;
     private final PaymentFsm paymentFsm;
     private final OrganizationFsm organizationFsm;
+    private final InvitationFsm invitationFsm;
 
     @SneakyThrows
     @PostConstruct
@@ -105,6 +102,11 @@ public class Bot extends TelegramLongPollingBot {
 
             if(paymentFsm.isActive(update.getMessage().getChatId())){
                 paymentFsm.process(update);
+                return;
+            }
+
+            if (invitationFsm.isActive(userId)){
+                invitationFsm.process(update);
                 return;
             }
 

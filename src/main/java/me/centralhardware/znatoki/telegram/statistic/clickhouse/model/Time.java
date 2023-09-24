@@ -14,7 +14,7 @@ public class Time {
     private LocalDateTime dateTime;
     private UUID id;
     private Long chatId;
-    private String subject;
+    private Long serviceId;
     private Set<Pair<String, Integer>> fios = new HashSet<>();
     private String fio;
     private Integer pupilId;

@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler.studentCommand;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.Storage;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;

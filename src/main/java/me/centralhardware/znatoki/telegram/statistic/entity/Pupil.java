@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
@@ -14,6 +13,7 @@ import org.hibernate.search.engine.backend.types.Projectable;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
 
+import javax.security.auth.Subject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -95,7 +95,7 @@ public class Pupil {
 
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    public String getInfo(List<Subject> subjects) {
+    public String getInfo(List<String> services) {
         String know             = howToKnow         == null? "" : howToKnow.toString();
         String nameMother       = motherName        == null? "" : motherName;
         String updated          = updateBy          == null? "" : updateBy.toString();
@@ -111,7 +111,7 @@ public class Pupil {
                 телефон=\{TelephoneUtils.format(telephone)}
                 телефон ответственного=\{TelephoneUtils.format( telephoneResponsible)}
                 как узнал=\{TelegramUtil.makeBold(know)}
-                Предметы=\{TelegramUtil.makeBold(subjects.stream().map(Subject::getRusName).collect(Collectors.joining(",")))}
+                Предметы=\{TelegramUtil.makeBold(String.join(",", services))}
                 имя матери=\{TelegramUtil.makeBold(nameMother)}
                 дата создания=\{TelegramUtil.makeBold(dateFormatter.format(createDate))}
                 дата изменения=\{TelegramUtil.makeBold(dateFormatter.format(modifyDate))}

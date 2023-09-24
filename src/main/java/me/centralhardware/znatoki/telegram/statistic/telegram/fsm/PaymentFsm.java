@@ -2,14 +2,11 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.Config;
-import me.centralhardware.znatoki.telegram.statistic.Storage;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;

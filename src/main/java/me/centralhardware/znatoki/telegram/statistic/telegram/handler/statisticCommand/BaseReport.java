@@ -1,9 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.handler.statisticCommand;
 
-import me.centralhardware.znatoki.telegram.statistic.Storage;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.handler.CommandHandler;
 import org.springframework.beans.factory.annotation.Autowired;

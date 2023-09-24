@@ -2,12 +2,12 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Subject;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ibatis.annotations.*;
 
+import javax.security.auth.Subject;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -37,7 +37,7 @@ public interface TimeMapper {
                 date_time,
                 id,
                 chat_id,
-                subject,
+                service_id,
                 fio,
                 amount,
                 photoId,
@@ -47,7 +47,7 @@ public interface TimeMapper {
                 #{time.dateTime},
                 #{time.id},
                 #{time.chatId},
-                #{time.subject},
+                #{time.serviceId},
                 #{time.fio},
                 #{time.amount},
                 #{time.photoId},
@@ -61,7 +61,7 @@ public interface TimeMapper {
             SELECT date_time,
                    id,
                    chat_id,
-                   subject,
+                   service_id,
                    fio,
                    pupil_id,
                    amount,
@@ -75,7 +75,7 @@ public interface TimeMapper {
             @Result(property = "dateTime", column = "date_time"),
             @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
             @Result(property = "chatId", column = "chat_id"),
-            @Result(property = "subject", column = "subject"),
+            @Result(property = "serviceId", column = "service_id"),
             @Result(property = "fio", column = "fio"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
@@ -92,7 +92,7 @@ public interface TimeMapper {
             SELECT date_time,
                    id,
                    chat_id,
-                   subject,
+                   service_id,
                    fio,
                    pupil_id,
                    amount,
@@ -107,7 +107,7 @@ public interface TimeMapper {
             @Result(property = "dateTime", column = "date_time"),
             @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
             @Result(property = "chatId", column = "chat_id"),
-            @Result(property = "subject", column = "subject"),
+            @Result(property = "serviceId", column = "service_id"),
             @Result(property = "fio", column = "fio"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
@@ -179,10 +179,10 @@ public interface TimeMapper {
     void setDeleted(@Param("id") UUID timeId, @Param("is_deleted") Boolean isDeleted);
 
     @Select("""
-            SELECT DISTINCT subject
+            SELECT DISTINCT service_id
             FROM znatoki_statistic_time
             WHERE toInt32(pupil_id) = toInt32(#{id}) ANd is_deleted=false
             """)
-    List<Subject> getSubjectsForPupil(@Param("id") Integer id);
+    List<Long> getServicesForPupil(@Param("id") Integer id);
 
 }
