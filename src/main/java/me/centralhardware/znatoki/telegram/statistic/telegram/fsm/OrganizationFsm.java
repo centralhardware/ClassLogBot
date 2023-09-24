@@ -97,7 +97,9 @@ public class OrganizationFsm extends Fsm {
                     org.setOwner(userId);
                     organizationMapper.insert(org);
 
-                    teacherNameMapper.insert(userId, org.getOwnerFio());
+                    if (teacherNameMapper.getFio(userId) == null){
+                        teacherNameMapper.insert(userId, org.getOwnerFio());
+                    }
 
                     org.getServices()
                             .forEach(service -> {
