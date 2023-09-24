@@ -13,15 +13,13 @@ import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
-import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
-import org.apache.commons.lang3.StringUtils;
+import me.centralhardware.znatoki.telegram.statistic.validate.ClassNumberValidator;
+import me.centralhardware.znatoki.telegram.statistic.validate.DateValidator;
+import me.centralhardware.znatoki.telegram.statistic.validate.TelephoneValidator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.time.DateTimeException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 @Component
@@ -37,6 +35,10 @@ public class PupilFsm extends Fsm {
 
     private final TimeMapper timeMapper;
     private final ServicesMapper servicesMapper;
+
+    private final ClassNumberValidator classNumberValidator;
+    private final DateValidator dateValidator;
+    private final TelephoneValidator telephoneValidator;
 
     @Override
     public void process(Update update) {
@@ -81,47 +83,36 @@ public class PupilFsm extends Fsm {
                     return;
                 }
 
-                if (StringUtils.isNumeric(text) || text.equals("-1")){
-                    int classNumber = Integer.parseInt(text);
-                    if (classNumber > 11 || classNumber < 1 && classNumber != -1){
-                        sender.sendMessageFromResource(MessageConstant.CLASS_MUST_BE_IN_RANGE, user);
-                        return;
-                    }
-                    getPupil(chatId).setClassNumber(classNumber);
-                    sender.sendMessageFromResource(MessageConstant.INPUT_DATE_IN_FORMAT, user);
-                    next(chatId);
-                } else {
-                    sender.sendMessageFromResource(MessageConstant.NECESSARY_TO_INPUT_NUMBER, user);
-                }
+                classNumberValidator.validate(text)
+                        .peekLeft(error -> sender.sendText(error, user))
+                        .peek(classNumber -> {
+                            getPupil(chatId).setClassNumber(classNumber);
+                            sender.sendMessageFromResource(MessageConstant.INPUT_DATE_IN_FORMAT, user);
+                            next(chatId);
+                        });
             }
             case INPUT_DATE_OF_RECORD -> {
-                LocalDate date;
-                try {
-                    date = LocalDate.parse(text, dateFormat);
-                } catch (DateTimeException e){
-                    sender.sendMessageFromResource(MessageConstant.DATE_FORMAT_ERROR, user);
-                    return;
-                }
 
-                if (date.getYear() < 119){
-                    sender.sendMessageFromResource(MessageConstant.YEAR_OF_RECORD_LOW_THEN_2019, user);
-                    return;
-                }
-                getPupil(chatId).setDateOfRecord(date.atStartOfDay());
-                next(chatId);
-                sender.sendMessageFromResource(MessageConstant.INPUT_DATE_OF_BIRTH_IN_FORMAT, user);
+                dateValidator.validate(text)
+                        .peekLeft(error -> sender.sendText(error, user))
+                        .peek(date -> {
+                            if (date.getYear() < 119){
+                                sender.sendMessageFromResource(MessageConstant.YEAR_OF_RECORD_LOW_THEN_2019, user);
+                                return;
+                            }
+                            getPupil(chatId).setDateOfRecord(date.atStartOfDay());
+                            next(chatId);
+                            sender.sendMessageFromResource(MessageConstant.INPUT_DATE_OF_BIRTH_IN_FORMAT, user);
+                        });
             }
             case INPUT_DATE_OF_BIRTH -> {
-                LocalDate date;
-                try {
-                    date = LocalDate.parse(text, dateFormat);
-                } catch (DateTimeException e){
-                    sender.sendMessageFromResource(MessageConstant.DATE_FORMAT_ERROR, user);
-                    return;
-                }
-                getPupil(chatId).setDateOfBirth(date.atStartOfDay());
-                next(chatId);
-                sender.sendMessageFromResource(MessageConstant.INPUT_PUPIL_TEL, user);
+                dateValidator.validate(text)
+                        .peekLeft(error -> sender.sendText(error, user))
+                        .peek(date -> {
+                            getPupil(chatId).setDateOfBirth(date.atStartOfDay());
+                            next(chatId);
+                            sender.sendMessageFromResource(MessageConstant.INPUT_PUPIL_TEL, user);
+                        });
             }
             case INPUT_TELEPHONE -> {
                 if (text.equals(SKIP_COMMAND)){
@@ -130,17 +121,18 @@ public class PupilFsm extends Fsm {
                     sender.sendMessageFromResource(MessageConstant.INPUT_RESPONSIBLE_TEL, user);
                     return;
                 }
-                if (TelephoneUtils.validate(text)){
-                    if (pupilService.existByTelephone(text)){
-                        sender.sendMessageFromResource(MessageConstant.TEL_ALREADY_EXIST, user);
-                        return;
-                    }
-                    getPupil(chatId).setTelephone(text);
-                    next(chatId);
-                    sender.sendMessageFromResource(MessageConstant.INPUT_RESPONSIBLE_TEL, user);
-                } else {
-                    sender.sendMessageFromResource(MessageConstant.INPUT_RIGHT_TEL_NUMBER, user);
-                }
+
+                telephoneValidator.validate(text)
+                        .peekLeft(error -> sender.sendText(error, user))
+                        .peek(telephone -> {
+                            if (pupilService.existByTelephone(telephone)){
+                                sender.sendMessageFromResource(MessageConstant.TEL_ALREADY_EXIST, user);
+                                return;
+                            }
+                            getPupil(chatId).setTelephone(telephone);
+                            next(chatId);
+                            sender.sendMessageFromResource(MessageConstant.INPUT_RESPONSIBLE_TEL, user);
+                        });
             }
             case INPUT_TELEPHONE_OF_RESPONSIBLE -> {
                 if (text.equals(SKIP_COMMAND)){
@@ -155,20 +147,21 @@ public class PupilFsm extends Fsm {
                     sender.send(replyKeyboardBuilder.build(chatId), user);
                     return;
                 }
-                if (TelephoneUtils.validate(text)){
-                    getPupil(chatId).setTelephoneResponsible(text);
-                    next(chatId);
-                    ReplyKeyboardBuilder replyKeyboardBuilder = ReplyKeyboardBuilder.
-                            create().
-                            setText(resourceBundle.getString("INPUT_HOW_TO_KNOW"));
-                    for (HowToKnow howToKnow : HowToKnow.values()){
-                        replyKeyboardBuilder.
-                                row().button(howToKnow.getRusName()).endRow();
-                    }
-                    sender.send(replyKeyboardBuilder.build(chatId), user);
-                } else {
-                    sender.sendMessageFromResource(MessageConstant.INPUT_RIGHT_TEL_NUMBER, user);
-                }
+
+                telephoneValidator.validate(text)
+                        .peekLeft(error -> sender.sendText(error, user))
+                        .peek(telephone -> {
+                            getPupil(chatId).setTelephoneResponsible(telephone);
+                            next(chatId);
+                            ReplyKeyboardBuilder replyKeyboardBuilder = ReplyKeyboardBuilder.
+                                    create().
+                                    setText(resourceBundle.getString("INPUT_HOW_TO_KNOW"));
+                            for (HowToKnow howToKnow : HowToKnow.values()){
+                                replyKeyboardBuilder.
+                                        row().button(howToKnow.getRusName()).endRow();
+                            }
+                            sender.send(replyKeyboardBuilder.build(chatId), user);
+                        });
             }
             case INPUT_HOW_TO_KNOW -> {
                 if (HowToKnow.validate(text)){
@@ -193,10 +186,6 @@ public class PupilFsm extends Fsm {
             }
         }
     }
-
-
-
-    private static final DateTimeFormatter dateFormat    = DateTimeFormatter.ofPattern("dd MM yyyy");
 
     public Pupil getPupil(Long chatId){
         return storage.getPupil(chatId);
