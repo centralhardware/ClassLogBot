@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS service (
-    id UUID PRIMARY KEY ,
+    unique_id SERIAL PRIMARY KEY ,
+    id UUID,
     chat_id BIGINT NOT NULL ,
     amount INTEGER NOT NULL ,
     photo_id TEXT,
@@ -8,4 +9,4 @@ CREATE TABLE IF NOT EXISTS service (
     service_id INTEGER NOT NULL ,
     date_time TIMESTAMP,
     is_deleted BOOLEAN DEFAULT false
-)
+);
