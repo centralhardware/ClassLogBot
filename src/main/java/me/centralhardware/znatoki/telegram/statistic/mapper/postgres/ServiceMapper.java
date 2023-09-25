@@ -1,10 +1,9 @@
-package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
+package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;
@@ -17,11 +16,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Mapper
-public interface TimeMapper {
+public interface ServiceMapper {
 
     @Select("""
-            SELECT organization_id
-            FROM znatoki_statistic_time
+            SELECT org_id
+            FROM service
             WHERE id = #{id}
             LIMIT 1
             """)
@@ -32,27 +31,25 @@ public interface TimeMapper {
     }
 
     @Insert("""
-            INSERT INTO znatoki_statistic_time (
+            INSERT INTO service (
                 date_time,
                 id,
                 chat_id,
                 service_id,
-                fio,
                 amount,
-                photoId,
+                photo_id,
                 pupil_id,
-                organization_id
+                org_id
             ) VALUES (
                 #{time.dateTime},
                 #{time.id},
                 #{time.chatId},
                 #{time.serviceId},
-                #{time.fio},
                 #{time.amount},
                 #{time.photoId},
                 #{time.pupilId},
                 #{time.organizationId}
-            )
+            );commit
             """)
     void insertTime(@Param("time") Time time);
 
@@ -61,12 +58,11 @@ public interface TimeMapper {
                    id,
                    chat_id,
                    service_id,
-                   fio,
                    pupil_id,
                    amount,
-                   photoId,
-                   organization_id
-            FROM znatoki_statistic_time
+                   photo_id,
+                   org_id
+            FROM service
             WHERE id = #{id}
                 AND is_deleted=false
             """)
@@ -75,11 +71,10 @@ public interface TimeMapper {
             @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
             @Result(property = "chatId", column = "chat_id"),
             @Result(property = "serviceId", column = "service_id"),
-            @Result(property = "fio", column = "fio"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
-            @Result(property = "photoId", column = "photoId"),
-            @Result(property = "organizationId", column = "organization_id", typeHandler = UuidTypeHandler.class)
+            @Result(property = "photoId", column = "photo_id"),
+            @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class)
     })
     List<Time> _getTimesById(@Param("id") UUID id);
 
@@ -92,14 +87,13 @@ public interface TimeMapper {
                    id,
                    chat_id,
                    service_id,
-                   fio,
                    pupil_id,
                    amount,
-                   photoId,
-                   organization_id
-            FROM znatoki_statistic_time
+                   photo_id,
+                   org_id
+            FROM service
             WHERE chat_id = #{userId}
-                AND date_time between toDateTime(#{startDate}) and toDateTime(#{endDate})
+                AND date_time between to_timestamp(#{startDate}, 'DD-MM-YYYY HH24:MI:SS') and to_timestamp(#{endDate}, 'DD-MM-YYYY HH24:MI:SS')
                 AND is_deleted=false
             """)
     @Results({
@@ -107,17 +101,16 @@ public interface TimeMapper {
             @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
             @Result(property = "chatId", column = "chat_id"),
             @Result(property = "serviceId", column = "service_id"),
-            @Result(property = "fio", column = "fio"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
-            @Result(property = "photoId", column = "photoId"),
-            @Result(property = "organizationId", column = "organization_id", typeHandler = UuidTypeHandler.class)
+            @Result(property = "photoId", column = "photo_id"),
+            @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class)
     })
     List<Time> _getTimesByChatId(@Param("userId") Long userId,
                              @Param("startDate") String startDate,
                              @Param("endDate") String endDate);
 
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
     default List<Time> _getTimesByChatId(Long userId,
                                      LocalDateTime startDate,
@@ -139,7 +132,7 @@ public interface TimeMapper {
                 .stream()
                 .map(timeCollection -> {
                     var time = timeCollection.stream().findFirst().get();
-                    time.setFios(timeCollection.stream().map(it -> Pair.of(it.getFio(), it.getPupilId())).collect(Collectors.toSet()));
+                    time.setFios(timeCollection.stream().map(Time::getPupilId).collect(Collectors.toSet()));
                     return time;
                 })
                 .sorted(Comparator.comparing(Time::getDateTime))
@@ -166,21 +159,23 @@ public interface TimeMapper {
 
     @Select("""
             SELECT DISTINCT chat_id
-            FROM znatoki_statistic_time
-            WHERE is_deleted = false AND organization_id = #{org_id}
+            FROM service
+            WHERE is_deleted = false AND org_id = #{org_id}
             """)
     @ResultType(Long.class)
     List<Long> getIds(@Param("org_id") UUID orgId);
 
     @Update("""
-            ALTER TABLE znatoki_statistic_time UPDATE is_deleted = #{is_deleted} WHERE id = #{id}
+            UPDATE service
+            SET is_deleted = #{is_deleted}
+            WHERE id = #{id};commit
             """)
     void setDeleted(@Param("id") UUID timeId, @Param("is_deleted") Boolean isDeleted);
 
     @Select("""
             SELECT DISTINCT service_id
-            FROM znatoki_statistic_time
-            WHERE toInt32(pupil_id) = toInt32(#{id}) ANd is_deleted=false
+            FROM service
+            WHERE pupil_id = #{id} ANd is_deleted=false
             """)
     List<Long> getServicesForPupil(@Param("id") Integer id);
 

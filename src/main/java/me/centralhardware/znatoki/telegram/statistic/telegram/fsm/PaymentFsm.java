@@ -3,8 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
@@ -39,7 +39,7 @@ public class PaymentFsm extends Fsm {
     private final Minio minio;
     private final Redis redis;
 
-    private final TeacherNameMapper teacherNameMapper;
+    private final EmployNameMapper employNameMapper;
     private final PaymentMapper paymentMapper;
     private final PupilService pupilService;
 
@@ -93,7 +93,7 @@ public class PaymentFsm extends Fsm {
                                 .get();
 
                         storage.getPayment(userId).setDateTime(LocalDateTime.now()  );
-                        String id = minio.upload(file, payment.getDateTime(), teacherNameMapper.getFio(payment.getChatId()), "", "znatoki-payment")
+                        String id = minio.upload(file, payment.getDateTime(), employNameMapper.getFio(payment.getChatId()), "", "znatoki-payment")
                                 .onFailure(error -> {
                                     sender.sendText("Ошибка при сохранение фотографии. Попробуйте снова", user);
                                     storage.remove(userId);
@@ -150,7 +150,7 @@ public class PaymentFsm extends Fsm {
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
                                 Ученик: #\{pupilService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
                                 оплачено: \{payment.getAmount()},
-                                Принял оплату: #\{teacherNameMapper.getFio(userId).replaceAll(" ", "_")}
+                                Принял оплату: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
                                 """)
                 .build();
         sender.send(sendPhoto, getLogUser());

@@ -15,8 +15,7 @@ public class Time {
     private UUID id;
     private Long chatId;
     private Long serviceId;
-    private Set<Pair<String, Integer>> fios = new HashSet<>();
-    private String fio;
+    private Set<Integer> fios = new HashSet<>();
     private Integer pupilId;
     private Integer amount;
     private String photoId;

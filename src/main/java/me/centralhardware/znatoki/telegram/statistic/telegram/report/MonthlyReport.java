@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
@@ -20,14 +20,14 @@ import java.util.List;
 public class MonthlyReport {
 
     private final ReportService reportService;
-    private final TimeMapper timeMapper;
+    private final ServiceMapper serviceMapper;
     private final TelegramSender sender;
     private final OrganizationMapper organizationMapper;
 
     @Scheduled(cron = "0 0 10 1 * *")
     public void report() {
         organizationMapper.getOwners()
-                .forEach(org -> timeMapper.getIds(org.getId())
+                .forEach(org -> serviceMapper.getIds(org.getId())
                             .stream()
                             .map(id -> {
                                 List<File> files = reportService.getReportPrevious(id);

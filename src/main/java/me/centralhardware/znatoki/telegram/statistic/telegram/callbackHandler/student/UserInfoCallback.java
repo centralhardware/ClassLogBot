@@ -3,11 +3,9 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.s
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
-import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -19,7 +17,7 @@ public class UserInfoCallback extends CallbackHandler {
 
     private final PupilService pupilService;
 
-    private final TimeMapper timeMapper;
+    private final ServiceMapper serviceMapper;
     private final ServicesMapper servicesMapper;
 
     @Override
@@ -36,7 +34,7 @@ public class UserInfoCallback extends CallbackHandler {
                         return;
                     }
 
-                    sender.sendMessageWithMarkdown(pupil.getInfo(timeMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()), callbackQuery.getFrom());
+                    sender.sendMessageWithMarkdown(pupil.getInfo(serviceMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()), callbackQuery.getFrom());
                 },
                 () -> sender.sendMessageFromResource(MessageConstant.USER_NOT_FOUND, from)
         );

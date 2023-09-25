@@ -6,7 +6,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
 import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
@@ -33,7 +33,7 @@ public class PupilFsm extends Fsm {
     private final TelegramSender sender;
     private final Redis redis;
 
-    private final TimeMapper timeMapper;
+    private final ServiceMapper serviceMapper;
     private final ServicesMapper servicesMapper;
 
     private final ClassNumberValidator classNumberValidator;
@@ -179,7 +179,7 @@ public class PupilFsm extends Fsm {
 
                 getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
                 getPupil(chatId).setCreated_by(chatId);
-                sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).getInfo(timeMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
+                sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
                 sendLog(getPupil(chatId));
                 storage.remove(chatId);
                 sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
@@ -206,8 +206,9 @@ public class PupilFsm extends Fsm {
 
     private void sendLog(Pupil pupil) {
         var message = SendMessage.builder()
-                .text("#ученик\n" + pupil.getInfo(timeMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()))
+                .text("#ученик\n" + pupil.getInfo(serviceMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()))
                 .chatId(getLogUser().getId())
+                .parseMode("Markdown")
                 .build();
         sender.send(message, getLogUser());
     }

@@ -3,14 +3,9 @@ package me.centralhardware.znatoki.telegram.statistic.configuration;
 import com.clickhouse.jdbc.ClickHouseDataSource;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Config;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.InvitationMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.SessionMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -33,11 +28,8 @@ public class MyBaatisConfiguration {
     public SqlSessionFactory getSqlSessionClickhouse(){
         var clickhouse = new Environment("clickhouse", new JdbcTransactionFactory(), getDataSource());
         var configurationClickhouse = new org.apache.ibatis.session.Configuration(clickhouse);
-        configurationClickhouse.addMapper(TimeMapper.class);
-        configurationClickhouse.addMapper(StatisticMapper.class);
-        configurationClickhouse.addMapper(TeacherNameMapper.class);
-        configurationClickhouse.addMapper(PaymentMapper.class);
 
+        configurationClickhouse.addMapper(StatisticMapper.class);
         configurationClickhouse.setCacheEnabled(false);
 
         return new SqlSessionFactoryBuilder().build(configurationClickhouse);
@@ -54,6 +46,9 @@ public class MyBaatisConfiguration {
         configurationPostgres.addMapper(OrganizationMapper.class);
         configurationPostgres.addMapper(ServicesMapper.class);
         configurationPostgres.addMapper(InvitationMapper.class);
+        configurationPostgres.addMapper(EmployNameMapper.class);
+        configurationPostgres.addMapper(PaymentMapper.class);
+        configurationPostgres.addMapper(ServiceMapper.class);
 
         configurationPostgres.setCacheEnabled(false);
 
@@ -74,17 +69,17 @@ public class MyBaatisConfiguration {
     }
 
     @Bean
-    public TimeMapper getTimeMapper(@Qualifier("sqlSessionFactoryClickhouse") SqlSessionFactory sqlSessionFactory){
-        return sqlSessionFactory.openSession().getMapper(TimeMapper.class);
+    public ServiceMapper getTimeMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
+        return sqlSessionFactory.openSession().getMapper(ServiceMapper.class);
     }
 
     @Bean
-    public TeacherNameMapper getTeacherNameMapper(@Qualifier("sqlSessionFactoryClickhouse") SqlSessionFactory sqlSessionFactory){
-        return sqlSessionFactory.openSession().getMapper(TeacherNameMapper.class);
+    public EmployNameMapper getTeacherNameMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
+        return sqlSessionFactory.openSession().getMapper(EmployNameMapper.class);
     }
 
     @Bean
-    public PaymentMapper getPaymentMapper(@Qualifier("sqlSessionFactoryClickhouse") SqlSessionFactory sqlSessionFactory){
+    public PaymentMapper getPaymentMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
         return sqlSessionFactory.openSession().getMapper(PaymentMapper.class);
     }
 

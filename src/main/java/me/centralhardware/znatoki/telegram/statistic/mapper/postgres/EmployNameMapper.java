@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
+package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -7,23 +7,23 @@ import org.apache.ibatis.annotations.Select;
 
 
 @Mapper
-public interface TeacherNameMapper {
+public interface EmployNameMapper {
 
     @Select("""
             SELECT fio
-            FROM znatoki_statistic_teacher_name
+            FROM employ_name
             WHERE chat_id = #{chatId}
             """)
     String getFio(@Param("chatId") Long chatId);
 
     @Insert("""
-            INSERT INTO znatoki_statistic_teacher_name(
+            INSERT INTO employ_name(
                 chat_id, 
                 fio
             ) VALUES (
                 #{chat_id},
                 #{fio}
-            )
+            );commit
             """)
     void insert(@Param("chat_id") Long chatId, @Param("fio") String fio);
 

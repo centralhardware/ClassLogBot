@@ -8,7 +8,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.Statistic
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;

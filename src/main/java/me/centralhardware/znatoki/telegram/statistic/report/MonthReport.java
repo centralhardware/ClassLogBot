@@ -50,14 +50,14 @@ public class MonthReport extends ExcelReport{
                 "Даты посещений"
         );
 
-        var fioToTimes = new MultivaluedHashMap<String, Time>();
-        times.forEach(it -> fioToTimes.add(it.getFio(), it));
+        var fioToTimes = new MultivaluedHashMap<Integer, Time>();
+        times.forEach(it -> fioToTimes.add(it.getPupilId(), it));
 
         AtomicInteger totalIndividual = new AtomicInteger();
         AtomicInteger totalGroup = new AtomicInteger();
 
         AtomicInteger i = new AtomicInteger(1);
-        fioToTimes.forEach((fio, fioTimes) -> {
+        fioToTimes.forEach((id, fioTimes) -> {
             int individual = (int) fioTimes
                     .stream()
                     .filter(it -> it.getFios().size() == 1)
@@ -82,8 +82,8 @@ public class MonthReport extends ExcelReport{
 
             writeRow(
                     String.valueOf(i.getAndIncrement()),
-                    fio,
-                    Objects.toString(pupilService.findByFio(fio).getClassNumber()),
+                    pupilService.getFioById(id),
+                    Objects.toString(pupilService.findById(id).get().getClassNumber()),
                     Integer.toString(individual),
                     Integer.toString(group),
                     "",

@@ -24,6 +24,11 @@ public class PupilService {
     private final PupilRepository repository;
     private final EntityManager entityManager;
 
+    public String getFioById(Integer id){
+        return findById(id)
+                .map(Pupil::getFio)
+                .orElse("");
+    }
 
     public Map<String, String> getTelephone(UUID organizationId){
         List<Pupil> list = repository.findByOrganizationId(organizationId);

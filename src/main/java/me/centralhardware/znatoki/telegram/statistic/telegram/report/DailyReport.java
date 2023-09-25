@@ -3,11 +3,11 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
+import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -23,10 +23,11 @@ import static java.util.function.Predicate.not;
 @RequiredArgsConstructor
 public class DailyReport {
 
-    private final TimeMapper timeMapper;
+    private final ServiceMapper serviceMapper;
     private final TelegramSender sender;
     private final OrganizationMapper organizationMapper;
     private final ServicesMapper servicesMapper;
+    private final PupilService pupilService;
 
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -36,9 +37,9 @@ public class DailyReport {
                 .getOwners()
                 .stream()
                 .map(Organization::getId)
-                .map(timeMapper::getIds)
+                .map(serviceMapper::getIds)
                 .flatMap(Collection::stream)
-                .map(timeMapper::getTodayTimes)
+                .map(serviceMapper::getTodayTimes)
                 .filter(Objects::nonNull)
                 .filter(not(List::isEmpty))
                 .forEach(it -> {
@@ -49,7 +50,7 @@ public class DailyReport {
                     it.forEach(time -> sender.sendText(STR."""
                                         Время: \{timeFormatter.format(time.getDateTime())}
                                         Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        Ученики: \{String.join(", ", time.getFios().stream().map(Pair::getLeft).toList())}
+                                        Ученики: \{String.join(", ", time.getFios().stream().map(pupilService::getFioById).toList())}
                                         Стоимость: \{time.getAmount()}
                             """, user));
                     sender.sendText("Проверьте правильность внесенных данных",user);

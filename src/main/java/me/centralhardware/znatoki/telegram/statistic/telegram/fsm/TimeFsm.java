@@ -4,12 +4,13 @@ import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -44,10 +45,11 @@ public class TimeFsm extends Fsm {
     private final Minio minio;
     private final Redis redis;
 
-    private final TimeMapper timeMapper;
+    private final ServiceMapper serviceMapper;
     private final PaymentMapper paymentMapper;
-    private final TeacherNameMapper teacherNameMapper;
+    private final EmployNameMapper employNameMapper;
     private final ServicesMapper servicesMapper;
+    private final PupilService pupilService;
 
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
@@ -98,7 +100,7 @@ public class TimeFsm extends Fsm {
                                 sender.sendText("Данное ФИО уже добавлено", user);
                                 return;
                             }
-                            storage.getTime(userId).getFios().add(Pair.of(name, id));
+                            storage.getTime(userId).getFios().add(id);
                             sender.sendText("ФИО сохранено", user);
                         }
                 );
@@ -128,7 +130,7 @@ public class TimeFsm extends Fsm {
                                 })
                                 .get();
 
-                        String id = minio.upload(file, time.getDateTime(), teacherNameMapper.getFio(time.getChatId()), servicesMapper.getKeyById(time.getServiceId()), "znatoki")
+                        String id = minio.upload(file, time.getDateTime(), employNameMapper.getFio(time.getChatId()), servicesMapper.getKeyById(time.getServiceId()), "znatoki")
                                 .onFailure(error -> {
                                     sender.sendText("Ошибка при сохранение фотографии. Попробуйте снова", user);
                                     storage.remove(userId);
@@ -139,7 +141,7 @@ public class TimeFsm extends Fsm {
                         ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
                                 .setText(STR."""
                                         Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        ФИО:\{String.join(";", time.getFios().stream().map(Pair::getLeft).toList())}
+                                        ФИО:\{String.join((CharSequence) ";", time.getFios().stream().map(pupilService::getFioById).toList())}
                                         стоимость занятия: \{time.getAmount().toString()}
                                         """)
                                 .row().button("да").endRow()
@@ -155,11 +157,10 @@ public class TimeFsm extends Fsm {
                     var time = storage.getTime(userId);
                     var id = UUID.randomUUID();
                     time.getFios().forEach(it -> {
-                        time.setFio(it.getLeft());
-                        time.setPupilId(it.getRight());
+                        time.setPupilId(it);
                         time.setId(id);
                         time.setOrganizationId(redis.getUser(userId).get().organizationId());
-                        timeMapper.insertTime(time);
+                        serviceMapper.insertTime(time);
                         var payment = new Payment();
                         payment.setDateTime(LocalDateTime.now());
                         payment.setPupilId(time.getPupilId());
@@ -203,10 +204,10 @@ public class TimeFsm extends Fsm {
                         Время: \{time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
                         Предмет: #\{servicesMapper.getNameById(time.getServiceId()).replaceAll(" ", "_")}
                         Ученики: \{time.getFios().stream()
-                                    .map(it -> "#" + it.getLeft().replaceAll(" ", "_"))
+                                    .map(it -> "#" + pupilService.getFioById(it).replaceAll(" ", "_"))
                                     .collect(Collectors.joining(", "))}
                         Стоимость: \{time.getAmount()}
-                        Преподаватель: #\{teacherNameMapper.getFio(userId).replaceAll(" ", "_")}
+                        Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
                         """)
                 .replyMarkup(keybard)
                 .build();

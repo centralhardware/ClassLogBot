@@ -2,8 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.report.MonthReport;
@@ -20,18 +20,18 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ReportService {
 
-    private final TimeMapper timeMapper;
-    private final TeacherNameMapper teacherNameMapper;
+    private final ServiceMapper serviceMapper;
+    private final EmployNameMapper employNameMapper;
     private final Redis redis;
     private final PupilService pupilService;
     private final ServicesMapper servicesMapper;
 
     public List<File> getReportsCurrent(Long id){
-        return getReport(timeMapper::getCuurentMontTimes, id);
+        return getReport(serviceMapper::getCuurentMontTimes, id);
     }
 
     public List<File> getReportPrevious(Long id){
-        return getReport(timeMapper::getPrevMonthTimes, id);
+        return getReport(serviceMapper::getPrevMonthTimes, id);
     }
 
     private List<File> getReport(Function<Long,List<Time>> getTime, Long id){
@@ -50,7 +50,7 @@ public class ReportService {
                             .orElse(null);
                     if (date == null) return null;
 
-                    return new MonthReport(teacherNameMapper.getFio(id), pupilService, it,servicesMapper.getKeyById(it), date).generate(times);
+                    return new MonthReport(employNameMapper.getFio(id), pupilService, it,servicesMapper.getKeyById(it), date).generate(times);
                 })
                 .filter(Objects::nonNull)
                 .toList();

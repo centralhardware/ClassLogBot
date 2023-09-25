@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
@@ -16,10 +16,10 @@ import java.util.stream.Collectors;
 public class TelegramService {
 
     private final Redis redis;
-    private final TimeMapper timeMapper;
+    private final ServiceMapper serviceMapper;
 
     public List<Long> getReadRightUser(UUID orgId) {
-        return timeMapper.getIds(orgId).stream()
+        return serviceMapper.getIds(orgId).stream()
                 .filter(this::hasReadRight)
                 .collect(Collectors.toList());
     }

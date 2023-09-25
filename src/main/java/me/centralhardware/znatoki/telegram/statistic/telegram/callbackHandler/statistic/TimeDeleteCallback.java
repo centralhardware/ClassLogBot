@@ -1,10 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.PaymentMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
 import org.springframework.stereotype.Component;
@@ -18,7 +16,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TimeDeleteCallback extends CallbackHandler {
 
-    private final TimeMapper timeMapper;
+    private final ServiceMapper serviceMapper;
     private final PaymentMapper paymentMapper;
 
     @Override
@@ -29,12 +27,12 @@ public class TimeDeleteCallback extends CallbackHandler {
 
         var id = UUID.fromString(data.replace("timeDelete-", ""));
 
-        if (!timeMapper.getOrgId(id).equals(getZnatokiUser(from).organizationId())){
+        if (!serviceMapper.getOrgId(id).equals(getZnatokiUser(from).organizationId())){
             sender.sendText("Доступ запрещен", from);
             return;
         }
 
-        timeMapper.setDeleted(id, true);
+        serviceMapper.setDeleted(id, true);
         paymentMapper.setDeleteByTimeId(id, true);
 
         var editMessageReplyMarkup = EditMessageReplyMarkup

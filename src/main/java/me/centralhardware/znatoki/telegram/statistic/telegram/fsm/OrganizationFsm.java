@@ -2,7 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.entity.Service;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TeacherNameMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
@@ -32,7 +32,7 @@ public class OrganizationFsm extends Fsm {
 
     private final OrganizationMapper organizationMapper;
     private final ServicesMapper servicesMapper;
-    private final TeacherNameMapper teacherNameMapper;
+    private final EmployNameMapper employNameMapper;
 
     @Override
     public void process(Update update) {
@@ -94,11 +94,17 @@ public class OrganizationFsm extends Fsm {
             case ADD_OWNER_SUBJECT -> {
                 var org = storage.getOrganization(userId);
                 if (Objects.equals(text, "/complete") || org.getOwnerServices().size() == org.getServices().size()){
+
+                    if (org.getOwnerServices().isEmpty()){
+                        sender.sendText("Необходимо выбрать как минимум одну услугу", user, false);
+                        return;
+                    }
+
                     org.setOwner(userId);
                     organizationMapper.insert(org);
 
-                    if (teacherNameMapper.getFio(userId) == null){
-                        teacherNameMapper.insert(userId, org.getOwnerFio());
+                    if (employNameMapper.getFio(userId) == null){
+                        employNameMapper.insert(userId, org.getOwnerFio());
                     }
 
                     org.getServices()

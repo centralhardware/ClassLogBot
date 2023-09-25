@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.TimeMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
@@ -20,7 +20,7 @@ import java.util.function.Function;
 public abstract class BaseReport extends CommandHandler {
 
     @Autowired
-    private TimeMapper timeMapper;
+    private ServiceMapper serviceMapper;
     @Autowired
     private Redis redis;
     @Autowired
@@ -46,7 +46,7 @@ public abstract class BaseReport extends CommandHandler {
             return;
         }
 
-        timeMapper.getIds(redis.getUser(id).get().organizationId())
+        serviceMapper.getIds(redis.getUser(id).get().organizationId())
                 .forEach(it -> getTime().apply(it)
                         .forEach(report -> send(report, message.getFrom())));
     }
