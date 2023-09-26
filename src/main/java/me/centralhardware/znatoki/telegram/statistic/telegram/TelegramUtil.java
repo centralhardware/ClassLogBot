@@ -119,26 +119,7 @@ public class TelegramUtil {
                 .build();
 
         statisticMapper.insertStatistic(entry);
-        log.info("""
-                    Save to clickHouse(dateTime: {},
-                    chatId; {},
-                    username: {},
-                    firstName: {},
-                    lastName: {},
-                    isPremium: {},
-                    action: {},
-                    text: {}б
-                    lang: {}
-                """,
-                entry.dateTime(),
-                entry.chatId(),
-                entry.username(),
-                entry.firstName(),
-                entry.lastName(),
-                entry.isPremium(),
-                entry.action(),
-                entry.text(),
-                entry.lang());
+        log.info(STR."Save to clickHouse income(\{entry.chatId()}, \{entry.action()}, \{entry.text()})");
     }
 
     private static final Map<Class<?>, String> clazz2action = Map.ofEntries(
@@ -202,27 +183,7 @@ public class TelegramUtil {
                 .build();
 
         statisticMapper.insertStatistic(entry);
-        log.info("""
-                    Save to clickHouse(
-                    dateTime: {},
-                    chatId; {},
-                    username: {},
-                    firstName: {},
-                    lastName: {},
-                    isPremium: {},
-                    action: {},
-                    text: {},
-                    lang: {}
-                """,
-                entry.dateTime(),
-                entry.chatId(),
-                entry.username(),
-                entry.firstName(),
-                entry.lastName(),
-                entry.isPremium(),
-                entry.action(),
-                entry.text(),
-                entry.lang());
+        log.info(STR."Save to clickHouse outcome(\{entry.chatId()}, \{entry.action()}, \{entry.text()})");
     }
 
     public void logSend(Object send){
