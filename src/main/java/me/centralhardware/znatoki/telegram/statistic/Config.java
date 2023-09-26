@@ -16,8 +16,6 @@ public class Config {
 
     @Getter
     private static final String baseUrl             = System.getenv("BASE_URL");
-    @Getter
-    private static final Long logChatId = Long.parseLong(System.getenv("LOG_CHAT"));
 
     @Getter
     private static final String minioUrl = System.getenv("MINIO_URL");

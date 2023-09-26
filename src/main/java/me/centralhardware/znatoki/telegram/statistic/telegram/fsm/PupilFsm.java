@@ -180,7 +180,7 @@ public class PupilFsm extends Fsm {
                 getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
                 getPupil(chatId).setCreated_by(chatId);
                 sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
-                sendLog(getPupil(chatId));
+                sendLog(getPupil(chatId), chatId);
                 storage.remove(chatId);
                 sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
             }
@@ -204,13 +204,16 @@ public class PupilFsm extends Fsm {
         return storage.containsPupil(chatId);
     }
 
-    private void sendLog(Pupil pupil) {
-        var message = SendMessage.builder()
-                .text("#ученик\n" + pupil.getInfo(serviceMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()))
-                .chatId(getLogUser().getId())
-                .parseMode("Markdown")
-                .build();
-        sender.send(message, getLogUser());
+    private void sendLog(Pupil pupil, Long chatId) {
+        getLogUser(chatId)
+                .ifPresent(user -> {
+                    var message = SendMessage.builder()
+                            .text("#ученик\n" + pupil.getInfo(serviceMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()))
+                            .chatId(user.getId())
+                            .parseMode("Markdown")
+                            .build();
+                    sender.send(message, user);
+                });
     }
 
 }

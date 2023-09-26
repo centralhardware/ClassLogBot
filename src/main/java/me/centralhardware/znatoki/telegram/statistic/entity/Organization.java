@@ -13,6 +13,7 @@ public class Organization {
     private String name;
     private String ownerFio;
     private Long owner;
+    private Long logChatId;
     private Set<String> services = new HashSet<>();
     private Set<String> ownerServices = new HashSet<>();
 

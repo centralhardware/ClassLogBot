@@ -132,9 +132,10 @@ public class OrganizationFsm extends Fsm {
                     storage.remove(userId);
 
                     sender.sendText("""
-                        Организация создана. 
+                        Организация создана.
                         Добавьте клиентов через /addPupil.
                         Заносите услуги и добавляйте оплату /addTime /addPayment
+                        Добавьте бота в чат, чтобы контролировать действия в боте. Добавьте бота в чат и выполните команду /join@@OrgStatisticBot 
                         """, user);
                     return;
                 }

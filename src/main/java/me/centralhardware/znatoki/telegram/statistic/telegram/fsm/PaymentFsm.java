@@ -139,21 +139,24 @@ public class PaymentFsm extends Fsm {
     }
 
     private void sendLog(Payment payment, Long userId) {
-        SendPhoto sendPhoto = SendPhoto
-                .builder()
-                .photo(new InputFile(minio.get(payment.getPhotoId(), "znatoki-payment")
-                        .onFailure(error -> sender.sendText("Ошибка во время отправки лога", getLogUser()))
-                        .get(), "отчет"))
-                .chatId(getLogUser().getId())
-                .caption(STR."""
+        getLogUser(userId)
+                .ifPresent(user -> {
+                    SendPhoto sendPhoto = SendPhoto
+                            .builder()
+                            .photo(new InputFile(minio.get(payment.getPhotoId(), "znatoki-payment")
+                                    .onFailure(error -> sender.sendText("Ошибка во время отправки лога", user))
+                                    .get(), "отчет"))
+                            .chatId(user.getId())
+                            .caption(STR."""
                                 #оплата
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
                                 Ученик: #\{pupilService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
                                 оплачено: \{payment.getAmount()},
                                 Принял оплату: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
                                 """)
-                .build();
-        sender.send(sendPhoto, getLogUser());
+                            .build();
+                    sender.send(sendPhoto, user);
+                });
     }
 
     @Override

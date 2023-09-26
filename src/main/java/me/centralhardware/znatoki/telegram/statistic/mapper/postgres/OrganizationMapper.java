@@ -1,13 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.simpleframework.xml.core.Commit;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Mapper
 public interface OrganizationMapper {
@@ -23,21 +20,43 @@ public interface OrganizationMapper {
                 #{org.owner}
             )
             """)
-    @Commit
     void insert(@Param("org") Organization organization);
 
+    @Update("""
+            UPDATE organization
+            SET log_chat_id = #{log_chat_id}
+            """)
+    void updateLogChat(@Param("org_id") UUID orgId, @Param("log_chat_id") Long logChat);
 
     @Select("""
             SELECT *
             FROM organization
             WHERE owner = #{id}
             """)
+    @Results({
+            @Result(property = "logChatId", column = "log_chat_id")
+    })
     Organization getByOwner(@Param("id") Long id);
 
     @Select("""
             SELECT *
             FROM organization
+            WHERE id = #{id}
             """)
+    @Results({
+            @Result(property = "logChatId", column = "log_chat_id")
+    })
+    Organization getById(@Param("id") UUID id);
+
+
+
+    @Select("""
+            SELECT *
+            FROM organization
+            """)
+    @Results({
+            @Result(property = "logChatId", column = "log_chat_id")
+    })
     List<Organization> getOwners();
 
     @Select("""

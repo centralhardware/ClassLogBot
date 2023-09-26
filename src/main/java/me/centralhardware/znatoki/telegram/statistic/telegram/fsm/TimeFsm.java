@@ -188,18 +188,20 @@ public class TimeFsm extends Fsm {
     }
 
     private void sendLog(Time time, Long userId){
-        var keybard = InlineKeyboardBuilder.create()
-                .setText("?")
-                .row()
-                .button("удалить", "timeDelete-" + time.getId())
-                .endRow().build();
-        SendPhoto sendPhoto = SendPhoto
-                .builder()
-                .photo(new InputFile(minio.get(time.getPhotoId(), "znatoki")
-                        .onFailure(error -> sender.sendText("Ошибка во время отправки лога", getLogUser()))
-                        .get(), "отчет"))
-                .chatId(getLogUser().getId())
-                .caption(STR."""
+        getLogUser(userId)
+                .ifPresent(user -> {
+                    var keybard = InlineKeyboardBuilder.create()
+                            .setText("?")
+                            .row()
+                            .button("удалить", "timeDelete-" + time.getId())
+                            .endRow().build();
+                    SendPhoto sendPhoto = SendPhoto
+                            .builder()
+                            .photo(new InputFile(minio.get(time.getPhotoId(), "znatoki")
+                                    .onFailure(error -> sender.sendText("Ошибка во время отправки лога", user))
+                                    .get(), "отчет"))
+                            .chatId(user.getId())
+                            .caption(STR."""
                         #занятие
                         Время: \{time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
                         Предмет: #\{servicesMapper.getNameById(time.getServiceId()).replaceAll(" ", "_")}
@@ -209,9 +211,10 @@ public class TimeFsm extends Fsm {
                         Стоимость: \{time.getAmount()}
                         Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
                         """)
-                .replyMarkup(keybard)
-                .build();
-        sender.send(sendPhoto, getLogUser());
+                            .replyMarkup(keybard)
+                            .build();
+                    sender.send(sendPhoto, user);
+                });
     }
 
     @Override

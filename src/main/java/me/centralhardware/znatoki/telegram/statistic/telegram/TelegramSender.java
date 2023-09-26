@@ -44,6 +44,13 @@ public class TelegramSender {
         sendText(text, user, true);
     }
 
+    public void sendText(String text, Long chatId){
+        var user = new User();
+        user.setId(chatId);
+        user.setLanguageCode("ru");
+        sendText(text, user, true);
+    }
+
     public void sendText(String text, User user, Boolean removeKeyboard){
         SendMessage.SendMessageBuilder message = SendMessage.builder()
                 .chatId(user.getId())
