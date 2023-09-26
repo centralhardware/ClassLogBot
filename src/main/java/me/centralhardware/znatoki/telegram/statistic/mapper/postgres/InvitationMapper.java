@@ -17,7 +17,7 @@ public interface InvitationMapper {
                 #{invitation.orgId},
                 #{invitation.services},
                 #{invitation.confirmCode}
-            );commit
+            )
             """)
     void insert(@Param("invitation") Invitation invitation);
 

@@ -18,8 +18,7 @@ public interface ServicesMapper {
                 #{service.key},
                 #{service.name},
                 #{service.orgId}
-            );
-            commit
+            )
             """)
     Long insert(@Param("service") Service service);
 

@@ -26,14 +26,14 @@ public interface PaymentMapper {
                 #{payment.photoId},
                 #{payment.timeId},
                 #{payment.organizationId}
-            );commit
+            )
             """)
     void insert(@Param("payment") Payment payment);
 
     @Update("""
             UPDATE payment
             SET is_deleted = #{is_delete}
-            WHERE time_id = #{time_id};commit
+            WHERE time_id = #{time_id}
             """)
     void setDeleteByTimeId(@Param("time_id") UUID timeId, @Param("is_delete") Boolean isDelete);
 

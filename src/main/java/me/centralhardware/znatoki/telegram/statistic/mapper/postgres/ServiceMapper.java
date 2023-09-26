@@ -49,7 +49,7 @@ public interface ServiceMapper {
                 #{time.photoId},
                 #{time.pupilId},
                 #{time.organizationId}
-            );commit
+            )
             """)
     void insertTime(@Param("time") Time time);
 
@@ -168,7 +168,7 @@ public interface ServiceMapper {
     @Update("""
             UPDATE service
             SET is_deleted = #{is_deleted}
-            WHERE id = #{id};commit
+            WHERE id = #{id}
             """)
     void setDeleted(@Param("id") UUID timeId, @Param("is_deleted") Boolean isDeleted);
 

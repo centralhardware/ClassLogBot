@@ -21,8 +21,7 @@ public interface OrganizationMapper {
                 #{org.id},
                 #{org.name},
                 #{org.owner}
-            );
-            commit
+            )
             """)
     @Commit
     void insert(@Param("org") Organization organization);

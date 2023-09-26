@@ -11,6 +11,7 @@ import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +38,7 @@ public class MyBaatisConfiguration {
 
     @Bean("sqlSessionFactoryPostgres")
     public SqlSessionFactory getSqlSessionPostgres(DataSource dataSource){
-        var postgres = new Environment("postgres", new JdbcTransactionFactory(), dataSource);
+        var postgres = new Environment("postgres", new ManagedTransactionFactory(), dataSource);
         var configurationPostgres = new org.apache.ibatis.session.Configuration(postgres);
 
         configurationPostgres.getTypeHandlerRegistry().register(UUID.class, UuidTypeHandler.class);
