@@ -58,13 +58,12 @@ public class MonthReport extends ExcelReport{
         AtomicInteger totalIndividual = new AtomicInteger();
         AtomicInteger totalGroup = new AtomicInteger();
 
-        Comparator<Map.Entry<Client, ?>> comparator = Comparator.comparing(it -> it.getKey().getClassNumber());
-        comparator.thenComparing(it -> it.getKey().getFio());
+        Comparator<Map.Entry<Client, ?>> comparator = Comparator.nullsLast(Comparator.comparing(it -> it.getKey().getClassNumber()));
+        comparator.thenComparing(Comparator.nullsLast(Comparator.comparing(it -> it.getKey().getFio())));
         AtomicInteger i = new AtomicInteger(1);
         fioToTimes
                 .entrySet()
                 .stream()
-                .filter(it -> it.getKey() != null && CollectionUtils.isNotEmpty(it.getValue()))
                 .sorted(comparator)
                 .forEach(it -> {
                     var fioTimes = it.getValue();
