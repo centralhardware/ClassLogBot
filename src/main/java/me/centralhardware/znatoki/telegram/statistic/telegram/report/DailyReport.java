@@ -6,7 +6,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ public class DailyReport {
     private final TelegramSender sender;
     private final OrganizationMapper organizationMapper;
     private final ServicesMapper servicesMapper;
-    private final PupilService pupilService;
+    private final ClientService clientService;
 
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -50,7 +50,7 @@ public class DailyReport {
                     it.forEach(time -> sender.sendText(STR."""
                                         Время: \{timeFormatter.format(time.getDateTime())}
                                         Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        Ученики: \{String.join(", ", time.getFios().stream().map(pupilService::getFioById).toList())}
+                                        Ученики: \{String.join(", ", time.getServiceIds().stream().map(clientService::getFioById).toList())}
                                         Стоимость: \{time.getAmount()}
                             """, user));
                     sender.sendText("Проверьте правильность внесенных данных",user);

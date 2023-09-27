@@ -2,14 +2,14 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
-import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -28,7 +28,7 @@ import java.util.ResourceBundle;
 public class PupilFsm extends Fsm {
 
     private final TelegramService telegramService;
-    private final PupilService pupilService;
+    private final ClientService clientService;
     private final ResourceBundle resourceBundle;
     private final TelegramSender sender;
     private final Redis redis;
@@ -58,17 +58,17 @@ public class PupilFsm extends Fsm {
                     sender.sendMessageFromResource(MessageConstant.INPUT_FIO_REQUIRED_FORMAT, user);
                     return;
                 }
-                me.centralhardware.znatoki.telegram.statistic.entity.Pupil pupil = storage.getPupil(chatId);
+                Client client = storage.getPupil(chatId);
                 if (words.length == 3){
-                    pupil.setSecondName(words[0]);
-                    pupil.setName(words[1]);
-                    pupil.setLastName(words[2]);
+                    client.setSecondName(words[0]);
+                    client.setName(words[1]);
+                    client.setLastName(words[2]);
                 } else {
-                    pupil.setSecondName(words[0]);
-                    pupil.setName(words[1]);
-                    pupil.setLastName("");
+                    client.setSecondName(words[0]);
+                    client.setName(words[1]);
+                    client.setLastName("");
                 }
-                if (pupilService.checkExistenceByFio(pupil.getName(), pupil.getSecondName(), pupil.getLastName())){
+                if (clientService.checkExistenceByFio(client.getName(), client.getSecondName(), client.getLastName())){
                     sender.sendMessageFromResource(MessageConstant.FIO_ALREADY_IN_DATABASE, user);
                     return;
                 }
@@ -125,7 +125,7 @@ public class PupilFsm extends Fsm {
                 telephoneValidator.validate(text)
                         .peekLeft(error -> sender.sendText(error, user))
                         .peek(telephone -> {
-                            if (pupilService.existByTelephone(telephone)){
+                            if (clientService.existByTelephone(telephone)){
                                 sender.sendMessageFromResource(MessageConstant.TEL_ALREADY_EXIST, user);
                                 return;
                             }
@@ -179,7 +179,7 @@ public class PupilFsm extends Fsm {
 
                 getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
                 getPupil(chatId).setCreated_by(chatId);
-                sender.sendMessageWithMarkdown(pupilService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
+                sender.sendMessageWithMarkdown(clientService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
                 sendLog(getPupil(chatId), chatId);
                 storage.remove(chatId);
                 sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
@@ -187,7 +187,7 @@ public class PupilFsm extends Fsm {
         }
     }
 
-    public Pupil getPupil(Long chatId){
+    public Client getPupil(Long chatId){
         return storage.getPupil(chatId);
     }
 
@@ -204,11 +204,11 @@ public class PupilFsm extends Fsm {
         return storage.containsPupil(chatId);
     }
 
-    private void sendLog(Pupil pupil, Long chatId) {
+    private void sendLog(Client client, Long chatId) {
         getLogUser(chatId)
                 .ifPresent(user -> {
                     var message = SendMessage.builder()
-                            .text("#ученик\n" + pupil.getInfo(serviceMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()))
+                            .text("#ученик\n" + client.getInfo(serviceMapper.getServicesForPupil(client.getId()).stream().map(servicesMapper::getNameById).toList()))
                             .chatId(user.getId())
                             .parseMode("Markdown")
                             .build();

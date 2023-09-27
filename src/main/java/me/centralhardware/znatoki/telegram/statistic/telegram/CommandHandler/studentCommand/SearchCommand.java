@@ -3,10 +3,10 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.st
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
-import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
@@ -39,7 +39,7 @@ import static java.util.function.Predicate.not;
 @RequiredArgsConstructor
 public class SearchCommand extends CommandHandler {
 
-    private final PupilService pupilService;
+    private final ClientService clientService;
     private final TelegramUtil telegramUtils;
     private final SessionService sessionService;
     private final TelegramService telegramService;
@@ -57,9 +57,9 @@ public class SearchCommand extends CommandHandler {
 
         var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();
         String searchText = Arrays.toString(arguments).replace("]", "").replace("[", "");
-        List<Pupil> searchResult = pupilService.search(searchText)
+        List<Client> searchResult = clientService.search(searchText)
                 .stream()
-                .filter(not(Pupil::isDeleted))
+                .filter(not(Client::isDeleted))
                 .filter(it -> it.getOrganizationId().equals(orgId))
                 .toList();
 
@@ -69,25 +69,25 @@ public class SearchCommand extends CommandHandler {
         }
 
         sender.sendMessageFromResource(MessageConstant.SEARCH_RESULT, message.getFrom());
-        for (Pupil pupil : searchResult) {
-            String uuid = sessionService.create(pupil, message.getChatId());
+        for (Client client : searchResult) {
+            String uuid = sessionService.create(client, message.getChatId());
             String link = String.format("%s/edit?sessionId=%s", Config.getBaseUrl(), uuid);
             InlineKeyboardBuilder inlineKeyboardBuilder = InlineKeyboardBuilder.
                     create().
                     setText(String.format("%s %s %s \n%s л. %s кл.",
-                            pupil.getName(),
-                            pupil.getSecondName(),
-                            pupil.getLastName(),
-                            pupil.getAge(),
-                            pupil.getClassNumber())).
+                            client.getName(),
+                            client.getSecondName(),
+                            client.getLastName(),
+                            client.getAge(),
+                            client.getClassNumber())).
                     row().
-                    button("информация", "/user_info" + pupil.getId()).
+                    button("информация", "/user_info" + client.getId()).
                     endRow();
             if (telegramService.hasWriteRight(message.getChatId())){
                 inlineKeyboardBuilder.row().webApp(link, "редактировать").endRow();
             }
             inlineKeyboardBuilder.row().
-                    button("удалить", "/delete_user" + pupil.getId()).
+                    button("удалить", "/delete_user" + client.getId()).
                     endRow();
             sender.send(inlineKeyboardBuilder.build(message.getChatId()), message.getFrom());
         }

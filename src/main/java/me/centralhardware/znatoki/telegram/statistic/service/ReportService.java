@@ -23,7 +23,7 @@ public class ReportService {
     private final ServiceMapper serviceMapper;
     private final EmployNameMapper employNameMapper;
     private final Redis redis;
-    private final PupilService pupilService;
+    private final ClientService clientService;
     private final ServicesMapper servicesMapper;
 
     public List<File> getReportsCurrent(Long id){
@@ -50,7 +50,7 @@ public class ReportService {
                             .orElse(null);
                     if (date == null) return null;
 
-                    return new MonthReport(employNameMapper.getFio(id), pupilService, it,servicesMapper.getKeyById(it), date).generate(times);
+                    return new MonthReport(employNameMapper.getFio(id), clientService, it,servicesMapper.getKeyById(it), date).generate(times);
                 })
                 .filter(Objects::nonNull)
                 .toList();

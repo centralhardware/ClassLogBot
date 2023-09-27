@@ -10,7 +10,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapp
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -49,7 +49,7 @@ public class TimeFsm extends Fsm {
     private final PaymentMapper paymentMapper;
     private final EmployNameMapper employNameMapper;
     private final ServicesMapper servicesMapper;
-    private final PupilService pupilService;
+    private final ClientService clientService;
 
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
@@ -80,7 +80,7 @@ public class TimeFsm extends Fsm {
             });
             case INPUT_FIO -> {
                 if (Objects.equals(text, "/complete")){
-                    if (storage.getTime(userId).getFios().isEmpty()) {
+                    if (storage.getTime(userId).getServiceIds().isEmpty()) {
                         sender.sendText("Необходимо ввести как минимум одно ФИО", user);
                         return;
                     }
@@ -96,11 +96,11 @@ public class TimeFsm extends Fsm {
                         fio -> {
                             Integer id = Integer.valueOf(text.split(" ")[0]);
                             String name = text.replace(id + " ", "");
-                            if (storage.getTime(userId).getFios().contains(Pair.of(id, name))){
+                            if (storage.getTime(userId).getServiceIds().contains(Pair.of(id, name))){
                                 sender.sendText("Данное ФИО уже добавлено", user);
                                 return;
                             }
-                            storage.getTime(userId).getFios().add(id);
+                            storage.getTime(userId).getServiceIds().add(id);
                             sender.sendText("ФИО сохранено", user);
                         }
                 );
@@ -141,7 +141,7 @@ public class TimeFsm extends Fsm {
                         ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
                                 .setText(STR."""
                                         Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        ФИО:\{String.join((CharSequence) ";", time.getFios().stream().map(pupilService::getFioById).toList())}
+                                        ФИО:\{String.join((CharSequence) ";", time.getServiceIds().stream().map(clientService::getFioById).toList())}
                                         стоимость занятия: \{time.getAmount().toString()}
                                         """)
                                 .row().button("да").endRow()
@@ -156,7 +156,7 @@ public class TimeFsm extends Fsm {
                 if (Objects.equals(text, "да")) {
                     var time = storage.getTime(userId);
                     var id = UUID.randomUUID();
-                    time.getFios().forEach(it -> {
+                    time.getServiceIds().forEach(it -> {
                         time.setPupilId(it);
                         time.setId(id);
                         time.setOrganizationId(redis.getUser(userId).get().organizationId());
@@ -205,8 +205,8 @@ public class TimeFsm extends Fsm {
                         #занятие
                         Время: \{time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
                         Предмет: #\{servicesMapper.getNameById(time.getServiceId()).replaceAll(" ", "_")}
-                        Ученики: \{time.getFios().stream()
-                                    .map(it -> "#" + pupilService.getFioById(it).replaceAll(" ", "_"))
+                        Ученики: \{time.getServiceIds().stream()
+                                    .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
                                     .collect(Collectors.joining(", "))}
                         Стоимость: \{time.getAmount()}
                         Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}

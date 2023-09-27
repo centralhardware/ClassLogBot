@@ -7,7 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameM
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -41,7 +41,7 @@ public class PaymentFsm extends Fsm {
 
     private final EmployNameMapper employNameMapper;
     private final PaymentMapper paymentMapper;
-    private final PupilService pupilService;
+    private final ClientService clientService;
 
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
@@ -106,7 +106,7 @@ public class PaymentFsm extends Fsm {
                                         ФИО: %s
                                         Оплата: %s
                                         """,
-                                        pupilService.findById(payment.getPupilId()).get().getFio(),
+                                        clientService.findById(payment.getPupilId()).get().getFio(),
                                         payment.getAmount()))
                                 .row().button("да").endRow()
                                 .row().button("нет").endRow();
@@ -150,7 +150,7 @@ public class PaymentFsm extends Fsm {
                             .caption(STR."""
                                 #оплата
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
-                                Ученик: #\{pupilService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
+                                Ученик: #\{ clientService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
                                 оплачено: \{payment.getAmount()},
                                 Принял оплату: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
                                 """)

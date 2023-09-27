@@ -117,28 +117,17 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private boolean processCommand(Update update) {
-        if (!update.hasMessage()) return false;
-
-        Message message = update.getMessage();
-
-        for (CommandHandler commandHandler : commandHandlers) {
-            if (commandHandler.isAcceptable(message)) {
-                commandHandler.handle(message);
-                return true;
-            }
-        }
-
-        return false;
+        return processHandler(update, commandHandlers);
     }
 
     private boolean processCallback(Update update) {
-        if (!update.hasCallbackQuery()) return false;
+        return processHandler(update, callbackHandlers);
+    }
 
-        var callback = update.getCallbackQuery();
-
-        for (var callbackHandler : callbackHandlers) {
-            if (callbackHandler.isAcceptable(callback)) {
-                callbackHandler.handle(callback);
+    private <T extends Handler> boolean processHandler(Update update, List<T> handlers){
+        for (var handler : handlers) {
+            if (handler.isAcceptable(update)) {
+                handler.handle(update);
                 return true;
             }
         }

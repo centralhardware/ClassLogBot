@@ -15,14 +15,14 @@ public class Session {
     @Getter
     private String uuid;
     @Getter
-    private Integer pupil;
+    private Integer clientId;
     @Getter
     private Long updateBy;
     private LocalDateTime createDate;
 
-    public Session(@NonNull Pupil pupil, @NonNull Long updateBy) {
+    public Session(@NonNull Client client, @NonNull Long updateBy) {
         this.uuid = UUID.randomUUID().toString();
-        this.pupil = pupil.getId();
+        this.clientId = client.getId();
         this.updateBy = updateBy;
         this.createDate= LocalDateTime.now();
     }

@@ -2,12 +2,12 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.st
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserInfoCommand extends CommandHandler {
 
-    private final PupilService pupilService;
+    private final ClientService clientService;
     private final TelegramUtil telegramUtils;
     private final Redis redis;
     private final ServiceMapper serviceMapper;
@@ -38,7 +38,7 @@ public class UserInfoCommand extends CommandHandler {
         if (!telegramUtils.checkReadAccess(message.getFrom(), sender)) return;
 
         var arguments = message.getText().replace("/i ", "");
-        Optional<Pupil> pupilOptional = pupilService.findById(Integer.valueOf(arguments));
+        Optional<Client> pupilOptional = clientService.findById(Integer.valueOf(arguments));
         pupilOptional.ifPresentOrElse(
                 pupil -> {
                     var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();

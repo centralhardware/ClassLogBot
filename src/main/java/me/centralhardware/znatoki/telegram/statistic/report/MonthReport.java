@@ -1,7 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.report;
 
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.entity.Client;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import java.io.File;
@@ -13,15 +14,15 @@ import java.util.stream.Collectors;
 
 public class MonthReport extends ExcelReport{
 
-    private final PupilService pupilService;
+    private final ClientService clientService;
 
-    public MonthReport(String fio, PupilService pupilService, Long service,String serviceName, LocalDateTime date) {
+    public MonthReport(String fio, ClientService clientService, Long service, String serviceName, LocalDateTime date) {
         super(fio, service, serviceName, date);
 
-        this.pupilService = pupilService;
+        this.clientService = clientService;
     }
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");;
 
     public File generate(List<Time> times){
         times = times
@@ -50,47 +51,55 @@ public class MonthReport extends ExcelReport{
                 "Даты посещений"
         );
 
-        var fioToTimes = new MultivaluedHashMap<Integer, Time>();
-        times.forEach(it -> fioToTimes.add(it.getPupilId(), it));
+        var fioToTimes = new MultivaluedHashMap<Client, Time>();
+        times.forEach(it -> clientService.findById(it.getPupilId()).ifPresent(client -> fioToTimes.add(client, it)));
 
         AtomicInteger totalIndividual = new AtomicInteger();
         AtomicInteger totalGroup = new AtomicInteger();
 
+        Comparator<Map.Entry<Client, ?>> comparator = Comparator.comparing(it -> it.getKey().getClassNumber());
+        comparator.thenComparing(it -> it.getKey().getFio());
         AtomicInteger i = new AtomicInteger(1);
-        fioToTimes.forEach((id, fioTimes) -> {
-            int individual = (int) fioTimes
-                    .stream()
-                    .filter(it -> it.getFios().size() == 1)
-                    .count();
-            int group = (int) fioTimes
-                    .stream()
-                    .filter(it -> it.getFios().size() != 1)
-                    .count();
-            totalIndividual.addAndGet(individual);
-            totalGroup.addAndGet(group);
+        fioToTimes
+                .entrySet()
+                .stream()
+                .sorted(comparator)
+                .forEach(it -> {
+                    var fioTimes = it.getValue();
+                    var client = it.getKey();
+                    int individual = (int) fioTimes
+                            .stream()
+                            .filter(time -> time.getServiceIds().size() == 1)
+                            .count();
+                    int group = (int) fioTimes
+                            .stream()
+                            .filter(time -> time.getServiceIds().size() != 1)
+                            .count();
+                    totalIndividual.addAndGet(individual);
+                    totalGroup.addAndGet(group);
 
-            LinkedHashMap<String, Integer> dates = new LinkedHashMap<>();
-            fioTimes.stream().sorted(Comparator.comparing(Time::getDateTime)).forEach(it -> {
-                int timeCount =  dates.computeIfAbsent(formatter.format(it.getDateTime()), count -> 0);
-                timeCount++;
-                dates.put(formatter.format(it.getDateTime()), timeCount);
-            });
+                    LinkedHashMap<String, Integer> dates = new LinkedHashMap<>();
+                    fioTimes.stream().sorted(Comparator.comparing(Time::getDateTime)).forEach(time -> {
+                        int timeCount = dates.computeIfAbsent(formatter.format(time.getDateTime()), count -> 0);
+                        timeCount++;
+                        dates.put(formatter.format(time.getDateTime()), timeCount);
+                    });
 
-            var datesStr = dates.entrySet().stream()
-                    .map(entry -> String.format("%s(%s)", entry.getKey(), entry.getValue()))
-                    .collect(Collectors.joining(","));
+                    var datesStr = dates.entrySet().stream()
+                            .map(entry -> String.format("%s(%s)", entry.getKey(), entry.getValue()))
+                            .collect(Collectors.joining(","));
 
-            writeRow(
-                    String.valueOf(i.getAndIncrement()),
-                    pupilService.getFioById(id),
-                    Objects.toString(pupilService.findById(id).get().getClassNumber()),
-                    Integer.toString(individual),
-                    Integer.toString(group),
-                    "",
-                    "",
-                    datesStr
-            );
-        });
+                    writeRow(
+                            String.valueOf(i.getAndIncrement()),
+                            client.getFio(),
+                            Objects.toString(client.getClassNumber()),
+                            Integer.toString(individual),
+                            Integer.toString(group),
+                            "",
+                            "",
+                            datesStr
+                    );
+                });
 
         writeRow(
                 "",

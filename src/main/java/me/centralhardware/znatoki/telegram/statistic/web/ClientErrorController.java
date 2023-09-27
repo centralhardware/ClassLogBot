@@ -12,11 +12,11 @@ import static me.centralhardware.znatoki.telegram.statistic.web.WebConstant.ERRO
 import static me.centralhardware.znatoki.telegram.statistic.web.WebConstant.ERROR_TITLE;
 
 @Controller
-public class ZnatokiErrorController implements ErrorController {
+public class ClientErrorController implements ErrorController {
 
     private final ResourceBundle resourceBundle;
 
-    public ZnatokiErrorController(ResourceBundle resourceBundle) {
+    public ClientErrorController(ResourceBundle resourceBundle) {
         this.resourceBundle = resourceBundle;
     }
 

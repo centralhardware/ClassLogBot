@@ -4,8 +4,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
-import me.centralhardware.znatoki.telegram.statistic.repository.PupilRepository;
+import me.centralhardware.znatoki.telegram.statistic.entity.Client;
+import me.centralhardware.znatoki.telegram.statistic.repository.ClientRepository;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,23 +15,25 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.function.Predicate.not;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class PupilService {
+public class ClientService {
 
 
-    private final PupilRepository repository;
+    private final ClientRepository repository;
     private final EntityManager entityManager;
 
     public String getFioById(Integer id){
         return findById(id)
-                .map(Pupil::getFio)
+                .map(Client::getFio)
                 .orElse("");
     }
 
     public Map<String, String> getTelephone(UUID organizationId){
-        List<Pupil> list = repository.findByOrganizationId(organizationId);
+        List<Client> list = repository.findByOrganizationId(organizationId);
         Map<String, String> result = new HashMap<>();
         list.forEach(it -> {
             if (it.getTelephone() == null) return;
@@ -41,30 +43,30 @@ public class PupilService {
         return result;
     }
 
-    public List<Pupil> getAll(){
+    public List<Client> getAll(){
         return repository.findAll()
                 .stream()
                 .filter(result -> !result.isDeleted())
                 .toList();
     }
 
-    public Pupil save(Pupil pupil){
+    public Client save(Client client){
         CompletableFuture.runAsync(this::updateIndex);
-        return repository.save(pupil);
+        return repository.save(client);
     }
 
     @SuppressWarnings("unchecked")
     @Transactional
-    public List<Pupil> search(String text) {
+    public List<Client> search(String text) {
         var query  = text.toLowerCase();
 
         SearchSession session = Search.session(entityManager);
 
-        return session.search(Pupil.class)
+        return session.search(Client.class)
                 .where(it -> it.match()
+                        .field("name")
                         .field("secondName")
                         .field("lastName")
-                        .field("name")
                         .matching(query)
                         .fuzzy())
                 .fetch(10)
@@ -82,19 +84,13 @@ public class PupilService {
         }
     }
 
-    public Optional<Pupil> findById(Integer id){
-        var result =  repository.findById(id);
-        if (result.isEmpty())           return Optional.empty();
-        if (result.get().isDeleted())   return Optional.empty();
-        return result;
+    public Optional<Client> findById(Integer id){
+        return repository.findById(id)
+                .filter(not(Client::isDeleted));
     }
 
-    public Pupil findByFioAndId(String fio){
+    public Client findByFioAndId(String fio){
         return repository.findByFioAndId(fio);
-    }
-
-    public Pupil findByFio(String fio){
-        return repository.findByFio(fio);
     }
 
     public boolean checkExistenceByFio(String name, String secondName, String lastName){

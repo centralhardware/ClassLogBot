@@ -5,7 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -15,7 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 @RequiredArgsConstructor
 public class UserInfoCallback extends CallbackHandler {
 
-    private final PupilService pupilService;
+    private final ClientService clientService;
 
     private final ServiceMapper serviceMapper;
     private final ServicesMapper servicesMapper;
@@ -26,7 +26,7 @@ public class UserInfoCallback extends CallbackHandler {
             sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, from);
             return;
         }
-        var pupilOptional = pupilService.findById(Integer.parseInt(data.replace("/user_info","")));
+        var pupilOptional = clientService.findById(Integer.parseInt(data.replace("/user_info","")));
         pupilOptional.ifPresentOrElse(
                 pupil -> {
                     if (!pupil.getOrganizationId().equals(getZnatokiUser(from).organizationId())){

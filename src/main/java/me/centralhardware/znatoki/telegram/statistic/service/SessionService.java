@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.entity.Session;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.SessionMapper;
 import org.springframework.stereotype.Service;
@@ -15,8 +15,8 @@ public class SessionService {
 
     private final SessionMapper sessionMapper;
 
-    public String create(Pupil pupil, Long chatId) {
-        var session = new Session(pupil, chatId);
+    public String create(Client client, Long chatId) {
+        var session = new Session(client, chatId);
         sessionMapper.save(session);
         return session.getUuid();
     }

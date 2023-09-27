@@ -132,7 +132,7 @@ public interface ServiceMapper {
                 .stream()
                 .map(timeCollection -> {
                     var time = timeCollection.stream().findFirst().get();
-                    time.setFios(timeCollection.stream().map(Time::getPupilId).collect(Collectors.toSet()));
+                    time.setServiceIds(timeCollection.stream().map(Time::getPupilId).collect(Collectors.toSet()));
                     return time;
                 })
                 .sorted(Comparator.comparing(Time::getDateTime))

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +23,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @RequiredArgsConstructor
 public class GetTelephoneList extends CommandHandler {
 
-    private final PupilService pupilService;
+    private final ClientService clientService;
     private final TelegramUtil telegramUtils;
     private final Redis redis;
 
@@ -32,11 +32,11 @@ public class GetTelephoneList extends CommandHandler {
         if (!telegramUtils.checkReadAccess(message.getFrom(), sender)) return;
 
         var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();
-        if (pupilService.getTelephone(orgId).isEmpty()){
+        if (clientService.getTelephone(orgId).isEmpty()){
             sender.sendMessageFromResource(MessageConstant.DATABASE_NOT_CONTAIN_TEL, message.getFrom());
             return;
         }
-        pupilService.getTelephone(orgId).forEach((telephone,fio) -> {
+        clientService.getTelephone(orgId).forEach((telephone, fio) -> {
             if (StringUtils.isBlank(telephone)) return;
 
             sender.sendText(telephone + " " + fio, message.getFrom());

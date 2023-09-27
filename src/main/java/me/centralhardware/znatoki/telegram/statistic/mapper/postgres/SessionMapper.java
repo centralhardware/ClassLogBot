@@ -16,7 +16,7 @@ public interface SessionMapper {
             """)
     @Results({
             @Result(property = "uuid", column = "uuid"),
-            @Result(property = "pupil", column = "pupil"),
+            @Result(property = "client", column = "client"),
             @Result(property = "createDate", column = "create_date"),
             @Result(property = "updateBy", column = "update_by")
     })
@@ -26,12 +26,12 @@ public interface SessionMapper {
             INSERT INTO session (
                 uuid,
                 create_date,
-                pupil,
+                client_id,
                 update_by
             ) VALUES (
                 #{session.uuid},
                 #{session.createDate},
-                #{session.pupil},
+                #{session.clientId},
                 #{session.updateBy}
             )
             """)

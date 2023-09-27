@@ -3,7 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.s
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -13,7 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 @RequiredArgsConstructor
 public class DeleteUserCallback extends CallbackHandler {
 
-    private final PupilService pupilService;
+    private final ClientService clientService;
 
     @Override
     public void handle(CallbackQuery callbackQuery, User from, String data) {
@@ -22,7 +22,7 @@ public class DeleteUserCallback extends CallbackHandler {
             return;
         }
 
-        pupilService.findById(Integer.parseInt(data.replace("/delete_user",""))).ifPresent(pupil -> {
+        clientService.findById(Integer.parseInt(data.replace("/delete_user",""))).ifPresent(pupil -> {
 
             if (!pupil.getOrganizationId().equals(getZnatokiUser(from).organizationId())){
                 sender.sendText("Доступ запрещен", from);
@@ -30,7 +30,7 @@ public class DeleteUserCallback extends CallbackHandler {
             }
 
             pupil.setDeleted(true);
-            pupilService.save(pupil);
+            clientService.save(pupil);
             sender.sendMessageFromResource(MessageConstant.PUPIL_DELETED, from);
         });
     }

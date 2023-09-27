@@ -36,7 +36,6 @@ public class TelegramUtil {
 
     private final StatisticMapper statisticMapper;
     private final Redis redis;
-    private final OrganizationMapper organizationMapper;
 
     public Long getUserId(Update update){
         if (update.hasMessage()){

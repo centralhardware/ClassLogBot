@@ -25,7 +25,7 @@ import java.util.UUID;
 @Slf4j
 @Getter
 @Setter
-public class Pupil {
+public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -114,11 +114,6 @@ public class Pupil {
                 создано=\{created_by}
                 редактировано=\{updated}
                 """;
-    }
-
-    public void incrementClassNumber(){
-        classNumber++;
-        log.info(STR."class number incremented to \{classNumber} for pupil \{name} \{secondName} \{lastName}");
     }
 
     public long getAge(){

@@ -1,10 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Pupil;
+import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
-import me.centralhardware.znatoki.telegram.statistic.service.PupilService;
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -24,7 +23,7 @@ import static java.util.function.Predicate.not;
 @RequiredArgsConstructor
 public class InlineHandler {
 
-    private final PupilService pupilService;
+    private final ClientService clientService;
     private final TelegramSender sender;
     private final Redis redis;
 
@@ -37,10 +36,10 @@ public class InlineHandler {
         if (StringUtils.isBlank(text)) return true;
 
         AtomicInteger i = new AtomicInteger();
-        List<InlineQueryResultArticle> articles = pupilService.search(text)
+        List<InlineQueryResultArticle> articles = clientService.search(text)
                 .stream()
                 .filter(it -> it.getOrganizationId().equals(redis.getUser(inlineQuery.getFrom().getId()).get().organizationId()))
-                .filter(not(Pupil::isDeleted))
+                .filter(not(Client::isDeleted))
                 .map(it -> InlineQueryResultArticle.builder()
                         .title(getFio(it))
                         .description(getBio(it))
@@ -64,15 +63,15 @@ public class InlineHandler {
         return true;
     }
 
-    private String getFio(Pupil pupil){
-        return pupil.getId() + " " +
-                pupil.getName() + " " +
-                pupil.getSecondName() + " " +
-                pupil.getLastName();
+    private String getFio(Client client){
+        return client.getId() + " " +
+                client.getName() + " " +
+                client.getSecondName() + " " +
+                client.getLastName();
     }
 
-    private String getBio(Pupil pupil){
-        return String.format("%s класс %s лет", pupil.getClassNumber(), ChronoUnit.YEARS.between(pupil.getDateOfBirth(), LocalDateTime.now()));
+    private String getBio(Client client){
+        return String.format("%s класс %s лет", client.getClassNumber(), ChronoUnit.YEARS.between(client.getDateOfBirth(), LocalDateTime.now()));
     }
 
 }
