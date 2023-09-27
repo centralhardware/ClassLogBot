@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.entity;
 
+import com.google.common.base.Objects;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -124,4 +125,16 @@ public class Client {
         return STR."\{name} \{lastName} \{secondName}";
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Client client = (Client) o;
+        return Objects.equal(id, client.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }
