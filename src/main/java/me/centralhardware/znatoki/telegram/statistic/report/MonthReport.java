@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.report;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
+import org.apache.commons.collections.CollectionUtils;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import java.io.File;
@@ -63,6 +64,7 @@ public class MonthReport extends ExcelReport{
         fioToTimes
                 .entrySet()
                 .stream()
+                .filter(it -> it.getKey() != null && CollectionUtils.isNotEmpty(it.getValue()))
                 .sorted(comparator)
                 .forEach(it -> {
                     var fioTimes = it.getValue();

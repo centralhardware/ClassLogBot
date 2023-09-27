@@ -39,21 +39,21 @@ public class ReportService {
         if (CollectionUtils.isEmpty(times)) return Collections.emptyList();
 
         return redis.getUser(times.get(0).getChatId())
-                .get()
-                .services()
-                .stream()
-                .map(it -> {
-                    var date = times.stream()
-                            .filter(time -> time.getServiceId().equals(it))
-                            .findFirst()
-                            .map(Time::getDateTime)
-                            .orElse(null);
-                    if (date == null) return null;
+                .fold(error -> Collections.emptyList(),
+                        user -> user.services()
+                                .stream()
+                                .map(it -> {
+                                    var date = times.stream()
+                                            .filter(time -> time.getServiceId().equals(it))
+                                            .findFirst()
+                                            .map(Time::getDateTime)
+                                            .orElse(null);
+                                    if (date == null) return null;
 
-                    return new MonthReport(employNameMapper.getFio(id), clientService, it,servicesMapper.getKeyById(it), date).generate(times);
-                })
-                .filter(Objects::nonNull)
-                .toList();
+                                    return new MonthReport(employNameMapper.getFio(id), clientService, it,servicesMapper.getKeyById(it), date).generate(times);
+                                })
+                                .filter(Objects::nonNull)
+                                .toList());
     }
 
 }
