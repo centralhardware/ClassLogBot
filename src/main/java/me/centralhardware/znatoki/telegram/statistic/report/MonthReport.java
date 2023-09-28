@@ -60,7 +60,7 @@ public class MonthReport extends ExcelReport{
         AtomicInteger totalGroup = new AtomicInteger();
 
         Comparator<Map.Entry<Client, ?>> comparator = Comparator.comparing(it -> it.getKey().getClassNumber(), Comparator.nullsLast(Comparator.naturalOrder()));
-        comparator.thenComparing(it -> it.getKey().getFio(), Comparator.nullsLast(Collator.getInstance(new Locale("ru", "RU"))));
+        comparator = comparator.thenComparing(it -> it.getKey().getFio(), Comparator.nullsLast(Collator.getInstance(new Locale("ru", "RU"))));
         AtomicInteger i = new AtomicInteger(1);
         fioToTimes
                 .entrySet()
