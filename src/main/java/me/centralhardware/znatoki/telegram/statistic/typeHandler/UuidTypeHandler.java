@@ -18,7 +18,6 @@ public class UuidTypeHandler implements TypeHandler<UUID> {
         } else {
             ps.setObject(i, parameter.toString(), Types.OTHER);
         }
-
     }
 
     @Override

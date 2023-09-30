@@ -2,12 +2,10 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
+import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
+import me.centralhardware.znatoki.telegram.statistic.entity.Payment;
+import me.centralhardware.znatoki.telegram.statistic.entity.Service;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
@@ -16,18 +14,15 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyb
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
-import me.centralhardware.znatoki.telegram.statistic.validate.PhotoValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.ServiceValidator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -50,10 +45,10 @@ public class TimeFsm extends Fsm {
     private final EmployNameMapper employNameMapper;
     private final ServicesMapper servicesMapper;
     private final ClientService clientService;
+    private final OrganizationMapper organizationMapper;
 
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
-    private final PhotoValidator photoValidator;
     private final ServiceValidator serviceValidator;
 
     @Override
@@ -64,6 +59,7 @@ public class TimeFsm extends Fsm {
                 .map(Message::getText)
                 .orElse(null);
         var znatokiUser = redis.getUser(userId).get();
+        var org =  organizationMapper.getById(znatokiUser.organizationId());
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getStage(userId)) {
@@ -110,111 +106,97 @@ public class TimeFsm extends Fsm {
             ).peek(
                     amount -> {
                         storage.getTime(userId).setAmount(amount);
-                        sender.sendText("Отправьте фото отчётности", user);
-                        storage.setStage(userId, INPUT_PHOTO);
-                    }
-            );
-            case INPUT_PHOTO -> photoValidator.validate(update).peekLeft(
-                    error -> sender.sendText(error, user)
-            ).peek(
-                    report -> {
-                        GetFile getFile = new GetFile();
-                        getFile.setFileId(report.getFileId());
 
-                        var time = storage.getTime(userId);
+                        if (org.getServiceCustomProperties() == null ||
+                                org.getServiceCustomProperties().isEmpty()){
+                            storage.setStage(userId, CONFIRM);
 
-                        File file = sender.downloadFile(getFile)
-                                .onFailure(error -> {
-                                    sender.sendText("Ошибка при добавление занятия. Попробуйте снова", user);
-                                    storage.remove(userId);
-                                })
-                                .get();
-
-                        String id = minio.upload(file, time.getDateTime(), employNameMapper.getFio(time.getChatId()), servicesMapper.getKeyById(time.getServiceId()), "znatoki")
-                                .onFailure(error -> {
-                                    sender.sendText("Ошибка при сохранение фотографии. Попробуйте снова", user);
-                                    storage.remove(userId);
-                                })
-                                .get();
-                        storage.getTime(userId).setPhotoId(id);
-
-                        ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
-                                .setText(STR."""
-                                        Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        ФИО:\{String.join((CharSequence) ";", time.getServiceIds().stream().map(clientService::getFioById).toList())}
-                                        стоимость занятия: \{time.getAmount().toString()}
+                            var time = storage.getTime(userId);
+                            ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
+                                    .setText(STR."""
+                                        услуга: \{ servicesMapper.getNameById(time.getServiceId())}
+                                        ФИО:\{String.join(";", time.getServiceIds().stream().map(clientService::getFioById).toList())}
+                                        стоимость: \{time.getAmount().toString()}
+                                        Сохранить?
                                         """)
-                                .row().button("да").endRow()
-                                .row().button("нет").endRow();
+                                    .row().button("да").endRow()
+                                    .row().button("нет").endRow();
+                            sender.send(builder.build(userId), user);
+                        } else {
+                            storage.setStage(userId, INPUT_PROPERTIES);
+                            storage.getTime(userId).setPropertiesBuilder(new PropertiesBuilder(org.getServiceCustomProperties().propertyDefs()));
+//                            sender.sendText(storage.getTime(userId).getPropertiesBuilder().getNext().get(), user);
+                        }
 
-                        sender.send(builder.build(userId), user);
-                        storage.setStage(userId, CONFIRM);
 
                     }
             );
+//            case INPUT_PROPERTIES -> storage.getTime(userId).getPropertiesBuilder()
+//                    .validate(update)
+//                    .toEither()
+//                    .peekLeft(error -> sender.sendText(error, user))
+//                    .peek(it -> storage.getTime(userId).getPropertiesBuilder().getNext()
+//                            .ifPresentOrElse(
+//                                    next -> sender.sendText(next, user),
+//                                    () -> storage.setStage(userId, CONFIRM)));
             case CONFIRM -> {
                 if (Objects.equals(text, "да")) {
-                    var time = storage.getTime(userId);
+                    var service = storage.getTime(userId);
                     var id = UUID.randomUUID();
-                    time.getServiceIds().forEach(it -> {
-                        time.setPupilId(it);
-                        time.setId(id);
-                        time.setOrganizationId(redis.getUser(userId).get().organizationId());
-                        serviceMapper.insertTime(time);
+                    service.getServiceIds().forEach(it -> {
+                        service.setPupilId(it);
+                        service.setId(id);
+                        service.setOrganizationId(redis.getUser(userId).get().organizationId());
+                        serviceMapper.insertTime(service);
                         var payment = new Payment();
                         payment.setDateTime(LocalDateTime.now());
-                        payment.setPupilId(time.getPupilId());
-                        payment.setAmount(time.getAmount() * -1);
-                        payment.setTimeId(time.getId());
+                        payment.setPupilId(service.getPupilId());
+                        payment.setAmount(service.getAmount() * -1);
+                        payment.setTimeId(service.getId());
                         payment.setOrganizationId(redis.getUser(userId).get().organizationId());
                         paymentMapper.insert(payment);
                     });
 
-                    sendLog(time, userId);
+                    sendLog(service, userId);
 
                     storage.remove(userId);
 
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
-                    Future.of(() -> {
-                        minio.delete(storage.getTime(userId).getPhotoId(), "znatoki")
-                                .onFailure(error -> sender.send("Ошибка при удаление фотографии", user));
-                        storage.remove(userId);
-                        return null;
-                    }).onSuccess(error -> sender.sendText("Удалено", user));
+
                 }
             }
         }
     }
 
-    private void sendLog(Time time, Long userId){
-        getLogUser(userId)
-                .ifPresent(user -> {
-                    var keybard = InlineKeyboardBuilder.create()
-                            .setText("?")
-                            .row()
-                            .button("удалить", "timeDelete-" + time.getId())
-                            .endRow().build();
-                    SendPhoto sendPhoto = SendPhoto
-                            .builder()
-                            .photo(new InputFile(minio.get(time.getPhotoId(), "znatoki")
-                                    .onFailure(error -> sender.sendText("Ошибка во время отправки лога", user))
-                                    .get(), "отчет"))
-                            .chatId(user.getId())
-                            .caption(STR."""
-                        #занятие
-                        Время: \{time.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
-                        Предмет: #\{servicesMapper.getNameById(time.getServiceId()).replaceAll(" ", "_")}
-                        Ученики: \{time.getServiceIds().stream()
-                                    .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
-                                    .collect(Collectors.joining(", "))}
-                        Стоимость: \{time.getAmount()}
-                        Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
-                        """)
-                            .replyMarkup(keybard)
-                            .build();
-                    sender.send(sendPhoto, user);
-                });
+    private void sendLog(Service service, Long userId){
+//        getLogUser(userId)
+//                .ifPresent(user -> {
+//                    var keybard = InlineKeyboardBuilder.create()
+//                            .setText("?")
+//                            .row()
+//                            .button("удалить", "timeDelete-" + service.getId())
+//                            .endRow().build();
+//                    SendPhoto sendPhoto = SendPhoto
+//                            .builder()
+//                            .photo(new InputFile(minio.get(service.getPhotoId(), "znatoki")
+//                                    .onFailure(error -> sender.sendText("Ошибка во время отправки лога", user))
+//                                    .get(), "отчет"))
+//                            .chatId(user.getId())
+//                            .caption(STR."""
+//                        #занятие
+//                        Время: \{ service.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
+//                        Предмет: #\{servicesMapper.getNameById(service.getServiceId()).replaceAll(" ", "_")}
+//                        Ученики: \{ service.getServiceIds().stream()
+//                                    .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
+//                                    .collect(Collectors.joining(", "))}
+//                        Стоимость: \{ service.getAmount()}
+//                        Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
+//                        """)
+//                            .replyMarkup(keybard)
+//                            .build();
+//                    sender.send(sendPhoto, user);
+//                });
     }
 
     @Override

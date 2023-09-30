@@ -5,20 +5,22 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import me.centralhardware.znatoki.telegram.statistic.entity.Enum.HowToKnow;
+import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
+import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
-import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.search.engine.backend.types.Projectable;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Indexed
@@ -48,27 +50,11 @@ public class Client {
     @Column(nullable = false)
     @KeywordField(name = "lastName", projectable = Projectable.YES)
     private String lastName;
-    /**
-     * 1-11
-     * -1 preschool age
-     */
-    @Column()
-    private Integer classNumber;
-    @Column(nullable = false)
-    private LocalDateTime dateOfRecord;
-    @Column(nullable = false)
-    private LocalDateTime dateOfBirth;
-    /**
-     * only mobile
-     */
-    @Column(nullable = false)
-    private String telephone;
-    @Column(length = 11)
-    private String telephoneResponsible;
-    @Enumerated(EnumType.STRING)
-    private HowToKnow howToKnow;
+
     @Column
-    private String motherName;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Property> properties;
+
     @Column
     private UUID organizationId;
 
@@ -90,35 +76,34 @@ public class Client {
     @Column(name = "deleted", columnDefinition = "boolean default false")
     private boolean deleted;
 
+    @Transient
+    private PropertiesBuilder propertiesBuilder;
+
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public String getInfo(List<String> services) {
-        String know             = howToKnow         == null? "" : howToKnow.toString();
-        String nameMother       = motherName        == null? "" : motherName;
-        String updated          = updateBy          == null? "" : updateBy.toString();
-
-        return STR."""
+        var start = STR."""
                 id=\{TelegramUtil.makeBold(id)}
                 фамилия=\{TelegramUtil.makeBold(secondName)}
                 имя=\{TelegramUtil.makeBold(name)}
                 отчество=\{TelegramUtil.makeBold(lastName)}
-                класс=\{TelegramUtil.makeBold(classNumber)}
-                дата записи=\{TelegramUtil.makeBold(dateFormatter.format(dateOfRecord))}
-                дата рождения=\{TelegramUtil.makeBold(dateFormatter.format(dateOfBirth))}
-                телефон=\{TelephoneUtils.format(telephone)}
-                телефон ответственного=\{TelephoneUtils.format( telephoneResponsible)}
-                как узнал=\{TelegramUtil.makeBold(know)}
+                """;
+        var end = STR."""
                 Предметы=\{TelegramUtil.makeBold(String.join(",", services))}
-                имя матери=\{TelegramUtil.makeBold(nameMother)}
                 дата создания=\{TelegramUtil.makeBold(dateFormatter.format(createDate))}
                 дата изменения=\{TelegramUtil.makeBold(dateFormatter.format(modifyDate))}
                 создано=\{created_by}
-                редактировано=\{updated}
+                редактировано=\{updateBy == null? "" : updateBy}
                 """;
-    }
 
-    public long getAge(){
-        return ChronoUnit.YEARS.between(dateOfBirth, LocalDateTime.now());
+        var customProperties = properties
+                .stream()
+                .map(property -> {
+                    return STR."\{property.name()} \{TelegramUtil.makeBold(property.value())}";
+                })
+                .collect(Collectors.joining("\n"));
+
+        return start + "\n" + customProperties + "\n" + end;
     }
 
     public String getFio(){

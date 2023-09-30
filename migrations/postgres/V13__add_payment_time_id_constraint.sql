@@ -1,1 +1,1 @@
-ALTER TABLE payment ADD CONSTRAINT time_id_fk FOREIGN KEY (time_id) REFERENCES service(id)
+ALTER TABLE payment ADD CONSTRAINT time_id_fk FOREIGN KEY (time_id) REFERENCES services(id)

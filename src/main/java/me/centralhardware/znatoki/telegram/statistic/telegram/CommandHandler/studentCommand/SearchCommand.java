@@ -74,12 +74,10 @@ public class SearchCommand extends CommandHandler {
             String link = String.format("%s/edit?sessionId=%s", Config.getBaseUrl(), uuid);
             InlineKeyboardBuilder inlineKeyboardBuilder = InlineKeyboardBuilder.
                     create().
-                    setText(String.format("%s %s %s \n%s л. %s кл.",
+                    setText(String.format("%s %s %s \n",
                             client.getName(),
                             client.getSecondName(),
-                            client.getLastName(),
-                            client.getAge(),
-                            client.getClassNumber())).
+                            client.getLastName())).
                     row().
                     button("информация", "/user_info" + client.getId()).
                     endRow();

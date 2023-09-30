@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
+import me.centralhardware.znatoki.telegram.statistic.entity.Payment;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
@@ -15,7 +15,6 @@ public interface PaymentMapper {
                 chat_id,
                 pupil_id,
                 amount,
-                photo_id,
                 time_id,
                 org_id
             ) VALUES (
@@ -23,7 +22,6 @@ public interface PaymentMapper {
                 #{payment.chatId},
                 #{payment.pupilId},
                 #{payment.amount},
-                #{payment.photoId},
                 #{payment.timeId},
                 #{payment.organizationId}
             )

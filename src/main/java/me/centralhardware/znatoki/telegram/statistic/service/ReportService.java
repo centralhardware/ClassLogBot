@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
@@ -34,7 +34,7 @@ public class ReportService {
         return getReport(serviceMapper::getPrevMonthTimes, id);
     }
 
-    private List<File> getReport(Function<Long,List<Time>> getTime, Long id){
+    private List<File> getReport(Function<Long,List<Service>> getTime, Long id){
         var times = getTime.apply(id);
         if (CollectionUtils.isEmpty(times)) return Collections.emptyList();
 
@@ -46,7 +46,7 @@ public class ReportService {
                                     var date = times.stream()
                                             .filter(time -> time.getServiceId().equals(it))
                                             .findFirst()
-                                            .map(Time::getDateTime)
+                                            .map(Service::getDateTime)
                                             .orElse(null);
                                     if (date == null) return null;
 

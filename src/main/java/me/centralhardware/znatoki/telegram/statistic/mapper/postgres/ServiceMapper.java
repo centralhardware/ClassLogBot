@@ -2,7 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.annotations.*;
 
@@ -20,7 +20,7 @@ public interface ServiceMapper {
 
     @Select("""
             SELECT org_id
-            FROM service
+            FROM services
             WHERE id = #{id}
             LIMIT 1
             """)
@@ -37,21 +37,19 @@ public interface ServiceMapper {
                 chat_id,
                 service_id,
                 amount,
-                photo_id,
                 pupil_id,
                 org_id
             ) VALUES (
-                #{time.dateTime},
-                #{time.id},
-                #{time.chatId},
-                #{time.serviceId},
-                #{time.amount},
-                #{time.photoId},
-                #{time.pupilId},
-                #{time.organizationId}
+                #{service.dateTime},
+                #{service.id},
+                #{service.chatId},
+                #{service.serviceId},
+                #{service.amount},
+                #{service.pupilId},
+                #{service.organizationId}
             )
             """)
-    void insertTime(@Param("time") Time time);
+    void insertTime(@Param("service") Service service);
 
     @Select("""
             SELECT date_time,
@@ -76,9 +74,9 @@ public interface ServiceMapper {
             @Result(property = "photoId", column = "photo_id"),
             @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class)
     })
-    List<Time> _getTimesById(@Param("id") UUID id);
+    List<Service> _getTimesById(@Param("id") UUID id);
 
-    default List<Time> getTimes(UUID id){
+    default List<Service> getTimes(UUID id){
         return convert(_getTimesById(id));
     }
 
@@ -106,52 +104,52 @@ public interface ServiceMapper {
             @Result(property = "photoId", column = "photo_id"),
             @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class)
     })
-    List<Time> _getTimesByChatId(@Param("userId") Long userId,
-                             @Param("startDate") String startDate,
-                             @Param("endDate") String endDate);
+    List<Service> _getTimesByChatId(@Param("userId") Long userId,
+                                    @Param("startDate") String startDate,
+                                    @Param("endDate") String endDate);
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
-    default List<Time> _getTimesByChatId(Long userId,
-                                     LocalDateTime startDate,
-                                     LocalDateTime endDate){
+    default List<Service> _getTimesByChatId(Long userId,
+                                            LocalDateTime startDate,
+                                            LocalDateTime endDate){
         return _getTimesByChatId(userId, dateTimeFormatter.format(startDate), dateTimeFormatter.format(endDate));
     }
 
-    default List<Time> getTimes(Long userId,
-                                LocalDateTime startDate,
-                                LocalDateTime endDate) {
+    default List<Service> getTimes(Long userId,
+                                   LocalDateTime startDate,
+                                   LocalDateTime endDate) {
         return convert(_getTimesByChatId(userId, startDate, endDate));
     }
 
-    default List<Time> convert(List<Time> rawTimes){
-        Multimap<UUID, Time> times = ArrayListMultimap.create();
-        rawTimes.forEach(it -> times.put(it.getId(), it));
+    default List<Service> convert(List<Service> rawServices){
+        Multimap<UUID, Service> times = ArrayListMultimap.create();
+        rawServices.forEach(it -> times.put(it.getId(), it));
         return times.asMap()
                 .values()
                 .stream()
                 .map(timeCollection -> {
-                    var time = timeCollection.stream().findFirst().get();
-                    time.setServiceIds(timeCollection.stream().map(Time::getPupilId).collect(Collectors.toSet()));
-                    return time;
+                    var service = timeCollection.stream().findFirst().get();
+                    service.setServiceIds(timeCollection.stream().map(Service::getPupilId).collect(Collectors.toSet()));
+                    return service;
                 })
-                .sorted(Comparator.comparing(Time::getDateTime))
+                .sorted(Comparator.comparing(Service::getDateTime))
                 .toList();
     }
 
 
 
-    default List<Time> getTodayTimes(Long chatId){
+    default List<Service> getTodayTimes(Long chatId){
         return getTimes(chatId, LocalDateTime.now().with(LocalTime.MIN), LocalDateTime.now());
     }
 
-    default List<Time> getCuurentMontTimes(Long chatId){
+    default List<Service> getCuurentMontTimes(Long chatId){
         return getTimes(chatId,
                 LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0),
                 LocalDateTime.now());
     }
 
-    default List<Time> getPrevMonthTimes(Long chatId){
+    default List<Service> getPrevMonthTimes(Long chatId){
         return getTimes(chatId,
                 LocalDateTime.now().minusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0),
                 LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59));

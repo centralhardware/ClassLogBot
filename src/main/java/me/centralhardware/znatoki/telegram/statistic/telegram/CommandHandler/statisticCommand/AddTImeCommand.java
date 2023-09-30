@@ -1,9 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
@@ -35,15 +35,15 @@ public class AddTImeCommand extends CommandHandler {
             return;
         }
 
-        Time time = new Time();
-        time.setDateTime(LocalDateTime.now());
-        time.setChatId(message.getChatId());
+        Service service = new Service();
+        service.setDateTime(LocalDateTime.now());
+        service.setChatId(message.getChatId());
 
         if (user.services().size() == 1){
-            time.setServiceId(user.services().get(0));
+            service.setServiceId(user.services().get(0));
         }
 
-        storage.setTime(message.getChatId(), time);
+        storage.setTime(message.getChatId(), service);
 
         if (user.services().size() != 1){
             ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create();

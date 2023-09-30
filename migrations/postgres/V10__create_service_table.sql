@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS service (
+CREATE TABLE IF NOT EXISTS services (
     unique_id SERIAL PRIMARY KEY ,
     id UUID,
     chat_id BIGINT NOT NULL ,

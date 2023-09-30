@@ -18,10 +18,6 @@ public interface ClientRepository extends CrudRepository<Client, Integer> {
 
     List<Client> findAllByNameAndSecondNameAndLastName(String name, String secondName, String lastName);
 
-    List<Client> findByTelephone(String telephone);
-
-    List<Client> findByTelephoneResponsible(String telephoneMother);
-
     @Query(value = """
         SELECT *
         FROM client

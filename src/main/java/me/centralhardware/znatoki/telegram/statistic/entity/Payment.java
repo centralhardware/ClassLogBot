@@ -1,9 +1,12 @@
-package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
+package me.centralhardware.znatoki.telegram.statistic.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
+import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -14,8 +17,9 @@ public class Payment {
     private Long chatId;
     private Integer pupilId;
     private Integer amount;
-    private String photoId;
     private UUID timeId;
     private UUID organizationId;
+    private List<Property> properties;
+    private PropertiesBuilder propertiesBuilder;
 
 }

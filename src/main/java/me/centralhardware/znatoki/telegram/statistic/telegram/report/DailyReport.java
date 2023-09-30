@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
+import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
@@ -47,19 +47,19 @@ public class DailyReport {
 
                     sender.sendText("Занятия проведенные за сегодня",user);
 
-                    it.forEach(time -> sender.sendText(STR."""
-                                        Время: \{timeFormatter.format(time.getDateTime())}
-                                        Предмет: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        Ученики: \{String.join(", ", time.getServiceIds().stream().map(clientService::getFioById).toList())}
-                                        Стоимость: \{time.getAmount()}
+                    it.forEach(service -> sender.sendText(STR."""
+                                        Время: \{timeFormatter.format(service.getDateTime())}
+                                        Предмет: \{ servicesMapper.getNameById(service.getServiceId())}
+                                        Ученики: \{String.join(", ", service.getServiceIds().stream().map(clientService::getFioById).toList())}
+                                        Стоимость: \{service.getAmount()}
                             """, user));
                     sender.sendText("Проверьте правильность внесенных данных",user);
                 });
     }
 
-    public User getUser(Time time){
+    public User getUser(Service service){
         var user = new User();
-        user.setId(time.getChatId());
+        user.setId(service.getChatId());
         user.setLanguageCode("ru");
         return user;
     }

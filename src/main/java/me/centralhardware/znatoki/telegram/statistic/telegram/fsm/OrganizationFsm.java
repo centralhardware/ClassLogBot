@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Service;
+import me.centralhardware.znatoki.telegram.statistic.entity.Services;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
@@ -109,7 +109,7 @@ public class OrganizationFsm extends Fsm {
 
                     org.getServices()
                             .forEach(service -> {
-                                var s = new Service();
+                                var s = new Services();
                                 s.setOrgId(org.getId());
                                 s.setName(service);
                                 s.setKey(transcriptor.convert(service.replace(" ", "_")).toUpperCase());

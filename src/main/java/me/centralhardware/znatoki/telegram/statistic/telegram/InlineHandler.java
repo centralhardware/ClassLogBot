@@ -71,7 +71,8 @@ public class InlineHandler {
     }
 
     private String getBio(Client client){
-        return String.format("%s класс %s лет", client.getClassNumber(), ChronoUnit.YEARS.between(client.getDateOfBirth(), LocalDateTime.now()));
+        return "";
+//        return String.format("%s класс %s лет", client.getClassNumber(), ChronoUnit.YEARS.between(client.getDateOfBirth(), LocalDateTime.now()));
     }
 
 }

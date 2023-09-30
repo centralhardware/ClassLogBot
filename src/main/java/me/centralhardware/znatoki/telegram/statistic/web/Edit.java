@@ -57,12 +57,6 @@ public class Edit {
             model.addAttribute(EditForm.FIELD_NAME, client.getName());
             model.addAttribute(EditForm.FIELD_SECOND_NAME, client.getSecondName());
             model.addAttribute(EditForm.FIELD_LAST_NAME, client.getLastName());
-            model.addAttribute(EditForm.FIELD_CLASS_NUMBER, client.getClassNumber());
-            model.addAttribute(EditForm.FIELD_DATE_OF_RECORD, DateUtils.dateFormat.format(client.getDateOfRecord()));
-            model.addAttribute(EditForm.FIELD_DATE_OF_BIRTH, DateUtils.dateFormat.format(client.getDateOfBirth()));
-            model.addAttribute(EditForm.FIELD_TELEPHONE, client.getTelephone());
-            model.addAttribute(EditForm.TELEPHONE_RESPONSIBLE, client.getTelephoneResponsible());
-            model.addAttribute(EditForm.FIELD_MOTHER_NAME, client.getMotherName());
             model.addAttribute(EditForm.FIELD_SESSOIN_ID, sessionOptional.get().getUuid());
             return "edit";
         }
@@ -104,35 +98,7 @@ public class Edit {
             fillError(model, "EMPTY_FIELD_LAST_NAME");
             return ERROR_PAGE_NAME;
         }
-        if (editForm.classNumber() < 12 && editForm.classNumber() > 0) {
-            client.setClassNumber(editForm.classNumber());
-        } else {
-            fillError(model, "WRONG_CLASS_NUMBER");
-            return ERROR_PAGE_NAME;
-        }
-        if (IS_NONE_EMPTY.test(editForm.date_of_record())) {
-            LocalDateTime dateOfRecord = LocalDate.parse(editForm.date_of_record(), DateUtils.dateFormat).atStartOfDay();
-            client.setDateOfRecord(dateOfRecord);
-        } else {
-            fillError(model, "EMPTY_FIELD_DATE_OF_RECORD");
-            return ERROR_PAGE_NAME;
-        }
-        if (IS_NONE_EMPTY.test(editForm.date_of_birth())) {
-            LocalDateTime dateOfBirth = LocalDate.parse(editForm.date_of_birth(),DateUtils.dateFormat).atStartOfDay();
-            client.setDateOfBirth(dateOfBirth);
-        } else {
-            fillError(model, "EMPTY_FIELD_DATE_OF_BIRTH");
-            return ERROR_PAGE_NAME;
-        }
-        if (TelephoneUtils.validate(editForm.telephone())) {
-            client.setTelephone(editForm.telephone());
-        }
-        if (TelephoneUtils.validate(editForm.telephone_responsible())) {
-            client.setTelephoneResponsible(editForm.telephone_responsible());
-        }
-        if (IS_NONE_EMPTY.test(editForm.mother_name())) {
-            client.setMotherName(editForm.mother_name());
-        }
+
         client.setUpdateBy(optionalSession.get().getUpdateBy());
         clientService.save(client);
         model.addAttribute("successMessage", resourceBundle.getString("PUPIL_UPDATED"));

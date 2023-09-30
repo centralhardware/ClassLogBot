@@ -1,10 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Time;
-import me.centralhardware.znatoki.telegram.statistic.entity.Client;
-import me.centralhardware.znatoki.telegram.statistic.entity.Invitation;
-import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
+import me.centralhardware.znatoki.telegram.statistic.entity.*;
+import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.*;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +11,7 @@ import java.util.Map;
 @Component
 public class Storage {
 
-    private final Map<Long, Time> fsmTime = new HashMap<>();
+    private final Map<Long, Service> fsmTime = new HashMap<>();
     private final Map<Long, AddTime> fsmTimeStage = new HashMap<>();
 
     private final Map<Long, Client> fsmPupil = new HashMap<>();
@@ -37,12 +34,12 @@ public class Storage {
         fsmTimeStage.put(chatId, stage);
     }
 
-    public Time getTime(Long chatId){
+    public Service getTime(Long chatId){
         return fsmTime.get(chatId);
     }
 
-    public void setTime(Long chatId, Time time){
-        fsmTime.put(chatId, time);
+    public void setTime(Long chatId, Service service){
+        fsmTime.put(chatId, service);
     }
 
     public Client getPupil(Long chatId){

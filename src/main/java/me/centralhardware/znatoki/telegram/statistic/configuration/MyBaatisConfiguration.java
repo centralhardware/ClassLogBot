@@ -3,9 +3,11 @@ package me.centralhardware.znatoki.telegram.statistic.configuration;
 import com.clickhouse.jdbc.ClickHouseDataSource;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Config;
+import me.centralhardware.znatoki.telegram.statistic.eav.PropertyDefs;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
+import me.centralhardware.znatoki.telegram.statistic.typeHandler.CustomPropertiesTypeHandler;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -42,6 +44,7 @@ public class MyBaatisConfiguration {
         var configurationPostgres = new org.apache.ibatis.session.Configuration(postgres);
 
         configurationPostgres.getTypeHandlerRegistry().register(UUID.class, UuidTypeHandler.class);
+        configurationPostgres.getTypeHandlerRegistry().register(PropertyDefs.class, CustomPropertiesTypeHandler.class);
 
         configurationPostgres.addMapper(SessionMapper.class);
         configurationPostgres.addMapper(OrganizationMapper.class);

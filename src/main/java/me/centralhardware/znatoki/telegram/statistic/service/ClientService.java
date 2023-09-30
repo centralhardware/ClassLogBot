@@ -32,17 +32,6 @@ public class ClientService {
                 .orElse("");
     }
 
-    public Map<String, String> getTelephone(UUID organizationId){
-        List<Client> list = repository.findByOrganizationId(organizationId);
-        Map<String, String> result = new HashMap<>();
-        list.forEach(it -> {
-            if (it.getTelephone() == null) return;
-            if (it.isDeleted()) return;
-            result.put(it.getTelephone(),  it.getFio());
-        });
-        return result;
-    }
-
     public List<Client> getAll(){
         return repository.findAll()
                 .stream()
@@ -100,9 +89,5 @@ public class ClientService {
 
     }
 
-    public boolean existByTelephone(String telephone){
-        return !repository.findByTelephone(telephone).isEmpty() ||
-                !repository.findByTelephoneResponsible(telephone).isEmpty();
-    }
 
 }

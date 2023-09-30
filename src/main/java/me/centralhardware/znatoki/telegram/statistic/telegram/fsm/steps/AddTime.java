@@ -5,7 +5,7 @@ public enum AddTime {
     INPUT_SUBJECT,
     INPUT_FIO,
     INPUT_AMOUNT,
-    INPUT_PHOTO,
+    INPUT_PROPERTIES,
     CONFIRM
 
 }

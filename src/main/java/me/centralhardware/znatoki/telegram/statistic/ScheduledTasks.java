@@ -22,21 +22,21 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 7 * * *")
     public void notifyBirthDay() {
-        log.info("start checking birthday");
-        clientService.getAll()
-                .stream()
-                .peek(it -> log.info("check {}, date of birth = {}", it.getId(), it.getDateOfBirth()))
-                .filter(it -> DateUtils.isBirthday(it.getDateOfBirth()))
-                .forEach(pupil -> {
-                    telegramService.getReadRightUser(pupil.getOrganizationId()).forEach(id -> sender.send(SendMessage.builder().
-                            chatId(id.toString()).
-                            text(String.format("День рождения у %s %s %s телефон: %s",
-                                    pupil.getSecondName(),
-                                    pupil.getName(),
-                                    pupil.getLastName(),
-                                    pupil.getTelephone())).build(), getUser(id)));
-                });
-        log.info("finish checking birthday");
+//        log.info("start checking birthday");
+//        clientService.getAll()
+//                .stream()
+//                .peek(it -> log.info("check {}, date of birth = {}", it.getId(), it.getDateOfBirth()))
+//                .filter(it -> DateUtils.isBirthday(it.getDateOfBirth()))
+//                .forEach(pupil -> {
+//                    telegramService.getReadRightUser(pupil.getOrganizationId()).forEach(id -> sender.send(SendMessage.builder().
+//                            chatId(id.toString()).
+//                            text(String.format("День рождения у %s %s %s телефон: %s",
+//                                    pupil.getSecondName(),
+//                                    pupil.getName(),
+//                                    pupil.getLastName(),
+//                                    pupil.getTelephone())).build(), getUser(id)));
+//                });
+//        log.info("finish checking birthday");
     }
 
     private User getUser(Long id){

@@ -2,7 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.st
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.Payment;
+import me.centralhardware.znatoki.telegram.statistic.entity.Payment;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;

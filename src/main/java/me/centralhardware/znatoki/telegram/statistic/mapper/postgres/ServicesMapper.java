@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
-import me.centralhardware.znatoki.telegram.statistic.entity.Service;
+import me.centralhardware.znatoki.telegram.statistic.entity.Services;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -15,12 +15,12 @@ public interface ServicesMapper {
                 name,
                 organization_id
             ) VALUES (
-                #{service.key},
-                #{service.name},
-                #{service.orgId}
+                #{services.key},
+                #{services.name},
+                #{services.orgId}
             )
             """)
-    Long insert(@Param("service") Service service);
+    Long insert(@Param("services") Services services);
 
     @Select("""
             SELECT *
@@ -29,18 +29,18 @@ public interface ServicesMapper {
             """)
     @Results({
             @Result(property = "id", column = "id"),
-            @Result(property = "key", column = "key"),
+            @Result(property = "name", column = "name"),
             @Result(property = "name", column = "name"),
             @Result(property = "orgId", column = "organization_id")
     })
-    List<Service> getServicesByOrganization(@Param("orgId") UUID orgId);
+    List<Services> getServicesByOrganization(@Param("orgId") UUID orgId);
 
     @Select("""
             SELECT id
             FROM services
             WHERE name = #{name} AND organization_id = #{org_id}
             """)
-    Long getServiceId(@Param("org_id") UUID orgId, @Param("name") String service);
+    Long getServiceId(@Param("org_id") UUID orgId, @Param("name") String services);
 
     @Select("""
             SELECT name
