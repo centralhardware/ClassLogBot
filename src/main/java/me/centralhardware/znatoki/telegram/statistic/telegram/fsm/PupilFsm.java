@@ -34,9 +34,9 @@ public class PupilFsm extends Fsm {
 
     @Override
     public void process(Update update) {
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = telegramUtil.getUserId(update);
         String text = update.getMessage().getText();
-        var user = update.getMessage().getFrom();
+        var user = telegramUtil.getFrom(update);
         var znatokiUser = redis.getUser(chatId);
 
         if (telegramService.isUnauthorized(chatId) || !telegramService.hasWriteRight(chatId)){
@@ -91,37 +91,15 @@ public class PupilFsm extends Fsm {
                     }
                 }
             }
-            case INPUT_PROPERTIES -> storage.getPupil(chatId).getPropertiesBuilder()
-                    .validate(update)
-                    .toEither()
-                    .peekLeft(error -> sender.sendText(error, user))
-                    .peek(it -> {
-                        storage.getPupil(chatId).getPropertiesBuilder().setProperty(update);
-                        storage.getPupil(chatId).getPropertiesBuilder().getNext()
-                            .ifPresentOrElse(
-                                    next -> {
-                                        if (!next.getRight().isEmpty()){
-                                            var builder = ReplyKeyboardBuilder
-                                                    .create()
-                                                    .setText(next.getLeft());
-                                            next.getRight().forEach(variant -> builder.row()
-                                                    .button(variant)
-                                                    .endRow());
-                                            sender.send(builder.build(chatId), user);
-                                        } else {
-                                            sender.sendText(next.getLeft(), user);
-                                        }
-                                    },
-                                    () -> {
-                                        getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
-                                        getPupil(chatId).setCreated_by(chatId);
-                                        getPupil(chatId).setProperties(getPupil(chatId).getPropertiesBuilder().getProperties());
-                                        sender.sendMessageWithMarkdown(clientService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
-                                        sendLog(getPupil(chatId), chatId);
-                                        storage.remove(chatId);
-                                        sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
-                                    });
-                    });
+            case INPUT_PROPERTIES -> processCustomProperties(update, getPupil(chatId).getPropertiesBuilder(), properties -> {
+                getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
+                getPupil(chatId).setCreated_by(chatId);
+                getPupil(chatId).setProperties(properties);
+                sender.sendMessageWithMarkdown(clientService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
+                sendLog(getPupil(chatId), chatId);
+                storage.remove(chatId);
+                sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
+            });
         }
     }
 

@@ -1,19 +1,21 @@
 package me.centralhardware.znatoki.telegram.statistic.eav.types;
 
 import io.vavr.control.Validation;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-public non-sealed class DateTime implements Type {
+@Component
+public non-sealed class Date implements Type {
 
-    private static final DateTimeFormatter dateFormat    = DateTimeFormatter.ofPattern("dd MM yyyy HH;mm");
+    private static final DateTimeFormatter dateFormat    = DateTimeFormatter.ofPattern("dd MM yyyy");
 
     @Override
     public String format(String name, Boolean isOptional) {
-        return STR."Введите \{name} в формате dd MM yyyy HH;mm \{isOptional? optionalText: ""}";
+        return STR."Введите \{name} в формате dd MM yyyy \{isOptional? optionalText: ""}";
     }
 
     @Override
@@ -30,4 +32,5 @@ public non-sealed class DateTime implements Type {
     public Optional<String> extract(Update update) {
         return Optional.ofNullable(update.getMessage().getText());
     }
+
 }

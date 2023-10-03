@@ -36,7 +36,7 @@ public interface OrganizationMapper {
             """)
     @Results({
             @Result(property = "logChatId", column = "log_chat_id"),
-            @Result(property = "serviceCustomProperties", column = "client_custom_properties"),
+            @Result(property = "serviceCustomProperties", column = "service_custom_properties"),
             @Result(property = "clientCustomProperties", column = "client_custom_properties"),
             @Result(property = "paymentCustomProperties", column = "payment_custom_properties")
     })
@@ -49,7 +49,7 @@ public interface OrganizationMapper {
             """)
     @Results({
             @Result(property = "logChatId", column = "log_chat_id"),
-            @Result(property = "serviceCustomProperties", column = "client_custom_properties", typeHandler = CustomPropertiesTypeHandler.class),
+            @Result(property = "serviceCustomProperties", column = "service_custom_properties", typeHandler = CustomPropertiesTypeHandler.class),
             @Result(property = "clientCustomProperties", column = "client_custom_properties", typeHandler = CustomPropertiesTypeHandler.class),
             @Result(property = "paymentCustomProperties", column = "payment_custom_properties", typeHandler = CustomPropertiesTypeHandler.class)
     })

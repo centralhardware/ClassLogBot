@@ -42,11 +42,20 @@ public class PropertiesBuilder {
         }
     }
 
-    public void setProperty(Update value){
-        if (value.hasMessage() && Objects.equals(value.getMessage().getText(), "/skip")) return;
+    public boolean setProperty(Update value){
+        if (value.hasMessage() && Objects.equals(value.getMessage().getText(), "/skip")) {
+            properties.add(new Property(current.name()));
+            return true;
+        }
 
-        properties.add(new Property(current.name(), current.type().extract(value)));
-        current = null;
+        var content = current.type().extract(value);
+        content.ifPresent(
+                it -> {
+                    properties.add(new Property(current.name(), it));
+                    current = null;
+                }
+        );
+        return content.isPresent();
     }
 
 }

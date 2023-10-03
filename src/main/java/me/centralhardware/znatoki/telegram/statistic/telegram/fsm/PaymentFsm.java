@@ -28,9 +28,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PaymentFsm extends Fsm {
 
-    private final TelegramUtil telegramUtil;
     private final TelegramSender sender;
-    private final Minio minio;
     private final Redis redis;
 
     private final EmployNameMapper employNameMapper;
@@ -83,22 +81,39 @@ public class PaymentFsm extends Fsm {
                                     .row().button("да").endRow()
                                     .row().button("нет").endRow();
                             sender.send(builder.build(userId), user);
+                            storage.setPaymentStage(userId, AddPayment.CONFIRM);
                         } else {
                             storage.getPayment(userId).setPropertiesBuilder(new PropertiesBuilder(org.getServiceCustomProperties().propertyDefs()));
-//                            sender.sendText(storage.getPayment(userId).getPropertiesBuilder().getNext().get(), user);
                             storage.setPaymentStage(userId, AddPayment.INPUT_PROPERTIES);
+                            var next = storage.getPayment(userId).getPropertiesBuilder().getNext().get();
+                            if (!next.getRight().isEmpty()){
+                                var builder = ReplyKeyboardBuilder
+                                        .create()
+                                        .setText(next.getLeft());
+                                next.getRight().forEach(it -> builder.row().button(it).endRow());
+                                sender.send(builder.build(userId), user);
+                            } else {
+                                sender.sendText(next.getLeft(), user);
+                            }
                         }
 
                     }
             );
-//            case INPUT_PROPERTIES -> storage.getTime(userId).getPropertiesBuilder()
-//                    .validate(update)
-//                    .toEither()
-//                    .peekLeft(error -> sender.sendText(error, user))
-//                    .peek(it -> storage.getTime(userId).getPropertiesBuilder().getNext()
-//                            .ifPresentOrElse(
-//                                    next -> sender.sendText(next, user),
-//                                    () -> storage.setStage(userId, CONFIRM)));
+            case INPUT_PROPERTIES -> processCustomProperties(update, storage.getPayment(userId).getPropertiesBuilder(), properties -> {
+                var payment = storage.getPayment(userId);
+                payment.setProperties(properties);
+                var builder = ReplyKeyboardBuilder.create()
+                        .setText(String.format("""
+                                        ФИО: %s
+                                        Оплата: %s
+                                        """,
+                                clientService.findById(payment.getPupilId()).get().getFio(),
+                                payment.getAmount()))
+                        .row().button("да").endRow()
+                        .row().button("нет").endRow();
+                sender.send(builder.build(userId), user);
+                storage.setPaymentStage(userId, AddPayment.CONFIRM);
+            });
             case CONFIRM -> {
                 if (Objects.equals(text, "да")) {
                     var payment = storage.getPayment(userId);

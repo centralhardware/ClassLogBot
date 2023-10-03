@@ -4,8 +4,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.entity.Session;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
-import me.centralhardware.znatoki.telegram.statistic.utils.DateUtils;
-import me.centralhardware.znatoki.telegram.statistic.utils.TelephoneUtils;
 import me.centralhardware.znatoki.telegram.statistic.web.dto.EditForm;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.UUID;

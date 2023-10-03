@@ -86,8 +86,7 @@ public class Client {
                 id=\{TelegramUtil.makeBold(id)}
                 фамилия=\{TelegramUtil.makeBold(secondName)}
                 имя=\{TelegramUtil.makeBold(name)}
-                отчество=\{TelegramUtil.makeBold(lastName)}
-                """;
+                отчество=\{TelegramUtil.makeBold(lastName)}""";
         var end = STR."""
                 Предметы=\{TelegramUtil.makeBold(String.join(",", services))}
                 дата создания=\{TelegramUtil.makeBold(dateFormatter.format(createDate))}
@@ -98,9 +97,7 @@ public class Client {
 
         var customProperties = properties
                 .stream()
-                .map(property -> {
-                    return STR."\{property.name()} \{TelegramUtil.makeBold(property.value())}";
-                })
+                .map(property -> STR."\{property.name()}=\{TelegramUtil.makeBold(property.value())}" )
                 .collect(Collectors.joining("\n"));
 
         return start + "\n" + customProperties + "\n" + end;

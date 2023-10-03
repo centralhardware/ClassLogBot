@@ -125,20 +125,35 @@ public class TimeFsm extends Fsm {
                         } else {
                             storage.setStage(userId, INPUT_PROPERTIES);
                             storage.getTime(userId).setPropertiesBuilder(new PropertiesBuilder(org.getServiceCustomProperties().propertyDefs()));
-//                            sender.sendText(storage.getTime(userId).getPropertiesBuilder().getNext().get(), user);
+                            var next = storage.getTime(userId).getPropertiesBuilder().getNext().get();
+                            if (!next.getRight().isEmpty()){
+                                var builder = ReplyKeyboardBuilder
+                                        .create()
+                                        .setText(next.getLeft());
+                                next.getRight().forEach(it -> builder.row().button(it).endRow());
+                                sender.send(builder.build(userId), user);
+                            } else {
+                                sender.sendText(next.getLeft(), user);
+                            }
+                            storage.setStage(userId, INPUT_PROPERTIES);
                         }
-
-
                     }
             );
-//            case INPUT_PROPERTIES -> storage.getTime(userId).getPropertiesBuilder()
-//                    .validate(update)
-//                    .toEither()
-//                    .peekLeft(error -> sender.sendText(error, user))
-//                    .peek(it -> storage.getTime(userId).getPropertiesBuilder().getNext()
-//                            .ifPresentOrElse(
-//                                    next -> sender.sendText(next, user),
-//                                    () -> storage.setStage(userId, CONFIRM)));
+            case INPUT_PROPERTIES -> processCustomProperties(update, storage.getTime(userId).getPropertiesBuilder(), properties -> {
+                var time = storage.getTime(userId);
+                time.setProperties(properties);
+                ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
+                        .setText(STR."""
+                                        услуга: \{ servicesMapper.getNameById(time.getServiceId())}
+                                        ФИО:\{String.join(";", time.getServiceIds().stream().map(clientService::getFioById).toList())}
+                                        стоимость: \{time.getAmount().toString()}
+                                        Сохранить?
+                                        """)
+                        .row().button("да").endRow()
+                        .row().button("нет").endRow();
+                sender.send(builder.build(userId), user);
+                storage.setStage(userId, CONFIRM);
+            });
             case CONFIRM -> {
                 if (Objects.equals(text, "да")) {
                     var service = storage.getTime(userId);

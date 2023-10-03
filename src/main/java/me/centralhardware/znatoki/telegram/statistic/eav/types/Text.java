@@ -4,6 +4,8 @@ import io.vavr.control.Validation;
 import org.apache.commons.lang3.StringUtils;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.Optional;
+
 public non-sealed class Text implements Type {
     @Override
     public String format(String name, Boolean isOptional) {
@@ -18,7 +20,7 @@ public non-sealed class Text implements Type {
     }
 
     @Override
-    public String extract(Update update) {
-        return update.getMessage().getText();
+    public Optional<String> extract(Update update) {
+        return Optional.ofNullable(update.getMessage().getText());
     }
 }

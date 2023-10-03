@@ -16,14 +16,16 @@ public interface PaymentMapper {
                 pupil_id,
                 amount,
                 time_id,
-                org_id
+                org_id,
+                properties
             ) VALUES (
                 #{payment.dateTime},
                 #{payment.chatId},
                 #{payment.pupilId},
                 #{payment.amount},
                 #{payment.timeId},
-                #{payment.organizationId}
+                #{payment.organizationId},
+                #{payment.properties, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler}::JSONB
             )
             """)
     void insert(@Param("payment") Payment payment);

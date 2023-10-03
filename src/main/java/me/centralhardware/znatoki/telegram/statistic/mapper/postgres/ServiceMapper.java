@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import me.centralhardware.znatoki.telegram.statistic.entity.Service;
+import me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.annotations.*;
 
@@ -38,7 +39,8 @@ public interface ServiceMapper {
                 service_id,
                 amount,
                 pupil_id,
-                org_id
+                org_id,
+                properties
             ) VALUES (
                 #{service.dateTime},
                 #{service.id},
@@ -46,7 +48,8 @@ public interface ServiceMapper {
                 #{service.serviceId},
                 #{service.amount},
                 #{service.pupilId},
-                #{service.organizationId}
+                #{service.organizationId},
+                #{service.properties, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler}::JSONB
             )
             """)
     void insertTime(@Param("service") Service service);
@@ -59,7 +62,8 @@ public interface ServiceMapper {
                    pupil_id,
                    amount,
                    photo_id,
-                   org_id
+                   org_id,
+                   properties
             FROM service
             WHERE id = #{id}
                 AND is_deleted=false
@@ -72,7 +76,8 @@ public interface ServiceMapper {
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
             @Result(property = "photoId", column = "photo_id"),
-            @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class)
+            @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class),
+            @Result(property = "properties", column = "properties", typeHandler = PropertiesTypeHandler.class)
     })
     List<Service> _getTimesById(@Param("id") UUID id);
 
@@ -88,7 +93,8 @@ public interface ServiceMapper {
                    pupil_id,
                    amount,
                    photo_id,
-                   org_id
+                   org_id,
+                   properties
             FROM service
             WHERE chat_id = #{userId}
                 AND date_time between to_timestamp(#{startDate}, 'DD-MM-YYYY HH24:MI:SS') and to_timestamp(#{endDate}, 'DD-MM-YYYY HH24:MI:SS')
@@ -102,7 +108,8 @@ public interface ServiceMapper {
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
             @Result(property = "photoId", column = "photo_id"),
-            @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class)
+            @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class),
+            @Result(property = "properties", column = "properties", typeHandler = PropertiesTypeHandler.class)
     })
     List<Service> _getTimesByChatId(@Param("userId") Long userId,
                                     @Param("startDate") String startDate,

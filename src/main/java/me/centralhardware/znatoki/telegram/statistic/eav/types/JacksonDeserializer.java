@@ -8,10 +8,12 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import java.io.IOException;
 
 public class JacksonDeserializer extends JsonDeserializer<Type> {
+
     @Override
     public Type deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
         var value = jsonParser.getValueAsString();
         return switch (value){
+            case "Date" -> new Date();
             case "DateTime" -> new DateTime();
             case "Enumeration" -> new Enumeration();
             case "Integer" -> new Integer();

@@ -4,6 +4,7 @@ import io.vavr.control.Validation;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 public non-sealed class Enumeration implements Type {
     @Override
@@ -19,8 +20,8 @@ public non-sealed class Enumeration implements Type {
     }
 
     @Override
-    public String extract(Update update) {
-        return update.getMessage().getText();
+    public Optional<String> extract(Update update) {
+        return Optional.ofNullable(update.getMessage().getText());
     }
 
 }

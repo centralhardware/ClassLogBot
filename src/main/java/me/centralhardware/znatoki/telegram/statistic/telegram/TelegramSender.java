@@ -23,6 +23,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
 import java.io.File;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @Component
@@ -65,8 +66,8 @@ public class TelegramSender {
         send(message.build(), user);
     }
 
-    public Try<File> downloadFile(GetFile getFile){
-        return Try.of(() -> absSender.downloadFile(absSender.execute(getFile)));
+    public Optional<File> downloadFile(GetFile getFile){
+        return Try.of(() -> absSender.downloadFile(absSender.execute(getFile))).toJavaOptional();
     }
 
     public void send(Object method, User user){
