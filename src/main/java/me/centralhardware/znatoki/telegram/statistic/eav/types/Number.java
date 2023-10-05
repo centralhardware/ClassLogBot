@@ -6,7 +6,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Optional;
 
-public non-sealed class Integer implements Type {
+public non-sealed class Number implements Type {
     @Override
     public String format(String name, Boolean isOptional) {
         return STR."Введите \{name} (число). \{isOptional? optionalText: ""}";

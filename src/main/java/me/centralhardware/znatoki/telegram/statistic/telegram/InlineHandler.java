@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
@@ -12,10 +13,9 @@ import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
 
@@ -71,8 +71,12 @@ public class InlineHandler {
     }
 
     private String getBio(Client client){
-        return "";
-//        return String.format("%s класс %s лет", client.getClassNumber(), ChronoUnit.YEARS.between(client.getDateOfBirth(), LocalDateTime.now()));
+        return client.getProperties()
+                .stream()
+                .filter(Property::isIncludeInBio)
+                .filter(it -> StringUtils.isNotBlank(it.value()))
+                .map(it -> STR."\{it.value()} \{it.name()}")
+                .collect(Collectors.joining(" "));
     }
 
 }

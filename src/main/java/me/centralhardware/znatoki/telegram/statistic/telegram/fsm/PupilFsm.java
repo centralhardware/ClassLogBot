@@ -78,7 +78,7 @@ public class PupilFsm extends Fsm {
                     sender.sendMessageFromResource(MessageConstant.CREATE_PUPIL_FINISHED, user);
                 } else {
                     next(chatId);
-                    storage.getPupil(chatId).setPropertiesBuilder(new PropertiesBuilder(org.getServiceCustomProperties().propertyDefs()));
+                    storage.getPupil(chatId).setPropertiesBuilder(new PropertiesBuilder(org.getClientCustomProperties().propertyDefs()));
                     var next = storage.getPupil(chatId).getPropertiesBuilder().getNext().get();
                     if (!next.getRight().isEmpty()){
                         var builder = ReplyKeyboardBuilder

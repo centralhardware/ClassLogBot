@@ -1,8 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
-import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
+import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo;
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment;
 import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
@@ -12,11 +12,13 @@ import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
+import me.centralhardware.znatoki.telegram.statistic.utils.PropertyUtils;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.ServiceValidator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -185,33 +187,56 @@ public class TimeFsm extends Fsm {
     }
 
     private void sendLog(Service service, Long userId){
-//        getLogUser(userId)
-//                .ifPresent(user -> {
-//                    var keybard = InlineKeyboardBuilder.create()
-//                            .setText("?")
-//                            .row()
-//                            .button("удалить", "timeDelete-" + service.getId())
-//                            .endRow().build();
-//                    SendPhoto sendPhoto = SendPhoto
-//                            .builder()
-//                            .photo(new InputFile(minio.get(service.getPhotoId(), "znatoki")
-//                                    .onFailure(error -> sender.sendText("Ошибка во время отправки лога", user))
-//                                    .get(), "отчет"))
-//                            .chatId(user.getId())
-//                            .caption(STR."""
-//                        #занятие
-//                        Время: \{ service.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
-//                        Предмет: #\{servicesMapper.getNameById(service.getServiceId()).replaceAll(" ", "_")}
-//                        Ученики: \{ service.getServiceIds().stream()
-//                                    .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
-//                                    .collect(Collectors.joining(", "))}
-//                        Стоимость: \{ service.getAmount()}
-//                        Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
-//                        """)
-//                            .replyMarkup(keybard)
-//                            .build();
-//                    sender.send(sendPhoto, user);
-//                });
+        getLogUser(userId)
+                .ifPresent(user -> {
+                    var keybard = InlineKeyboardBuilder.create()
+                            .setText("?")
+                            .row()
+                            .button("удалить", "timeDelete-" + service.getId())
+                            .endRow().build();
+
+                    var text =STR."""
+                        #занятие
+                        Время: \{ service.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
+                        Предмет: #\{servicesMapper.getNameById(service.getServiceId()).replaceAll(" ", "_")}
+                        Ученики: \{ service.getServiceIds().stream()
+                            .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
+                            .collect(Collectors.joining(", "))}
+                        Стоимость: \{ service.getAmount()}
+                        Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
+                        \{ PropertyUtils.print(service.getProperties())}
+                        """;
+
+                    var hasPhoto = service.getProperties()
+                            .stream()
+                            .filter(it -> it.type() instanceof Photo)
+                            .count();
+
+                    if (hasPhoto == 1){
+                        service.getProperties()
+                                .stream()
+                                .filter(it -> it.type() instanceof Photo)
+                                .forEach(photo -> {
+                                    SendPhoto sendPhoto = SendPhoto
+                                            .builder()
+                                            .photo(new InputFile(minio.get(photo.value())
+                                                    .onFailure(error -> sender.sendText("Ошибка во время отправки лога", user))
+                                                    .get(), "отчет"))
+                                            .chatId(user.getId())
+                                            .caption(text)
+                                            .replyMarkup(keybard)
+                                            .build();
+                                    sender.send(sendPhoto, user);
+                                });
+                    } else {
+                        var message = SendMessage
+                                .builder()
+                                .chatId(user.getId())
+                                .text(text)
+                                .replyMarkup(keybard);
+                        sender.send(message.build(), user);
+                    }
+                });
     }
 
     @Override

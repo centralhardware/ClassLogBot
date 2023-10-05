@@ -21,7 +21,7 @@ public interface ServiceMapper {
 
     @Select("""
             SELECT org_id
-            FROM services
+            FROM service
             WHERE id = #{id}
             LIMIT 1
             """)
@@ -61,7 +61,6 @@ public interface ServiceMapper {
                    service_id,
                    pupil_id,
                    amount,
-                   photo_id,
                    org_id,
                    properties
             FROM service
@@ -75,7 +74,6 @@ public interface ServiceMapper {
             @Result(property = "serviceId", column = "service_id"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
-            @Result(property = "photoId", column = "photo_id"),
             @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class),
             @Result(property = "properties", column = "properties", typeHandler = PropertiesTypeHandler.class)
     })
@@ -92,7 +90,6 @@ public interface ServiceMapper {
                    service_id,
                    pupil_id,
                    amount,
-                   photo_id,
                    org_id,
                    properties
             FROM service
@@ -107,7 +104,6 @@ public interface ServiceMapper {
             @Result(property = "serviceId", column = "service_id"),
             @Result(property = "pupilId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
-            @Result(property = "photoId", column = "photo_id"),
             @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class),
             @Result(property = "properties", column = "properties", typeHandler = PropertiesTypeHandler.class)
     })

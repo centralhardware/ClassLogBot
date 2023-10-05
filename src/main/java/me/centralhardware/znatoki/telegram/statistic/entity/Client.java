@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
+import me.centralhardware.znatoki.telegram.statistic.utils.PropertyUtils;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -82,25 +83,18 @@ public class Client {
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public String getInfo(List<String> services) {
-        var start = STR."""
+        return STR."""
                 id=\{TelegramUtil.makeBold(id)}
                 фамилия=\{TelegramUtil.makeBold(secondName)}
                 имя=\{TelegramUtil.makeBold(name)}
-                отчество=\{TelegramUtil.makeBold(lastName)}""";
-        var end = STR."""
+                отчество=\{TelegramUtil.makeBold(lastName)}
+                \{ PropertyUtils.print(properties)}
                 Предметы=\{TelegramUtil.makeBold(String.join(",", services))}
                 дата создания=\{TelegramUtil.makeBold(dateFormatter.format(createDate))}
                 дата изменения=\{TelegramUtil.makeBold(dateFormatter.format(modifyDate))}
                 создано=\{created_by}
                 редактировано=\{updateBy == null? "" : updateBy}
                 """;
-
-        var customProperties = properties
-                .stream()
-                .map(property -> STR."\{property.name()}=\{TelegramUtil.makeBold(property.value())}" )
-                .collect(Collectors.joining("\n"));
-
-        return start + "\n" + customProperties + "\n" + end;
     }
 
     public String getFio(){

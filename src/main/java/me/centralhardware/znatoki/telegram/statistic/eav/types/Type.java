@@ -6,7 +6,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.Objects;
 import java.util.Optional;
 
-public sealed interface Type permits Date, DateTime, Enumeration, Integer, Photo, Telephone, Text {
+public sealed interface Type permits Date, DateTime, Enumeration, Number, Photo, Telephone, Text {
 
     String optionalText = "/skip для пропуска.";
 

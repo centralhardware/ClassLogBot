@@ -11,47 +11,47 @@
 <form action='/save' method='get' accept-charset='UTF-8'>
     <div class="form-group">
         <label for='name' class="control-label">Имя</label><br>
-        <input type='text' class="form-control" required="required" id='name' name='name' th:value='${name}'><br>
+        <input value='text' class="form-control" required="required" id='name' name='name' th:value='${name}'><br>
     </div>
     <div class="form-group">
         <label for='secondName'>Фамилия</label><br>
-        <input type='text' class="form-control" required="required" id='secondName' name='secondName' th:value='${secondName}'><br>
+        <input value='text' class="form-control" required="required" id='secondName' name='secondName' th:value='${secondName}'><br>
     </div>
     <div class="form-group">
         <label for='lastName'>Отчество</label><br>
-        <input type='text' class="form-control" id='lastName' name='lastName' th:value='${lastName}'><br>
+        <input value='text' class="form-control" id='lastName' name='lastName' th:value='${lastName}'><br>
     </div>
     <div class="form-group">
         <label for='classNumber'>Класс</label><br>
-        <input type='number' class="form-control" required="required" id='classNumber' name='classNumber' th:value='${classNumber}'><br>
+        <input value='number' class="form-control" required="required" id='classNumber' name='classNumber' th:value='${classNumber}'><br>
     </div>
     <div class="form-group">
         <label for='date_of_record'>дата записи</label><br>
-        <input type='date' class="form-control" required="required" id='date_of_record' name='date_of_record' th:value='${date_of_record}'><br>
+        <input value='date' class="form-control" required="required" id='date_of_record' name='date_of_record' th:value='${date_of_record}'><br>
     </div>
     <div class="form-group">
         <label for='date_of_birth'>Дата рождения</label><br>
-        <input type='date' class="form-control" required="required" id='date_of_birth' name='date_of_birth' th:value='${date_of_birth}'><br>
+        <input value='date' class="form-control" required="required" id='date_of_birth' name='date_of_birth' th:value='${date_of_birth}'><br>
     </div>
     <div class="form-group">
         <label for='telephone'>Телефон</label><br>
-        <input type='tel' class="form-control" id='telephone' name='telephone' th:value='${telephone}'><br>
+        <input value='tel' class="form-control" id='telephone' name='telephone' th:value='${telephone}'><br>
     </div>
     <div class="form-group">
         <label for='telephone_responsible'>Телефон ответственного</label><br>
-        <input type='tel' class="form-control" id='telephone_responsible' name='telephone_responsible' th:value='${telephone_responsible}'><br>
+        <input value='tel' class="form-control" id='telephone_responsible' name='telephone_responsible' th:value='${telephone_responsible}'><br>
     </div>
     <div class="form-group">
         <label for='email'>Email</label><br>
-        <input type='email' class="form-control" id='email' name='email' th:value='${email}'><br>
+        <input value='email' class="form-control" id='email' name='email' th:value='${email}'><br>
     </div>
     <div class="form-group">
         <label for='mother_name'>Имя матери</label> <br>
-        <input type='text' class="form-control" id='mother_name' name='mother_name' th:value='${mother_name}'><br>
+        <input value='text' class="form-control" id='mother_name' name='mother_name' th:value='${mother_name}'><br>
     </div>
 
-    <input type='hidden' id='sessionId' name='sessionId' th:value='${sessionId}'>
-    <input type='submit' class="btn btn-primary" value='Сохранить'>
+    <input value='hidden' id='sessionId' name='sessionId' th:value='${sessionId}'>
+    <input value='submit' class="btn btn-primary" value='Сохранить'>
 </form>
 </body>
 </html>
