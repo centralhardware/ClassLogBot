@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
+import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo;
@@ -132,7 +133,18 @@ public class PaymentFsm extends Fsm {
 
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
-
+                    Future.of(() -> {
+                        storage.getTime(userId)
+                                .getProperties()
+                                .stream()
+                                .filter(it -> it.type() instanceof Photo)
+                                .forEach(photo -> {
+                                    minio.delete(photo.value())
+                                            .onFailure(error -> sender.send("Ошибка при удаление фотографии", user));
+                                });
+                        storage.remove(userId);
+                        return null;
+                    }).onSuccess(it -> sender.sendText("Удалено", user));
                 }
                 storage.remove(userId);
             }

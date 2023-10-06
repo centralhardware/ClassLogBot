@@ -1,18 +1,18 @@
-update payment
+update payment_backup
 set properties = jsonb_build_array(
         jsonb_build_object(
                 'name', 'фото отчетности',
                 'type', 'Photo',
-                'value', payment.photo_id
+                'value', payment_backup.photo_id
             )
     )
 
-update service
+update service_backup
 set properties = jsonb_build_array(
         jsonb_build_object(
                 'name', 'фото отчетности',
                 'type', 'Photo',
-                'value', service.photo_id
+                'value', service_backup.photo_id
             )
     )
 

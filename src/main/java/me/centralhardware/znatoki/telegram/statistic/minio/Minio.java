@@ -57,11 +57,11 @@ public class Minio {
                 .toJavaOptional();
     }
 
-    public Try<Void> delete(String file, String bucket){
+    public Try<Void> delete(String file){
         return Try.of(() -> {
             minioClient.removeObject(RemoveObjectArgs
                     .builder()
-                    .bucket(bucket)
+                    .bucket("znatoki")
                     .object(file)
                     .build());
             return null;
