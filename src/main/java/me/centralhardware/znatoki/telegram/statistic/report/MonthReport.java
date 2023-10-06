@@ -137,14 +137,18 @@ public class MonthReport extends ExcelReport{
                 .toList();
         for (var p : props){
             if (comparator == null){
-                if (p.type() instanceof Number && StringUtils.isNotBlank(p.value())){
-                    comparator = Comparator.comparing(it -> java.lang.Integer.parseInt(getProperty(it.getKey(), p.name()).value()), Comparator.nullsLast(Comparator.naturalOrder()));
+                if (p.type() instanceof Number){
+                    comparator = Comparator.comparing(it ->
+                            getProperty(it.getKey(), p.name()).value() != null ?
+                                    Integer.parseInt(getProperty(it.getKey(), p.name()).value()) :
+                                    null,
+                            Comparator.nullsLast(Comparator.naturalOrder()));
                 } else {
                     comparator = Comparator.comparing(it -> getProperty(it.getKey(), p.name()).value(), Comparator.nullsLast(Comparator.naturalOrder()));
                 }
             }
             if (p.type() instanceof Number && StringUtils.isNotBlank(p.value())){
-                comparator = comparator.thenComparing(it -> java.lang.Integer.parseInt(getProperty(it.getKey(), p.name()).value()), Comparator.nullsLast(Comparator.naturalOrder()));
+                comparator = comparator.thenComparing(it -> Integer.parseInt(getProperty(it.getKey(), p.name()).value()), Comparator.nullsLast(Comparator.naturalOrder()));
             } else {
                 comparator = comparator.thenComparing(it -> getProperty(it.getKey(), p.name()).value(), Comparator.nullsLast(Comparator.naturalOrder()));
             }
