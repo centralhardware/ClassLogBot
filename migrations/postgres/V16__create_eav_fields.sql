@@ -9,3 +9,6 @@ ALTER TABLE service ADD COLUMN properties JSONB;
 ALTER TABLE client ALTER COLUMN date_of_birth DROP NOT NULL;
 ALTER TABLE client ALTER COLUMN date_of_record DROP NOT NULL;
 ALTER TABLE client ALTER COLUMN telephone DROP NOT NULL;
+
+ALTER TABLE organization ADD COLUMN include_in_inline TEXT;
+ALTER TABLE organization ADD COLUMN include_in_report TEXT;

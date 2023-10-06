@@ -11,11 +11,10 @@ public record Property(
         @JsonSerialize(using = TypeSerializer.class)
         @JsonDeserialize(using = TypeDeserializer.class)
         Type type,
-        Boolean isIncludeInBio,
         String value) {
 
-    public Property(String name, Type type, Boolean isIncludeInBio){
-        this(name,type, isIncludeInBio,"");
+    public Property(String name, Type type){
+        this(name,type,"");
     }
 
 }

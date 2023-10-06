@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.entity.Client;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,7 @@ public class InlineHandler {
     private final ClientService clientService;
     private final TelegramSender sender;
     private final Redis redis;
+    private final OrganizationMapper organizationMapper;
 
     public boolean processInline(Update update) {
         if (!update.hasInlineQuery()) return false;
@@ -71,9 +73,10 @@ public class InlineHandler {
     }
 
     private String getBio(Client client){
+        var inline = organizationMapper.__getInlineFields(client.getOrganizationId());
         return client.getProperties()
                 .stream()
-                .filter(Property::isIncludeInBio)
+                .filter(it -> inline.contains(it.name()))
                 .filter(it -> StringUtils.isNotBlank(it.value()))
                 .map(it -> STR."\{it.value()} \{it.name()}")
                 .collect(Collectors.joining(" "));

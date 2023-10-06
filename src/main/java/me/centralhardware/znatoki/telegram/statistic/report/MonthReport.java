@@ -18,11 +18,13 @@ import java.util.stream.Collectors;
 public class MonthReport extends ExcelReport{
 
     private final ClientService clientService;
+    private final List<String> reportFields;
 
-    public MonthReport(String fio, ClientService clientService, Long service, String serviceName, LocalDateTime date) {
+    public MonthReport(String fio, ClientService clientService, Long service, String serviceName, LocalDateTime date, List<String> reportFields) {
         super(fio, service, serviceName, date);
 
         this.clientService = clientService;
+        this.reportFields = reportFields;
     }
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");;
@@ -50,7 +52,7 @@ public class MonthReport extends ExcelReport{
                 .map(Client::getProperties)
                 .orElse(Collections.emptyList())
                 .stream()
-                .filter(Property::isIncludeInBio)
+                .filter(it -> reportFields.contains(it.name()))
                 .map(Property::name)
                 .forEach(headers::add);
         headers.add("посетил индивидуально");
@@ -103,7 +105,7 @@ public class MonthReport extends ExcelReport{
                     data.add(client.getFio());
                     client.getProperties()
                             .stream()
-                            .filter(Property::isIncludeInBio)
+                            .filter(prop -> reportFields.contains(prop.name()))
                             .map(Property::value)
                             .forEach(data::add);
                     data.add(Integer.toString(individual));
@@ -130,7 +132,7 @@ public class MonthReport extends ExcelReport{
         Comparator<Map.Entry<Client, List<Service>>> comparator = null;
         var props = client.getProperties()
                 .stream()
-                .filter(Property::isIncludeInBio)
+                .filter(it -> reportFields.contains(it.name()))
                 .toList();
         for (var p : props){
             Object val = p.type() instanceof Number ? java.lang.Integer.parseInt(p.value()) : p.value();
@@ -153,12 +155,6 @@ public class MonthReport extends ExcelReport{
             comparator = comparator.thenComparing(it -> it.getKey().getFio(), Comparator.nullsLast(Collator.getInstance(new Locale("ru", "RU"))));
         }
         return comparator;
-    }
-
-    private Object getValue(Property property){
-        return property.type() instanceof Number ?
-                java.lang.Integer.parseInt(property.value()):
-                property.value();
     }
 
     private Property getProperty(Client client, String name){

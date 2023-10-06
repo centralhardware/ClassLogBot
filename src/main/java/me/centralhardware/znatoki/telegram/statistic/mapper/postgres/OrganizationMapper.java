@@ -73,4 +73,28 @@ public interface OrganizationMapper {
             """)
     Boolean exist(@Param("owner_id") Long OwnerId);
 
+    @Select("""
+            SELECT include_in_inline
+            FROM organization
+            WHERE id = #{id}
+            LIMIT 1
+            """)
+    String __getInlineFields(@Param("id") UUID id);
+
+    default List<String> getInlineFields(UUID id){
+        return List.of(__getInlineFields(id).split(":"));
+    }
+
+    @Select("""
+            SELECT include_in_report
+            FROM organization
+            WHERE id = #{id}
+            LIMIT 1
+            """)
+    String __getReportFields(@Param("id") UUID id);
+
+    default List<String> getReportFields(UUID id){
+        return List.of(__getReportFields(id).split(":"));
+    }
+
 }

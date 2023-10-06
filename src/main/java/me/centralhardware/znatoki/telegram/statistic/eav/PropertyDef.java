@@ -10,6 +10,5 @@ public record PropertyDef(
         String name,
         String[] enumeration,
         Boolean isOptional,
-        Boolean isUnique,
-        Boolean isIncludeInBio
+        Boolean isUnique
 ){}

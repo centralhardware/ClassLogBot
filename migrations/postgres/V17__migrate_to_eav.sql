@@ -21,20 +21,17 @@ set properties = jsonb_build_array(
     jsonb_build_object(
         'name', 'класс',
         'type', 'Integer',
-        'value', client.class_number,
-        'isIncludeInBio', 'true'
+        'value', client.class_number
         ),
     jsonb_build_object(
             'name', 'дата записи',
             'type', 'Date',
-            'value', to_char(client.date_of_record, 'dd MM yyyy'),
-            'isIncludeInBio', 'false'
+            'value', to_char(client.date_of_record, 'dd MM yyyy')
         ),
     jsonb_build_object(
             'name', 'дата рождения',
             'type', 'Date',
-            'value', to_char(client.date_of_birth, 'dd MM yyyy'),
-            'isIncludeInBio', 'false'
+            'value', to_char(client.date_of_birth, 'dd MM yyyy')
         ),
     jsonb_build_object(
             'name', 'как узнал',
@@ -50,19 +47,16 @@ set properties = jsonb_build_array(
                            when how_to_know = 'AUDIO_ADVERTISE_IN_STORE' then 'Аудио Реклама в магазине'
                            when how_to_know = 'ADVERTISING_ON_TV' then 'Реклама на ТВ'
                            when how_to_know = 'INSTAGRAM' then 'инстаграм'
-        end),
-            'isIncludeInBio', 'false'
+        end)
         ),
     jsonb_build_object(
             'name', 'телефон',
             'type', 'Telephone',
-            'value', client.telephone,
-            'isIncludeInBio', 'false'
+            'value', client.telephone
         ),
     jsonb_build_object(
             'name', 'телефон ответственного',
             'type', 'Telephone',
-            'value', client.telephone,
-            'isIncludeInBio', 'false'
+            'value', client.telephone
         )
     )

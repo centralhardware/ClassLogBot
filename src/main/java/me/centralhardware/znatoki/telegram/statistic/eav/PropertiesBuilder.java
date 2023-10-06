@@ -44,14 +44,14 @@ public class PropertiesBuilder {
 
     public boolean setProperty(Update value){
         if (value.hasMessage() && Objects.equals(value.getMessage().getText(), "/skip")) {
-            properties.add(new Property(current.name(), current.type(), current.isIncludeInBio()));
+            properties.add(new Property(current.name(), current.type()));
             return true;
         }
 
         var content = current.type().extract(value);
         content.ifPresent(
                 it -> {
-                    properties.add(new Property(current.name(), current.type(),current.isIncludeInBio(),it));
+                    properties.add(new Property(current.name(), current.type(),it));
                     current = null;
                 }
         );
