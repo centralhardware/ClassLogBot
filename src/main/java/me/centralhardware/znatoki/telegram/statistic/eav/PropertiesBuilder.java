@@ -2,20 +2,22 @@ package me.centralhardware.znatoki.telegram.statistic.eav;
 
 import io.vavr.control.Validation;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Enumeration;
 import org.apache.commons.lang3.tuple.Pair;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.*;
 
-@RequiredArgsConstructor
 public class PropertiesBuilder {
 
     private final List<PropertyDef> propertyDefs;
     @Getter
     private final List<Property> properties = new ArrayList<>();
     private PropertyDef current;
+
+    public PropertiesBuilder(List<PropertyDef> propertyDefs) {
+        this.propertyDefs = new ArrayList<>(propertyDefs);
+    }
 
     public Optional<Pair<String, List<String>>> getNext(){
         if (propertyDefs.isEmpty()) return Optional.empty();
