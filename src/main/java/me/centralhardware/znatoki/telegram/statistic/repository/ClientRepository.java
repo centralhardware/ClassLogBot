@@ -22,7 +22,7 @@ public interface ClientRepository extends CrudRepository<Client, Integer> {
         SELECT *
         FROM client
         WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = lower(:fio)
-        ORDER BY date_of_record DESC
+        ORDER BY create_date DESC
         LIMIT 1
     """, nativeQuery = true)
     Client findByFioAndId(@Param("fio") String fio);
