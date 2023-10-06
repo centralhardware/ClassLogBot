@@ -5,6 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Number;
 import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import java.io.File;
@@ -135,15 +136,14 @@ public class MonthReport extends ExcelReport{
                 .filter(it -> reportFields.contains(it.name()))
                 .toList();
         for (var p : props){
-            Object val = p.type() instanceof Number ? java.lang.Integer.parseInt(p.value()) : p.value();
             if (comparator == null){
-                if (p.type() instanceof Number){
+                if (p.type() instanceof Number && StringUtils.isNotBlank(p.value())){
                     comparator = Comparator.comparing(it -> java.lang.Integer.parseInt(getProperty(it.getKey(), p.name()).value()), Comparator.nullsLast(Comparator.naturalOrder()));
                 } else {
                     comparator = Comparator.comparing(it -> getProperty(it.getKey(), p.name()).value(), Comparator.nullsLast(Comparator.naturalOrder()));
                 }
             }
-            if (p.type() instanceof Number){
+            if (p.type() instanceof Number && StringUtils.isNotBlank(p.value())){
                 comparator = comparator.thenComparing(it -> java.lang.Integer.parseInt(getProperty(it.getKey(), p.name()).value()), Comparator.nullsLast(Comparator.naturalOrder()));
             } else {
                 comparator = comparator.thenComparing(it -> getProperty(it.getKey(), p.name()).value(), Comparator.nullsLast(Comparator.naturalOrder()));
