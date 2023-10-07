@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 

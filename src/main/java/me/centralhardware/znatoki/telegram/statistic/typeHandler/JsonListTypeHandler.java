@@ -47,6 +47,7 @@ public abstract class JsonListTypeHandler<T> implements TypeHandler<List<T>> {
         if (StringUtils.isBlank(str)) return null;
 
         try {
+            //noinspection unchecked
             return mapper.readValue(str, List.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

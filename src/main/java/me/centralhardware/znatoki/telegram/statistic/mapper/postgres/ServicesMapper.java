@@ -20,7 +20,7 @@ public interface ServicesMapper {
                 #{services.orgId}
             )
             """)
-    Long insert(@Param("services") Services services);
+    void insert(@Param("services") Services services);
 
     @Select("""
             SELECT *

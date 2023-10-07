@@ -2,9 +2,6 @@ package me.centralhardware.znatoki.telegram.statistic;
 
 import lombok.Getter;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class Config {
 
     @Getter

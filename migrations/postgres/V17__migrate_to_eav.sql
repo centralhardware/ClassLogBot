@@ -16,22 +16,22 @@ set properties = jsonb_build_array(
             )
     )
 
-update client
+update client_backup
 set properties = jsonb_build_array(
     jsonb_build_object(
         'name', 'класс',
         'type', 'Integer',
-        'value', client.class_number
+        'value', class_number
         ),
     jsonb_build_object(
             'name', 'дата записи',
             'type', 'Date',
-            'value', to_char(client.date_of_record, 'dd MM yyyy')
+            'value', to_char(date_of_record, 'dd MM yyyy')
         ),
     jsonb_build_object(
             'name', 'дата рождения',
             'type', 'Date',
-            'value', to_char(client.date_of_birth, 'dd MM yyyy')
+            'value', to_char(date_of_birth, 'dd MM yyyy')
         ),
     jsonb_build_object(
             'name', 'как узнал',
@@ -52,11 +52,16 @@ set properties = jsonb_build_array(
     jsonb_build_object(
             'name', 'телефон',
             'type', 'Telephone',
-            'value', client.telephone
+            'value', telephone
         ),
     jsonb_build_object(
             'name', 'телефон ответственного',
             'type', 'Telephone',
-            'value', client.telephone
+            'value', telephone
+        ),
+    jsonb_build_object(
+            'name', 'ФИО матери',
+            'type', 'Text',
+            'value', mother_name
         )
     )

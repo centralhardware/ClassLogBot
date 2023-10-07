@@ -28,7 +28,7 @@ public class MonthReport extends ExcelReport{
         this.reportFields = reportFields;
     }
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
 
     public File generate(List<Service> services){
         services = services
@@ -53,8 +53,8 @@ public class MonthReport extends ExcelReport{
                 .map(Client::getProperties)
                 .orElse(Collections.emptyList())
                 .stream()
-                .filter(it -> reportFields.contains(it.name()))
                 .map(Property::name)
+                .filter(reportFields::contains)
                 .forEach(headers::add);
         headers.add("посетил индивидуально");
         headers.add("посетил групповые");
@@ -154,9 +154,9 @@ public class MonthReport extends ExcelReport{
             }
         }
         if (comparator == null){
-            comparator = Comparator.comparing(it -> it.getKey().getFio(), Comparator.nullsLast(Collator.getInstance(new Locale("ru", "RU"))));
+            comparator = Comparator.comparing(it -> it.getKey().getFio(), Comparator.nullsLast(Collator.getInstance(Locale.of("ru", "RU"))));
         } else {
-            comparator = comparator.thenComparing(it -> it.getKey().getFio(), Comparator.nullsLast(Collator.getInstance(new Locale("ru", "RU"))));
+            comparator = comparator.thenComparing(it -> it.getKey().getFio(), Comparator.nullsLast(Collator.getInstance(Locale.of("ru", "RU"))));
         }
         return comparator;
     }

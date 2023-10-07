@@ -12,7 +12,7 @@ import java.io.IOException;
 public class TypeDeserializer extends JsonDeserializer<Type> {
 
     @Override
-    public Type deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+    public Type deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         var value = jsonParser.getValueAsString();
         return switch (value){
             case "Date" -> new Date();

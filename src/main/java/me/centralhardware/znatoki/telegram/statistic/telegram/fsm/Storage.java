@@ -1,7 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import me.centralhardware.znatoki.telegram.statistic.entity.*;
-import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.*;
 import org.springframework.stereotype.Component;
 

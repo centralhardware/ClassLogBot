@@ -18,7 +18,7 @@ public interface EmployNameMapper {
 
     @Insert("""
             INSERT INTO employ_name(
-                chat_id, 
+                chat_id,
                 fio
             ) VALUES (
                 #{chat_id},

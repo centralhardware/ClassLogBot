@@ -186,10 +186,8 @@ public class TimeFsm extends Fsm {
                                 .getProperties()
                                 .stream()
                                 .filter(it -> it.type() instanceof Photo)
-                                .forEach(photo -> {
-                                    minio.delete(photo.value())
-                                            .onFailure(error -> sender.send("Ошибка при удаление фотографии", user));
-                                });
+                                .forEach(photo -> minio.delete(photo.value())
+                                        .onFailure(error -> sender.send("Ошибка при удаление фотографии", user)));
                         storage.remove(userId);
                         return null;
                     }).onSuccess(error -> sender.sendText("Удалено", user));
