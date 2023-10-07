@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
+import me.centralhardware.znatoki.telegram.statistic.entity.Role;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -34,7 +34,7 @@ import static java.util.Map.entry;
 public class TelegramUtil {
 
     private final StatisticMapper statisticMapper;
-    private final Redis redis;
+    private final UserMapper userMapper;
 
     public Long getUserId(Update update){
         if (update.hasMessage()){
@@ -226,18 +226,18 @@ public class TelegramUtil {
     }
 
     private boolean checkAccess(User user, String right, TelegramSender sender) {
-        var znatokiUser = redis.getUser(user.getId())
-                .getOrElseThrow(() -> new IllegalStateException());
+        var telegramUser = userMapper.getById(user.getId());
 
-        if (znatokiUser == null){
+        if (telegramUser == null){
             sender.sendText("Вам необходимо создать или присоединиться к организации", user);
+            return false;
         }
 
         boolean authorized = false;
         if (right.equals("read")) {
-            authorized = znatokiUser.role() == Role.ADMIN ||
-                    znatokiUser.role() == Role.READ ||
-                    znatokiUser.role() == Role.READ_WRITE;
+            authorized = telegramUser.getRole() == Role.ADMIN ||
+                    telegramUser.getRole() == Role.READ ||
+                    telegramUser.getRole() == Role.READ_WRITE;
         }
 
         if (!authorized) {

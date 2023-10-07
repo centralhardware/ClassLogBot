@@ -5,9 +5,9 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Services;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.Role;
+import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddOrganization;
@@ -27,12 +27,12 @@ import java.util.Optional;
 public class OrganizationFsm extends Fsm {
 
     private final TelegramUtil telegramUtil;
-    private final Redis redis;
     private final Transcriptor transcriptor;
 
     private final OrganizationMapper organizationMapper;
     private final ServicesMapper servicesMapper;
     private final EmployNameMapper employNameMapper;
+    private final UserMapper userMapper;
 
     @Override
     public void process(Update update) {
@@ -121,13 +121,13 @@ public class OrganizationFsm extends Fsm {
                             .map(it -> servicesMapper.getServiceId(org.getId(), it))
                             .toList();
 
-                    var znatokiUser = ZnatokiUser.builder()
+                    var telegramUser = TelegramUser.builder()
                             .organizationId(org.getId())
                             .role(Role.ADMIN)
                             .services(ownServices)
                             .build();
 
-                    redis.put(user.getId().toString(), znatokiUser);
+                    userMapper.insert(telegramUser);
 
                     storage.remove(userId);
 

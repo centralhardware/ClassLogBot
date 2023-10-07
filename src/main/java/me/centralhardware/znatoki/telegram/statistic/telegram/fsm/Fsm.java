@@ -5,8 +5,8 @@ import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -28,7 +28,7 @@ public abstract class Fsm {
     @Autowired
     private OrganizationMapper organizationMapper;
     @Autowired
-    private Redis redis;
+    private UserMapper userMapper;
     @Autowired
     protected TelegramUtil telegramUtil;
 
@@ -36,8 +36,8 @@ public abstract class Fsm {
     abstract boolean isActive(Long chatId);
 
     protected Optional<User> getLogUser(Long userId){
-        return redis.getUser(userId)
-                .map(ZnatokiUser::organizationId)
+        return Optional.ofNullable(userMapper.getById(userId))
+                .map(TelegramUser::getOrganizationId)
                 .map(it -> organizationMapper.getById(it))
                 .map(Organization::getLogChatId)
                 .map(logChatId -> {
@@ -45,8 +45,7 @@ public abstract class Fsm {
                     logUser.setId(logChatId);
                     logUser.setLanguageCode("ru");
                     return logUser;
-                })
-                .toJavaOptional();
+                });
     }
 
     protected void processCustomProperties(Update update, PropertiesBuilder builder, Consumer<List<Property>> onFinish) {

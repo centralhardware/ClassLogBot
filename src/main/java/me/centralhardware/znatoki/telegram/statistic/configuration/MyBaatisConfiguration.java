@@ -4,9 +4,12 @@ import com.clickhouse.jdbc.ClickHouseDataSource;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertyDefs;
+import me.centralhardware.znatoki.telegram.statistic.entity.Role;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.CustomPropertiesTypeHandler;
+import me.centralhardware.znatoki.telegram.statistic.typeHandler.ListLongTypeHandler;
+import me.centralhardware.znatoki.telegram.statistic.typeHandler.RoleTypeHandler;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -19,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 @SuppressWarnings("resource")
@@ -44,6 +48,8 @@ public class MyBaatisConfiguration {
 
         configurationPostgres.getTypeHandlerRegistry().register(UUID.class, UuidTypeHandler.class);
         configurationPostgres.getTypeHandlerRegistry().register(PropertyDefs.class, CustomPropertiesTypeHandler.class);
+        configurationPostgres.getTypeHandlerRegistry().register(List.class, ListLongTypeHandler.class);
+        configurationPostgres.getTypeHandlerRegistry().register(Role.class, RoleTypeHandler.class);
 
         configurationPostgres.addMapper(SessionMapper.class);
         configurationPostgres.addMapper(OrganizationMapper.class);
@@ -52,6 +58,7 @@ public class MyBaatisConfiguration {
         configurationPostgres.addMapper(EmployNameMapper.class);
         configurationPostgres.addMapper(PaymentMapper.class);
         configurationPostgres.addMapper(ServiceMapper.class);
+        configurationPostgres.addMapper(UserMapper.class);
 
         configurationPostgres.setCacheEnabled(false);
 
@@ -104,6 +111,11 @@ public class MyBaatisConfiguration {
     @Bean
     public InvitationMapper getInvitationMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
         return sqlSessionFactory.openSession().getMapper(InvitationMapper.class);
+    }
+
+    @Bean
+    public UserMapper getUserMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
+        return sqlSessionFactory.openSession().getMapper(UserMapper.class);
     }
 
 }

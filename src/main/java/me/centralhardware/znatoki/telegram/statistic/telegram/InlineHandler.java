@@ -3,7 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ public class InlineHandler {
 
     private final ClientService clientService;
     private final TelegramSender sender;
-    private final Redis redis;
+    private final UserMapper userMapper;
     private final OrganizationMapper organizationMapper;
 
     public boolean processInline(Update update) {
@@ -39,7 +39,7 @@ public class InlineHandler {
         AtomicInteger i = new AtomicInteger();
         List<InlineQueryResultArticle> articles = clientService.search(text)
                 .stream()
-                .filter(it -> it.getOrganizationId().equals(redis.getUser(inlineQuery.getFrom().getId()).get().organizationId()))
+                .filter(it -> it.getOrganizationId().equals(userMapper.getById(inlineQuery.getFrom().getId()).getOrganizationId()))
                 .filter(not(Client::isDeleted))
                 .map(it -> InlineQueryResultArticle.builder()
                         .title(getFio(it))
@@ -72,7 +72,7 @@ public class InlineHandler {
     }
 
     private String getBio(Client client){
-        var inline = organizationMapper.__getInlineFields(client.getOrganizationId());
+        var inline = organizationMapper.getInlineFields(client.getOrganizationId());
         return client.getProperties()
                 .stream()
                 .filter(it -> inline.contains(it.name()))

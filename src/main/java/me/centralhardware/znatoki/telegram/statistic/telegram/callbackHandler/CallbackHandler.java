@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler;
 
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.Handler;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
@@ -18,7 +18,7 @@ public abstract class CallbackHandler implements Handler {
     @Autowired
     protected TelegramService telegramService;
     @Autowired
-    private Redis redis;
+    private UserMapper userMapper;
 
     public void handle(CallbackQuery callbackQuery){
         handle(callbackQuery, callbackQuery.getFrom(), callbackQuery.getData());
@@ -45,8 +45,8 @@ public abstract class CallbackHandler implements Handler {
         return isAcceptable(update.getCallbackQuery().getData());
     }
 
-    protected ZnatokiUser getZnatokiUser(User from){
-        return redis.getUser(from.getId()).get();
+    protected TelegramUser getTelegramUser(User from){
+        return userMapper.getById(from.getId());
     }
 
 

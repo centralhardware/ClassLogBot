@@ -27,7 +27,7 @@ public class TimeRestoreCallback  extends CallbackHandler {
 
         var id = UUID.fromString(data.replace("timeRestore-", ""));
 
-        if (!serviceMapper.getOrgId(id).equals(getZnatokiUser(from).organizationId())){
+        if (!serviceMapper.getOrgId(id).equals(getTelegramUser(from).getOrganizationId())){
             sender.sendText("Доступ запрещен", from);
             return;
         }

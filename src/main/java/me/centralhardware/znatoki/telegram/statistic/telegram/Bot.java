@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.*;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
@@ -29,7 +29,6 @@ public class Bot extends TelegramLongPollingBot {
     private final TelegramUtil telegramUtil;
     private final List<CommandHandler> commandHandlers;
     private final List<CallbackHandler> callbackHandlers;
-    private final Redis redis;
     private final InlineHandler inlineHandler;
 
     private final TimeFsm timeFsm;
@@ -37,6 +36,8 @@ public class Bot extends TelegramLongPollingBot {
     private final PaymentFsm paymentFsm;
     private final OrganizationFsm organizationFsm;
     private final InvitationFsm invitationFsm;
+
+    private final UserMapper userMapper;
 
     @SneakyThrows
     @PostConstruct
@@ -77,7 +78,7 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (!redis.exists(userId.toString()) && !organizationFsm.isActive(userId)){
+            if (userMapper.getById(userId) == null && !organizationFsm.isActive(userId)){
                 sender.sendText("Вам необходимо создать или присоединиться к организации", telegramUtil.getFrom(update));
                 return;
             } else if (organizationFsm.isActive(userId)){

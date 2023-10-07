@@ -9,7 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
@@ -26,18 +26,18 @@ public class PupilFsm extends Fsm {
     private final TelegramService telegramService;
     private final ClientService clientService;
     private final TelegramSender sender;
-    private final Redis redis;
 
     private final ServiceMapper serviceMapper;
     private final ServicesMapper servicesMapper;
     private final OrganizationMapper organizationMapper;
+    private final UserMapper userMapper;
 
     @Override
     public void process(Update update) {
         Long chatId = telegramUtil.getUserId(update);
         String text = update.getMessage().getText();
         var user = telegramUtil.getFrom(update);
-        var znatokiUser = redis.getUser(chatId);
+        var telegramUser = userMapper.getById(chatId);
 
         if (telegramService.isUnauthorized(chatId) || !telegramService.hasWriteRight(chatId)){
             sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
@@ -66,11 +66,11 @@ public class PupilFsm extends Fsm {
                     return;
                 }
 
-                var org = organizationMapper.getById(znatokiUser.get().organizationId());
+                var org = organizationMapper.getById(telegramUser.getOrganizationId());
 
                 if (org.getClientCustomProperties() == null ||
                         org.getClientCustomProperties().isEmpty()){
-                    getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
+                    getPupil(chatId).setOrganizationId(userMapper.getById(chatId).getOrganizationId());
                     getPupil(chatId).setCreated_by(chatId);
                     sender.sendMessageWithMarkdown(clientService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);
                     sendLog(getPupil(chatId), chatId);
@@ -92,7 +92,7 @@ public class PupilFsm extends Fsm {
                 }
             }
             case INPUT_PROPERTIES -> processCustomProperties(update, getPupil(chatId).getPropertiesBuilder(), properties -> {
-                getPupil(chatId).setOrganizationId(redis.getUser(chatId).get().organizationId());
+                getPupil(chatId).setOrganizationId(userMapper.getById(chatId).getOrganizationId());
                 getPupil(chatId).setCreated_by(chatId);
                 getPupil(chatId).setProperties(properties);
                 sender.sendMessageWithMarkdown(clientService.save(getPupil(chatId)).getInfo(serviceMapper.getServicesForPupil(getPupil(chatId).getId()).stream().map(servicesMapper::getNameById).toList()), user);

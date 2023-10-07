@@ -1,8 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public abstract class BaseReport extends CommandHandler {
     @Autowired
     private ServiceMapper serviceMapper;
     @Autowired
-    private Redis redis;
+    private UserMapper userMapper;
     @Autowired
     private Storage storage;
     @Autowired
@@ -36,7 +36,7 @@ public abstract class BaseReport extends CommandHandler {
             return;
         }
 
-        if (redis.exists(id.toString()) && !telegramService.isAdmin(id)){
+        if (userMapper.getById(id) != null  && !telegramService.isAdmin(id)){
             getTime().apply(id)
                     .forEach(it -> send(it, message.getFrom()));
             return;
@@ -46,7 +46,7 @@ public abstract class BaseReport extends CommandHandler {
             return;
         }
 
-        serviceMapper.getIds(redis.getUser(id).get().organizationId())
+        serviceMapper.getIds(userMapper.getById(id).getOrganizationId())
                 .forEach(it -> getTime().apply(it)
                         .forEach(report -> send(report, message.getFrom())));
     }

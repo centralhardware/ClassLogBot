@@ -8,8 +8,8 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Payment;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -36,12 +36,12 @@ public class PaymentFsm extends Fsm {
 
     private final TelegramSender sender;
     private final Minio minio;
-    private final Redis redis;
 
     private final EmployNameMapper employNameMapper;
     private final PaymentMapper paymentMapper;
     private final ClientService clientService;
     private final OrganizationMapper organizationMapper;
+    private final UserMapper userMapper;
 
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
@@ -53,7 +53,7 @@ public class PaymentFsm extends Fsm {
                 .map(Update::getMessage)
                 .map(Message::getText)
                 .orElse(null);
-        var znatokiUser = redis.getUser(userId).get();
+        var znatokiUser = userMapper.getById(userId);
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getPaymentStage(userId)){
@@ -73,7 +73,7 @@ public class PaymentFsm extends Fsm {
                     amount -> {
                         storage.getPayment(userId).setAmount(amount);
 
-                        var org = organizationMapper.getById(znatokiUser.organizationId());
+                        var org = organizationMapper.getById(znatokiUser.getOrganizationId());
                         var payment = storage.getPayment(userId);
 
                         if (org.getPaymentCustomProperties() == null ||
@@ -124,7 +124,7 @@ public class PaymentFsm extends Fsm {
             case CONFIRM -> {
                 if (Objects.equals(text, "да")) {
                     var payment = storage.getPayment(userId);
-                    payment.setOrganizationId(redis.getUser(userId).get().organizationId());
+                    payment.setOrganizationId(userMapper.getById(userId).getOrganizationId());
                     payment.setDateTime(LocalDateTime.now());
 
                     sendLog(payment, userId);

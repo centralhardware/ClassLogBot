@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.CustomPropertiesTypeHandler;
+import me.centralhardware.znatoki.telegram.statistic.typeHandler.ListStringTypeHandler;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -79,11 +80,8 @@ public interface OrganizationMapper {
             WHERE id = #{id}
             LIMIT 1
             """)
-    String __getInlineFields(@Param("id") UUID id);
-
-    default List<String> getInlineFields(UUID id){
-        return List.of(__getInlineFields(id).split(":"));
-    }
+    @Result(column = "include_in_inline", typeHandler = ListStringTypeHandler.class)
+    List<String> getInlineFields(@Param("id") UUID id);
 
     @Select("""
             SELECT include_in_report
@@ -91,10 +89,7 @@ public interface OrganizationMapper {
             WHERE id = #{id}
             LIMIT 1
             """)
-    String __getReportFields(@Param("id") UUID id);
-
-    default List<String> getReportFields(UUID id){
-        return List.of(__getReportFields(id).split(":"));
-    }
+    @Result(column = "include_in_report", typeHandler = ListStringTypeHandler.class)
+    List<String> getReportFields(@Param("id") UUID id);
 
 }

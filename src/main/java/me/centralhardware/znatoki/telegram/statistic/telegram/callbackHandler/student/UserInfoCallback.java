@@ -29,7 +29,7 @@ public class UserInfoCallback extends CallbackHandler {
         var pupilOptional = clientService.findById(Integer.parseInt(data.replace("/user_info","")));
         pupilOptional.ifPresentOrElse(
                 pupil -> {
-                    if (!pupil.getOrganizationId().equals(getZnatokiUser(from).organizationId())){
+                    if (!pupil.getOrganizationId().equals(getTelegramUser(from).getOrganizationId())){
                         sender.sendText("Доступ запрещен", from);
                         return;
                     }

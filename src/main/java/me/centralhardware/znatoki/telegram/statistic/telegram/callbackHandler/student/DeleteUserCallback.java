@@ -24,7 +24,7 @@ public class DeleteUserCallback extends CallbackHandler {
 
         clientService.findById(Integer.parseInt(data.replace("/delete_user",""))).ifPresent(pupil -> {
 
-            if (!pupil.getOrganizationId().equals(getZnatokiUser(from).organizationId())){
+            if (!pupil.getOrganizationId().equals(getTelegramUser(from).getOrganizationId())){
                 sender.sendText("Доступ запрещен", from);
                 return;
             }

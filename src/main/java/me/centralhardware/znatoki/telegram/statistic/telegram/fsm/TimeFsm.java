@@ -8,7 +8,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Payment;
 import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
 import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -41,7 +40,6 @@ public class TimeFsm extends Fsm {
 
     private final TelegramUtil telegramUtil;
     private final Minio minio;
-    private final Redis redis;
 
     private final ServiceMapper serviceMapper;
     private final PaymentMapper paymentMapper;
@@ -49,6 +47,7 @@ public class TimeFsm extends Fsm {
     private final ServicesMapper servicesMapper;
     private final ClientService clientService;
     private final OrganizationMapper organizationMapper;
+    private final UserMapper userMapper;
 
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
@@ -61,15 +60,15 @@ public class TimeFsm extends Fsm {
                 .map(Update::getMessage)
                 .map(Message::getText)
                 .orElse(null);
-        var znatokiUser = redis.getUser(userId).get();
-        var org =  organizationMapper.getById(znatokiUser.organizationId());
+        var znatokiUser = userMapper.getById(userId);
+        var org =  organizationMapper.getById(znatokiUser.getOrganizationId());
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getStage(userId)) {
-            case INPUT_SUBJECT -> serviceValidator.validate(Pair.of(text, znatokiUser.organizationId())).peekLeft(
+            case INPUT_SUBJECT -> serviceValidator.validate(Pair.of(text, znatokiUser.getOrganizationId())).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(service -> {
-                storage.getTime(userId).setServiceId(servicesMapper.getServiceId(znatokiUser.organizationId(), service));
+                storage.getTime(userId).setServiceId(servicesMapper.getServiceId(znatokiUser.getOrganizationId(), service));
                 sender.sendText("Введите фио. /complete - для окончания ввода", user);
                 InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                         .row().switchToInline().endRow();
@@ -164,14 +163,14 @@ public class TimeFsm extends Fsm {
                     service.getServiceIds().forEach(it -> {
                         service.setPupilId(it);
                         service.setId(id);
-                        service.setOrganizationId(redis.getUser(userId).get().organizationId());
+                        service.setOrganizationId(userMapper.getById(userId).getOrganizationId());
                         serviceMapper.insertTime(service);
                         var payment = new Payment();
                         payment.setDateTime(LocalDateTime.now());
                         payment.setPupilId(service.getPupilId());
                         payment.setAmount(service.getAmount() * -1);
                         payment.setTimeId(service.getId());
-                        payment.setOrganizationId(redis.getUser(userId).get().organizationId());
+                        payment.setOrganizationId(userMapper.getById(userId).getOrganizationId());
                         paymentMapper.insert(payment);
                     });
 

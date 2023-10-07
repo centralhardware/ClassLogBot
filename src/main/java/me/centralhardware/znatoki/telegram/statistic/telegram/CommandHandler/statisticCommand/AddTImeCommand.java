@@ -3,9 +3,9 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.st
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.entity.Service;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -19,16 +19,14 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AddTImeCommand extends CommandHandler {
 
-    private final Redis redis;
     private final Storage storage;
 
+    private final UserMapper userMapper;
     private final ServicesMapper servicesMapper;
 
     @Override
     public void handle(Message message) {
-        ZnatokiUser user = redis.getUser(message.getChatId())
-                .onFailure(error -> sender.sendText("Внутрення ошибка", message.getFrom()))
-                .get();
+        TelegramUser user = userMapper.getById(message.getFrom().getId());
 
         if (storage.contain(message.getChatId())){
             sender.sendText("Сначала сохраните текущую запись", message.getFrom(), false);
@@ -39,17 +37,17 @@ public class AddTImeCommand extends CommandHandler {
         service.setDateTime(LocalDateTime.now());
         service.setChatId(message.getChatId());
 
-        if (user.services().size() == 1){
-            service.setServiceId(user.services().get(0));
+        if (user.getServices().size() == 1){
+            service.setServiceId(user.getServices().get(0));
         }
 
         storage.setTime(message.getChatId(), service);
 
-        if (user.services().size() != 1){
+        if (user.getServices().size() != 1){
             ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create();
             builder.setText("Выберите предмет");
 
-            user.services().forEach(it -> builder.row().button(servicesMapper.getNameById(it)).endRow());
+            user.getServices().forEach(it -> builder.row().button(servicesMapper.getNameById(it)).endRow());
             sender.send(builder.build(message.getChatId()), message.getFrom());
             storage.setStage(message.getChatId(), AddTime.INPUT_SUBJECT);
         } else {

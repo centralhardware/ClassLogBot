@@ -6,7 +6,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
@@ -29,7 +29,7 @@ public class UserInfoCommand extends CommandHandler {
 
     private final ClientService clientService;
     private final TelegramUtil telegramUtils;
-    private final Redis redis;
+    private final UserMapper userMapper;
     private final ServiceMapper serviceMapper;
     private final ServicesMapper servicesMapper;
 
@@ -41,7 +41,7 @@ public class UserInfoCommand extends CommandHandler {
         Optional<Client> pupilOptional = clientService.findById(Integer.valueOf(arguments));
         pupilOptional.ifPresentOrElse(
                 pupil -> {
-                    var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();
+                    var orgId = userMapper.getById(message.getFrom().getId()).getOrganizationId();
                     if (!pupil.getOrganizationId().equals(orgId)){
                         sender.sendText("Доступ запрещен", message.getFrom());
                         return;

@@ -1,28 +1,18 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.Role;
-import me.centralhardware.znatoki.telegram.statistic.redis.dto.ZnatokiUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.Role;
+import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class TelegramService {
 
-    private final Redis redis;
-    private final ServiceMapper serviceMapper;
-
-    public List<Long> getReadRightUser(UUID orgId) {
-        return serviceMapper.getIds(orgId).stream()
-                .filter(this::hasReadRight)
-                .collect(Collectors.toList());
-    }
+    private final UserMapper userMapper;
 
     public boolean hasWriteRight(Long chatId) {
         var role = getRole(chatId);
@@ -42,13 +32,13 @@ public class TelegramService {
     }
 
     public boolean isUnauthorized(Long chatId) {
-        return getRole(chatId) == Role.UNAUTHORIZED;
+        return getRole(chatId) == null;
     }
 
     private Role getRole(Long chatId){
-        return redis.getUser(chatId)
-                .map(ZnatokiUser::role)
-                .getOrElse(Role.UNAUTHORIZED);
+        return Optional.ofNullable(userMapper.getById(chatId))
+                .map(TelegramUser::getRole)
+                .orElse(null);
     }
 
 }

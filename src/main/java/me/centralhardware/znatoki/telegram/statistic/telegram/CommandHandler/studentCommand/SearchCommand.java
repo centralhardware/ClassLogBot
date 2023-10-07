@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.entity.Client;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
-import me.centralhardware.znatoki.telegram.statistic.redis.Redis;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
@@ -43,7 +43,7 @@ public class SearchCommand extends CommandHandler {
     private final TelegramUtil telegramUtils;
     private final SessionService sessionService;
     private final TelegramService telegramService;
-    private final Redis redis;
+    private final UserMapper userMapper;
 
     @Override
     public void handle(Message message) {
@@ -55,7 +55,7 @@ public class SearchCommand extends CommandHandler {
             return;
         }
 
-        var orgId = redis.getUser(message.getFrom().getId()).get().organizationId();
+        var orgId = userMapper.getById(message.getFrom().getId()).getOrganizationId();
         String searchText = Arrays.toString(arguments).replace("]", "").replace("[", "");
         List<Client> searchResult = clientService.search(searchText)
                 .stream()
