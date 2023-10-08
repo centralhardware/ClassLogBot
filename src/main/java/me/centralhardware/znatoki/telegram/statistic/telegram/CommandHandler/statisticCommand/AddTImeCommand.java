@@ -1,11 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Service;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
-import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.TelegramUser;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;

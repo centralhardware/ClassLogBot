@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse;
 
-import me.centralhardware.znatoki.telegram.statistic.clickhouse.model.LogEntry;
+import me.centralhardware.znatoki.telegram.statistic.entity.clickhouse.LogEntry;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

@@ -1,8 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Service;
-import me.centralhardware.znatoki.telegram.statistic.entity.Organization;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Organization;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;

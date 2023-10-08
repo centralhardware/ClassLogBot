@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.typeHandler;
 
-import me.centralhardware.znatoki.telegram.statistic.entity.Role;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 
 public class RoleTypeHandler extends EnumHandler<Role>{
     @Override

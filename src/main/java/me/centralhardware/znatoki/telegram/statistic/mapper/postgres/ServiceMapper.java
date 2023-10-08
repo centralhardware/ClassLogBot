@@ -2,7 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import me.centralhardware.znatoki.telegram.statistic.entity.Service;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler;
 import org.apache.ibatis.annotations.*;

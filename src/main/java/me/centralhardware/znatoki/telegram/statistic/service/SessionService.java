@@ -1,8 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Client;
-import me.centralhardware.znatoki.telegram.statistic.entity.Session;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Session;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.SessionMapper;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.web;
 
-import me.centralhardware.znatoki.telegram.statistic.entity.Client;
-import me.centralhardware.znatoki.telegram.statistic.entity.Session;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Session;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.web.dto.EditForm;

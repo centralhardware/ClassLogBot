@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.entity;
+package me.centralhardware.znatoki.telegram.statistic.entity.postgres;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

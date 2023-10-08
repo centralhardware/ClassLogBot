@@ -1,11 +1,10 @@
-package me.centralhardware.znatoki.telegram.statistic.entity;
+package me.centralhardware.znatoki.telegram.statistic.entity.postgres;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Builder

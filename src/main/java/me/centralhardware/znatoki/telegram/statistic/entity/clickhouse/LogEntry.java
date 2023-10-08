@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.clickhouse.model;
+package me.centralhardware.znatoki.telegram.statistic.entity.clickhouse;
 
 import lombok.Builder;
 

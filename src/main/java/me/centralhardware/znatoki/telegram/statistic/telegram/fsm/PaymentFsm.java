@@ -4,12 +4,12 @@ import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo;
-import me.centralhardware.znatoki.telegram.statistic.entity.Payment;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
-import me.centralhardware.znatoki.telegram.statistic.minio.Minio;
+import me.centralhardware.znatoki.telegram.statistic.service.MinioService;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
@@ -35,7 +35,7 @@ import java.util.Optional;
 public class PaymentFsm extends Fsm {
 
     private final TelegramSender sender;
-    private final Minio minio;
+    private final MinioService minioService;
 
     private final EmployNameMapper employNameMapper;
     private final PaymentMapper paymentMapper;
@@ -138,7 +138,7 @@ public class PaymentFsm extends Fsm {
                                 .getProperties()
                                 .stream()
                                 .filter(it -> it.type() instanceof Photo)
-                                .forEach(photo -> minio.delete(photo.value())
+                                .forEach(photo -> minioService.delete(photo.value())
                                         .onFailure(error -> sender.send("Ошибка при удаление фотографии", user)));
                         storage.remove(userId);
                         return null;
@@ -174,7 +174,7 @@ public class PaymentFsm extends Fsm {
                                 .forEach(photo -> {
                                     SendPhoto sendPhoto = SendPhoto
                                             .builder()
-                                            .photo(new InputFile(minio.get(photo.value())
+                                            .photo(new InputFile(minioService.get(photo.value())
                                                     .onFailure(error -> sender.sendText("Ошибка во время отправки лога", user))
                                                     .get(), "отчет"))
                                             .chatId(user.getId())

@@ -2,8 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic.report;
 
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Number;
-import me.centralhardware.znatoki.telegram.statistic.entity.Service;
-import me.centralhardware.znatoki.telegram.statistic.entity.Client;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import org.apache.commons.lang3.StringUtils;
 

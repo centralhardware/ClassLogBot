@@ -2,7 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.validate;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Services;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Services;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;

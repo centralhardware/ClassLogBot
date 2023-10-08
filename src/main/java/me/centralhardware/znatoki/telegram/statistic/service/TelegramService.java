@@ -1,8 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.service;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Role;
-import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.TelegramUser;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import org.springframework.stereotype.Service;
 

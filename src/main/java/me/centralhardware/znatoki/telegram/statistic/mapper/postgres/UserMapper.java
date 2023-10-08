@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
-import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.TelegramUser;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.ListLongTypeHandler;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.RoleTypeHandler;
 import org.apache.ibatis.annotations.*;

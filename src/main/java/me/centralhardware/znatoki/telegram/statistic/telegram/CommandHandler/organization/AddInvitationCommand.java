@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.organization;
 
 import lombok.RequiredArgsConstructor;
-import me.centralhardware.znatoki.telegram.statistic.entity.Invitation;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Invitation;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;

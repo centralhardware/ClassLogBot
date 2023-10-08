@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.entity;
+package me.centralhardware.znatoki.telegram.statistic.entity.postgres;
 
 import com.google.common.base.Objects;
 import jakarta.persistence.*;

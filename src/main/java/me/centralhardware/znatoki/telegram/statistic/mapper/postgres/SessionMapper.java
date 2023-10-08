@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
-import me.centralhardware.znatoki.telegram.statistic.entity.Session;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Session;
 import org.apache.ibatis.annotations.*;
 
 import java.util.Optional;

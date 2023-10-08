@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.minio;
+package me.centralhardware.znatoki.telegram.statistic.service;
 
 import com.google.common.io.Files;
 import io.minio.GetObjectArgs;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class Minio {
+public class MinioService {
 
     private final MinioClient minioClient;
 
@@ -44,7 +44,7 @@ public class Minio {
                     minioClient.uploadObject(
                             UploadObjectArgs
                                     .builder()
-                                    .bucket("znatoki")
+                                    .bucket(Config.getMinioBucket())
                                     .filename(fileNew.toFile().getAbsolutePath())
                                     .object(fileNew.toFile().getAbsolutePath())
                                     .build()
@@ -61,7 +61,7 @@ public class Minio {
         return Try.of(() -> {
             minioClient.removeObject(RemoveObjectArgs
                     .builder()
-                    .bucket("znatoki")
+                    .bucket(Config.getMinioBucket())
                     .object(file)
                     .build());
             return null;
@@ -71,7 +71,7 @@ public class Minio {
     public Try<InputStream> get(String file){
         return Try.of(() -> new ByteArrayInputStream(minioClient.getObject(GetObjectArgs
                 .builder()
-                .bucket("znatoki")
+                .bucket(Config.getMinioBucket())
                 .object(file)
                 .build()).readAllBytes()));
     }

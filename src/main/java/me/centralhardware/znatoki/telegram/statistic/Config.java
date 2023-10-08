@@ -17,6 +17,8 @@ public class Config {
     @Getter
     private static final String minioUrl = System.getenv("MINIO_URL");
     @Getter
+    private static final String minioBucket = System.getenv("MINIO_BUCKET");
+    @Getter
     private static final Integer minioPort = Integer.parseInt(System.getenv("MINIO_PORT"));
     @Getter
     private static final String minioAccessKey = System.getenv("MINIO_ACCESS_KEY");
