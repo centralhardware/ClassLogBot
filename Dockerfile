@@ -1,4 +1,4 @@
-FROM openjdk:3.9.4-amazoncorretto-21 as maven
+FROM maven:3.9.4-amazoncorretto-21 as maven
 
 COPY ./ ./
 
