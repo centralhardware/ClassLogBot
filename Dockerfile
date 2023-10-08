@@ -1,9 +1,7 @@
-FROM openjdk:21-slim as maven
+FROM openjdk:3.9.4-amazoncorretto-21 as maven
 
 COPY ./ ./
 
-RUN apt-get -y update
-RUN apt-get install maven -y
 RUN mvn package
 
 FROM openjdk:21-slim
