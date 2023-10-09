@@ -95,9 +95,6 @@ public class Edit {
         params.remove("secondName");
         if (IS_NONE_EMPTY.test(params.get("lastName"))) {
             client.setLastName(params.get("lastName"));
-        } else {
-            fillError(model, "EMPTY_FIELD_LAST_NAME");
-            return ERROR_PAGE_NAME;
         }
         params.remove("lastName");
 
