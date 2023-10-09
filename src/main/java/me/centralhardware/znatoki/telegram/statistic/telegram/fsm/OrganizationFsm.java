@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Organization;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Services;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
@@ -20,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Component
@@ -93,50 +95,14 @@ public class OrganizationFsm extends Fsm {
             }
             case ADD_OWNER_SUBJECT -> {
                 var org = storage.getOrganization(userId);
-                if (Objects.equals(text, "/complete") || org.getOwnerServices().size() == org.getServices().size()){
+                if (Objects.equals(text, "/complete")){
 
                     if (org.getOwnerServices().isEmpty()){
                         sender.sendText("Необходимо выбрать как минимум одну услугу", user, false);
                         return;
                     }
 
-                    org.setOwner(userId);
-                    organizationMapper.insert(org);
-
-                    if (employNameMapper.getFio(userId) == null){
-                        employNameMapper.insert(userId, org.getOwnerFio());
-                    }
-
-                    org.getServices()
-                            .forEach(service -> {
-                                var s = new Services();
-                                s.setOrgId(org.getId());
-                                s.setName(service);
-                                s.setKey(transcriptor.convert(service.replace(" ", "_")).toUpperCase());
-                                servicesMapper.insert(s);
-                            });
-
-                    var ownServices = org.getOwnerServices()
-                            .stream()
-                            .map(it -> servicesMapper.getServiceId(org.getId(), it))
-                            .toList();
-
-                    var telegramUser = TelegramUser.builder()
-                            .organizationId(org.getId())
-                            .role(Role.ADMIN)
-                            .services(ownServices)
-                            .build();
-
-                    userMapper.insert(telegramUser);
-
-                    storage.remove(userId);
-
-                    sender.sendText("""
-                        Организация создана.
-                        Добавьте клиентов через /addPupil.
-                        Заносите услуги и добавляйте оплату /addTime /addPayment
-                        Добавьте бота в чат, чтобы контролировать действия в боте. Добавьте бота в чат и выполните команду /join@@OrgStatisticBot
-                        """, user);
+                    complete(org,user, userId);
                     return;
                 }
 
@@ -146,6 +112,11 @@ public class OrganizationFsm extends Fsm {
                     var builder = ReplyKeyboardBuilder
                             .create()
                             .setText("Сохранено");
+
+                    if (org.getOwnerServices().size() == org.getServices().size()){
+                        complete(org, user,userId);
+                        return;
+                    }
 
                     org.getServices()
                             .stream()
@@ -159,6 +130,49 @@ public class OrganizationFsm extends Fsm {
                 }
             }
         }
+    }
+
+    private void complete(Organization org, User user, Long userId){
+        org.setId(UUID.randomUUID());
+
+        org.setOwner(userId);
+        organizationMapper.insert(org);
+
+        org.getServices()
+                .forEach(service -> {
+                    var s = new Services();
+                    s.setOrgId(org.getId());
+                    s.setName(service);
+                    s.setKey(transcriptor.convert(service.replace(" ", "_")).toUpperCase());
+                    servicesMapper.insert(s);
+                });
+
+        var ownServices = org.getOwnerServices()
+                .stream()
+                .map(it -> servicesMapper.getServiceId(org.getId(), it))
+                .toList();
+
+        var telegramUser = TelegramUser.builder()
+                .id(userId)
+                .organizationId(org.getId())
+                .role(Role.ADMIN)
+                .services(ownServices)
+                .build();
+
+        userMapper.insert(telegramUser);
+
+        if (employNameMapper.getFio(userId) == null){
+            employNameMapper.insert(userId, org.getOwnerFio());
+        }
+
+        storage.remove(userId);
+
+        sender.sendText("""
+                        Организация создана.
+                        Добавьте клиентов через /addPupil.
+                        Заносите услуги и добавляйте оплату /addTime /addPayment
+                        Добавьте бота в чат, чтобы контролировать действия в боте. Добавьте бота в чат и выполните команду /join@@OrgStatisticBot
+                        """, user);
     }
 
     @Override

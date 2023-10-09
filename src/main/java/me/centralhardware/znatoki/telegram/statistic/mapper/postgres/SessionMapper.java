@@ -16,7 +16,7 @@ public interface SessionMapper {
             """)
     @Results({
             @Result(property = "uuid", column = "uuid"),
-            @Result(property = "client", column = "client"),
+            @Result(property = "clientId", column = "client_id"),
             @Result(property = "createDate", column = "create_date"),
             @Result(property = "updateBy", column = "update_by")
     })

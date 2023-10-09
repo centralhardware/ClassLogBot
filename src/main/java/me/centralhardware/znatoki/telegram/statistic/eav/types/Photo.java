@@ -26,6 +26,11 @@ public non-sealed class Photo implements Type {
     }
 
     @Override
+    public Validation<String, Void> validate(String value) {
+        return null;
+    }
+
+    @Override
     public Optional<String> extract(Update update) {
         var sender = SpringBootUtils.getBean(TelegramSender.class);
         var minio = SpringBootUtils.getBean(MinioService.class);
@@ -38,6 +43,11 @@ public non-sealed class Photo implements Type {
                         .build())
                 .flatMap(sender::downloadFile)
                 .flatMap(it -> minio.upload(it, LocalDateTime.now()));
+    }
+
+    @Override
+    public String getName() {
+        return "Photo";
     }
 
 }

@@ -20,8 +20,18 @@ public non-sealed class Enumeration implements Type {
     }
 
     @Override
+    public Validation<String, Void> validate(String value) {
+        return null;
+    }
+
+    @Override
     public Optional<String> extract(Update update) {
         return Optional.ofNullable(update.getMessage().getText());
+    }
+
+    @Override
+    public String getName() {
+        return "Enumeration";
     }
 
 }

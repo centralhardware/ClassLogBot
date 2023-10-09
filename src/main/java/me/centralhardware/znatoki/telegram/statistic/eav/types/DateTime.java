@@ -18,8 +18,13 @@ public non-sealed class DateTime implements Type {
 
     @Override
     public Validation<String, Void> __validate(Update update, String... variants) {
+        return validate(update.getMessage().getText());
+    }
+
+    @Override
+    public Validation<String, Void> validate(String value) {
         try {
-            LocalDate.parse(update.getMessage().getText(), dateFormat);
+            LocalDate.parse(value, dateFormat);
             return Validation.valid(null);
         } catch (Throwable e){
         }
@@ -29,5 +34,10 @@ public non-sealed class DateTime implements Type {
     @Override
     public Optional<String> extract(Update update) {
         return Optional.ofNullable(update.getMessage().getText());
+    }
+
+    @Override
+    public String getName() {
+        return "DateTime";
     }
 }

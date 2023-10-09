@@ -20,7 +20,17 @@ public non-sealed class Text implements Type {
     }
 
     @Override
+    public Validation<String, Void> validate(String value) {
+        return Validation.valid(null);
+    }
+
+    @Override
     public Optional<String> extract(Update update) {
         return Optional.ofNullable(update.getMessage().getText());
+    }
+
+    @Override
+    public String getName() {
+        return "Text";
     }
 }

@@ -21,37 +21,19 @@
         <label for='lastName'>Отчество</label><br>
         <input value='text' class="form-control" id='lastName' name='lastName' th:value='${lastName}'><br>
     </div>
-    <div class="form-group">
-        <label for='classNumber'>Класс</label><br>
-        <input value='number' class="form-control" required="required" id='classNumber' name='classNumber' th:value='${classNumber}'><br>
-    </div>
-    <div class="form-group">
-        <label for='date_of_record'>дата записи</label><br>
-        <input value='date' class="form-control" required="required" id='date_of_record' name='date_of_record' th:value='${date_of_record}'><br>
-    </div>
-    <div class="form-group">
-        <label for='date_of_birth'>Дата рождения</label><br>
-        <input value='date' class="form-control" required="required" id='date_of_birth' name='date_of_birth' th:value='${date_of_birth}'><br>
-    </div>
-    <div class="form-group">
-        <label for='telephone'>Телефон</label><br>
-        <input value='tel' class="form-control" id='telephone' name='telephone' th:value='${telephone}'><br>
-    </div>
-    <div class="form-group">
-        <label for='telephone_responsible'>Телефон ответственного</label><br>
-        <input value='tel' class="form-control" id='telephone_responsible' name='telephone_responsible' th:value='${telephone_responsible}'><br>
-    </div>
-    <div class="form-group">
-        <label for='email'>Email</label><br>
-        <input value='email' class="form-control" id='email' name='email' th:value='${email}'><br>
-    </div>
-    <div class="form-group">
-        <label for='mother_name'>Имя матери</label> <br>
-        <input value='text' class="form-control" id='mother_name' name='mother_name' th:value='${mother_name}'><br>
+
+    <div th:each='property: ${properties}' class="form-group">
+        <label th:for='${property.name}' th:value='${property.name}'/><br>
+        <th:block th:switch='${property.type.name}'>
+            <input th:case='Text' value='text' class="form-control" th:id='${property.name}' th:name='${property.name}' th:value='${property.value}'>
+            <input th:case="Number" value='number' class="form-control" th:id='${property.name}' th:name='${property.name}' th:value='${property.value}'>
+            <input th:case="Date" value='date' class="form-control" th:id='${property.name}' th:name='${property.name}' th:value='${property.value}'>
+            <input th:case="Telephone" value='tel' class="form-control" th:id='${property.name}' th:name='${property.name}' th:value='${property.value}'>
+        </th:block>
     </div>
 
-    <input value='hidden' id='sessionId' name='sessionId' th:value='${sessionId}'>
-    <input value='submit' class="btn btn-primary" value='Сохранить'>
+    <input type='hidden' id='sessionId' name='sessionId' th:value='${sessionId}'>
+    <input type='submit' class="btn btn-primary" value='Сохранить'>
 </form>
 </body>
 </html>

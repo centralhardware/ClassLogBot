@@ -13,6 +13,8 @@ public sealed interface Type permits Date, DateTime, Enumeration, Number, Photo,
     String format(String name, Boolean isOptional);
     Validation<String, Void> __validate(Update update, String...variants);
 
+    Validation<String, Void> validate(String value);
+
     Optional<String> extract(Update update);
 
     default Validation<String, Void> validate(Update update, String...variants){
@@ -22,5 +24,7 @@ public sealed interface Type permits Date, DateTime, Enumeration, Number, Photo,
 
         return __validate(update, variants);
     }
+
+    String getName();
 
 }

@@ -17,4 +17,9 @@ public record Property(
         this(name,type,"");
     }
 
+    public Property withValue(String value){
+        return new Property(name(), type(), value );
+    }
+
+
 }
