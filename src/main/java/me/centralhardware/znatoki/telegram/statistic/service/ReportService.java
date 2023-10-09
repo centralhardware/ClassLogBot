@@ -19,7 +19,6 @@ import java.util.function.Function;
 public class ReportService {
 
     private final ServiceMapper serviceMapper;
-    private final EmployNameMapper employNameMapper;
     private final UserMapper userMapper;
     private final ClientService clientService;
     private final ServicesMapper servicesMapper;
@@ -49,7 +48,7 @@ public class ReportService {
                                 .orElse(null);
                         if (date == null) return null;
 
-                        return new MonthReport(employNameMapper.getFio(id), clientService, it,servicesMapper.getKeyById(it), date, organizationMapper.getReportFields(user.get().getOrganizationId())).generate(times);
+                        return new MonthReport(userMapper.getById(id).getName(), clientService, it,servicesMapper.getKeyById(it), date, organizationMapper.getReportFields(user.get().getOrganizationId())).generate(times);
                     })
                     .filter(Objects::nonNull)
                     .toList();

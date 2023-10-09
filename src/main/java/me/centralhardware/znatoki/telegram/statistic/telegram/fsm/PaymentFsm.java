@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
@@ -37,7 +36,6 @@ public class PaymentFsm extends Fsm {
     private final TelegramSender sender;
     private final MinioService minioService;
 
-    private final EmployNameMapper employNameMapper;
     private final PaymentMapper paymentMapper;
     private final ClientService clientService;
     private final OrganizationMapper organizationMapper;
@@ -158,7 +156,7 @@ public class PaymentFsm extends Fsm {
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
                                 Ученик: #\{ clientService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
                                 оплачено: \{payment.getAmount()},
-                                Принял оплату: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
+                                Принял оплату: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
                                 \{ PropertyUtils.print(payment.getProperties())}
                                 """;
 

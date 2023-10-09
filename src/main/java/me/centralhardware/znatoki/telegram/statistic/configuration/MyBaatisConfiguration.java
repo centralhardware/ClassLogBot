@@ -55,7 +55,6 @@ public class MyBaatisConfiguration {
         configurationPostgres.addMapper(OrganizationMapper.class);
         configurationPostgres.addMapper(ServicesMapper.class);
         configurationPostgres.addMapper(InvitationMapper.class);
-        configurationPostgres.addMapper(EmployNameMapper.class);
         configurationPostgres.addMapper(PaymentMapper.class);
         configurationPostgres.addMapper(ServiceMapper.class);
         configurationPostgres.addMapper(UserMapper.class);
@@ -81,11 +80,6 @@ public class MyBaatisConfiguration {
     @Bean
     public ServiceMapper getTimeMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
         return sqlSessionFactory.openSession().getMapper(ServiceMapper.class);
-    }
-
-    @Bean
-    public EmployNameMapper getTeacherNameMapper(@Qualifier("sqlSessionFactoryPostgres") SqlSessionFactory sqlSessionFactory){
-        return sqlSessionFactory.openSession().getMapper(EmployNameMapper.class);
     }
 
     @Bean

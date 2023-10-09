@@ -3,7 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Organization;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Services;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.EmployNameMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
@@ -33,7 +32,6 @@ public class OrganizationFsm extends Fsm {
 
     private final OrganizationMapper organizationMapper;
     private final ServicesMapper servicesMapper;
-    private final EmployNameMapper employNameMapper;
     private final UserMapper userMapper;
 
     @Override
@@ -157,13 +155,10 @@ public class OrganizationFsm extends Fsm {
                 .organizationId(org.getId())
                 .role(Role.ADMIN)
                 .services(ownServices)
+                .name(org.getOwnerFio())
                 .build();
 
         userMapper.insert(telegramUser);
-
-        if (employNameMapper.getFio(userId) == null){
-            employNameMapper.insert(userId, org.getOwnerFio());
-        }
 
         storage.remove(userId);
 

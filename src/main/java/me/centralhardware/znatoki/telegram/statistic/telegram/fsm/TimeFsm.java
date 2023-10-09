@@ -43,7 +43,6 @@ public class TimeFsm extends Fsm {
 
     private final ServiceMapper serviceMapper;
     private final PaymentMapper paymentMapper;
-    private final EmployNameMapper employNameMapper;
     private final ServicesMapper servicesMapper;
     private final ClientService clientService;
     private final OrganizationMapper organizationMapper;
@@ -212,7 +211,7 @@ public class TimeFsm extends Fsm {
                             .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
                             .collect(Collectors.joining(", "))}
                         Стоимость: \{ service.getAmount()}
-                        Преподаватель: #\{ employNameMapper.getFio(userId).replaceAll(" ", "_")}
+                        Преподаватель: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
                         \{ PropertyUtils.print(service.getProperties())}
                         """;
 

@@ -15,5 +15,6 @@ public final class TelegramUser {
     private Role role;
     private UUID organizationId;
     private List<Long> services;
+    private String name;
 
 }

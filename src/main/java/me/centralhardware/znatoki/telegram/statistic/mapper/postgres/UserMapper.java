@@ -17,7 +17,8 @@ public interface UserMapper {
             @Result(property = "id", column = "id"),
             @Result(property = "role", column = "role", typeHandler = RoleTypeHandler.class),
             @Result(property = "organizationId", column = "org_id"),
-            @Result(property = "services", column = "services", typeHandler = ListLongTypeHandler.class)
+            @Result(property = "services", column = "services", typeHandler = ListLongTypeHandler.class),
+            @Result(property = "name", column = "name")
     })
     TelegramUser getById(@Param("id") Long id);
 
@@ -26,12 +27,14 @@ public interface UserMapper {
                 id,
                 role,
                 org_id,
-                services
+                services,
+                name
             ) VALUES (
                 #{user.id},
                 #{user.role, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.RoleTypeHandler},
                 #{user.organizationId},
-                #{user.services, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.ListLongTypeHandler}
+                #{user.services, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.ListLongTypeHandler},
+                #{user.name}
             ) 
             """)
     void insert(@Param("user") TelegramUser user);
