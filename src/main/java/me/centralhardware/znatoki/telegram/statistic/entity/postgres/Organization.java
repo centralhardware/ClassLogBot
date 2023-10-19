@@ -20,6 +20,9 @@ public class Organization {
     private PropertyDefs serviceCustomProperties;
     private PropertyDefs clientCustomProperties;
     private PropertyDefs paymentCustomProperties;
+    private String grafanaUsername;
+    private String grafanaPassword;
+    private String grafanaUrl;
     private Set<String> services = new HashSet<>();
     private Set<String> ownerServices = new HashSet<>();
 

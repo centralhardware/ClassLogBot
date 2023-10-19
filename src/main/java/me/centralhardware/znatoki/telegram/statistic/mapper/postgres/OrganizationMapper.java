@@ -39,7 +39,10 @@ public interface OrganizationMapper {
             @Result(property = "logChatId", column = "log_chat_id"),
             @Result(property = "serviceCustomProperties", column = "service_custom_properties"),
             @Result(property = "clientCustomProperties", column = "client_custom_properties"),
-            @Result(property = "paymentCustomProperties", column = "payment_custom_properties")
+            @Result(property = "paymentCustomProperties", column = "payment_custom_properties"),
+            @Result(property = "grafanaUsername", column = "grafana_username"),
+            @Result(property = "grafanaPassword", column = "grafana_password"),
+            @Result(property = "grafanaUrl", column = "grafana_url")
     })
     Organization getByOwner(@Param("id") Long id);
 
@@ -52,7 +55,10 @@ public interface OrganizationMapper {
             @Result(property = "logChatId", column = "log_chat_id"),
             @Result(property = "serviceCustomProperties", column = "service_custom_properties", typeHandler = CustomPropertiesTypeHandler.class),
             @Result(property = "clientCustomProperties", column = "client_custom_properties", typeHandler = CustomPropertiesTypeHandler.class),
-            @Result(property = "paymentCustomProperties", column = "payment_custom_properties", typeHandler = CustomPropertiesTypeHandler.class)
+            @Result(property = "paymentCustomProperties", column = "payment_custom_properties", typeHandler = CustomPropertiesTypeHandler.class),
+            @Result(property = "grafanaUsername", column = "grafana_username"),
+            @Result(property = "grafanaPassword", column = "grafana_password"),
+            @Result(property = "grafanaUrl", column = "grafana_url")
     })
     Organization getById(@Param("id") UUID id);
 
