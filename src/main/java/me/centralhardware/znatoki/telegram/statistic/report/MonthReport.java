@@ -147,7 +147,7 @@ public class MonthReport extends ExcelReport{
             if (comparator == null){
                 if (p.type() instanceof Number){
                     comparator = Comparator.comparing(it ->
-                            getProperty(it.getKey(), p.name()).value() != null ?
+                            StringUtils.isNotBlank(getProperty(it.getKey(), p.name()).value()) ?
                                     Integer.parseInt(getProperty(it.getKey(), p.name()).value()) :
                                     null,
                             Comparator.nullsLast(Comparator.naturalOrder()));
