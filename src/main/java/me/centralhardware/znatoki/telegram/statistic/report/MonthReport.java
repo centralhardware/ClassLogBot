@@ -20,12 +20,20 @@ public class MonthReport extends ExcelReport{
 
     private final ClientService clientService;
     private final List<String> reportFields;
+    private final String clientName;
 
-    public MonthReport(String fio, ClientService clientService, Long service, String serviceName, LocalDateTime date, List<String> reportFields) {
+    public MonthReport(String fio,
+                       ClientService clientService,
+                       Long service,
+                       String serviceName,
+                       LocalDateTime date,
+                       List<String> reportFields,
+                       String clientName) {
         super(fio, service, serviceName, date);
 
         this.clientService = clientService;
         this.reportFields = reportFields;
+        this.clientName = clientName;
     }
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
@@ -48,7 +56,7 @@ public class MonthReport extends ExcelReport{
 
         List<String> headers = new ArrayList<>();
         headers.add("№");
-        headers.add("ФИО ученика");
+        headers.add(STR."ФИО \{clientName}");
         clientService.findById(services.getFirst().getPupilId())
                 .map(Client::getProperties)
                 .orElse(Collections.emptyList())

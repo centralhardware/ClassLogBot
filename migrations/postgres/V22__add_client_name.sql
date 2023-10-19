@@ -1,0 +1,1 @@
+ALTER TABLE organization ADD COLUMN client_name TEXT default 'клиент';

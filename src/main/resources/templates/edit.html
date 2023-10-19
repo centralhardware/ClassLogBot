@@ -1,13 +1,13 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>редактирование ученика</title>
+    <title th:value="${clientName}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
 </head>
 <body>
 
-<h2>Редактирование ученика</h2>
+<h2 th:value="${clientName}"/>
 <form action='/save' method='get' accept-charset='UTF-8'>
     <div class="form-group">
         <label for='name' class="control-label">Имя</label><br>

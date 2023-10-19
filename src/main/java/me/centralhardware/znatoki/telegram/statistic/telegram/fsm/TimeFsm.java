@@ -173,7 +173,7 @@ public class TimeFsm extends Fsm {
                         paymentMapper.insert(payment);
                     });
 
-                    sendLog(service, userId);
+                    sendLog(service, userId, service.getOrganizationId());
 
                     storage.remove(userId);
 
@@ -194,7 +194,7 @@ public class TimeFsm extends Fsm {
         }
     }
 
-    private void sendLog(Service service, Long userId){
+    private void sendLog(Service service, Long userId, UUID organizationId){
         getLogUser(userId)
                 .ifPresent(user -> {
                     var keybard = InlineKeyboardBuilder.create()
@@ -207,7 +207,7 @@ public class TimeFsm extends Fsm {
                         #занятие
                         Время: \{ service.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
                         Предмет: #\{servicesMapper.getNameById(service.getServiceId()).replaceAll(" ", "_")}
-                        Ученики: \{ service.getServiceIds().stream()
+                        \{organizationMapper.getById(organizationId).getClientName()}: \{ service.getServiceIds().stream()
                             .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
                             .collect(Collectors.joining(", "))}
                         Стоимость: \{ service.getAmount()}

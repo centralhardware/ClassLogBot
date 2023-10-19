@@ -48,7 +48,12 @@ public class ReportService {
                                 .orElse(null);
                         if (date == null) return null;
 
-                        return new MonthReport(userMapper.getById(id).getName(), clientService, it,servicesMapper.getKeyById(it), date, organizationMapper.getReportFields(user.get().getOrganizationId())).generate(times);
+                        return new MonthReport(userMapper.getById(id).getName(),
+                                clientService,
+                                it,servicesMapper.getKeyById(it),
+                                date,
+                                organizationMapper.getReportFields(user.get().getOrganizationId()),
+                                organizationMapper.getById(user.get().getOrganizationId()).getClientName()).generate(times);
                     })
                     .filter(Objects::nonNull)
                     .toList();

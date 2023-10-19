@@ -1,8 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.web;
 
+import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Session;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
 import me.centralhardware.znatoki.telegram.statistic.web.dto.EditForm;
@@ -10,8 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.*;
@@ -21,18 +21,14 @@ import static me.centralhardware.znatoki.telegram.statistic.web.WebConstant.ERRO
 import static me.centralhardware.znatoki.telegram.statistic.web.WebConstant.ERROR_TITLE;
 
 @Controller
+@RequiredArgsConstructor
 public class Edit {
     private final ResourceBundle resourceBundle;
     public static final String ERROR_PAGE_NAME = "error";
 
     private final SessionService sessionService;
     private final ClientService clientService;
-
-    public Edit(ResourceBundle resourceBundle, SessionService sessionService, ClientService clientService) {
-        this.resourceBundle = resourceBundle;
-        this.sessionService = sessionService;
-        this.clientService = clientService;
-    }
+    private final OrganizationMapper organizationMapper;
 
     @GetMapping(value = "/edit")
     public String edit(@RequestParam String sessionId, Model model) {
@@ -56,6 +52,8 @@ public class Edit {
             model.addAttribute(EditForm.FIELD_LAST_NAME, client.getLastName());
             model.addAttribute(EditForm.FIELD_SESSOIN_ID, sessionOptional.get().getUuid());
             model.addAttribute("properties", client.getProperties());
+            model.addAttribute("clientName",
+                    STR."редактирование \{organizationMapper.getById(client.getOrganizationId()).getClientName()}");
             return "edit";
         }
         model.addAttribute(ERROR_TITLE, resourceBundle.getString("ERROR"));

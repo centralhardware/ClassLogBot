@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Component
@@ -125,7 +126,7 @@ public class PaymentFsm extends Fsm {
                     payment.setOrganizationId(userMapper.getById(userId).getOrganizationId());
                     payment.setDateTime(LocalDateTime.now());
 
-                    sendLog(payment, userId);
+                    sendLog(payment, userId, payment.getOrganizationId());
 
                     paymentMapper.insert(payment);
 
@@ -147,14 +148,14 @@ public class PaymentFsm extends Fsm {
         }
     }
 
-    private void sendLog(Payment payment, Long userId) {
+    private void sendLog(Payment payment, Long userId, UUID organizationId) {
         getLogUser(userId)
                 .ifPresent(user -> {
 
                     var text = STR."""
                                 #оплата
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
-                                Ученик: #\{ clientService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
+                                \{organizationMapper.getById(organizationId).getClientName()}: #\{ clientService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
                                 оплачено: \{payment.getAmount()},
                                 Принял оплату: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
                                 \{ PropertyUtils.print(payment.getProperties())}

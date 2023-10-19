@@ -23,6 +23,7 @@ public class Organization {
     private String grafanaUsername;
     private String grafanaPassword;
     private String grafanaUrl;
+    private String clientName;
     private Set<String> services = new HashSet<>();
     private Set<String> ownerServices = new HashSet<>();
 

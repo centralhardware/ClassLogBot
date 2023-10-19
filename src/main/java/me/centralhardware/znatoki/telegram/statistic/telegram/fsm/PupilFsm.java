@@ -121,7 +121,7 @@ public class PupilFsm extends Fsm {
         getLogUser(chatId)
                 .ifPresent(user -> {
                     var message = SendMessage.builder()
-                            .text("#ученик\n" + client.getInfo(serviceMapper.getServicesForPupil(client.getId()).stream().map(servicesMapper::getNameById).toList()))
+                            .text(STR."#\{organizationMapper.getById(client.getOrganizationId()).getClientName()}\n" + client.getInfo(serviceMapper.getServicesForPupil(client.getId()).stream().map(servicesMapper::getNameById).toList()))
                             .chatId(user.getId())
                             .parseMode("Markdown")
                             .build();
