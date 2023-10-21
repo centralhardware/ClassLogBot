@@ -154,8 +154,7 @@ public class TelegramUtil {
                 return;
             }
             case SendDocument sendDocument -> {
-                chatId = sendDocument.getChatId();
-                text = sendDocument.getFileField();
+                return;
             }
             case ReplyKeyboardRemove replyKeyboardRemove -> {
                 return;
