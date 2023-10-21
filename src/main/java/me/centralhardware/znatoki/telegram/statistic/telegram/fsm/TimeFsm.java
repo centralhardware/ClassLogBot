@@ -76,6 +76,25 @@ public class TimeFsm extends Fsm {
                 storage.setStage(userId, INPUT_FIO);
             });
             case INPUT_FIO -> {
+                if (!servicesMapper.isAllowMultiplyClients(storage.getTime(userId).getServiceId())){
+                    fioValidator.validate(text).peekLeft(
+                            error -> sender.sendText(error, user)
+                    ).peek(
+                            fio -> {
+                                Integer id = Integer.valueOf(text.split(" ")[0]);
+                                String name = text.replace(id + " ", "");
+                                if (storage.getTime(userId).getServiceIds().contains(Pair.of(id, name))){
+                                    sender.sendText("Данное ФИО уже добавлено", user);
+                                    return;
+                                }
+                                storage.getTime(userId).getServiceIds().add(id);
+                                sender.sendText("Введите стоимость занятия", user);
+                                storage.setStage(userId, INPUT_AMOUNT);
+                            }
+                    );
+                    return;
+                }
+
                 if (Objects.equals(text, "/complete")){
                     if (storage.getTime(userId).getServiceIds().isEmpty()) {
                         sender.sendText("Необходимо ввести как минимум одно ФИО", user);

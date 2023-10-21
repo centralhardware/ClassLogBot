@@ -15,6 +15,7 @@ public class Services {
     private String key;
     private String name;
     private UUID orgId;
+    private Boolean allowMultiplyClients;
     private List<Property> properties;
 
 }

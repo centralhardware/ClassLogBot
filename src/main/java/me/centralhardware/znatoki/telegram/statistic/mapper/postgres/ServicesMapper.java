@@ -56,4 +56,11 @@ public interface ServicesMapper {
             """)
     String getKeyById(@Param("id") Long id);
 
+    @Select("""
+            SELECT allow_multiply_clients
+            FROM services
+            WHERE id = #{id}
+            """)
+    Boolean isAllowMultiplyClients(@Param("id") Long id);
+
 }
