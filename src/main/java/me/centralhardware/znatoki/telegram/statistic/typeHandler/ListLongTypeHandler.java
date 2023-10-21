@@ -4,6 +4,6 @@ public class ListLongTypeHandler extends ListTypeHandler<Long> {
 
     @Override
     protected Long convert(String val) {
-        return null;
+        return Long.parseLong(val);
     }
 }
