@@ -154,13 +154,15 @@ public class TelegramUtil {
                 return;
             }
             case SendDocument sendDocument -> {
-                return;
+                chatId = sendDocument.getChatId();
+                text = sendDocument.getFileField();
             }
             case ReplyKeyboardRemove replyKeyboardRemove -> {
                 return;
             }
             case EditMessageText editMessageText -> {
-                return;
+                chatId = editMessageText.getChatId();
+                text = editMessageText.getText();
             }
             case EditMessageReplyMarkup editMessageReplyMarkup -> {
                 return;

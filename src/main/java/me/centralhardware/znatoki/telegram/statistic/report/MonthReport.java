@@ -5,6 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Number;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
+import me.centralhardware.znatoki.telegram.statistic.utils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.core.MultivaluedHashMap;
@@ -18,12 +19,10 @@ import java.util.stream.Collectors;
 
 public class MonthReport extends ExcelReport{
 
-    private final ClientService clientService;
     private final List<String> reportFields;
     private final String clientName;
 
     public MonthReport(String fio,
-                       ClientService clientService,
                        Long service,
                        String serviceName,
                        LocalDateTime date,
@@ -31,7 +30,6 @@ public class MonthReport extends ExcelReport{
                        String clientName) {
         super(fio, service, serviceName, date);
 
-        this.clientService = clientService;
         this.reportFields = reportFields;
         this.clientName = clientName;
     }
@@ -57,7 +55,7 @@ public class MonthReport extends ExcelReport{
         List<String> headers = new ArrayList<>();
         headers.add("№");
         headers.add(STR."ФИО \{clientName}");
-        clientService.findById(services.getFirst().getPupilId())
+        BeanUtils.getBean(ClientService.class).findById(services.getFirst().getPupilId())
                 .map(Client::getProperties)
                 .orElse(Collections.emptyList())
                 .stream()
@@ -73,13 +71,13 @@ public class MonthReport extends ExcelReport{
         writeRow(headers.toArray(new String[0]));
 
         var fioToTimes = new MultivaluedHashMap<Client, Service>();
-        services.forEach(it -> clientService.findById(it.getPupilId()).ifPresent(client -> fioToTimes.add(client, it)));
+        services.forEach(it -> BeanUtils.getBean(ClientService.class).findById(it.getPupilId()).ifPresent(client -> fioToTimes.add(client, it)));
 
         AtomicInteger totalIndividual = new AtomicInteger();
         AtomicInteger totalGroup = new AtomicInteger();
 
         AtomicInteger i = new AtomicInteger(1);
-        var comparator = getComparator(clientService.findById(services.getFirst().getPupilId()).get());
+        var comparator = getComparator(BeanUtils.getBean(ClientService.class).findById(services.getFirst().getPupilId()).get());
         fioToTimes
                 .entrySet()
                 .stream()

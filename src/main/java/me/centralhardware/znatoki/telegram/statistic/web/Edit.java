@@ -7,7 +7,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Session;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.SessionService;
-import me.centralhardware.znatoki.telegram.statistic.web.dto.EditForm;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -47,10 +46,10 @@ public class Edit {
         Optional<Session> sessionOptional = sessionService.findByUuid(UUID.fromString(sessionId));
         if (sessionOptional.isPresent()) {
             Client client = clientService.findById(sessionOptional.get().getClientId()).get();
-            model.addAttribute(EditForm.FIELD_NAME, client.getName());
-            model.addAttribute(EditForm.FIELD_SECOND_NAME, client.getSecondName());
-            model.addAttribute(EditForm.FIELD_LAST_NAME, client.getLastName());
-            model.addAttribute(EditForm.FIELD_SESSOIN_ID, sessionOptional.get().getUuid());
+            model.addAttribute(WebConstant.FIELD_NAME, client.getName());
+            model.addAttribute(WebConstant.FIELD_SECOND_NAME, client.getSecondName());
+            model.addAttribute(WebConstant.FIELD_LAST_NAME, client.getLastName());
+            model.addAttribute(WebConstant.FIELD_SESSOIN_ID, sessionOptional.get().getUuid());
             model.addAttribute("properties", client.getProperties());
             model.addAttribute("clientName",
                     STR."редактирование \{organizationMapper.getById(client.getOrganizationId()).getClientName()}");

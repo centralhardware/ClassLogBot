@@ -45,7 +45,7 @@ public class PupilFsm extends Fsm {
         }
 
         switch (storage.getPupilStage(chatId)){
-            case INPUT_FIO -> {
+            case ФВВ_FIO -> {
                 String[] words = text.split(" ");
                 if (!(words.length >= 2 && words.length <= 3)) {
                     sender.sendMessageFromResource(MessageConstant.INPUT_FIO_REQUIRED_FORMAT, user);
@@ -91,7 +91,7 @@ public class PupilFsm extends Fsm {
                     }
                 }
             }
-            case INPUT_PROPERTIES -> processCustomProperties(update, getPupil(chatId).getPropertiesBuilder(), properties -> {
+            case ADD_PROPERTIES -> processCustomProperties(update, getPupil(chatId).getPropertiesBuilder(), properties -> {
                 getPupil(chatId).setOrganizationId(userMapper.getById(chatId).getOrganizationId());
                 getPupil(chatId).setCreated_by(chatId);
                 getPupil(chatId).setProperties(properties);

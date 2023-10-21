@@ -37,7 +37,7 @@ public class InvitationFsm  extends Fsm{
         User user = telegramUtil.getFrom(update);
         var orgId = organizationMapper.getByOwner(userId).getId();
         switch (storage.getInvitationStage(userId)){
-            case INPUT_SERVICES -> {
+            case ADD_SERVICES -> {
                 if (Objects.equals(text, "/complete")){
                     var invitation = storage.getInvitation(userId);
                     invitation.setOrgId(orgId);

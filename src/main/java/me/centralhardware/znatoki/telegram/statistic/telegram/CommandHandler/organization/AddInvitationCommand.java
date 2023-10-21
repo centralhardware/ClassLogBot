@@ -37,7 +37,7 @@ public class AddInvitationCommand extends CommandHandler {
                         .endRow());
 
         storage.setInvitation(message.getFrom().getId(), new Invitation());
-        storage.setInvitationStage(message.getFrom().getId(), AddInvitation.INPUT_SERVICES);
+        storage.setInvitationStage(message.getFrom().getId(), AddInvitation.ADD_SERVICES);
 
         sender.send(builder.build(message.getChatId()), message.getFrom());
     }

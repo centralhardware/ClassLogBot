@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.eav.types;
 
+import io.vavr.control.Try;
 import io.vavr.control.Validation;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -25,12 +26,9 @@ public non-sealed class Date implements Type {
 
     @Override
     public Validation<String, Void> validate(String value) {
-        try {
-            LocalDate.parse(value, dateFormat);
-            return Validation.valid(null);
-        } catch (Throwable e){
-        }
-        return Validation.invalid("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy");
+        return Try.of(() -> LocalDate.parse(value, dateFormat))
+                .fold(error -> Validation.invalid("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy"),
+                        date -> Validation.valid(null));
     }
 
     @Override

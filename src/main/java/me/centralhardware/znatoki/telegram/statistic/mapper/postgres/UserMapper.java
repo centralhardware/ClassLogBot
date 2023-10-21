@@ -35,7 +35,7 @@ public interface UserMapper {
                 #{user.organizationId},
                 #{user.services, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.ListLongTypeHandler},
                 #{user.name}
-            ) 
+            )
             """)
     void insert(@Param("user") TelegramUser user);
 

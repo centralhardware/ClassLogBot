@@ -2,10 +2,10 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps;
 
 public enum AddTime {
 
-    INPUT_SUBJECT,
-    INPUT_FIO,
-    INPUT_AMOUNT,
-    INPUT_PROPERTIES,
+    ADD_SUBJECT,
+    ADD_FIO,
+    ADD_AMOUNT,
+    ADD_PROPERTIES,
     CONFIRM
 
 }

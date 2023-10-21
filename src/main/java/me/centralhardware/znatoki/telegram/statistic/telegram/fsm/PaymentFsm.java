@@ -56,17 +56,17 @@ public class PaymentFsm extends Fsm {
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getPaymentStage(userId)){
-            case INPUT_PUPIL -> fioValidator.validate(text).peekLeft(
+            case ФВВ_PUPIL -> fioValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(
                     fio -> {
                         Integer id = Integer.valueOf(text.split(" ")[0]);
                         storage.getPayment(userId).setPupilId(id);
-                        storage.setPaymentStage(userId, AddPayment.INPUT_AMOUNT);
+                        storage.setPaymentStage(userId, AddPayment.ФВВ_AMOUNT);
                         sender.sendText("Введите сумму оплаты", user);
                     }
             );
-            case INPUT_AMOUNT -> amountValidator.validate(text).peekLeft(
+            case ФВВ_AMOUNT -> amountValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(
                     amount -> {
@@ -90,7 +90,7 @@ public class PaymentFsm extends Fsm {
                             storage.setPaymentStage(userId, AddPayment.CONFIRM);
                         } else {
                             storage.getPayment(userId).setPropertiesBuilder(new PropertiesBuilder(org.getPaymentCustomProperties().propertyDefs()));
-                            storage.setPaymentStage(userId, AddPayment.INPUT_PROPERTIES);
+                            storage.setPaymentStage(userId, AddPayment.ФВВ_PROPERTIES);
                             var next = storage.getPayment(userId).getPropertiesBuilder().getNext().get();
                             if (!next.getRight().isEmpty()){
                                 var builder = ReplyKeyboardBuilder
@@ -105,7 +105,7 @@ public class PaymentFsm extends Fsm {
 
                     }
             );
-            case INPUT_PROPERTIES -> processCustomProperties(update, storage.getPayment(userId).getPropertiesBuilder(), properties -> {
+            case ФВВ_PROPERTIES -> processCustomProperties(update, storage.getPayment(userId).getPropertiesBuilder(), properties -> {
                 var payment = storage.getPayment(userId);
                 payment.setProperties(properties);
                 var builder = ReplyKeyboardBuilder.create()

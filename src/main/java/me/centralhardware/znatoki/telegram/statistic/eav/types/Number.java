@@ -32,7 +32,7 @@ public non-sealed class Number implements Type {
 
     @Override
     public String getName() {
-        return "Number";
+        return "Integer";
     }
 
 }

@@ -37,29 +37,24 @@ public class ReportService {
         if (CollectionUtils.isEmpty(times)) return Collections.emptyList();
 
         var user =  Optional.ofNullable(userMapper.getById(times.get(0).getChatId()));
-        if (user.isPresent()){
-            return user.get().getServices()
-                    .stream()
-                    .map(it -> {
-                        var date = times.stream()
-                                .filter(time -> time.getServiceId().equals(it))
-                                .findFirst()
-                                .map(Service::getDateTime)
-                                .orElse(null);
-                        if (date == null) return null;
+        return user.map(telegramUser -> telegramUser.getServices()
+                .stream()
+                .map(it -> {
+                    var date = times.stream()
+                            .filter(time -> time.getServiceId().equals(it))
+                            .findFirst()
+                            .map(Service::getDateTime)
+                            .orElse(null);
+                    if (date == null) return null;
 
-                        return new MonthReport(userMapper.getById(id).getName(),
-                                clientService,
-                                it,servicesMapper.getKeyById(it),
-                                date,
-                                organizationMapper.getReportFields(user.get().getOrganizationId()),
-                                organizationMapper.getById(user.get().getOrganizationId()).getClientName()).generate(times);
-                    })
-                    .filter(Objects::nonNull)
-                    .toList();
-        } else {
-            return Collections.emptyList();
-        }
+                    return new MonthReport(userMapper.getById(id).getName(),
+                            it, servicesMapper.getKeyById(it),
+                            date,
+                            organizationMapper.getReportFields(telegramUser.getOrganizationId()),
+                            organizationMapper.getById(telegramUser.getOrganizationId()).getClientName()).generate(times);
+                })
+                .filter(Objects::nonNull)
+                .toList()).orElse(Collections.emptyList());
     }
 
 }

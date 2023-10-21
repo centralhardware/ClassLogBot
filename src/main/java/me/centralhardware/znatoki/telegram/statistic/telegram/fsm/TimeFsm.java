@@ -64,7 +64,7 @@ public class TimeFsm extends Fsm {
 
         User user = telegramUtil.getFrom(update);
         switch (storage.getStage(userId)) {
-            case INPUT_SUBJECT -> serviceValidator.validate(Pair.of(text, znatokiUser.getOrganizationId())).peekLeft(
+            case ADD_SUBJECT -> serviceValidator.validate(Pair.of(text, znatokiUser.getOrganizationId())).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(service -> {
                 storage.getTime(userId).setServiceId(servicesMapper.getServiceId(znatokiUser.getOrganizationId(), service));
@@ -73,9 +73,9 @@ public class TimeFsm extends Fsm {
                         .row().switchToInline().endRow();
                 builder.setText("нажмите для поиска фио");
                 sender.send(builder.build(userId), update.getMessage().getFrom());
-                storage.setStage(userId, INPUT_FIO);
+                storage.setStage(userId, ADD_FIO);
             });
-            case INPUT_FIO -> {
+            case ADD_FIO -> {
                 if (!servicesMapper.isAllowMultiplyClients(storage.getTime(userId).getServiceId())){
                     fioValidator.validate(text).peekLeft(
                             error -> sender.sendText(error, user)
@@ -89,7 +89,7 @@ public class TimeFsm extends Fsm {
                                 }
                                 storage.getTime(userId).getServiceIds().add(id);
                                 sender.sendText("Введите стоимость занятия", user);
-                                storage.setStage(userId, INPUT_AMOUNT);
+                                storage.setStage(userId, ADD_AMOUNT);
                             }
                     );
                     return;
@@ -102,7 +102,7 @@ public class TimeFsm extends Fsm {
                     }
 
                     sender.sendText("Введите стоимость занятия", user);
-                    storage.setStage(userId, INPUT_AMOUNT);
+                    storage.setStage(userId, ADD_AMOUNT);
                     return;
                 }
 
@@ -121,7 +121,7 @@ public class TimeFsm extends Fsm {
                         }
                 );
             }
-            case INPUT_AMOUNT -> amountValidator.validate(text).peekLeft(
+            case ADD_AMOUNT -> amountValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(
                     amount -> {
@@ -143,7 +143,7 @@ public class TimeFsm extends Fsm {
                                     .row().button("нет").endRow();
                             sender.send(builder.build(userId), user);
                         } else {
-                            storage.setStage(userId, INPUT_PROPERTIES);
+                            storage.setStage(userId, ADD_PROPERTIES);
                             storage.getTime(userId).setPropertiesBuilder(new PropertiesBuilder(org.getServiceCustomProperties().propertyDefs()));
                             var next = storage.getTime(userId).getPropertiesBuilder().getNext().get();
                             if (!next.getRight().isEmpty()){
@@ -155,11 +155,11 @@ public class TimeFsm extends Fsm {
                             } else {
                                 sender.sendText(next.getLeft(), user);
                             }
-                            storage.setStage(userId, INPUT_PROPERTIES);
+                            storage.setStage(userId, ADD_PROPERTIES);
                         }
                     }
             );
-            case INPUT_PROPERTIES -> processCustomProperties(update, storage.getTime(userId).getPropertiesBuilder(), properties -> {
+            case ADD_PROPERTIES -> processCustomProperties(update, storage.getTime(userId).getPropertiesBuilder(), properties -> {
                 var time = storage.getTime(userId);
                 time.setProperties(properties);
                 ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()

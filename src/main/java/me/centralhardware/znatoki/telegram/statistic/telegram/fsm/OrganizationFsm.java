@@ -89,7 +89,6 @@ public class OrganizationFsm extends Fsm {
                 storage.getOrganization(userId).getServices().add(text);
 
                 sender.sendText("Услуга сохранена", user);
-                return;
             }
             case ADD_OWNER_SUBJECT -> {
                 var org = storage.getOrganization(userId);

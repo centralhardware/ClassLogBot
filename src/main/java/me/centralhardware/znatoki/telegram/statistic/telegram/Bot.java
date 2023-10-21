@@ -92,17 +92,17 @@ public class Bot extends TelegramLongPollingBot {
 
             if (processCallback(update)) return;
 
-            if (timeFsm.isActive(update.getMessage().getChatId())) {
+            if (timeFsm.isActive(userId)) {
                 timeFsm.process(update);
                 return;
             }
 
-            if(pupilFsm.isActive(update.getMessage().getChatId())){
+            if(pupilFsm.isActive(userId)){
                 pupilFsm.process(update);
                 return;
             }
 
-            if(paymentFsm.isActive(update.getMessage().getChatId())){
+            if(paymentFsm.isActive(userId)){
                 paymentFsm.process(update);
                 return;
             }

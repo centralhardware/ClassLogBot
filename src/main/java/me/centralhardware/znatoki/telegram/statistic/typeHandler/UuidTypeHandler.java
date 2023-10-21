@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.typeHandler;
 
-import com.google.common.base.Strings;
+import io.vavr.control.Try;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedTypes;
 import org.apache.ibatis.type.TypeHandler;
@@ -36,13 +36,8 @@ public class UuidTypeHandler implements TypeHandler<UUID> {
     }
 
     private static UUID toUUID(String val) {
-        if (!Strings.isNullOrEmpty(val)) {
-            try {
-                return UUID.fromString(val);
-            } catch (IllegalArgumentException e) {
-            }
-        }
-        return null;
+        return Try.of(() -> UUID.fromString(val))
+                .getOrElse(() -> null);
     }
 
 }

@@ -6,7 +6,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Organizatio
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import org.springframework.scheduling.annotation.Scheduled;

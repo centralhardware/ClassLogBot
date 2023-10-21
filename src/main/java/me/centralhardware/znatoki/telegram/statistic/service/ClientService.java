@@ -32,13 +32,6 @@ public class ClientService {
                 .orElse("");
     }
 
-    public List<Client> getAll(){
-        return repository.findAll()
-                .stream()
-                .filter(result -> !result.isDeleted())
-                .toList();
-    }
-
     public Client save(Client client){
         CompletableFuture.runAsync(this::updateIndex);
         return repository.save(client);

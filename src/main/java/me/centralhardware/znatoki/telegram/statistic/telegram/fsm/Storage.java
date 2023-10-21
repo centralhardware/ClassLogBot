@@ -47,7 +47,7 @@ public class Storage {
 
     public void createPupil(Long chatId){
         fsmPupil.put(chatId, new Client());
-        fsmPupilStage.put(chatId, AddPupil.INPUT_FIO);
+        fsmPupilStage.put(chatId, AddPupil.ФВВ_FIO);
     }
 
     public AddPupil getPupilStage(Long chatId){

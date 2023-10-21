@@ -30,12 +30,6 @@ public class PropertiesBuilder {
                 Optional.of(Pair.of(current.type().format(current.name(), current.isOptional()), Collections.emptyList()));
     }
 
-    public List<String> getEnumeration(){
-        return current.type() instanceof Enumeration?
-                List.of(current.enumeration()) :
-                Collections.emptyList();
-    }
-
     public Validation<String, Void> validate(Update update){
         if (current.type() instanceof Enumeration){
             return current.type().validate(update, current.enumeration());
