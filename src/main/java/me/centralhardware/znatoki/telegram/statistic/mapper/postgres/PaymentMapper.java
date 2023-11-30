@@ -1,9 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 
 import java.util.UUID;
 
@@ -28,6 +26,7 @@ public interface PaymentMapper {
                 #{payment.properties, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler}::JSONB
             )
             """)
+    @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
     void insert(@Param("payment") Payment payment);
 
     @Update("""
@@ -36,5 +35,24 @@ public interface PaymentMapper {
             WHERE time_id = #{time_id}
             """)
     void setDeleteByTimeId(@Param("time_id") UUID timeId, @Param("is_delete") Boolean isDelete);
+
+    @Update("""
+            UPDATE payment
+            SET is_deleted = #{is_delete}
+            WHERE id = #{id}
+            """)
+    void setDelete(@Param("id") Integer id, @Param("is_delete") Boolean isDelete);
+
+
+    @Select("""
+            SELECT org_id
+            FROM payment
+            WHERE id = #{id}::int
+            """)
+    String __getOrgById(@Param("id") Integer id);
+
+    default UUID getOrgById(Integer id){
+        return UUID.fromString(__getOrgById(id));
+    }
 
 }

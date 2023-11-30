@@ -13,6 +13,7 @@ import java.util.UUID;
 @Setter
 public class Payment {
 
+    private Integer id;
     private LocalDateTime dateTime;
     private Long chatId;
     private Integer pupilId;

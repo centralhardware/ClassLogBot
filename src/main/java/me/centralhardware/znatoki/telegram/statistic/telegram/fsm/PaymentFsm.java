@@ -11,12 +11,14 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
+import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
 import me.centralhardware.znatoki.telegram.statistic.utils.PropertyUtils;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -126,9 +128,8 @@ public class PaymentFsm extends Fsm {
                     payment.setOrganizationId(userMapper.getById(userId).getOrganizationId());
                     payment.setDateTime(LocalDateTime.now());
 
-                    sendLog(payment, userId, payment.getOrganizationId());
-
                     paymentMapper.insert(payment);
+                    sendLog(payment, payment.getId(), userId, payment.getOrganizationId());
 
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
@@ -148,9 +149,14 @@ public class PaymentFsm extends Fsm {
         }
     }
 
-    private void sendLog(Payment payment, Long userId, UUID organizationId) {
+    private void sendLog(Payment payment, Integer paymentId,Long userId, UUID organizationId) {
         getLogUser(userId)
                 .ifPresent(user -> {
+                    var keybard = InlineKeyboardBuilder.create()
+                            .setText("?")
+                            .row()
+                            .button("удалить", "paymentDelete-" + paymentId)
+                            .endRow().build();
 
                     var text = STR."""
                                 #оплата
@@ -178,11 +184,17 @@ public class PaymentFsm extends Fsm {
                                                     .get(), "отчет"))
                                             .chatId(user.getId())
                                             .caption(text)
+                                            .replyMarkup(keybard)
                                             .build();
                                     sender.send(sendPhoto, user);
                                 });
                     } else {
-                        sender.sendText(text, user);
+                        var message = SendMessage.builder()
+                                .text(text)
+                                .chatId(user.getId())
+                                .replyMarkup(keybard)
+                                .build();
+                        sender.send(message, user);
                     }
                 });
     }
