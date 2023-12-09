@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.TelegramUser;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.*;
@@ -68,6 +70,13 @@ public class Bot extends TelegramLongPollingBot {
             telegramUtil.logUpdate(update);
 
             Long userId = telegramUtil.getUserId(update);
+
+            TelegramUser user = userMapper.getById(userId);
+
+            if (user != null && user.getRole() == Role.BLOCK){
+                log.info("Access blocked for user {}({})", user.getName(), user.getId());
+                return;
+            }
 
             boolean isStart = Optional.of(update)
                     .map(Update::getMessage)
