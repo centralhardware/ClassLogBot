@@ -58,27 +58,25 @@ public interface PaymentMapper {
         return UUID.fromString(__getOrgById(id));
     }
 
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
-
     @Select("""
             SELECT sum(amount)
             FROM payment
             WHERE chat_id = #{chat_id}
                 AND pupil_id = #{client_id}
-                AND date_time between to_timestamp(#{startDate}, 'DD-MM-YYYY HH24:MI:SS') and to_timestamp(#{endDate}, 'DD-MM-YYYY HH24:MI:SS')
+                AND date_time between #{startDate} and #{endDate}
             """)
     Integer __getPaymentsSumByPupil(@Param("chat_id") Long chatId,
                              @Param("client_id") Integer clientId,
-                             @Param("startDate") String startDate,
-                             @Param("endDate") String endDate);
+                             @Param("startDate") LocalDateTime startDate,
+                             @Param("endDate") LocalDateTime endDate);
 
     default Integer getPaymentsSumByPupil(Long chatId,
                                    Integer clientId,
                                    LocalDateTime date){
         var res = __getPaymentsSumByPupil(chatId,
                 clientId,
-                dateTimeFormatter.format(date.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)),
-                dateTimeFormatter.format(date.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withSecond(59)));
+                date.with(TemporalAdjusters.firstDayOfMonth()),
+                date.with(TemporalAdjusters.lastDayOfMonth()));
 
         return res == null?
                 0:
@@ -89,17 +87,17 @@ public interface PaymentMapper {
             SELECT sum(amount)
             FROM payment
             WHERE chat_id = #{chat_id}
-                AND date_time between to_timestamp(#{startDate}, 'DD-MM-YYYY HH24:MI:SS') and to_timestamp(#{endDate}, 'DD-MM-YYYY HH24:MI:SS')
+                AND date_time between #{startDate} and #{endDate}
             """)
     Integer __getPaymentsSum(@Param("chat_id") Long chatId,
-                             @Param("startDate") String startDate,
-                             @Param("endDate") String endDate);
+                             @Param("startDate") LocalDateTime startDate,
+                             @Param("endDate") LocalDateTime endDate);
 
     default Integer getPaymentsSum(Long chatId,
                                    LocalDateTime date){
         var res = __getPaymentsSum(chatId,
-                dateTimeFormatter.format(date.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)),
-                dateTimeFormatter.format(date.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withSecond(59)));
+                date.with(TemporalAdjusters.firstDayOfMonth()),
+                date.with(TemporalAdjusters.lastDayOfMonth()));
 
         return res == null?
                 0:
