@@ -64,19 +64,19 @@ public interface PaymentMapper {
             SELECT sum(amount)
             FROM payment
             WHERE chat_id = #{chat_id}
-                AND pupil_id = #{pupil_id}
+                AND pupil_id = #{client_id}
                 AND date_time between to_timestamp(#{startDate}, 'DD-MM-YYYY HH24:MI:SS') and to_timestamp(#{endDate}, 'DD-MM-YYYY HH24:MI:SS')
             """)
     Integer __getPaymentsSumByPupil(@Param("chat_id") Long chatId,
-                             @Param("pupil_id") Integer pupilId,
+                             @Param("client_id") Integer clientId,
                              @Param("startDate") String startDate,
                              @Param("endDate") String endDate);
 
     default Integer getPaymentsSumByPupil(Long chatId,
-                                   Integer pupilId,
+                                   Integer clientId,
                                    LocalDateTime date){
         var res = __getPaymentsSumByPupil(chatId,
-                pupilId,
+                clientId,
                 dateTimeFormatter.format(date.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)),
                 dateTimeFormatter.format(date.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withSecond(59)));
 
@@ -105,5 +105,12 @@ public interface PaymentMapper {
                 0:
                 res;
     }
+
+    @Select("""
+            SELECT sum(amount)
+            FROM payment
+            WHERE pupil_id = #{client_id}
+            """)
+    Integer getCredit(@Param("client_id") Integer clientId);
 
 }

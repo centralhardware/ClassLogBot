@@ -232,6 +232,7 @@ public class TimeFsm extends Fsm {
                         Стоимость: \{ service.getAmount()}
                         Преподаватель: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
                         \{ PropertyUtils.print(service.getProperties())}
+                        баланс: \{paymentMapper.getCredit(service.getPupilId())}}
                         """;
 
                     var hasPhoto = service.getProperties()
