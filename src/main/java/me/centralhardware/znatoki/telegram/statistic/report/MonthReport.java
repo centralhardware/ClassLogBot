@@ -4,6 +4,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Number;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.utils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,8 +22,10 @@ public class MonthReport extends ExcelReport{
 
     private final List<String> reportFields;
     private final String clientName;
+    private final Long userId;
 
     public MonthReport(String fio,
+                       Long userId,
                        Long service,
                        String serviceName,
                        LocalDateTime date,
@@ -32,6 +35,7 @@ public class MonthReport extends ExcelReport{
 
         this.reportFields = reportFields;
         this.clientName = clientName;
+        this.userId = userId;
     }
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
@@ -117,7 +121,8 @@ public class MonthReport extends ExcelReport{
                             .forEach(data::add);
                     data.add(Integer.toString(individual));
                     data.add(Integer.toString(group));
-                    data.add("");
+                    data.add(BeanUtils.getBean(PaymentMapper.class)
+                            .getPaymentsSumByPupil(userId, client.getId(), date).toString());
                     data.add("");
                     data.add(datesStr);
 
@@ -129,7 +134,8 @@ public class MonthReport extends ExcelReport{
                 "Итого",
                 "",
                 totalIndividual.toString(),
-                totalGroup.toString()
+                totalGroup.toString(),
+                BeanUtils.getBean(PaymentMapper.class).getPaymentsSum(userId, date).toString()
         );
 
         return create();

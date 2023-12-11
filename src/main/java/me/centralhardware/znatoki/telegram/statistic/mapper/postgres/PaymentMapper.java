@@ -3,6 +3,9 @@ package me.centralhardware.znatoki.telegram.statistic.mapper.postgres;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 
 public interface PaymentMapper {
@@ -53,6 +56,54 @@ public interface PaymentMapper {
 
     default UUID getOrgById(Integer id){
         return UUID.fromString(__getOrgById(id));
+    }
+
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+
+    @Select("""
+            SELECT sum(amount)
+            FROM payment
+            WHERE chat_id = #{chat_id}
+                AND pupil_id = #{pupil_id}
+                AND date_time between to_timestamp(#{startDate}, 'DD-MM-YYYY HH24:MI:SS') and to_timestamp(#{endDate}, 'DD-MM-YYYY HH24:MI:SS')
+            """)
+    Integer __getPaymentsSumByPupil(@Param("chat_id") Long chatId,
+                             @Param("pupil_id") Integer pupilId,
+                             @Param("startDate") String startDate,
+                             @Param("endDate") String endDate);
+
+    default Integer getPaymentsSumByPupil(Long chatId,
+                                   Integer pupilId,
+                                   LocalDateTime date){
+        var res = __getPaymentsSumByPupil(chatId,
+                pupilId,
+                dateTimeFormatter.format(date.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)),
+                dateTimeFormatter.format(date.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withSecond(59)));
+
+        return res == null?
+                0:
+                res;
+    }
+
+    @Select("""
+            SELECT sum(amount)
+            FROM payment
+            WHERE chat_id = #{chat_id}
+                AND date_time between to_timestamp(#{startDate}, 'DD-MM-YYYY HH24:MI:SS') and to_timestamp(#{endDate}, 'DD-MM-YYYY HH24:MI:SS')
+            """)
+    Integer __getPaymentsSum(@Param("chat_id") Long chatId,
+                             @Param("startDate") String startDate,
+                             @Param("endDate") String endDate);
+
+    default Integer getPaymentsSum(Long chatId,
+                                   LocalDateTime date){
+        var res = __getPaymentsSum(chatId,
+                dateTimeFormatter.format(date.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)),
+                dateTimeFormatter.format(date.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withSecond(59)));
+
+        return res == null?
+                0:
+                res;
     }
 
 }

@@ -47,7 +47,7 @@ public class ReportService {
                             .orElse(null);
                     if (date == null) return null;
 
-                    return new MonthReport(userMapper.getById(id).getName(),
+                    return new MonthReport(userMapper.getById(id).getName(), id,
                             it, servicesMapper.getKeyById(it),
                             date,
                             organizationMapper.getReportFields(telegramUser.getOrganizationId()),
