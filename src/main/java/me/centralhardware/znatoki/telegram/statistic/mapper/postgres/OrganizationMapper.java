@@ -11,19 +11,6 @@ import java.util.UUID;
 @Mapper
 public interface OrganizationMapper {
 
-    @Insert("""
-            INSERT INTO organization(
-                id,
-                name,
-                owner
-            ) VALUES (
-                #{org.id},
-                #{org.name},
-                #{org.owner}
-            )
-            """)
-    void insert(@Param("org") Organization organization);
-
     @Update("""
             UPDATE organization
             SET log_chat_id = #{log_chat_id}

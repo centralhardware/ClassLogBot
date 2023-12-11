@@ -36,8 +36,6 @@ public class Bot extends TelegramLongPollingBot {
     private final TimeFsm timeFsm;
     private final PupilFsm pupilFsm;
     private final PaymentFsm paymentFsm;
-    private final OrganizationFsm organizationFsm;
-    private final InvitationFsm invitationFsm;
 
     private final UserMapper userMapper;
 
@@ -88,11 +86,8 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (userMapper.getById(userId) == null && !organizationFsm.isActive(userId)){
+            if (userMapper.getById(userId) == null){
                 sender.sendText("Вам необходимо создать или присоединиться к организации", telegramUtil.getFrom(update));
-                return;
-            } else if (organizationFsm.isActive(userId)){
-                organizationFsm.process(update);
                 return;
             }
 
@@ -114,11 +109,6 @@ public class Bot extends TelegramLongPollingBot {
 
             if(paymentFsm.isActive(userId)){
                 paymentFsm.process(update);
-                return;
-            }
-
-            if (invitationFsm.isActive(userId)){
-                invitationFsm.process(update);
                 return;
             }
 
