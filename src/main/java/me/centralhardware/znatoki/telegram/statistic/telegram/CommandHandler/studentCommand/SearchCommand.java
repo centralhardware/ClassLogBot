@@ -79,13 +79,13 @@ public class SearchCommand extends CommandHandler {
                             client.getSecondName(),
                             client.getLastName())).
                     row().
-                    button("информация", "/user_info" + client.getId()).
+                    button("информация", STR."/user_info\{client.getId()}").
                     endRow();
             if (telegramService.hasWriteRight(message.getChatId())){
                 inlineKeyboardBuilder.row().webApp(link, "редактировать").endRow();
             }
             inlineKeyboardBuilder.row().
-                    button("удалить", "/delete_user" + client.getId()).
+                    button("удалить", STR."/delete_user\{client.getId()}").
                     endRow();
             sender.send(inlineKeyboardBuilder.build(message.getChatId()), message.getFrom());
         }

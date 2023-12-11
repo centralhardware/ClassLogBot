@@ -155,7 +155,7 @@ public class PaymentFsm extends Fsm {
                     var keybard = InlineKeyboardBuilder.create()
                             .setText("?")
                             .row()
-                            .button("удалить", "paymentDelete-" + paymentId)
+                            .button("удалить", STR."paymentDelete-\{paymentId}")
                             .endRow().build();
 
                     var text = STR."""

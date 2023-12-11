@@ -65,10 +65,7 @@ public class InlineHandler {
     }
 
     private String getFio(Client client){
-        return client.getId() + " " +
-                client.getName() + " " +
-                client.getSecondName() + " " +
-                client.getLastName();
+        return STR."\{client.getId()} \{client.getName()} \{client.getSecondName()} \{client.getLastName()}";
     }
 
     private String getBio(Client client){

@@ -103,7 +103,7 @@ public class Edit {
                 var validation = property.type().validate(params.get(property.name()));
                 if (StringUtils.isNotBlank(property.value()) && validation.isInvalid()){
                     model.addAttribute(ERROR_TITLE, resourceBundle.getString("ERROR"));
-                    model.addAttribute(ERROR_MESSAGE, property.name() + " " + validation.getError());
+                    model.addAttribute(ERROR_MESSAGE, STR."\{property.name()} \{validation.getError()}");
                     return ERROR_PAGE_NAME;
                 }
                 changed.add(property.withValue(params.get(property.name())));

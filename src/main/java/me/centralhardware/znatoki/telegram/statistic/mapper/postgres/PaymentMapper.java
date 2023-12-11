@@ -4,7 +4,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
 import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 

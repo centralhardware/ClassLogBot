@@ -41,7 +41,7 @@ public class TimeDeleteCallback extends CallbackHandler {
                 .chatId(callbackQuery.getMessage().getChatId())
                 .replyMarkup(InlineKeyboardBuilder.create()
                         .row()
-                        .button("восстановить", "timeRestore-" + id)
+                        .button("восстановить", STR."timeRestore-\{id}")
                         .endRow().build())
                 .build();
         sender.send(editMessageReplyMarkup, from);

@@ -82,8 +82,8 @@ public class TimeFsm extends Fsm {
                     ).peek(
                             fio -> {
                                 Integer id = Integer.valueOf(text.split(" ")[0]);
-                                String name = text.replace(id + " ", "");
-                                if (storage.getTime(userId).getServiceIds().contains(Pair.of(id, name))){
+                                String name = text.replace(STR."\{id} ", "");
+                                if (storage.getTime(userId).getServiceIds().contains(id)){
                                     sender.sendText("Данное ФИО уже добавлено", user);
                                     return;
                                 }
@@ -111,8 +111,8 @@ public class TimeFsm extends Fsm {
                 ).peek(
                         fio -> {
                             Integer id = Integer.valueOf(text.split(" ")[0]);
-                            String name = text.replace(id + " ", "");
-                            if (storage.getTime(userId).getServiceIds().contains(Pair.of(id, name))){
+                            String name = text.replace(STR."\{id} ", "");
+                            if (storage.getTime(userId).getServiceIds().contains(id)){
                                 sender.sendText("Данное ФИО уже добавлено", user);
                                 return;
                             }
@@ -219,7 +219,7 @@ public class TimeFsm extends Fsm {
                     var keybard = InlineKeyboardBuilder.create()
                             .setText("?")
                             .row()
-                            .button("удалить", "timeDelete-" + service.getId())
+                            .button("удалить", STR."timeDelete-\{service.getId()}")
                             .endRow().build();
 
                     var text =STR."""
@@ -227,7 +227,7 @@ public class TimeFsm extends Fsm {
                         Время: \{ service.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
                         Предмет: #\{servicesMapper.getNameById(service.getServiceId()).replaceAll(" ", "_")}
                         \{organizationMapper.getById(organizationId).getClientName()}: \{ service.getServiceIds().stream()
-                            .map(it -> "#" + clientService.getFioById(it).replaceAll(" ", "_"))
+                            .map(it -> STR."#\{clientService.getFioById(it).replaceAll(" ", "_")}")
                             .collect(Collectors.joining(", "))}
                         Стоимость: \{ service.getAmount()}
                         Преподаватель: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}

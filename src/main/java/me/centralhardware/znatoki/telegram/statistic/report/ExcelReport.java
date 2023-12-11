@@ -60,8 +60,7 @@ public class ExcelReport {
 
     public File create(){
         try {
-            var temp = Files.createFile(Path.of(fio + " - " + serviceName + " " + date.format(DateTimeFormatter.ofPattern("MMMM")) + " " +
-                    date.getYear() + ".xlsx")).toFile();
+            var temp = Files.createFile(Path.of(STR."\{fio} - \{serviceName} \{date.format(DateTimeFormatter.ofPattern("MMMM"))} \{date.getYear()}.xlsx")).toFile();
 
             try (var outputStream = new FileOutputStream(temp)){
                 workbook.write(outputStream);

@@ -9,8 +9,6 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageRe
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.User;
 
-import java.util.UUID;
-
 @Component
 @RequiredArgsConstructor
 public class PaymentRestoreCallback extends CallbackHandler {
@@ -39,7 +37,7 @@ public class PaymentRestoreCallback extends CallbackHandler {
                 .replyMarkup(InlineKeyboardBuilder.create()
                         .setText("?")
                         .row()
-                        .button("удалить", "paymentDelete-" + id)
+                        .button("удалить", STR."paymentDelete-\{id}")
                         .endRow().build())
                 .build();
         sender.send(editMessageReplyMarkup, from);

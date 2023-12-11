@@ -36,7 +36,7 @@ public class PaymentDeleteCallback extends CallbackHandler {
                 .chatId(callbackQuery.getMessage().getChatId())
                 .replyMarkup(InlineKeyboardBuilder.create()
                         .row()
-                        .button("восстановить", "paymentRestore-" + id)
+                        .button("восстановить", STR."paymentRestore-\{id}")
                         .endRow().build())
                 .build();
         sender.send(editMessageReplyMarkup, from);

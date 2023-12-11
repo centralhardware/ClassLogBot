@@ -36,7 +36,7 @@ public class ReportService {
         var times = getTime.apply(id);
         if (CollectionUtils.isEmpty(times)) return Collections.emptyList();
 
-        var user =  Optional.ofNullable(userMapper.getById(times.get(0).getChatId()));
+        var user =  Optional.ofNullable(userMapper.getById(times.getFirst().getChatId()));
         return user.map(telegramUser -> telegramUser.getServices()
                 .stream()
                 .map(it -> {

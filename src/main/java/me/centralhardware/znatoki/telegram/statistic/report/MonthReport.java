@@ -50,11 +50,10 @@ public class MonthReport extends ExcelReport{
         newSheet("отчет");
 
         writeTitle(STR."Отчет по оплате и посещаемости занятий по \{serviceName}", 6);
-        writeTitle("Преподаватель: " + fio, 6);
+        writeTitle(STR."Преподаватель: \{fio}", 6);
 
-        LocalDateTime dateTime = services.get(0).getDateTime();
-        writeTitle(dateTime.format(DateTimeFormatter.ofPattern("MMMM")) + " " +
-                dateTime.getYear(), 6);
+        LocalDateTime dateTime = services.getFirst().getDateTime();
+        writeTitle(STR."\{dateTime.format(DateTimeFormatter.ofPattern("MMMM"))} \{dateTime.getYear()}", 6);
 
         List<String> headers = new ArrayList<>();
         headers.add("№");

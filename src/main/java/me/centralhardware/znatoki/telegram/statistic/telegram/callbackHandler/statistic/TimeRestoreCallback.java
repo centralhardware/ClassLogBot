@@ -42,7 +42,7 @@ public class TimeRestoreCallback  extends CallbackHandler {
                 .replyMarkup(InlineKeyboardBuilder.create()
                         .setText("?")
                         .row()
-                        .button("удалить", "timeDelete-" + id)
+                        .button("удалить", STR."timeDelete-\{id}")
                         .endRow().build())
                 .build();
         sender.send(editMessageReplyMarkup, from);

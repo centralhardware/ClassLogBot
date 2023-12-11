@@ -38,7 +38,7 @@ public class AddTImeCommand extends CommandHandler {
         service.setChatId(message.getChatId());
 
         if (user.getServices().size() == 1){
-            service.setServiceId(user.getServices().get(0));
+            service.setServiceId(user.getServices().getFirst());
         }
 
         storage.setTime(message.getChatId(), service);
