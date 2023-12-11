@@ -1,8 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.studentCommand;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
-import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
@@ -20,11 +20,6 @@ public class AddPupilCommand extends CommandHandler {
 
     @Override
     public void handle(Message message) {
-        if (telegramService.isUnauthorized(message.getChatId()) || !telegramService.hasWriteRight(message.getChatId())){
-            sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, message.getFrom());
-            return;
-        }
-
         if (storage.contain(message.getChatId())){
             sender.sendText("Сначала сохраните текущую запись", message.getFrom(), false);
             return;
@@ -37,5 +32,10 @@ public class AddPupilCommand extends CommandHandler {
     @Override
     public boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/addPupil");
+    }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ_WRITE;
     }
 }

@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
@@ -37,4 +38,10 @@ public class AddPaymentCommand extends CommandHandler {
     public boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/addPayment");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ;
+    }
+
 }

@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
@@ -64,4 +65,10 @@ public class AddTImeCommand extends CommandHandler {
     public boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/addTime");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ;
+    }
+
 }

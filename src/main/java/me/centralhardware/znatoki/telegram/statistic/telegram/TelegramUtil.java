@@ -34,7 +34,6 @@ import static java.util.Map.entry;
 public class TelegramUtil {
 
     private final StatisticMapper statisticMapper;
-    private final UserMapper userMapper;
 
     public Long getUserId(Update update){
         if (update.hasMessage()){
@@ -48,7 +47,7 @@ public class TelegramUtil {
         throw new IllegalStateException();
     }
 
-    public User getFrom(Update update){
+    public static User getFrom(Update update){
         if (update.hasMessage()){
             return update.getMessage().getFrom();
         } else if (update.hasCallbackQuery()){
@@ -60,7 +59,7 @@ public class TelegramUtil {
         throw new IllegalStateException();
     }
 
-    private String getText(Update update){
+    private static String getText(Update update){
         if (update.hasMessage()){
             return update.getMessage().getText();
         } else if (update.hasCallbackQuery()){
@@ -225,32 +224,5 @@ public class TelegramUtil {
 
         return BOLD_MAKER + text + BOLD_MAKER;
     }
-
-    private boolean checkAccess(User user, String right, TelegramSender sender) {
-        var telegramUser = userMapper.getById(user.getId());
-
-        if (telegramUser == null){
-            sender.sendText("Вам необходимо создать или присоединиться к организации", user);
-            return false;
-        }
-
-        boolean authorized = false;
-        if (right.equals("read")) {
-            authorized = telegramUser.getRole() == Role.ADMIN ||
-                    telegramUser.getRole() == Role.READ ||
-                    telegramUser.getRole() == Role.READ_WRITE;
-        }
-
-        if (!authorized) {
-            sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
-        }
-        return authorized;
-    }
-
-    public boolean checkReadAccess(User user, TelegramSender sender) {
-        return checkAccess(user, "read", sender);
-    }
-
-
 
 }

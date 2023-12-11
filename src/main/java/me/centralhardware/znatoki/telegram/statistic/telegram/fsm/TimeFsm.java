@@ -62,7 +62,7 @@ public class TimeFsm extends Fsm {
         var znatokiUser = userMapper.getById(userId);
         var org =  organizationMapper.getById(znatokiUser.getOrganizationId());
 
-        User user = telegramUtil.getFrom(update);
+        User user = TelegramUtil.getFrom(update);
         switch (storage.getStage(userId)) {
             case ADD_SUBJECT -> serviceValidator.validate(Pair.of(text, znatokiUser.getOrganizationId())).peekLeft(
                     error -> sender.sendText(error, user)

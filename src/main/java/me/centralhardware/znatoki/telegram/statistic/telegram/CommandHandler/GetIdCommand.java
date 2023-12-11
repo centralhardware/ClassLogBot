@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler;
 
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -24,4 +25,10 @@ public class GetIdCommand extends CommandHandler {
     public boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/get_id");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ;
+    }
+
 }

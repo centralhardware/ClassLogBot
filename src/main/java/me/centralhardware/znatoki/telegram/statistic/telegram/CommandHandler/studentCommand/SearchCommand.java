@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
@@ -47,8 +48,6 @@ public class SearchCommand extends CommandHandler {
 
     @Override
     public void handle(Message message) {
-        if (!telegramUtils.checkReadAccess(message.getFrom(), sender)) return;
-
         var arguments = message.getText().replace("/s", "").trim().split(" ");
         if (arguments.length == 1 && StringUtils.isBlank(arguments[0])){
             sender.sendText("Вы не ввели текст запроса. Пример: /s Иванов", message.getFrom());
@@ -95,4 +94,10 @@ public class SearchCommand extends CommandHandler {
     public boolean isAcceptable(String data) {
         return data.startsWith("/s ");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ;
+    }
+
 }

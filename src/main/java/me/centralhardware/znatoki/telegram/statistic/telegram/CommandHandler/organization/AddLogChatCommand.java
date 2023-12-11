@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.organization;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,11 @@ public class AddLogChatCommand extends CommandHandler {
     @Override
     public boolean isAcceptable(String data) {
         return data.startsWith("/join");
+    }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.ADMIN;
     }
 
 }

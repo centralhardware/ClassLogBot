@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.st
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
@@ -35,8 +36,6 @@ public class UserInfoCommand extends CommandHandler {
 
     @Override
     public void handle(Message message) {
-        if (!telegramUtils.checkReadAccess(message.getFrom(), sender)) return;
-
         var arguments = message.getText().replace("/i ", "");
         Optional<Client> pupilOptional = clientService.findById(Integer.valueOf(arguments));
         pupilOptional.ifPresentOrElse(
@@ -57,4 +56,10 @@ public class UserInfoCommand extends CommandHandler {
     public boolean isAcceptable(String data) {
         return data.startsWith("/i");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ;
+    }
+
 }

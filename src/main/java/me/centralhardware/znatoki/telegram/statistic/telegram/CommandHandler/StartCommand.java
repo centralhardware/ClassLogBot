@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler;
 
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.Config;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -27,4 +28,10 @@ public class StartCommand extends CommandHandler {
     public boolean isAcceptable(String data) {
         return data.equals("/start");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return null;
+    }
+
 }

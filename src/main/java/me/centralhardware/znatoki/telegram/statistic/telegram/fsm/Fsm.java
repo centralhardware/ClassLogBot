@@ -49,7 +49,7 @@ public abstract class Fsm {
     }
 
     protected void processCustomProperties(Update update, PropertiesBuilder builder, Consumer<List<Property>> onFinish) {
-        var user = telegramUtil.getFrom(update);
+        var user = TelegramUtil.getFrom(update);
         Long chatId = telegramUtil.getUserId(update);
         builder
                 .validate(update)

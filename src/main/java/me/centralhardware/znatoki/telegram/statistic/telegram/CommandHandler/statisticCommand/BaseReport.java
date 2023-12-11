@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.statisticCommand;
 
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
@@ -49,6 +50,11 @@ public abstract class BaseReport extends CommandHandler {
         serviceMapper.getIds(userMapper.getById(id).getOrganizationId())
                 .forEach(it -> getTime().apply(it)
                         .forEach(report -> send(report, message.getFrom())));
+    }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ;
     }
 
     protected abstract Function<Long, List<File>> getTime();

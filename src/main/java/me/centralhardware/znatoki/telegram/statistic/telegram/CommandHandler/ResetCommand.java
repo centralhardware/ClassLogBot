@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler;
 
 import lombok.RequiredArgsConstructor;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -21,4 +22,10 @@ public class ResetCommand extends CommandHandler {
     public boolean isAcceptable (String data) {
         return data.equalsIgnoreCase("/reset");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.READ;
+    }
+
 }

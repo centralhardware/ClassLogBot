@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
-import me.centralhardware.znatoki.telegram.statistic.i18n.ErrorConstant;
 import me.centralhardware.znatoki.telegram.statistic.i18n.MessageConstant;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServiceMapper;
@@ -13,6 +12,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.service.TelegramService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
+import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -36,13 +36,8 @@ public class PupilFsm extends Fsm {
     public void process(Update update) {
         Long chatId = telegramUtil.getUserId(update);
         String text = update.getMessage().getText();
-        var user = telegramUtil.getFrom(update);
+        var user = TelegramUtil.getFrom(update);
         var telegramUser = userMapper.getById(chatId);
-
-        if (telegramService.isUnauthorized(chatId) || !telegramService.hasWriteRight(chatId)){
-            sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, user);
-            return;
-        }
 
         switch (storage.getPupilStage(chatId)){
             case ФВВ_FIO -> {

@@ -31,10 +31,6 @@ public class TelegramService {
         return getRole(chatId) == Role.ADMIN;
     }
 
-    public boolean isUnauthorized(Long chatId) {
-        return getRole(chatId) == null;
-    }
-
     private Role getRole(Long chatId){
         return Optional.ofNullable(userMapper.getById(chatId))
                 .map(TelegramUser::getRole)

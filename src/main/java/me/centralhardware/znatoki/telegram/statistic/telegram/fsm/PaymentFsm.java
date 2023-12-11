@@ -11,6 +11,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
+import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
@@ -56,7 +57,7 @@ public class PaymentFsm extends Fsm {
                 .orElse(null);
         var znatokiUser = userMapper.getById(userId);
 
-        User user = telegramUtil.getFrom(update);
+        User user = TelegramUtil.getFrom(update);
         switch (storage.getPaymentStage(userId)){
             case ФВВ_PUPIL -> fioValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)

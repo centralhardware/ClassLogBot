@@ -18,10 +18,6 @@ public class GrafanaCommand extends CommandHandler {
     @Override
     public void handle(Message message) {
         var user = userMapper.getById(message.getFrom().getId());
-        if (user.getRole() != Role.ADMIN) {
-            sender.sendText("Доступ запрещен", message.getFrom());
-            return;
-        }
 
         var org = organizationMapper.getById(user.getOrganizationId());
         sender.sendText(STR."""
@@ -35,4 +31,10 @@ public class GrafanaCommand extends CommandHandler {
     public boolean isAcceptable(String data) {
         return data.equalsIgnoreCase("/grafana");
     }
+
+    @Override
+    public Role getRequiredRole() {
+        return Role.ADMIN;
+    }
+
 }
