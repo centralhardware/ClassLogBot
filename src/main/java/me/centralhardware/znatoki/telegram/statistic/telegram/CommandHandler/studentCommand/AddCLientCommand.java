@@ -12,11 +12,10 @@ import java.util.ResourceBundle;
 
 @Component
 @RequiredArgsConstructor
-public class AddPupilCommand extends CommandHandler {
+public class AddCLientCommand extends CommandHandler {
 
     private final Storage storage;
     private final ResourceBundle resourceBundle;
-    private final TelegramService telegramService;
 
     @Override
     public void handle(Message message) {
@@ -25,7 +24,7 @@ public class AddPupilCommand extends CommandHandler {
             return;
         }
 
-        storage.createPupil(message.getChatId());
+        storage.createClient(message.getChatId());
         sender.sendMessageAndRemoveKeyboard(resourceBundle.getString("INPUT_FIO_IN_FORMAT"), message.getFrom());
     }
 

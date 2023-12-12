@@ -58,7 +58,7 @@ public class MonthReport extends ExcelReport{
         List<String> headers = new ArrayList<>();
         headers.add("№");
         headers.add(STR."ФИО \{clientName}");
-        BeanUtils.getBean(ClientService.class).findById(services.getFirst().getPupilId())
+        BeanUtils.getBean(ClientService.class).findById(services.getFirst().getClientId())
                 .map(Client::getProperties)
                 .orElse(Collections.emptyList())
                 .stream()
@@ -74,13 +74,13 @@ public class MonthReport extends ExcelReport{
         writeRow(headers.toArray(new String[0]));
 
         var fioToTimes = new MultivaluedHashMap<Client, Service>();
-        services.forEach(it -> BeanUtils.getBean(ClientService.class).findById(it.getPupilId()).ifPresent(client -> fioToTimes.add(client, it)));
+        services.forEach(it -> BeanUtils.getBean(ClientService.class).findById(it.getClientId()).ifPresent(client -> fioToTimes.add(client, it)));
 
         AtomicInteger totalIndividual = new AtomicInteger();
         AtomicInteger totalGroup = new AtomicInteger();
 
         AtomicInteger i = new AtomicInteger(1);
-        var comparator = getComparator(BeanUtils.getBean(ClientService.class).findById(services.getFirst().getPupilId()).get());
+        var comparator = getComparator(BeanUtils.getBean(ClientService.class).findById(services.getFirst().getClientId()).get());
         fioToTimes
                 .entrySet()
                 .stream()
@@ -121,7 +121,7 @@ public class MonthReport extends ExcelReport{
                     data.add(Integer.toString(individual));
                     data.add(Integer.toString(group));
                     data.add(BeanUtils.getBean(PaymentMapper.class)
-                            .getPaymentsSumByPupil(userId, client.getId(), date).toString());
+                            .getPaymentsSumByClient(userId, client.getId(), date).toString());
                     data.add("");
                     data.add(datesStr);
 

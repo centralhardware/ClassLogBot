@@ -37,16 +37,15 @@ public class UserInfoCommand extends CommandHandler {
     @Override
     public void handle(Message message) {
         var arguments = message.getText().replace("/i ", "");
-        Optional<Client> pupilOptional = clientService.findById(Integer.valueOf(arguments));
-        pupilOptional.ifPresentOrElse(
-                pupil -> {
+        clientService.findById(Integer.valueOf(arguments)).ifPresentOrElse(
+                client -> {
                     var orgId = userMapper.getById(message.getFrom().getId()).getOrganizationId();
-                    if (!pupil.getOrganizationId().equals(orgId)){
+                    if (!client.getOrganizationId().equals(orgId)){
                         sender.sendText("Доступ запрещен", message.getFrom());
                         return;
                     }
 
-                    sender.sendMessageWithMarkdown(pupil.getInfo(serviceMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()), message.getFrom());
+                    sender.sendMessageWithMarkdown(client.getInfo(serviceMapper.getServicesForCLient(client.getId()).stream().map(servicesMapper::getNameById).toList()), message.getFrom());
                 },
                 () -> sender.sendMessageFromResource(MessageConstant.PUPIL_NOT_FOUND, message.getFrom())
         );

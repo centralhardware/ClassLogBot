@@ -34,7 +34,7 @@ public class Bot extends TelegramLongPollingBot {
     private final InlineHandler inlineHandler;
 
     private final TimeFsm timeFsm;
-    private final PupilFsm pupilFsm;
+    private final ClientFsm clientFsm;
     private final PaymentFsm paymentFsm;
 
     private final UserMapper userMapper;
@@ -102,8 +102,8 @@ public class Bot extends TelegramLongPollingBot {
                 return;
             }
 
-            if(pupilFsm.isActive(userId)){
-                pupilFsm.process(update);
+            if(clientFsm.isActive(userId)){
+                clientFsm.process(update);
                 return;
             }
 

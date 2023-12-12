@@ -13,8 +13,8 @@ public class Storage {
     private final Map<Long, Service> fsmTime = new HashMap<>();
     private final Map<Long, AddTime> fsmTimeStage = new HashMap<>();
 
-    private final Map<Long, Client> fsmPupil = new HashMap<>();
-    private final Map<Long, AddPupil> fsmPupilStage = new HashMap<>();
+    private final Map<Long, Client> fsmClient = new HashMap<>();
+    private final Map<Long, AddCLient> fsmClientStage = new HashMap<>();
 
     private final Map<Long, Payment> fsmPayment = new HashMap<>();
     private final Map<Long, AddPayment> fsmPaymentStage = new HashMap<>();
@@ -35,21 +35,21 @@ public class Storage {
         fsmTime.put(chatId, service);
     }
 
-    public Client getPupil(Long chatId){
-        return fsmPupil.get(chatId);
+    public Client getClient(Long chatId){
+        return fsmClient.get(chatId);
     }
 
-    public void createPupil(Long chatId){
-        fsmPupil.put(chatId, new Client());
-        fsmPupilStage.put(chatId, AddPupil.ФВВ_FIO);
+    public void createClient(Long chatId){
+        fsmClient.put(chatId, new Client());
+        fsmClientStage.put(chatId, AddCLient.ADD_FIO);
     }
 
-    public AddPupil getPupilStage(Long chatId){
-        return fsmPupilStage.get(chatId);
+    public AddCLient getCLientStage(Long chatId){
+        return fsmClientStage.get(chatId);
     }
 
-    public void setPupilStage(Long chatId, AddPupil step){
-        fsmPupilStage.put(chatId, step);
+    public void setClientStage(Long chatId, AddCLient step){
+        fsmClientStage.put(chatId, step);
     }
 
     public AddPayment getPaymentStage(Long chatId){
@@ -71,18 +71,18 @@ public class Storage {
     public void remove(Long chatId){
         fsmTime.remove(chatId);
         fsmTimeStage.remove(chatId);
-        fsmPupil.remove(chatId);
-        fsmPupilStage.remove(chatId);
+        fsmClient.remove(chatId);
+        fsmClientStage.remove(chatId);
         fsmPayment.remove(chatId);
         fsmPaymentStage.remove(chatId);
     }
 
     public boolean contain(Long chaId){
-        return fsmTime.containsKey(chaId) || fsmPupil.containsKey(chaId) || fsmPayment.containsKey(chaId);
+        return fsmTime.containsKey(chaId) || fsmClient.containsKey(chaId) || fsmPayment.containsKey(chaId);
     }
 
-    public boolean containsPupil(Long chatId){
-        return fsmPupil.containsKey(chatId);
+    public boolean containsCLient(Long chatId){
+        return fsmClient.containsKey(chatId);
     }
 
     public boolean containTime(Long chatId){

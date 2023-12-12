@@ -22,15 +22,15 @@ public class DeleteUserCallback extends CallbackHandler {
             return;
         }
 
-        clientService.findById(Integer.parseInt(data.replace("/delete_user",""))).ifPresent(pupil -> {
+        clientService.findById(Integer.parseInt(data.replace("/delete_user",""))).ifPresent(client -> {
 
-            if (!pupil.getOrganizationId().equals(getTelegramUser(from).getOrganizationId())){
+            if (!client.getOrganizationId().equals(getTelegramUser(from).getOrganizationId())){
                 sender.sendText("Доступ запрещен", from);
                 return;
             }
 
-            pupil.setDeleted(true);
-            clientService.save(pupil);
+            client.setDeleted(true);
+            clientService.save(client);
             sender.sendMessageFromResource(MessageConstant.PUPIL_DELETED, from);
         });
     }

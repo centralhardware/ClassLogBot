@@ -46,7 +46,7 @@ public interface ServiceMapper {
                 #{service.chatId},
                 #{service.serviceId},
                 #{service.amount},
-                #{service.pupilId},
+                #{service.clientId},
                 #{service.organizationId},
                 #{service.properties, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler}::JSONB
             )
@@ -71,7 +71,7 @@ public interface ServiceMapper {
             @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
             @Result(property = "chatId", column = "chat_id"),
             @Result(property = "serviceId", column = "service_id"),
-            @Result(property = "pupilId", column = "pupil_id"),
+            @Result(property = "clientId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
             @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class),
             @Result(property = "properties", column = "properties", typeHandler = PropertiesTypeHandler.class)
@@ -101,7 +101,7 @@ public interface ServiceMapper {
             @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
             @Result(property = "chatId", column = "chat_id"),
             @Result(property = "serviceId", column = "service_id"),
-            @Result(property = "pupilId", column = "pupil_id"),
+            @Result(property = "clientId", column = "pupil_id"),
             @Result(property = "amount", column = "amount"),
             @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class),
             @Result(property = "properties", column = "properties", typeHandler = PropertiesTypeHandler.class)
@@ -124,7 +124,7 @@ public interface ServiceMapper {
                 .stream()
                 .map(timeCollection -> {
                     var service = timeCollection.stream().findFirst().get();
-                    service.setServiceIds(timeCollection.stream().map(Service::getPupilId).collect(Collectors.toSet()));
+                    service.setServiceIds(timeCollection.stream().map(Service::getClientId).collect(Collectors.toSet()));
                     return service;
                 })
                 .sorted(Comparator.comparing(Service::getDateTime))
@@ -169,6 +169,6 @@ public interface ServiceMapper {
             FROM service
             WHERE pupil_id = #{id} ANd is_deleted=false
             """)
-    List<Long> getServicesForPupil(@Param("id") Integer id);
+    List<Long> getServicesForCLient(@Param("id") Integer id);
 
 }

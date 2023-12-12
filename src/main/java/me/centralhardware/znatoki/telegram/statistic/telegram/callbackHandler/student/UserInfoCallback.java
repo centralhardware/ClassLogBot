@@ -26,15 +26,15 @@ public class UserInfoCallback extends CallbackHandler {
             sender.sendMessageFromResource(ErrorConstant.ACCESS_DENIED, from);
             return;
         }
-        var pupilOptional = clientService.findById(Integer.parseInt(data.replace("/user_info","")));
-        pupilOptional.ifPresentOrElse(
-                pupil -> {
-                    if (!pupil.getOrganizationId().equals(getTelegramUser(from).getOrganizationId())){
+        var clientOptional = clientService.findById(Integer.parseInt(data.replace("/user_info","")));
+        clientOptional.ifPresentOrElse(
+                client -> {
+                    if (!client.getOrganizationId().equals(getTelegramUser(from).getOrganizationId())){
                         sender.sendText("Доступ запрещен", from);
                         return;
                     }
 
-                    sender.sendMessageWithMarkdown(pupil.getInfo(serviceMapper.getServicesForPupil(pupil.getId()).stream().map(servicesMapper::getNameById).toList()), callbackQuery.getFrom());
+                    sender.sendMessageWithMarkdown(client.getInfo(serviceMapper.getServicesForCLient(client.getId()).stream().map(servicesMapper::getNameById).toList()), callbackQuery.getFrom());
                 },
                 () -> sender.sendMessageFromResource(MessageConstant.USER_NOT_FOUND, from)
         );

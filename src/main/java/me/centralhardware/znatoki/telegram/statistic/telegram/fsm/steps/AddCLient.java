@@ -1,11 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps;
 
-public enum AddPupil {
+public enum AddCLient {
 
-    ФВВ_FIO,
+    ADD_FIO,
     ADD_PROPERTIES;
 
-    public AddPupil next() {
+    public AddCLient next() {
         return values()[(ordinal() + 1) % values().length];
     }
 

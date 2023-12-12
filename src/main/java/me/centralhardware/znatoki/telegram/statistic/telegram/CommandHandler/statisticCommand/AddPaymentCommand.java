@@ -26,7 +26,7 @@ public class AddPaymentCommand extends CommandHandler {
         var payment = new Payment();
         payment.setChatId(message.getChatId());
         storage.setPayment(message.getChatId(), payment);
-        storage.setPaymentStage(message.getChatId(),AddPayment.ФВВ_PUPIL);
+        storage.setPaymentStage(message.getChatId(),AddPayment.ADD_PUPIL);
         sender.sendText("Введите фио", message.getFrom());
         InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                 .row().switchToInline().endRow();

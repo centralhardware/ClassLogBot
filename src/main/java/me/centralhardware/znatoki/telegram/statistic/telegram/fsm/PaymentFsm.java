@@ -59,17 +59,17 @@ public class PaymentFsm extends Fsm {
 
         User user = TelegramUtil.getFrom(update);
         switch (storage.getPaymentStage(userId)){
-            case ФВВ_PUPIL -> fioValidator.validate(text).peekLeft(
+            case ADD_PUPIL -> fioValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(
                     fio -> {
                         Integer id = Integer.valueOf(text.split(" ")[0]);
-                        storage.getPayment(userId).setPupilId(id);
-                        storage.setPaymentStage(userId, AddPayment.ФВВ_AMOUNT);
+                        storage.getPayment(userId).setClientId(id);
+                        storage.setPaymentStage(userId, AddPayment.ADD_AMOUNT);
                         sender.sendText("Введите сумму оплаты", user);
                     }
             );
-            case ФВВ_AMOUNT -> amountValidator.validate(text).peekLeft(
+            case ADD_AMOUNT -> amountValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(
                     amount -> {
@@ -85,7 +85,7 @@ public class PaymentFsm extends Fsm {
                                         ФИО: %s
                                         Оплата: %s
                                         """,
-                                            clientService.findById(payment.getPupilId()).get().getFio(),
+                                            clientService.findById(payment.getClientId()).get().getFio(),
                                             payment.getAmount()))
                                     .row().button("да").endRow()
                                     .row().button("нет").endRow();
@@ -93,7 +93,7 @@ public class PaymentFsm extends Fsm {
                             storage.setPaymentStage(userId, AddPayment.CONFIRM);
                         } else {
                             storage.getPayment(userId).setPropertiesBuilder(new PropertiesBuilder(org.getPaymentCustomProperties().propertyDefs()));
-                            storage.setPaymentStage(userId, AddPayment.ФВВ_PROPERTIES);
+                            storage.setPaymentStage(userId, AddPayment.ADD_PROPERTIES);
                             var next = storage.getPayment(userId).getPropertiesBuilder().getNext().get();
                             if (!next.getRight().isEmpty()){
                                 var builder = ReplyKeyboardBuilder
@@ -108,7 +108,7 @@ public class PaymentFsm extends Fsm {
 
                     }
             );
-            case ФВВ_PROPERTIES -> processCustomProperties(update, storage.getPayment(userId).getPropertiesBuilder(), properties -> {
+            case ADD_PROPERTIES -> processCustomProperties(update, storage.getPayment(userId).getPropertiesBuilder(), properties -> {
                 var payment = storage.getPayment(userId);
                 payment.setProperties(properties);
                 var builder = ReplyKeyboardBuilder.create()
@@ -116,7 +116,7 @@ public class PaymentFsm extends Fsm {
                                         ФИО: %s
                                         Оплата: %s
                                         """,
-                                clientService.findById(payment.getPupilId()).get().getFio(),
+                                clientService.findById(payment.getClientId()).get().getFio(),
                                 payment.getAmount()))
                         .row().button("да").endRow()
                         .row().button("нет").endRow();
@@ -162,7 +162,7 @@ public class PaymentFsm extends Fsm {
                     var text = STR."""
                                 #оплата
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
-                                \{organizationMapper.getById(organizationId).getClientName()}: #\{ clientService.findById(payment.getPupilId()).get().getFio().replaceAll(" ", "_")}
+                                \{organizationMapper.getById(organizationId).getClientName()}: #\{ clientService.findById(payment.getClientId()).get().getFio().replaceAll(" ", "_")}
                                 оплачено: \{payment.getAmount()},
                                 Принял оплату: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
                                 \{ PropertyUtils.print(payment.getProperties())}

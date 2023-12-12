@@ -17,7 +17,7 @@ public class Service {
     private Long chatId;
     private Long serviceId;
     private Set<Integer> serviceIds = new HashSet<>();
-    private Integer pupilId;
+    private Integer clientId;
     private Integer amount;
     private UUID organizationId;
     private List<Property> properties;

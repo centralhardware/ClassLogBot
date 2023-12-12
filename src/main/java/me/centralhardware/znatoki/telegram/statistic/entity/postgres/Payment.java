@@ -16,7 +16,7 @@ public class Payment {
     private Integer id;
     private LocalDateTime dateTime;
     private Long chatId;
-    private Integer pupilId;
+    private Integer clientId;
     private Integer amount;
     private UUID timeId;
     private UUID organizationId;

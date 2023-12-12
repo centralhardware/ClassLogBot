@@ -179,13 +179,13 @@ public class TimeFsm extends Fsm {
                     var service = storage.getTime(userId);
                     var id = UUID.randomUUID();
                     service.getServiceIds().forEach(it -> {
-                        service.setPupilId(it);
+                        service.setClientId(it);
                         service.setId(id);
                         service.setOrganizationId(userMapper.getById(userId).getOrganizationId());
                         serviceMapper.insertTime(service);
                         var payment = new Payment();
                         payment.setDateTime(LocalDateTime.now());
-                        payment.setPupilId(service.getPupilId());
+                        payment.setClientId(service.getClientId());
                         payment.setAmount(service.getAmount() * -1);
                         payment.setTimeId(service.getId());
                         payment.setOrganizationId(userMapper.getById(userId).getOrganizationId());
@@ -232,7 +232,7 @@ public class TimeFsm extends Fsm {
                         Стоимость: \{ service.getAmount()}
                         Преподаватель: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
                         \{ PropertyUtils.print(service.getProperties())}
-                        баланс: \{paymentMapper.getCredit(service.getPupilId())}}
+                        баланс: \{paymentMapper.getCredit(service.getClientId())}}
                         """;
 
                     var hasPhoto = service.getProperties()

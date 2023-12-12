@@ -21,7 +21,7 @@ public interface PaymentMapper {
             ) VALUES (
                 #{payment.dateTime},
                 #{payment.chatId},
-                #{payment.pupilId},
+                #{payment.clientId},
                 #{payment.amount},
                 #{payment.timeId},
                 #{payment.organizationId},
@@ -64,15 +64,15 @@ public interface PaymentMapper {
                 AND pupil_id = #{client_id}
                 AND date_time between #{startDate} and #{endDate}
             """)
-    Integer __getPaymentsSumByPupil(@Param("chat_id") Long chatId,
-                             @Param("client_id") Integer clientId,
-                             @Param("startDate") LocalDateTime startDate,
-                             @Param("endDate") LocalDateTime endDate);
+    Integer __getPaymentsSumByClient(@Param("chat_id") Long chatId,
+                                     @Param("client_id") Integer clientId,
+                                     @Param("startDate") LocalDateTime startDate,
+                                     @Param("endDate") LocalDateTime endDate);
 
-    default Integer getPaymentsSumByPupil(Long chatId,
-                                   Integer clientId,
-                                   LocalDateTime date){
-        var res = __getPaymentsSumByPupil(chatId,
+    default Integer getPaymentsSumByClient(Long chatId,
+                                           Integer clientId,
+                                           LocalDateTime date){
+        var res = __getPaymentsSumByClient(chatId,
                 clientId,
                 date.with(TemporalAdjusters.firstDayOfMonth()),
                 date.with(TemporalAdjusters.lastDayOfMonth()));
