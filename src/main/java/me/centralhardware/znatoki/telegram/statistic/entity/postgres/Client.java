@@ -7,7 +7,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
+import me.centralhardware.znatoki.telegram.statistic.utils.BeanUtils;
 import me.centralhardware.znatoki.telegram.statistic.utils.PropertyUtils;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -89,6 +91,7 @@ public class Client {
                 отчество=\{TelegramUtil.makeBold(lastName)}
                 \{ PropertyUtils.print(properties)}
                 Предметы=\{TelegramUtil.makeBold(String.join(",", services))}
+                Баланс=\{BeanUtils.getBean(PaymentMapper.class).getCredit(id)}
                 дата создания=\{TelegramUtil.makeBold(dateFormatter.format(createDate))}
                 дата изменения=\{TelegramUtil.makeBold(dateFormatter.format(modifyDate))}
                 создано=\{created_by}

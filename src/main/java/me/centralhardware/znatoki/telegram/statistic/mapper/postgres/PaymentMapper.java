@@ -63,6 +63,7 @@ public interface PaymentMapper {
             WHERE chat_id = #{chat_id}
                 AND pupil_id = #{client_id}
                 AND date_time between #{startDate} and #{endDate}
+                AND is_deleted = false
             """)
     Integer __getPaymentsSumByClient(@Param("chat_id") Long chatId,
                                      @Param("client_id") Integer clientId,
@@ -87,6 +88,7 @@ public interface PaymentMapper {
             FROM payment
             WHERE chat_id = #{chat_id}
                 AND date_time between #{startDate} and #{endDate}
+                AND is_deleted = false
             """)
     Integer __getPaymentsSum(@Param("chat_id") Long chatId,
                              @Param("startDate") LocalDateTime startDate,
@@ -107,7 +109,18 @@ public interface PaymentMapper {
             SELECT sum(amount)
             FROM payment
             WHERE pupil_id = #{client_id}
+                AND is_deleted = false
             """)
     Integer getCredit(@Param("client_id") Integer clientId);
+
+    @Select("""
+            SELECT EXISTS(
+                SELECT amount
+                FROM payment 
+                WHERE amount > 0 AND pupil_id = #{client_id}
+                    AND is_deleted = false
+            )
+            """)
+    Boolean paymentExists(@Param("client_id") Integer clientId);
 
 }

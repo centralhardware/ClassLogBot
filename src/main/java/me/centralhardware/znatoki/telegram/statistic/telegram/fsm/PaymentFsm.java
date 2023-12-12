@@ -132,6 +132,16 @@ public class PaymentFsm extends Fsm {
                     paymentMapper.insert(payment);
                     sendLog(payment, payment.getId(), userId, payment.getOrganizationId());
 
+                    if (paymentMapper.paymentExists(payment.getClientId())){
+                        var correctionPayment = new Payment();
+                        correctionPayment.setAmount(Math.abs(paymentMapper.getCredit(payment.getClientId())) + payment.getAmount());
+                        correctionPayment.setChatId(userId);
+                        correctionPayment.setDateTime(LocalDateTime.now());
+                        correctionPayment.setOrganizationId(payment.getOrganizationId());
+                        correctionPayment.setClientId(payment.getClientId());
+                        paymentMapper.insert(correctionPayment);
+                    }
+
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
                     Future.run(() -> {
