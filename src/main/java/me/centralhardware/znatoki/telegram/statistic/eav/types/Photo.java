@@ -3,7 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.eav.types;
 import io.vavr.control.Validation;
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
-import me.centralhardware.znatoki.telegram.statistic.utils.SpringBootUtils;
+import me.centralhardware.znatoki.telegram.statistic.utils.BeanUtils;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -32,8 +32,8 @@ public non-sealed class Photo implements Type {
 
     @Override
     public Optional<String> extract(Update update) {
-        var sender = SpringBootUtils.getBean(TelegramSender.class);
-        var minio = SpringBootUtils.getBean(MinioService.class);
+        var sender = BeanUtils.getBean(TelegramSender.class);
+        var minio = BeanUtils.getBean(MinioService.class);
 
         return update.getMessage().getPhoto()
                 .stream()
