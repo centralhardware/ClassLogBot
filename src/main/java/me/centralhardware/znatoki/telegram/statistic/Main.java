@@ -13,7 +13,6 @@ import org.telegram.telegrambots.starter.TelegramBotStarterConfiguration;
 @Import(TelegramBotStarterConfiguration.class)
 public class Main {
     public static void main(String[] args) {
-        System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
         SpringApplication.run(Main.class, args);
     }
 }
