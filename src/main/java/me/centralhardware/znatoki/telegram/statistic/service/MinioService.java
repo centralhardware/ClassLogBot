@@ -58,13 +58,12 @@ public class MinioService {
     }
 
     public Try<Void> delete(String file){
-        return Try.of(() -> {
+        return Try.run(() -> {
             minioClient.removeObject(RemoveObjectArgs
                     .builder()
                     .bucket(Config.getMinioBucket())
                     .object(file)
                     .build());
-            return null;
         });
     }
 

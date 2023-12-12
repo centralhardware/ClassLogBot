@@ -134,15 +134,14 @@ public class PaymentFsm extends Fsm {
 
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
-                    Future.of(() -> {
-                        storage.getTime(userId)
+                    Future.run(() -> {
+                        storage.getPayment(userId)
                                 .getProperties()
                                 .stream()
                                 .filter(it -> it.type() instanceof Photo)
                                 .forEach(photo -> minioService.delete(photo.value())
                                         .onFailure(error -> sender.send("Ошибка при удаление фотографии", user)));
                         storage.remove(userId);
-                        return null;
                     }).onSuccess(it -> sender.sendText("Удалено", user));
                 }
                 storage.remove(userId);

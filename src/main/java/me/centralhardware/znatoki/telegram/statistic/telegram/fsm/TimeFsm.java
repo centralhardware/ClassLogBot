@@ -198,7 +198,7 @@ public class TimeFsm extends Fsm {
 
                     sender.sendText("Сохранено", user);
                 } else if (Objects.equals(text, "нет")) {
-                    Future.of(() -> {
+                    Future.run(() -> {
                         storage.getTime(userId)
                                 .getProperties()
                                 .stream()
@@ -206,7 +206,6 @@ public class TimeFsm extends Fsm {
                                 .forEach(photo -> minioService.delete(photo.value())
                                         .onFailure(error -> sender.send("Ошибка при удаление фотографии", user)));
                         storage.remove(userId);
-                        return null;
                     }).onSuccess(error -> sender.sendText("Удалено", user));
                 }
             }
