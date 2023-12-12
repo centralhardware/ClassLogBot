@@ -6,28 +6,32 @@ import org.apache.commons.lang3.StringUtils;
 import javax.swing.text.MaskFormatter;
 import java.text.ParseException;
 
+import java.util.regex.Pattern;
+
 public class TelephoneUtils {
 
-    public static boolean validate(String telephone) {
-        return StringUtils.isNumeric(telephone) &&
-                telephone.length() == 11 &&
-                (telephone.charAt(0) == '7' || telephone.charAt(0) == '8');
+    private static final Pattern VALID_PHONE_NR = Pattern.compile("^[78]\\d{10}$");
+    private static final MaskFormatter PHONE_MASK_FORMATTER;
+
+    static {
+        try {
+            PHONE_MASK_FORMATTER = new MaskFormatter("#-###-###-##-##");
+        } catch (ParseException ex) {
+            throw new RuntimeException("Failed to create a mask formatter.", ex);
+        }
+        PHONE_MASK_FORMATTER.setValueContainsLiteralCharacters(false);
     }
 
-    /**
-     * @param telephone input 89029990408
-     * @return output 8-902-999-04-08
-     */
+    public static boolean validate(String telephone) {
+        return VALID_PHONE_NR.matcher(telephone).matches();
+    }
+
     public static String format(String telephone) {
         if (telephone == null || telephone.isEmpty()) return "";
         try {
-            String phoneMask = "#-###-###-##-##";
-            MaskFormatter maskFormatter = new MaskFormatter(phoneMask);
-            maskFormatter.setValueContainsLiteralCharacters(false);
-            return TelegramUtil.makeBold(maskFormatter.valueToString(telephone));
+            return PHONE_MASK_FORMATTER.valueToString(telephone);
         } catch (ParseException ignored) {
         }
         return "";
     }
-
 }

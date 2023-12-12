@@ -7,19 +7,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class AmountValidator implements Validator<String, Integer> {
 
+    private static final String NOT_NUMBER_ERROR = "Введенное значение должно быть числом";
+    private static final String LESS_THAN_ZERO_ERROR = "Введенное значение должно быть больше нуля";
+
     @Override
     public Either<String, Integer> validate(String value) {
-        Integer val = Ints.tryParse(value);
-
-        if (val == null){
-            return Either.left("Введенное значение должно быть числом");
+        Integer parsedValue = Ints.tryParse(value);
+        if (parsedValue == null) {
+            return Either.left(NOT_NUMBER_ERROR);
         }
-
-        if (val <= 0){
-            return Either.left("Введенное значение должно быть больше нуля");
+        if (parsedValue <= 0) {
+            return Either.left(LESS_THAN_ZERO_ERROR);
         }
-
-        return Either.right(val);
+        return Either.right(parsedValue);
     }
-
 }
