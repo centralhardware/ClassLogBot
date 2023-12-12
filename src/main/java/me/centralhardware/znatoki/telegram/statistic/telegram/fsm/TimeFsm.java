@@ -230,8 +230,8 @@ public class TimeFsm extends Fsm {
                             .collect(Collectors.joining(", "))}
                         Стоимость: \{ service.getAmount()}
                         Преподаватель: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
+                        баланс: \\{paymentMapper.getCredit(service.getClientId())}
                         \{ PropertyUtils.print(service.getProperties())}
-                        баланс: \{paymentMapper.getCredit(service.getClientId())}}
                         """;
 
                     var hasPhoto = service.getProperties()
