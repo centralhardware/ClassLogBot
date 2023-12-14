@@ -134,7 +134,7 @@ public class PaymentFsm extends Fsm {
 
                     if (paymentMapper.paymentExists(payment.getClientId())){
                         var correctionPayment = new Payment();
-                        correctionPayment.setAmount(Math.abs(paymentMapper.getCredit(payment.getClientId())) + payment.getAmount());
+                        correctionPayment.setAmount(Math.abs(paymentMapper.getCredit(payment.getClientId())) + (payment.getAmount() * 2));
                         correctionPayment.setChatId(userId);
                         correctionPayment.setDateTime(LocalDateTime.now());
                         correctionPayment.setOrganizationId(payment.getOrganizationId());
