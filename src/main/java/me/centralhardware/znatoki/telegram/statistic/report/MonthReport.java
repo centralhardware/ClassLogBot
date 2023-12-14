@@ -90,11 +90,11 @@ public class MonthReport extends ExcelReport{
                     var client = it.getKey();
                     int individual = (int) fioTimes
                             .stream()
-                            .filter(time -> time.getServiceIds().size() == 1)
+                            .filter(time -> time.getClientIds().size() == 1)
                             .count();
                     int group = (int) fioTimes
                             .stream()
-                            .filter(time -> time.getServiceIds().size() != 1)
+                            .filter(time -> time.getClientIds().size() != 1)
                             .count();
                     totalIndividual.addAndGet(individual);
                     totalGroup.addAndGet(group);

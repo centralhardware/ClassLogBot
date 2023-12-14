@@ -124,7 +124,7 @@ public interface ServiceMapper {
                 .stream()
                 .map(timeCollection -> {
                     var service = timeCollection.stream().findFirst().get();
-                    service.setServiceIds(timeCollection.stream().map(Service::getClientId).collect(Collectors.toSet()));
+                    service.setClientIds(timeCollection.stream().map(Service::getClientId).collect(Collectors.toSet()));
                     return service;
                 })
                 .sorted(Comparator.comparing(Service::getDateTime))

@@ -83,11 +83,11 @@ public class TimeFsm extends Fsm {
                             fio -> {
                                 Integer id = Integer.valueOf(text.split(" ")[0]);
                                 String name = text.replace(STR."\{id} ", "");
-                                if (storage.getTime(userId).getServiceIds().contains(id)){
+                                if (storage.getTime(userId).getClientIds().contains(id)){
                                     sender.sendText("Данное ФИО уже добавлено", user);
                                     return;
                                 }
-                                storage.getTime(userId).getServiceIds().add(id);
+                                storage.getTime(userId).getClientIds().add(id);
                                 sender.sendText("Введите стоимость занятия", user);
                                 storage.setStage(userId, ADD_AMOUNT);
                             }
@@ -96,7 +96,7 @@ public class TimeFsm extends Fsm {
                 }
 
                 if (Objects.equals(text, "/complete")){
-                    if (storage.getTime(userId).getServiceIds().isEmpty()) {
+                    if (storage.getTime(userId).getClientIds().isEmpty()) {
                         sender.sendText("Необходимо ввести как минимум одно ФИО", user);
                         return;
                     }
@@ -112,11 +112,11 @@ public class TimeFsm extends Fsm {
                         fio -> {
                             Integer id = Integer.valueOf(text.split(" ")[0]);
                             String name = text.replace(STR."\{id} ", "");
-                            if (storage.getTime(userId).getServiceIds().contains(id)){
+                            if (storage.getTime(userId).getClientIds().contains(id)){
                                 sender.sendText("Данное ФИО уже добавлено", user);
                                 return;
                             }
-                            storage.getTime(userId).getServiceIds().add(id);
+                            storage.getTime(userId).getClientIds().add(id);
                             sender.sendText("ФИО сохранено", user);
                         }
                 );
@@ -135,7 +135,7 @@ public class TimeFsm extends Fsm {
                             ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
                                     .setText(STR."""
                                         услуга: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        ФИО:\{String.join(";", time.getServiceIds().stream().map(clientService::getFioById).toList())}
+                                        ФИО:\{String.join(";", time.getClientIds().stream().map(clientService::getFioById).toList())}
                                         стоимость: \{time.getAmount().toString()}
                                         Сохранить?
                                         """)
@@ -165,7 +165,7 @@ public class TimeFsm extends Fsm {
                 ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create()
                         .setText(STR."""
                                         услуга: \{ servicesMapper.getNameById(time.getServiceId())}
-                                        ФИО:\{String.join(";", time.getServiceIds().stream().map(clientService::getFioById).toList())}
+                                        ФИО:\{String.join(";", time.getClientIds().stream().map(clientService::getFioById).toList())}
                                         стоимость: \{time.getAmount().toString()}
                                         Сохранить?
                                         """)
@@ -178,7 +178,7 @@ public class TimeFsm extends Fsm {
                 if (Objects.equals(text, "да")) {
                     var service = storage.getTime(userId);
                     var id = UUID.randomUUID();
-                    service.getServiceIds().forEach(it -> {
+                    service.getClientIds().forEach(it -> {
                         service.setClientId(it);
                         service.setId(id);
                         service.setOrganizationId(userMapper.getById(userId).getOrganizationId());
@@ -225,12 +225,11 @@ public class TimeFsm extends Fsm {
                         #занятие
                         Время: \{ service.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
                         Предмет: #\{servicesMapper.getNameById(service.getServiceId()).replaceAll(" ", "_")}
-                        \{organizationMapper.getById(organizationId).getClientName()}: \{ service.getServiceIds().stream()
-                            .map(it -> STR."#\{clientService.getFioById(it).replaceAll(" ", "_")}")
+                        \{organizationMapper.getById(organizationId).getClientName()}: \{ service.getClientIds().stream()
+                            .map(it -> STR."#\{clientService.getFioById(it).replaceAll(" ", "_")}(\{paymentMapper.getCredit(service.getClientId())}})")
                             .collect(Collectors.joining(", "))}
                         Стоимость: \{ service.getAmount()}
                         Преподаватель: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
-                        баланс: \{paymentMapper.getCredit(service.getClientId())}
                         \{ PropertyUtils.print(service.getProperties())}
                         """;
 

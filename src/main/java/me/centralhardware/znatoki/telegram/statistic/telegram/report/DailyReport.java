@@ -50,7 +50,7 @@ public class DailyReport {
                     it.forEach(service -> sender.sendText(STR."""
                                         Время: \{timeFormatter.format(service.getDateTime())}
                                         Предмет: \{ servicesMapper.getNameById(service.getServiceId())}
-                                        \{organizationMapper.getById(service.getOrganizationId()).getClientName()}: \{String.join(", ", service.getServiceIds().stream().map(clientService::getFioById).toList())}
+                                        \{organizationMapper.getById(service.getOrganizationId()).getClientName()}: \{String.join(", ", service.getClientIds().stream().map(clientService::getFioById).toList())}
                                         Стоимость: \{service.getAmount()}
                             """, user));
                     sender.sendText("Проверьте правильность внесенных данных",user);
