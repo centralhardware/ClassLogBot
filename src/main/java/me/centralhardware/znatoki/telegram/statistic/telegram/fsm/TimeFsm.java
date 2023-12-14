@@ -226,7 +226,7 @@ public class TimeFsm extends Fsm {
                         Время: \{ service.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))}
                         Предмет: #\{servicesMapper.getNameById(service.getServiceId()).replaceAll(" ", "_")}
                         \{organizationMapper.getById(organizationId).getClientName()}: \{ service.getClientIds().stream()
-                            .map(it -> STR."#\{clientService.getFioById(it).replaceAll(" ", "_")}(\{paymentMapper.getCredit(service.getClientId())}})")
+                            .map(it -> STR."#\{clientService.getFioById(it).replaceAll(" ", "_")}(\{paymentMapper.getCredit(service.getClientId())})")
                             .collect(Collectors.joining(", "))}
                         Стоимость: \{ service.getAmount()}
                         Преподаватель: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
