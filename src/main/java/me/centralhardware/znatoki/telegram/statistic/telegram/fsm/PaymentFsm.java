@@ -189,6 +189,7 @@ public class PaymentFsm extends Fsm {
                                 #оплата
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
                                 \{organizationMapper.getById(organizationId).getClientName()}: #\{ clientService.findById(payment.getClientId()).get().getFio().replaceAll(" ", "_")}
+                                Предмет: \{servicesMapper.getNameById(payment.getServiceId())}
                                 оплачено: \{payment.getAmount()},
                                 Принял оплату: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}
                                 \{ PropertyUtils.print(payment.getProperties())}
