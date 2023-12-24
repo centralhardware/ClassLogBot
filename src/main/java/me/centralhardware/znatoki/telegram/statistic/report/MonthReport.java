@@ -121,7 +121,7 @@ public class MonthReport extends ExcelReport{
                     data.add(Integer.toString(individual));
                     data.add(Integer.toString(group));
                     data.add(BeanUtils.getBean(PaymentMapper.class)
-                            .getPaymentsSumByClient(userId, client.getId(), date).toString());
+                            .getPaymentsSumByClient(userId, fioTimes.getFirst().getServiceId(), client.getId(), date).toString());
                     data.add("");
                     data.add(datesStr);
 
@@ -134,7 +134,7 @@ public class MonthReport extends ExcelReport{
                 "",
                 totalIndividual.toString(),
                 totalGroup.toString(),
-                BeanUtils.getBean(PaymentMapper.class).getPaymentsSum(userId, date).toString()
+                BeanUtils.getBean(PaymentMapper.class).getPaymentsSum(userId, services.getFirst().getServiceId(), date).toString()
         );
 
         return create();

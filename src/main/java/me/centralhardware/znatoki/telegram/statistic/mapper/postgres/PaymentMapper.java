@@ -17,7 +17,8 @@ public interface PaymentMapper {
                 amount,
                 time_id,
                 org_id,
-                properties
+                properties,
+                services
             ) VALUES (
                 #{payment.dateTime},
                 #{payment.chatId},
@@ -25,7 +26,8 @@ public interface PaymentMapper {
                 #{payment.amount},
                 #{payment.timeId},
                 #{payment.organizationId},
-                #{payment.properties, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler}::JSONB
+                #{payment.properties, typeHandler=me.centralhardware.znatoki.telegram.statistic.typeHandler.PropertiesTypeHandler}::JSONB,
+                #{payment.serviceId}
             )
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
@@ -61,19 +63,24 @@ public interface PaymentMapper {
             SELECT sum(amount)
             FROM payment
             WHERE chat_id = #{chat_id}
+                AND services = #{service_id}
                 AND pupil_id = #{client_id}
                 AND date_time between #{startDate} and #{endDate}
+                AND jsonb_array_length(properties) > 0
                 AND is_deleted = false
             """)
     Integer __getPaymentsSumByClient(@Param("chat_id") Long chatId,
+                                     @Param("service_id") Long serviceId,
                                      @Param("client_id") Integer clientId,
                                      @Param("startDate") LocalDateTime startDate,
                                      @Param("endDate") LocalDateTime endDate);
 
     default Integer getPaymentsSumByClient(Long chatId,
+                                           Long serviceId,
                                            Integer clientId,
                                            LocalDateTime date){
         var res = __getPaymentsSumByClient(chatId,
+                serviceId,
                 clientId,
                 date.with(TemporalAdjusters.firstDayOfMonth()),
                 date.with(TemporalAdjusters.lastDayOfMonth()));
@@ -87,16 +94,21 @@ public interface PaymentMapper {
             SELECT sum(amount)
             FROM payment
             WHERE chat_id = #{chat_id}
+                AND services = #{service_id}
                 AND date_time between #{startDate} and #{endDate}
+                AND jsonb_array_length(properties) > 0
                 AND is_deleted = false
             """)
     Integer __getPaymentsSum(@Param("chat_id") Long chatId,
+                             @Param("service_id") Long serviceId,
                              @Param("startDate") LocalDateTime startDate,
                              @Param("endDate") LocalDateTime endDate);
 
     default Integer getPaymentsSum(Long chatId,
+                                   Long serviceId,
                                    LocalDateTime date){
         var res = __getPaymentsSum(chatId,
+                serviceId,
                 date.with(TemporalAdjusters.firstDayOfMonth()),
                 date.with(TemporalAdjusters.lastDayOfMonth()));
 

@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
@@ -15,9 +13,12 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
 import me.centralhardware.znatoki.telegram.statistic.utils.PropertyUtils;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
+import me.centralhardware.znatoki.telegram.statistic.validate.ServiceValidator;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -32,6 +33,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime.ADD_FIO;
+
 
 @Component
 @RequiredArgsConstructor
@@ -44,9 +47,11 @@ public class PaymentFsm extends Fsm {
     private final ClientService clientService;
     private final OrganizationMapper organizationMapper;
     private final UserMapper userMapper;
+    private final ServicesMapper servicesMapper;
 
     private final FioValidator fioValidator;
     private final AmountValidator amountValidator;
+    private final ServiceValidator serviceValidator;
 
     @Override
     public void process(Update update) {
@@ -65,10 +70,22 @@ public class PaymentFsm extends Fsm {
                     fio -> {
                         Integer id = Integer.valueOf(text.split(" ")[0]);
                         storage.getPayment(userId).setClientId(id);
-                        storage.setPaymentStage(userId, AddPayment.ADD_AMOUNT);
-                        sender.sendText("Введите сумму оплаты", user);
+                        storage.setPaymentStage(userId, AddPayment.ADD_SERVICE);
+
+                        ReplyKeyboardBuilder builder = ReplyKeyboardBuilder.create();
+                        builder.setText("Выберите предмет");
+
+                        userMapper.getById(userId).getServices().forEach(it -> builder.row().button(servicesMapper.getNameById(it)).endRow());
+                        sender.send(builder.build(userId), user);
                     }
             );
+            case ADD_SERVICE -> serviceValidator.validate(Pair.of(text, znatokiUser.getOrganizationId())).peekLeft(
+                    error -> sender.sendText(error, user)
+            ).peek(service -> {
+                storage.getPayment(userId).setServiceId(servicesMapper.getServiceId(znatokiUser.getOrganizationId(), service));
+                sender.sendText("Введите сумму оплаты", user);
+                storage.setPaymentStage(userId, AddPayment.ADD_AMOUNT);
+            });
             case ADD_AMOUNT -> amountValidator.validate(text).peekLeft(
                     error -> sender.sendText(error, user)
             ).peek(

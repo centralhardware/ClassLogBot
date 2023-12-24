@@ -6,6 +6,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +21,8 @@ public class Payment {
     private Integer amount;
     private UUID timeId;
     private UUID organizationId;
-    private List<Property> properties;
+    private Long serviceId;
+    private List<Property> properties = new ArrayList<>();
     private PropertiesBuilder propertiesBuilder;
 
 }
