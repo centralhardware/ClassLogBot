@@ -194,6 +194,13 @@
             <artifactId>icu4j</artifactId>
             <version>74.1</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.25.0</version>
+        </dependency>
     </dependencies>
 
     <build>
