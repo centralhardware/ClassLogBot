@@ -20,7 +20,6 @@ public class ReportService {
 
     private final ServiceMapper serviceMapper;
     private final UserMapper userMapper;
-    private final ClientService clientService;
     private final ServicesMapper servicesMapper;
     private final OrganizationMapper organizationMapper;
 

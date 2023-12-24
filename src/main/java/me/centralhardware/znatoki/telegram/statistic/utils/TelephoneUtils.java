@@ -1,11 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.utils;
 
-import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import javax.swing.text.MaskFormatter;
 import java.text.ParseException;
-
 import java.util.regex.Pattern;
 
 public class TelephoneUtils {
@@ -23,6 +19,8 @@ public class TelephoneUtils {
     }
 
     public static boolean validate(String telephone) {
+        if (telephone == null) return false;
+
         return VALID_PHONE_NR.matcher(telephone).matches();
     }
 
