@@ -74,7 +74,10 @@ public class MonthReport extends ExcelReport{
         writeRow(headers.toArray(new String[0]));
 
         var fioToTimes = new MultivaluedHashMap<Client, Service>();
-        services.forEach(it -> BeanUtils.getBean(ClientService.class).findById(it.getClientId()).ifPresent(client -> fioToTimes.add(client, it)));
+        services.forEach(it -> it.getClientIds()
+                .forEach(id -> BeanUtils.getBean(ClientService.class)
+                        .findById(id)
+                        .ifPresent(client -> fioToTimes.add(client, it))));
 
         AtomicInteger totalIndividual = new AtomicInteger();
         AtomicInteger totalGroup = new AtomicInteger();
