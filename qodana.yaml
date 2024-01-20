@@ -3,4 +3,31 @@ linter: jetbrains/qodana-jvm-community:2023.3
 projectJDK: 21
 include:
   - name: VulnerableLibrariesGlobal
+  - name: NonFinalFieldInEnum
+  - name: Deprecation
+  - name: MarkedForRemoval
+  - name: SystemOutErr
+  - name: StringBufferReplaceableByString
+  - name: GrUnnecessarySemicolon
+  - name: GrUnnecessaryAlias
+  - name: GrUnnecessaryPublicModifier
+  - name: GrUnnecessaryFinalModifier
+  - name: ChannelResource
+  - name: IOResource
+  - name: QodanaSanity
+  - name: DuplicatePropertyInspection
+  - name: InconsistentResourceBundle
+  - name: UnusedMessageFormatParameter
+  - name: UnusedProperty
+  - name: TrailingSpacesInProperty
+  - name: SuspiciousLocalesLanguages
+  - name: WrongPropertyKeyValueDelimiter
+  - name: AlphaUnsortedPropertiesFile
+  - name: SpellCheckingInspection
+  - name: StringTemplateMigration
+  - name: SequencedCollectionMethodCanBeUsed
+  - name: ForEachWithRecordPatternCanBeUsed
+  - name: UNUSED_IMPORT
+  - name: SamePackageImport
+
 
