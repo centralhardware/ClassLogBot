@@ -29,5 +29,8 @@ include:
   - name: ForEachWithRecordPatternCanBeUsed
   - name: UNUSED_IMPORT
   - name: SamePackageImport
-
+exclude:
+  - name: All
+    paths:
+      - src/main/resources/application.properties
 
