@@ -31,5 +31,5 @@ qodana:
          --cache-dir=$CI_PROJECT_DIR/.qodana/cache
    artifacts:
       paths:
-         - qodana/report/
+         - qodana/result/
       expose_as: 'Qodana report'
