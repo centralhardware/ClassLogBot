@@ -29,7 +29,7 @@ qodana:
    variables:
       QODANA_TOKEN: $qodana_token 
    script:
-      - qodana --fail-threshold 0 --baseline--save-report --results-dir=$CI_PROJECT_DIR/qodana/results
+      - qodana --fail-threshold 0 --baseline --save-report --results-dir=$CI_PROJECT_DIR/qodana/results
          --cache-dir=$CI_PROJECT_DIR/.qodana/cache
    artifacts:
       paths:
