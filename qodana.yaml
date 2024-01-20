@@ -23,7 +23,6 @@ include:
   - name: TrailingSpacesInProperty
   - name: SuspiciousLocalesLanguages
   - name: WrongPropertyKeyValueDelimiter
-  - name: AlphaUnsortedPropertiesFile
   - name: StringTemplateMigration
   - name: SequencedCollectionMethodCanBeUsed
   - name: ForEachWithRecordPatternCanBeUsed
