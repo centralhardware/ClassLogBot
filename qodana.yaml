@@ -24,7 +24,6 @@ include:
   - name: SuspiciousLocalesLanguages
   - name: WrongPropertyKeyValueDelimiter
   - name: AlphaUnsortedPropertiesFile
-  - name: SpellCheckingInspection
   - name: StringTemplateMigration
   - name: SequencedCollectionMethodCanBeUsed
   - name: ForEachWithRecordPatternCanBeUsed
