@@ -27,7 +27,7 @@ qodana:
         paths:
            - .qodana/cache
    script:
-      - qodana --save-report --results-dir=$CI_PROJECT_DIR/.qodana/results
+      - qodana --save-report --results-dir=$CI_PROJECT_DIR/qodana/results
          --cache-dir=$CI_PROJECT_DIR/.qodana/cache
    artifacts:
       paths:
