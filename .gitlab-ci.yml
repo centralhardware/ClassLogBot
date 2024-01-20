@@ -29,10 +29,10 @@ qodana:
    variables:
       QODANA_TOKEN: $qodana_token 
    script:
-      - qodana --fail-threshold 0 --baseline --save-report --results-dir=$CI_PROJECT_DIR/qodana/results
-         --cache-dir=$CI_PROJECT_DIR/.qodana/cache --coverage-dir=$CI_PROJECT_DIR/qodana/coverage
+      - qodana --fail-threshold 0 --baseline --save-report --results-dir=$CI_PROJECT_DIR/.qodana/results
+         --cache-dir=$CI_PROJECT_DIR/.qodana/cache --coverage-dir=$CI_PROJECT_DIR/.qodana/coverage
    artifacts:
       paths:
-         - qodana/results/
-         - qodana/coverage
+         - .qodana/results/
+         - .qodana/coverage
       expose_as: 'Qodana report'
