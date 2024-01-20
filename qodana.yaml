@@ -4,6 +4,7 @@ projectJDK: 21
 include:
   - name: VulnerableLibrariesGlobal
   - name: NonFinalFieldInEnum
+  - name: NullableProblems
   - name: Deprecation
   - name: MarkedForRemoval
   - name: SystemOutErr
