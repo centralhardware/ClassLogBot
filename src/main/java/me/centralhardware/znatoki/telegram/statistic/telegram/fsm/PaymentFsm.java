@@ -4,16 +4,19 @@ import io.vavr.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo;
+import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Payment;
-import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
-import me.centralhardware.znatoki.telegram.statistic.service.MinioService;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.OrganizationMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.ServicesMapper;
+import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
+import me.centralhardware.znatoki.telegram.statistic.service.MinioService;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender;
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramUtil;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.InlineKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.ReplyKeyboardBuilder;
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddPayment;
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime;
 import me.centralhardware.znatoki.telegram.statistic.utils.PropertyUtils;
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator;
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator;
@@ -32,8 +35,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-
-import static me.centralhardware.znatoki.telegram.statistic.telegram.fsm.steps.AddTime.ADD_FIO;
 
 
 @Component
@@ -68,7 +69,7 @@ public class PaymentFsm extends Fsm {
                     error -> sender.sendText(error, user)
             ).peek(
                     fio -> {
-                        Integer id = Integer.valueOf(text.split(" ")[0]);
+                        Integer id = Integer.valueOf(fio.split(" ")[0]);
                         storage.getPayment(userId).setClientId(id);
                         storage.setPaymentStage(userId, AddPayment.ADD_SERVICE);
 
@@ -102,7 +103,7 @@ public class PaymentFsm extends Fsm {
                                         ФИО: %s
                                         Оплата: %s
                                         """,
-                                            clientService.findById(payment.getClientId()).get().getFio(),
+                                            clientService.findById(payment.getClientId()).map(Client::getFio).orElse(""),
                                             payment.getAmount()))
                                     .row().button("да").endRow()
                                     .row().button("нет").endRow();
@@ -111,7 +112,7 @@ public class PaymentFsm extends Fsm {
                         } else {
                             storage.getPayment(userId).setPropertiesBuilder(new PropertiesBuilder(org.getPaymentCustomProperties().propertyDefs()));
                             storage.setPaymentStage(userId, AddPayment.ADD_PROPERTIES);
-                            var next = storage.getPayment(userId).getPropertiesBuilder().getNext().get();
+                            var next = storage.getPayment(userId).getPropertiesBuilder().getNext().orElseThrow();
                             if (!next.getRight().isEmpty()){
                                 var builder = ReplyKeyboardBuilder
                                         .create()
@@ -133,7 +134,7 @@ public class PaymentFsm extends Fsm {
                                         ФИО: %s
                                         Оплата: %s
                                         """,
-                                clientService.findById(payment.getClientId()).get().getFio(),
+                                clientService.findById(payment.getClientId()).map(Client::getFio).orElse(""),
                                 payment.getAmount()))
                         .row().button("да").endRow()
                         .row().button("нет").endRow();
@@ -188,7 +189,7 @@ public class PaymentFsm extends Fsm {
                     var text = STR."""
                                 #оплата
                                 Время: \{payment.getDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))},
-                                \{organizationMapper.getById(organizationId).getClientName()}: #\{ clientService.findById(payment.getClientId()).get().getFio().replaceAll(" ", "_")}
+                                \{organizationMapper.getById(organizationId).getClientName()}: #\{ clientService.findById(payment.getClientId()).map(Client::getFio).orElse("").replaceAll(" ", "_")}
                                 Предмет: \{servicesMapper.getNameById(payment.getServiceId())}
                                 оплачено: \{payment.getAmount()},
                                 Принял оплату: #\{ userMapper.getById(userId).getName().replaceAll(" ", "_")}

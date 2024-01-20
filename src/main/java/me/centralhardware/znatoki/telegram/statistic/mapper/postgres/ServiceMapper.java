@@ -123,7 +123,7 @@ public interface ServiceMapper {
                 .values()
                 .stream()
                 .map(timeCollection -> {
-                    var service = timeCollection.stream().findFirst().get();
+                    var service = timeCollection.stream().findFirst().orElseThrow();
                     service.setClientIds(timeCollection.stream().map(Service::getClientId).collect(Collectors.toSet()));
                     return service;
                 })

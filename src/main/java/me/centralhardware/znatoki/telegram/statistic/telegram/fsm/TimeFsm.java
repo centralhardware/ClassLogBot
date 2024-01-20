@@ -145,7 +145,7 @@ public class TimeFsm extends Fsm {
                         } else {
                             storage.setStage(userId, ADD_PROPERTIES);
                             storage.getTime(userId).setPropertiesBuilder(new PropertiesBuilder(org.getServiceCustomProperties().propertyDefs()));
-                            var next = storage.getTime(userId).getPropertiesBuilder().getNext().get();
+                            var next = storage.getTime(userId).getPropertiesBuilder().getNext().orElseThrow();
                             if (!next.getRight().isEmpty()){
                                 var builder = ReplyKeyboardBuilder
                                         .create()

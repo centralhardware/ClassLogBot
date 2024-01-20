@@ -83,7 +83,7 @@ public class MonthReport extends ExcelReport{
         AtomicInteger totalGroup = new AtomicInteger();
 
         AtomicInteger i = new AtomicInteger(1);
-        var comparator = getComparator(BeanUtils.getBean(ClientService.class).findById(services.getFirst().getClientId()).get());
+        var comparator = getComparator(BeanUtils.getBean(ClientService.class).findById(services.getFirst().getClientId()).orElseThrow());
         fioToTimes
                 .entrySet()
                 .stream()

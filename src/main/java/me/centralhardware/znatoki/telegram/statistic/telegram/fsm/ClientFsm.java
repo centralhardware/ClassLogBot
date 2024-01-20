@@ -72,7 +72,7 @@ public class ClientFsm extends Fsm {
                 } else {
                     next(chatId);
                     storage.getClient(chatId).setPropertiesBuilder(new PropertiesBuilder(org.getClientCustomProperties().propertyDefs()));
-                    var next = storage.getClient(chatId).getPropertiesBuilder().getNext().get();
+                    var next = storage.getClient(chatId).getPropertiesBuilder().getNext().orElseThrow();
                     if (!next.getRight().isEmpty()){
                         var builder = ReplyKeyboardBuilder
                                 .create()

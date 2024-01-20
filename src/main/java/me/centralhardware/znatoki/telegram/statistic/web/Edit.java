@@ -45,14 +45,15 @@ public class Edit {
         }
         Optional<Session> sessionOptional = sessionService.findByUuid(UUID.fromString(sessionId));
         if (sessionOptional.isPresent()) {
-            Client client = clientService.findById(sessionOptional.get().getClientId()).get();
-            model.addAttribute(WebConstant.FIELD_NAME, client.getName());
-            model.addAttribute(WebConstant.FIELD_SECOND_NAME, client.getSecondName());
-            model.addAttribute(WebConstant.FIELD_LAST_NAME, client.getLastName());
-            model.addAttribute(WebConstant.FIELD_SESSOIN_ID, sessionOptional.get().getUuid());
-            model.addAttribute("properties", client.getProperties());
-            model.addAttribute("clientName",
-                    STR."редактирование \{organizationMapper.getById(client.getOrganizationId()).getClientName()}");
+            clientService.findById(sessionOptional.get().getClientId()).ifPresent(client -> {
+                model.addAttribute(WebConstant.FIELD_NAME, client.getName());
+                model.addAttribute(WebConstant.FIELD_SECOND_NAME, client.getSecondName());
+                model.addAttribute(WebConstant.FIELD_LAST_NAME, client.getLastName());
+                model.addAttribute(WebConstant.FIELD_SESSOIN_ID, sessionOptional.get().getUuid());
+                model.addAttribute("properties", client.getProperties());
+                model.addAttribute("clientName",
+                        STR."редактирование \{organizationMapper.getById(client.getOrganizationId()).getClientName()}");
+            });
             return "edit";
         }
         model.addAttribute(ERROR_TITLE, resourceBundle.getString("ERROR"));
@@ -75,7 +76,7 @@ public class Edit {
             return ERROR_PAGE_NAME;
         }
         params.remove("sessionId");
-        Client client = clientService.findById(optionalSession.get().getClientId()).get();
+        Client client = clientService.findById(optionalSession.get().getClientId()).orElseThrow();
         if (IS_NONE_EMPTY.test(params.get("name"))) {
             client.setName(params.get("name"));
         } else {
