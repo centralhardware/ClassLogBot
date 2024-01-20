@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.repository;
 
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,7 @@ import java.util.UUID;
 @Repository
 public interface ClientRepository extends CrudRepository<Client, Integer> {
 
+    @NotNull
     List<Client> findAll();
 
     List<Client> findByOrganizationId(UUID organizationId);
