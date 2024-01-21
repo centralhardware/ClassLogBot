@@ -93,7 +93,7 @@ public class InlineKeyboardBuilder {
                 .chatId(callbackQuery.getMessage().getChatId())
                 .inlineMessageId(callbackQuery.getInlineMessageId())
                 .text(text)
-                .messageId(callbackQuery.getMessage().getMessageId())
+                .messageId(Integer.valueOf(callbackQuery.getInlineMessageId()))
                 .replyMarkup(InlineKeyboardMarkup
                         .builder()
                         .keyboard(keyboard)

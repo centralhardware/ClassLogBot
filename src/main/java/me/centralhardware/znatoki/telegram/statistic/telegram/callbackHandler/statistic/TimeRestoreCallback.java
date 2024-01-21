@@ -37,7 +37,7 @@ public class TimeRestoreCallback  extends CallbackHandler {
 
         var editMessageReplyMarkup = EditMessageReplyMarkup
                 .builder()
-                .messageId(callbackQuery.getMessage().getMessageId())
+                .messageId(Integer.valueOf(callbackQuery.getInlineMessageId()))
                 .chatId(callbackQuery.getMessage().getChatId())
                 .replyMarkup(InlineKeyboardBuilder.create()
                         .setText("?")
