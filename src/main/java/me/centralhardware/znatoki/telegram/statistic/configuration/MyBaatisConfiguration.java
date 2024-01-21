@@ -65,7 +65,7 @@ public class MyBaatisConfiguration {
 
     public DataSource getDataSource(){
         try {
-            return new ClickHouseDataSource(Config.getClickhouseUrl());
+            return new ClickHouseDataSource(Config.Clickhouse.getClickhouseUrl());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

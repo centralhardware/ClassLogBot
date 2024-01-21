@@ -20,7 +20,7 @@ public class StartCommand extends CommandHandler {
                         Автор: @centralhardware
                         """, message.getFrom());
         if (!organizationMapper.exist(message.getFrom().getId())){
-            sender.sendText(Config.getStartTelegraph(), message.getFrom());
+            sender.sendText(Config.Telegram.getStartTelegraph(), message.getFrom());
         }
     }
 

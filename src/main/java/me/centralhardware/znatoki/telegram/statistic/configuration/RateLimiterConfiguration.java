@@ -11,7 +11,7 @@ public class RateLimiterConfiguration {
 
     @Bean
     public RateLimiter getRateLimiter(){
-        return RateLimiter.create(Config.getTelegramRateLimit());
+        return RateLimiter.create(Config.Telegram.getTelegramRateLimit());
     }
 
 }

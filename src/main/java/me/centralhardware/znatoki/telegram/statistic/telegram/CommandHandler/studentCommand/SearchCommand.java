@@ -70,7 +70,7 @@ public class SearchCommand extends CommandHandler {
         sender.sendMessageFromResource(MessageConstant.SEARCH_RESULT, message.getFrom());
         for (Client client : searchResult) {
             String uuid = sessionService.create(client, message.getChatId());
-            String link = String.format("%s/edit?sessionId=%s", Config.getBaseUrl(), uuid);
+            String link = String.format("%s/edit?sessionId=%s", Config.Web.getBaseUrl(), uuid);
             InlineKeyboardBuilder inlineKeyboardBuilder = InlineKeyboardBuilder.
                     create().
                     setText(String.format("%s %s %s \n",

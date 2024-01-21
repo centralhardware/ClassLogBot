@@ -29,7 +29,7 @@ public class MinioService {
     public Optional<String> upload(File file, LocalDateTime dateTime){
         return Try.of(() -> {
                     var fileNew = Paths.get(String.format("%s/%s/%s/%s/%s:%s-%s.jpg",
-                            Config.getMinioBasePath(),
+                            Config.Minio.getMinioBasePath(),
                             dateTime.getYear(),
                             dateTime.getMonth(),
                             dateTime.getDayOfMonth(),
@@ -44,7 +44,7 @@ public class MinioService {
                     minioClient.uploadObject(
                             UploadObjectArgs
                                     .builder()
-                                    .bucket(Config.getMinioBucket())
+                                    .bucket(Config.Minio.getMinioBucket())
                                     .filename(fileNew.toFile().getAbsolutePath())
                                     .object(fileNew.toFile().getAbsolutePath())
                                     .build()
@@ -61,7 +61,7 @@ public class MinioService {
         return Try.run(() -> {
             minioClient.removeObject(RemoveObjectArgs
                     .builder()
-                    .bucket(Config.getMinioBucket())
+                    .bucket(Config.Minio.getMinioBucket())
                     .object(file)
                     .build());
         });
@@ -70,7 +70,7 @@ public class MinioService {
     public Try<InputStream> get(String file){
         return Try.of(() -> new ByteArrayInputStream(minioClient.getObject(GetObjectArgs
                 .builder()
-                .bucket(Config.getMinioBucket())
+                .bucket(Config.Minio.getMinioBucket())
                 .object(file)
                 .build()).readAllBytes()));
     }

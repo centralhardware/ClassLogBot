@@ -137,8 +137,8 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     @Getter
-    private final String botUsername = Config.getTelegramUsername();
+    private final String botUsername = Config.Telegram.getTelegramUsername();
 
     @Getter
-    private final String botToken = Config.getTelegramToken();
+    private final String botToken = Config.Telegram.getTelegramToken();
 }
