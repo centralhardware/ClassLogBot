@@ -64,8 +64,6 @@ public class TimeFsm extends Fsm {
 
         User user = TelegramUtil.getFrom(update);
 
-        if (text == null) return;
-
         switch (storage.getStage(userId)) {
             case ADD_SUBJECT -> serviceValidator.validate(Pair.of(text, znatokiUser.getOrganizationId())).peekLeft(
                     error -> sender.sendText(error, user)
