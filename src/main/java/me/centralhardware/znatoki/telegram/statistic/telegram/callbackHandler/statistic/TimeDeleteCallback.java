@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InaccessibleMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class TimeDeleteCallback extends CallbackHandler {
 
         var editMessageReplyMarkup = EditMessageReplyMarkup
                 .builder()
-                .messageId(((InaccessibleMessage)callbackQuery.getMessage()).getMessageId())
+                .messageId(((Message)callbackQuery.getMessage()).getMessageId())
                 .chatId(callbackQuery.getMessage().getChatId())
                 .replyMarkup(InlineKeyboardBuilder.create()
                         .row()
