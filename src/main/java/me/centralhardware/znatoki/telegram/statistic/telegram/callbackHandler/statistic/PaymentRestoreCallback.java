@@ -7,6 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.Ca
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.InaccessibleMessage;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 @Component
@@ -32,7 +33,7 @@ public class PaymentRestoreCallback extends CallbackHandler {
 
         var editMessageReplyMarkup = EditMessageReplyMarkup
                 .builder()
-                .messageId(Integer.valueOf(callbackQuery.getInlineMessageId()))
+                .messageId(((InaccessibleMessage)callbackQuery.getMessage()).getMessageId())
                 .chatId(callbackQuery.getMessage().getChatId())
                 .replyMarkup(InlineKeyboardBuilder.create()
                         .setText("?")
