@@ -103,25 +103,17 @@ public class TelegramUtil {
         var entry = LogEntry.builder()
                 .dateTime(LocalDateTime.now())
                 .chatId(getUserId(update))
-                .username(getFrom(update).getUserName())
+                .username("@" + getFrom(update).getUserName())
                 .firstName(getFrom(update).getFirstName())
                 .lastName(getFrom(update).getLastName())
                 .isPremium(getFrom(update).getIsPremium() != null && getFrom(update).getIsPremium())
                 .lang(getFrom(update).getLanguageCode())
                 .text(getText(update) == null? "": getText(update))
-                .action(action)
                 .build();
 
         statisticMapper.insertStatistic(entry);
-        log.info(STR."Save to clickHouse income(\{entry.chatId()}, \{entry.action()}, \{entry.text()})");
+        log.info(STR."Save to clickHouse income(\{entry.chatId()}, \{entry.text()})");
     }
-
-    private static final Map<Class<?>, String> clazz2action = Map.ofEntries(
-            entry(SendMessage.class, "sendTextMessage"),
-            entry(SendPhoto.class, "sendPhoto"),
-            entry(DeleteMessage.class, "deleteMessage"),
-            entry(SendChatAction.class, "sendChatAction")
-    );
 
     public void saveStatisticOutcome(Object object, User user){
         String chatId;
@@ -168,17 +160,16 @@ public class TelegramUtil {
         var entry = LogEntry.builder()
                 .dateTime(LocalDateTime.now())
                 .chatId(Long.valueOf(chatId))
-                .username(user.getUserName())
+                .username("@" + user.getUserName())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .isPremium(user.getIsPremium() != null && user.getIsPremium())
-                .action(clazz2action.get(object.getClass()))
                 .lang(user.getLanguageCode())
                 .text(text)
                 .build();
 
         statisticMapper.insertStatistic(entry);
-        log.info(STR."Save to clickHouse outcome(\{entry.chatId()}, \{entry.action()}, \{entry.text()})");
+        log.info(STR."Save to clickHouse outcome(\{entry.chatId()}, \{entry.text()})");
     }
 
     public void logSend(Object send){

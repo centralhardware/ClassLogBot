@@ -13,6 +13,5 @@ public record LogEntry(
         String lastName,
         Boolean isPremium,
         String lang,
-        String action,
         String text
 ) { }

@@ -9,27 +9,29 @@ import org.apache.ibatis.annotations.Param;
 public interface StatisticMapper {
 
     @Insert("""
-            INSERT INTO znatoki_statistic (
-                date_time,
-                chat_id,
-                username,
-                first_name,
-                last_name,
-                lang,
-                is_premium,
-                action,
-                text
-            ) VALUES (
-                #{entry.dateTime},
-                #{entry.chatId},
-                #{entry.username},
-                #{entry.firstName},
-                #{entry.lastName},
-                #{entry.lang},
-                #{entry.isPremium},
-                #{entry.action},
-                #{entry.text}
-            )
+                   INSERT INTO default.bot_log (
+                            date_time,
+                            bot_name,
+                            user_id,
+                            usernames,
+                            first_name,
+                            last_name,
+                            is_premium,
+                            is_inline,
+                            lang,
+                            text
+                       ) VALUES (
+                            now(),
+                            'znatokiStatistic',
+                            #{entry.chatId},
+                            array(#{entry.username}),
+                            #{entry.firstName},
+                            #{entry.lastName},
+                            #{entry.isPremium},
+                            False,
+                            #{entry.lang},
+                            #{entry.text}
+                       )
             """)
     void insertStatistic(@Param("entry") LogEntry entry);
 
