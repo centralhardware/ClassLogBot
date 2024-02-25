@@ -73,7 +73,6 @@ public class TelegramSender {
     public void send(Object method, User user){
         limiter.limit(() -> {
             try {
-                telegramUtil.logSend(method);
                 if (method instanceof BotApiMethodMessage botApiMethodMessage){
                     absSender.execute(botApiMethodMessage);
                 } else if (method instanceof  SendPhoto sendPhoto){
@@ -93,7 +92,6 @@ public class TelegramSender {
                 } else if (method instanceof EditMessageReplyMarkup editMessageReplyMarkup){
                     absSender.execute(editMessageReplyMarkup);
                 }
-                telegramUtil.saveStatisticOutcome(method, user);
 
             } catch (Throwable t){
                 log.warn("",t);

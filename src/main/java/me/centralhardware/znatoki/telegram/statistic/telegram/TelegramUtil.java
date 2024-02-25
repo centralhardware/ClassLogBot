@@ -5,25 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.entity.clickhouse.LogEntry;
 import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
-import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
 import java.time.LocalDateTime;
-import java.util.Map;
-
-import static java.util.Map.entry;
 
 @Component
 @Slf4j
@@ -113,83 +100,6 @@ public class TelegramUtil {
 
         statisticMapper.insertStatistic(entry);
         log.info(STR."Save to clickHouse income(\{entry.chatId()}, \{entry.text()})");
-    }
-
-    public void saveStatisticOutcome(Object object, User user){
-        String chatId;
-        String text;
-        switch (object) {
-            case SendMessage sendMessage -> {
-                chatId = sendMessage.getChatId();
-                text = sendMessage.getText();
-            }
-            case SendPhoto sendPhoto -> {
-                chatId = sendPhoto.getChatId();
-                text = sendPhoto.getCaption();
-            }
-            case DeleteMessage deleteMessage -> {
-                chatId = deleteMessage.getChatId();
-                text = deleteMessage.getMessageId().toString();
-            }
-            case SendChatAction sendChatAction -> {
-                chatId = sendChatAction.getChatId();
-                text = sendChatAction.getActionType().toString();
-            }
-            case AnswerCallbackQuery answerCallbackQuery -> {
-                return;
-            }
-            case AnswerInlineQuery answerInlineQuery -> {
-                return;
-            }
-            case SendDocument sendDocument -> {
-                return;
-            }
-            case ReplyKeyboardRemove replyKeyboardRemove -> {
-                return;
-            }
-            case EditMessageText editMessageText -> {
-                chatId = editMessageText.getChatId();
-                text = editMessageText.getText();
-            }
-            case EditMessageReplyMarkup editMessageReplyMarkup -> {
-                return;
-            }
-            case null, default -> throw new IllegalStateException();
-        }
-
-        var entry = LogEntry.builder()
-                .dateTime(LocalDateTime.now())
-                .chatId(Long.valueOf(chatId))
-                .username("@" + user.getUserName())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .isPremium(user.getIsPremium() != null && user.getIsPremium())
-                .lang(user.getLanguageCode())
-                .text(text)
-                .build();
-
-        statisticMapper.insertStatistic(entry);
-        log.info(STR."Save to clickHouse outcome(\{entry.chatId()}, \{entry.text()})");
-    }
-
-    public void logSend(Object send){
-        if (send instanceof SendMessage sendMessage){
-            log.info("Send message to id: {}, text: {}",
-                    sendMessage.getChatId(),
-                    sendMessage.getText());
-        } else if (send instanceof SendPhoto sendPhoto){
-            log.info("Send photo to id: {} with caption {}",
-                    sendPhoto.getChatId(),
-                    sendPhoto.getCaption());
-        } else if (send instanceof DeleteMessage deleteMessage){
-            log.info("Delete messageId: {} from chat: {}",
-                    deleteMessage.getMessageId(),
-                    deleteMessage.getChatId());
-        } else if (send instanceof SendChatAction sendChatAction){
-            log.info("Send chat action {} to {}",
-                    sendChatAction.getAction(),
-                    sendChatAction.getChatId());
-        }
     }
 
     private static final String BOLD_MAKER = "*";
