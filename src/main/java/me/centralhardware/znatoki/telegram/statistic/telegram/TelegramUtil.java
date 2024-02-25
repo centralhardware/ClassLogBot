@@ -2,22 +2,19 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.centralhardware.znatoki.telegram.statistic.entity.clickhouse.LogEntry;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
+import me.centralhardware.telegram.bot.common.ClickhouseRuben;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
-import java.time.LocalDateTime;
-
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class TelegramUtil {
 
-    private final StatisticMapper statisticMapper;
+    private final ClickhouseRuben clickhouse = new ClickhouseRuben();
 
     public Long getUserId(Update update){
         if (update.hasMessage()){
@@ -76,30 +73,11 @@ public class TelegramUtil {
     }
 
     public void saveStatisticIncome(Update update){
-        String action;
-        if (update.hasMessage()){
-            action = "receiveText";
-        } else if (update.hasCallbackQuery()){
-            action = "receiveCallback";
-        } else if (update.hasInlineQuery()){
-            action = "receiveInlineQuery";
-        }else {
-            throw new IllegalStateException();
-        }
-
-        var entry = LogEntry.builder()
-                .dateTime(LocalDateTime.now())
-                .chatId(getUserId(update))
-                .username("@" + getFrom(update).getUserName())
-                .firstName(getFrom(update).getFirstName())
-                .lastName(getFrom(update).getLastName())
-                .isPremium(getFrom(update).getIsPremium() != null && getFrom(update).getIsPremium())
-                .lang(getFrom(update).getLanguageCode())
-                .text(getText(update) == null? "": getText(update))
-                .build();
-
-        statisticMapper.insertStatistic(entry);
-        log.info(STR."Save to clickHouse income(\{entry.chatId()}, \{entry.text()})");
+        clickhouse.log(getText(update) == null? "": getText(update),
+                update.hasInlineQuery(),
+                getFrom(update),
+                "znatokiStatistic");
+        log.info(STR."Save to clickHouse income(\{getUserId(update)}, \{getText(update)})");
     }
 
     private static final String BOLD_MAKER = "*";

@@ -13,8 +13,14 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <lucene.versoin>7.1.0</lucene.versoin>
-
     </properties>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.telegram/telegrambots-spring-boot-starter -->
@@ -213,6 +219,11 @@
             <artifactId>mockito-core</artifactId>
             <version>5.9.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.centralhardware</groupId>
+            <artifactId>telegram-bot-commons</artifactId>
+            <version>0bb7ca6a4b</version>
         </dependency>
     </dependencies>
 

@@ -6,7 +6,6 @@ import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertyDefs;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.*;
-import me.centralhardware.znatoki.telegram.statistic.mapper.clickhouse.StatisticMapper;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.CustomPropertiesTypeHandler;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.ListLongTypeHandler;
 import me.centralhardware.znatoki.telegram.statistic.typeHandler.RoleTypeHandler;
@@ -14,7 +13,6 @@ import me.centralhardware.znatoki.telegram.statistic.typeHandler.UuidTypeHandler
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
-import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -29,17 +27,6 @@ import java.util.UUID;
 @Configuration
 @RequiredArgsConstructor
 public class MyBaatisConfiguration {
-
-    @Bean("sqlSessionFactoryClickhouse")
-    public SqlSessionFactory getSqlSessionClickhouse(){
-        var clickhouse = new Environment("clickhouse", new JdbcTransactionFactory(), getDataSource());
-        var configurationClickhouse = new org.apache.ibatis.session.Configuration(clickhouse);
-
-        configurationClickhouse.addMapper(StatisticMapper.class);
-        configurationClickhouse.setCacheEnabled(false);
-
-        return new SqlSessionFactoryBuilder().build(configurationClickhouse);
-    }
 
     @Bean("sqlSessionFactoryPostgres")
     public SqlSessionFactory getSqlSessionPostgres(DataSource dataSource){
@@ -69,11 +56,6 @@ public class MyBaatisConfiguration {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Bean
-    public StatisticMapper getStatisticMapper(@Qualifier("sqlSessionFactoryClickhouse") SqlSessionFactory sqlSessionFactory){
-        return sqlSessionFactory.openSession().getMapper(StatisticMapper.class);
     }
 
     @Bean
