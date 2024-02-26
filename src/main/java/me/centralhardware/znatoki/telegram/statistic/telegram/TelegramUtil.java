@@ -14,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.User;
 @RequiredArgsConstructor
 public class TelegramUtil {
 
-    private final ClickhouseRuben clickhouse = new ClickhouseRuben();
 
     public Long getUserId(Update update){
         if (update.hasMessage()){
@@ -40,18 +39,6 @@ public class TelegramUtil {
         throw new IllegalStateException();
     }
 
-    private static String getText(Update update){
-        if (update.hasMessage()){
-            return update.getMessage().getText();
-        } else if (update.hasCallbackQuery()){
-            return update.getCallbackQuery().getData();
-        } else if (update.hasInlineQuery()){
-            return update.getInlineQuery().getQuery();
-        }
-
-        throw new IllegalStateException();
-    }
-
     public void logUpdate(Update update){
         if (update.hasMessage()){
             Message message = update.getMessage();
@@ -70,14 +57,6 @@ public class TelegramUtil {
                     callbackQuery.getFrom().getId(),
                     callbackQuery.getData());
         }
-    }
-
-    public void saveStatisticIncome(Update update){
-        clickhouse.log(getText(update) == null? "": getText(update),
-                update.hasInlineQuery(),
-                getFrom(update),
-                "znatokiStatistic");
-        log.info(STR."Save to clickHouse income(\{getUserId(update)}, \{getText(update)})");
     }
 
     private static final String BOLD_MAKER = "*";

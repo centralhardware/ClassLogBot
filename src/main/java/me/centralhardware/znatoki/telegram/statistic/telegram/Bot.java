@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import me.centralhardware.telegram.bot.common.ClickhouseRuben;
 import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.TelegramUser;
@@ -26,6 +27,8 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 public class Bot extends TelegramLongPollingBot {
+
+    private final ClickhouseRuben clickhouse = new ClickhouseRuben();
 
     private final TelegramSender sender;
     private final TelegramUtil telegramUtil;
@@ -64,7 +67,7 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         try {
-            telegramUtil.saveStatisticIncome(update);
+            clickhouse.log(update, "znatokiStatistic");
             telegramUtil.logUpdate(update);
 
             Long userId = telegramUtil.getUserId(update);
