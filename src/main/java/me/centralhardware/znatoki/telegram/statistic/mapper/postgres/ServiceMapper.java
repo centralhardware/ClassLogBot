@@ -63,35 +63,6 @@ public interface ServiceMapper {
                    org_id,
                    properties
             FROM service
-            WHERE id = #{id}
-                AND is_deleted=false
-            """)
-    @Results({
-            @Result(property = "dateTime", column = "date_time"),
-            @Result(property = "id", column = "id", typeHandler = UuidTypeHandler.class),
-            @Result(property = "chatId", column = "chat_id"),
-            @Result(property = "serviceId", column = "service_id"),
-            @Result(property = "clientId", column = "pupil_id"),
-            @Result(property = "amount", column = "amount"),
-            @Result(property = "organizationId", column = "org_id", typeHandler = UuidTypeHandler.class),
-            @Result(property = "properties", column = "properties", typeHandler = PropertiesTypeHandler.class)
-    })
-    List<Service> _getTimesById(@Param("id") UUID id);
-
-    default List<Service> getTimes(UUID id){
-        return convert(_getTimesById(id));
-    }
-
-    @Select("""
-            SELECT date_time,
-                   id,
-                   chat_id,
-                   service_id,
-                   pupil_id,
-                   amount,
-                   org_id,
-                   properties
-            FROM service
             WHERE chat_id = #{userId}
                 AND date_time between #{startDate} and #{endDate}
                 AND is_deleted=false
@@ -139,14 +110,14 @@ public interface ServiceMapper {
 
     default List<Service> getCuurentMontTimes(Long chatId){
         return getTimes(chatId,
-                LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth()),
-                LocalDateTime.now());
+                LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth()).withHour(0).withMinute(0),
+                LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59));
     }
 
     default List<Service> getPrevMonthTimes(Long chatId){
         return getTimes(chatId,
-                LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()),
-                LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()));
+                LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).withHour(0).withMinute(0),
+                LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59));
     }
 
     @Select("""
