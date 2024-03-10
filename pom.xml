@@ -223,7 +223,7 @@
         <dependency>
             <groupId>com.github.centralhardware</groupId>
             <artifactId>telegram-bot-commons</artifactId>
-            <version>6682ca238b</version>
+            <version>fb2bb2a86b</version>
         </dependency>
     </dependencies>
 
