@@ -56,10 +56,10 @@ dependencies {
 
     implementation("commons-validator:commons-validator:1.8.0")
 
-    implementation("org.hibernate.search:hibernate-search-mapper-orm-orm6:6.2.2.Final")
-    implementation("org.hibernate.search:hibernate-search-backend-lucene:6.2.2.Final")
+    implementation("org.hibernate.search:hibernate-search-mapper-orm-orm6:6.2.3.Final")
+    implementation("org.hibernate.search:hibernate-search-backend-lucene:6.2.3.Final")
 
-    implementation("org.hibernate.orm:hibernate-core:6.2.15.Final")
+    implementation("org.hibernate.orm:hibernate-core:6.4.4.Final")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     implementation("com.ibm.icu:icu4j:74.2")
 
