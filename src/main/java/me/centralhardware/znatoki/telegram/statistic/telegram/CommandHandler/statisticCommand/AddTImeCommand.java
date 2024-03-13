@@ -49,14 +49,14 @@ public class AddTImeCommand extends CommandHandler {
             builder.setText("Выберите предмет");
 
             user.getServices().forEach(it -> builder.row().button(servicesMapper.getNameById(it)).endRow());
-            sender.send(builder.build(message.getChatId()), message.getFrom());
+            sender.send(builder.build(message.getChatId()));
             storage.setStage(message.getChatId(), AddTime.ADD_SUBJECT);
         } else {
             sender.sendText("Введите фио. /complete - для окончания ввода", message.getFrom());
             InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                     .row().switchToInline().endRow();
             builder.setText("нажмите для поиска фио");
-            sender.send(builder.build(message.getChatId()), message.getFrom());
+            sender.send(builder.build(message.getChatId()));
             storage.setStage(message.getChatId(), AddTime.ADD_FIO);
         }
     }

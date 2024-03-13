@@ -31,7 +31,7 @@ public class AddPaymentCommand extends CommandHandler {
         InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                 .row().switchToInline().endRow();
         builder.setText("нажмите для поиска фио");
-        sender.send(builder.build(message.getChatId()), message.getFrom());
+        sender.send(builder.build(message.getChatId()));
     }
 
     @Override

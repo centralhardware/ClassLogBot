@@ -2,12 +2,11 @@ package me.centralhardware.znatoki.telegram.statistic.telegram;
 
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.centralhardware.znatoki.telegram.statistic.i18n.ConstantEnum;
 import me.centralhardware.znatoki.telegram.statistic.limiter.Limiter;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.DefaultAbsSender;
+import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -32,13 +31,10 @@ import java.util.ResourceBundle;
 public class TelegramSender {
 
 
-    private final TelegramUtil telegramUtil;
     private final Limiter limiter;
     private final ResourceBundle resourceBundle;
     private final ReplyKeyboardRemove replyKeyboardRemove;
-    @Setter
-    private DefaultAbsSender absSender;
-
+    private final OkHttpTelegramClient telegramClient;
     private static final String PARSE_MODE_MARKDOWN = "markdown";
 
     public void sendText(String text, User user){
@@ -63,34 +59,34 @@ public class TelegramSender {
             message.replyMarkup(removeMarkup);
         }
 
-        send(message.build(), user);
+        send(message.build());
     }
 
     public Optional<File> downloadFile(GetFile getFile){
-        return Try.of(() -> absSender.downloadFile(absSender.execute(getFile))).toJavaOptional();
+        return Try.of(() -> telegramClient.downloadFile(telegramClient.execute(getFile))).toJavaOptional();
     }
 
-    public void send(Object method, User user){
+    public void send(Object method){
         limiter.limit(() -> {
             try {
                 if (method instanceof BotApiMethodMessage botApiMethodMessage){
-                    absSender.execute(botApiMethodMessage);
+                    telegramClient.execute(botApiMethodMessage);
                 } else if (method instanceof  SendPhoto sendPhoto){
-                    absSender.execute(sendPhoto);
+                    telegramClient.execute(sendPhoto);
                 } else if (method instanceof DeleteMessage deleteMessage){
-                    absSender.execute(deleteMessage);
+                    telegramClient.execute(deleteMessage);
                 } else if (method instanceof AnswerCallbackQuery answerCallbackQuery){
-                    absSender.execute(answerCallbackQuery);
+                    telegramClient.execute(answerCallbackQuery);
                 } else if (method instanceof SendChatAction sendChatAction){
-                    absSender.execute(sendChatAction);
+                    telegramClient.execute(sendChatAction);
                 } else if (method instanceof AnswerInlineQuery answerInlineQuery){
-                    absSender.execute(answerInlineQuery);
+                    telegramClient.execute(answerInlineQuery);
                 } else if (method instanceof SendDocument sendDocument){
-                    absSender.execute(sendDocument);
+                    telegramClient.execute(sendDocument);
                 } else if (method instanceof EditMessageText editMessageText){
-                    absSender.execute(editMessageText);
+                    telegramClient.execute(editMessageText);
                 } else if (method instanceof EditMessageReplyMarkup editMessageReplyMarkup){
-                    absSender.execute(editMessageReplyMarkup);
+                    telegramClient.execute(editMessageReplyMarkup);
                 }
 
             } catch (Throwable t){
@@ -113,7 +109,7 @@ public class TelegramSender {
                 chatId(user.getId()).
                 text(text).
                 replyMarkup(replyKeyboardRemove).
-                build(), user);
+                build());
     }
 
     public void sendMessageWithMarkdown(String text, User user) {
@@ -122,7 +118,7 @@ public class TelegramSender {
                 chatId(user.getId()).
                 text(text).
                 parseMode(PARSE_MODE_MARKDOWN).
-                build(), user);
+                build());
     }
 
 }

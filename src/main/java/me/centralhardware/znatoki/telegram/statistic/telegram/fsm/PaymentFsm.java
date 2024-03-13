@@ -77,7 +77,7 @@ public class PaymentFsm extends Fsm {
                         builder.setText("Выберите предмет");
 
                         userMapper.getById(userId).getServices().forEach(it -> builder.row().button(servicesMapper.getNameById(it)).endRow());
-                        sender.send(builder.build(userId), user);
+                        sender.send(builder.build(userId));
                     }
             );
             case ADD_SERVICE -> serviceValidator.validate(Pair.of(text, znatokiUser.getOrganizationId())).peekLeft(
@@ -107,7 +107,7 @@ public class PaymentFsm extends Fsm {
                                             payment.getAmount()))
                                     .row().button("да").endRow()
                                     .row().button("нет").endRow();
-                            sender.send(builder.build(userId), user);
+                            sender.send(builder.build(userId));
                             storage.setPaymentStage(userId, AddPayment.CONFIRM);
                         } else {
                             storage.getPayment(userId).setPropertiesBuilder(new PropertiesBuilder(org.getPaymentCustomProperties().propertyDefs()));
@@ -118,7 +118,7 @@ public class PaymentFsm extends Fsm {
                                         .create()
                                         .setText(next.getLeft());
                                 next.getRight().forEach(it -> builder.row().button(it).endRow());
-                                sender.send(builder.build(userId), user);
+                                sender.send(builder.build(userId));
                             } else {
                                 sender.sendText(next.getLeft(), user);
                             }
@@ -138,7 +138,7 @@ public class PaymentFsm extends Fsm {
                                 payment.getAmount()))
                         .row().button("да").endRow()
                         .row().button("нет").endRow();
-                sender.send(builder.build(userId), user);
+                sender.send(builder.build(userId));
                 storage.setPaymentStage(userId, AddPayment.CONFIRM);
             });
             case CONFIRM -> {
@@ -168,7 +168,7 @@ public class PaymentFsm extends Fsm {
                                 .stream()
                                 .filter(it -> it.type() instanceof Photo)
                                 .forEach(photo -> minioService.delete(photo.value())
-                                        .onFailure(error -> sender.send("Ошибка при удаление фотографии", user)));
+                                        .onFailure(error -> sender.send("Ошибка при удаление фотографии")));
                         storage.remove(userId);
                     }).onSuccess(it -> sender.sendText("Удалено", user));
                 }
@@ -215,7 +215,7 @@ public class PaymentFsm extends Fsm {
                                             .caption(text)
                                             .replyMarkup(keybard)
                                             .build();
-                                    sender.send(sendPhoto, user);
+                                    sender.send(sendPhoto);
                                 });
                     } else {
                         var message = SendMessage.builder()
@@ -223,7 +223,7 @@ public class PaymentFsm extends Fsm {
                                 .chatId(user.getId())
                                 .replyMarkup(keybard)
                                 .build();
-                        sender.send(message, user);
+                        sender.send(message);
                     }
                 });
     }

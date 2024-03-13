@@ -66,7 +66,7 @@ public abstract class BaseReport extends CommandHandler {
                 .chatId(from.getId())
                 .document(new InputFile(file))
                 .build();
-        sender.send(sendDocument, from);
+        sender.send(sendDocument);
         //noinspection ResultOfMethodCallIgnored
         file.delete();
     }

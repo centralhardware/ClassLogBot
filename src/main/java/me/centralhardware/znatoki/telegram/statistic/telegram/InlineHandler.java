@@ -59,7 +59,7 @@ public class InlineHandler {
                 .cacheTime(0)
                 .build();
 
-        sender.send(answerInlineQuery, inlineQuery.getFrom());
+        sender.send(answerInlineQuery);
 
         return true;
     }

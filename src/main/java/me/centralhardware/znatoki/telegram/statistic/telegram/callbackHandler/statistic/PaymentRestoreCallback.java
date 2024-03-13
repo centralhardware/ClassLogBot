@@ -7,7 +7,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.Ca
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.InaccessibleMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -42,7 +41,7 @@ public class PaymentRestoreCallback extends CallbackHandler {
                         .button("удалить", STR."paymentDelete-\{id}")
                         .endRow().build())
                 .build();
-        sender.send(editMessageReplyMarkup, from);
+        sender.send(editMessageReplyMarkup);
     }
 
     @Override

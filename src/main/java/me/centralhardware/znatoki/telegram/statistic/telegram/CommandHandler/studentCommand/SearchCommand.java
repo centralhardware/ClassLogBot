@@ -86,7 +86,7 @@ public class SearchCommand extends CommandHandler {
             inlineKeyboardBuilder.row().
                     button("удалить", STR."/delete_user\{client.getId()}").
                     endRow();
-            sender.send(inlineKeyboardBuilder.build(message.getChatId()), message.getFrom());
+            sender.send(inlineKeyboardBuilder.build(message.getChatId()));
         }
     }
 

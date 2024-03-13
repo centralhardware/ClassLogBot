@@ -78,7 +78,7 @@ public class ClientFsm extends Fsm {
                                 .create()
                                 .setText(next.getLeft());
                         next.getRight().forEach(it -> builder.row().button(it).endRow());
-                        sender.send(builder.build(chatId), user);
+                        sender.send(builder.build(chatId));
                     } else {
                         sender.sendText(next.getLeft(), user);
                     }
@@ -118,7 +118,7 @@ public class ClientFsm extends Fsm {
                             .chatId(user.getId())
                             .parseMode("Markdown")
                             .build();
-                    sender.send(message, user);
+                    sender.send(message);
                 });
     }
 

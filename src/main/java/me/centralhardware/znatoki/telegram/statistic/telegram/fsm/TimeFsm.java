@@ -73,7 +73,7 @@ public class TimeFsm extends Fsm {
                 InlineKeyboardBuilder builder = InlineKeyboardBuilder.create()
                         .row().switchToInline().endRow();
                 builder.setText("нажмите для поиска фио");
-                sender.send(builder.build(userId), update.getMessage().getFrom());
+                sender.send(builder.build(userId));
                 storage.setStage(userId, ADD_FIO);
             });
             case ADD_FIO -> {
@@ -142,7 +142,7 @@ public class TimeFsm extends Fsm {
                                         """)
                                     .row().button("да").endRow()
                                     .row().button("нет").endRow();
-                            sender.send(builder.build(userId), user);
+                            sender.send(builder.build(userId));
                         } else {
                             storage.setStage(userId, ADD_PROPERTIES);
                             storage.getTime(userId).setPropertiesBuilder(new PropertiesBuilder(org.getServiceCustomProperties().propertyDefs()));
@@ -152,7 +152,7 @@ public class TimeFsm extends Fsm {
                                         .create()
                                         .setText(next.getLeft());
                                 next.getRight().forEach(it -> builder.row().button(it).endRow());
-                                sender.send(builder.build(userId), user);
+                                sender.send(builder.build(userId));
                             } else {
                                 sender.sendText(next.getLeft(), user);
                             }
@@ -172,7 +172,7 @@ public class TimeFsm extends Fsm {
                                         """)
                         .row().button("да").endRow()
                         .row().button("нет").endRow();
-                sender.send(builder.build(userId), user);
+                sender.send(builder.build(userId));
                 storage.setStage(userId, CONFIRM);
             });
             case CONFIRM -> {
@@ -205,7 +205,7 @@ public class TimeFsm extends Fsm {
                                 .stream()
                                 .filter(it -> it.type() instanceof Photo)
                                 .forEach(photo -> minioService.delete(photo.value())
-                                        .onFailure(error -> sender.send("Ошибка при удаление фотографии", user)));
+                                        .onFailure(error -> sender.send("Ошибка при удаление фотографии")));
                         storage.remove(userId);
                     }).onSuccess(error -> sender.sendText("Удалено", user));
                 }
@@ -253,7 +253,7 @@ public class TimeFsm extends Fsm {
                                             .caption(text)
                                             .replyMarkup(keybard)
                                             .build();
-                                    sender.send(sendPhoto, user);
+                                    sender.send(sendPhoto);
                                 });
                     } else {
                         var message = SendMessage
@@ -261,7 +261,7 @@ public class TimeFsm extends Fsm {
                                 .chatId(user.getId())
                                 .text(text)
                                 .replyMarkup(keybard);
-                        sender.send(message.build(), user);
+                        sender.send(message.build());
                     }
                 });
     }

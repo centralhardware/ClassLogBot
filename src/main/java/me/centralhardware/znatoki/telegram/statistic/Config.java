@@ -6,8 +6,6 @@ public class Config {
 
     public static class Telegram{
         @Getter
-        private static final String telegramUsername = getSystemEnv("BOT_USERNAME");
-        @Getter
         private static final String telegramToken = getSystemEnv("BOT_TOKEN");
         @Getter
         private static final Double telegramRateLimit = Double.valueOf(getSystemEnv("TELEGRAM_RATE_LIMIT"));

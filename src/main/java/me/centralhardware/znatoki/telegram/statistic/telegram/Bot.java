@@ -10,11 +10,15 @@ import me.centralhardware.znatoki.telegram.statistic.Config;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Role;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.TelegramUser;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.UserMapper;
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.*;
 import me.centralhardware.znatoki.telegram.statistic.telegram.CommandHandler.CommandHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ClientFsm;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm;
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
+import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
+import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -26,7 +30,7 @@ import java.util.Optional;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class Bot extends TelegramLongPollingBot {
+public class Bot implements SpringLongPollingBot {
 
     private final ClickhouseRuben clickhouse = new ClickhouseRuben();
 
@@ -41,11 +45,11 @@ public class Bot extends TelegramLongPollingBot {
     private final PaymentFsm paymentFsm;
 
     private final UserMapper userMapper;
+    private final OkHttpTelegramClient telegramClient;
 
     @SneakyThrows
     @PostConstruct
     public void init() {
-        sender.setAbsSender(this);
         var commands = SetMyCommands.builder()
                 .commands(List.of(createCommand("/addtime", "Добавить запись"),
                         createCommand("/addpayment", "Добавить оплату"),
@@ -53,7 +57,7 @@ public class Bot extends TelegramLongPollingBot {
                         createCommand("/reportprevious", "Отчет за предыдущий месяц"),
                         createCommand("/reset", "Сбросить состояние")))
                 .build();
-        execute(commands);
+        telegramClient.execute(commands);
     }
 
     private BotCommand createCommand(String command, String description){
@@ -65,6 +69,10 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     @Override
+    public LongPollingUpdateConsumer getUpdatesConsumer() {
+        return updates -> updates.forEach(this::onUpdateReceived);
+    }
+
     public void onUpdateReceived(Update update) {
         try {
             clickhouse.log(update, "znatokiStatistic");
@@ -140,8 +148,6 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     @Getter
-    private final String botUsername = Config.Telegram.getTelegramUsername();
-
-    @Getter
     private final String botToken = Config.Telegram.getTelegramToken();
+
 }

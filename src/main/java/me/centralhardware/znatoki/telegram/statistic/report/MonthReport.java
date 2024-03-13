@@ -1,5 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.report;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import io.micrometer.common.util.StringUtils;
 import me.centralhardware.znatoki.telegram.statistic.eav.Property;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Number;
 import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Service;
@@ -7,9 +10,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.postgres.Client;
 import me.centralhardware.znatoki.telegram.statistic.mapper.postgres.PaymentMapper;
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService;
 import me.centralhardware.znatoki.telegram.statistic.utils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import javax.ws.rs.core.MultivaluedHashMap;
 import java.io.File;
 import java.text.Collator;
 import java.time.LocalDateTime;
@@ -73,11 +74,11 @@ public class MonthReport extends ExcelReport{
 
         writeRow(headers.toArray(new String[0]));
 
-        var fioToTimes = new MultivaluedHashMap<Client, Service>();
+        Multimap<Client, Service> fioToTimes = ArrayListMultimap.create();
         services.forEach(it -> it.getClientIds()
                 .forEach(id -> BeanUtils.getBean(ClientService.class)
                         .findById(id)
-                        .ifPresent(client -> fioToTimes.add(client, it))));
+                        .ifPresent(client -> fioToTimes.put(client, it))));
 
         AtomicInteger totalIndividual = new AtomicInteger();
         AtomicInteger totalGroup = new AtomicInteger();
@@ -85,6 +86,7 @@ public class MonthReport extends ExcelReport{
         AtomicInteger i = new AtomicInteger(1);
         var comparator = getComparator(BeanUtils.getBean(ClientService.class).findById(services.getFirst().getClientId()).orElseThrow());
         fioToTimes
+                .asMap()
                 .entrySet()
                 .stream()
                 .sorted(comparator)
@@ -124,7 +126,7 @@ public class MonthReport extends ExcelReport{
                     data.add(Integer.toString(individual));
                     data.add(Integer.toString(group));
                     data.add(BeanUtils.getBean(PaymentMapper.class)
-                            .getPaymentsSumByClient(userId, fioTimes.getFirst().getServiceId(), client.getId(), date).toString());
+                            .getPaymentsSumByClient(userId, fioTimes.stream().findFirst().get().getServiceId(), client.getId(), date).toString());
                     data.add("");
                     data.add(datesStr);
 
@@ -143,8 +145,8 @@ public class MonthReport extends ExcelReport{
         return create();
     }
 
-    private Comparator<Map.Entry<Client, List<Service>>> getComparator(Client client){
-        Comparator<Map.Entry<Client, List<Service>>> comparator = null;
+    private Comparator<Map.Entry<Client, Collection<Service>>> getComparator(Client client){
+        Comparator<Map.Entry<Client, Collection<Service>>> comparator = null;
         var props = client.getProperties()
                 .stream()
                 .filter(it -> reportFields.contains(it.name()))

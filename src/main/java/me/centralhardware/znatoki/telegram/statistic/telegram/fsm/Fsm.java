@@ -72,7 +72,7 @@ public abstract class Fsm {
                                             next.getRight().forEach(variant -> keyboard.row()
                                                     .button(variant)
                                                     .endRow());
-                                            sender.send(keyboard.build(chatId), user);
+                                            sender.send(keyboard.build(chatId));
                                         } else {
                                             sender.sendText(next.getLeft(), user);
                                         }

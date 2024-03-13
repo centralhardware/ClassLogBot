@@ -38,7 +38,7 @@ public class MonthlyReport {
                                             .chatId(id)
                                             .document(new InputFile(file))
                                             .build();
-                                    sender.send(sendDocument, getUser(id));
+                                    sender.send(sendDocument);
                                 });
 
                                 return files;
@@ -50,7 +50,7 @@ public class MonthlyReport {
                                         .chatId(org.getOwner())
                                         .document(new InputFile(report))
                                         .build();
-                                sender.send(sendDocument, getUser(org.getOwner()));
+                                sender.send(sendDocument);
                                 //noinspection ResultOfMethodCallIgnored
                                 report.delete();
                             })
