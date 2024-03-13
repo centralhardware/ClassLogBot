@@ -8,7 +8,7 @@ FROM openjdk:21-slim
 
 WORKDIR /znatokiBot
 
-COPY --from=maven target/znatokiStatistic-1.0-SNAPSHOT.jar .
+COPY --from=maven build/libs/znatokiStatistic-1.0-SNAPSHOT.jar .
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
