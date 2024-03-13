@@ -1,14 +1,14 @@
-FROM maven:3.9.4-amazoncorretto-21 as maven
+FROM gradle:jdk21 as gradle
 
 COPY ./ ./
 
-RUN mvn package -DskipTests
+RUN gradle bootJar
 
 FROM openjdk:21-slim
 
 WORKDIR /znatokiBot
 
-COPY --from=maven build/libs/znatokiStatistic-1.0-SNAPSHOT.jar .
+COPY --from=gradle /home/gradle/build/libs/znatokiStatistic-1.0-SNAPSHOT.jar .
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
