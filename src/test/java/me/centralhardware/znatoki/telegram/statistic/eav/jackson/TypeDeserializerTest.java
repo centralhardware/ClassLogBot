@@ -3,7 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.eav.jackson;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import me.centralhardware.znatoki.telegram.statistic.eav.types.*;
-import me.centralhardware.znatoki.telegram.statistic.eav.types.Number;
+import me.centralhardware.znatoki.telegram.statistic.eav.types.Integer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -54,7 +54,7 @@ public class TypeDeserializerTest {
 
         Type result = typeDeserializer.deserialize(jsonParser, mock(DeserializationContext.class));
 
-        assertInstanceOf(Number.class, result);
+        assertInstanceOf(Integer.class, result);
     }
 
     @Test
