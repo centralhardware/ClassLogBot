@@ -24,11 +24,13 @@ class DailyReport(
     @Scheduled(cron = "0 0 22 * * *")
     fun report() {
         organizationMapper.getOwners()
+            .asSequence()
             .map(Organization::id)
             .map(serviceMapper::getIds)
             .flatten()
             .map(serviceMapper::getTodayTimes)
             .filterNot { it.isEmpty() }
+            .toList()
             .forEach {
                 val id = it.first().chatId
                 sender.sendText("Занятия проведенные за сегодня", id)

@@ -17,7 +17,7 @@ import java.util.UUID
 @Component
 class TimeDeleteCallback(
     val serviceMapper: ServiceMapper,
-    val paymentMapper: PaymentMapper,
+    private val paymentMapper: PaymentMapper,
     sender: TelegramSender,
     telegramService: TelegramService, userMapper: UserMapper
 ) : CallbackHandler(sender, telegramService, userMapper) {
@@ -45,7 +45,7 @@ class TimeDeleteCallback(
                 row { btn("восстановить", "timeRestore-$id") }
             }.buildReplyMarkup())
             .build()
-        sender.send(editMessageReplyMarkup)
+        sender.send { execute(editMessageReplyMarkup) }
     }
 
     override fun isAcceptable(data: String) = data.startsWith("timeDelete-")

@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.eav.jackson
+package me.centralhardware.znatoki.telegram.statistic.eav.json
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind

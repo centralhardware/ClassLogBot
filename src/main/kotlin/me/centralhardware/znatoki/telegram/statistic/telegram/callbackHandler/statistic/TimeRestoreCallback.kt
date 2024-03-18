@@ -26,7 +26,7 @@ class TimeRestoreCallback(
     override fun handle(callbackQuery: CallbackQuery,
                         from: User,
                         data: String) {
-        if (!telegramService.isAdmin(from.getId())) {
+        if (!telegramService.isAdmin(from.id)) {
             sender.sendText("Доступ запрещен", from.id)
         }
 
@@ -48,7 +48,7 @@ class TimeRestoreCallback(
             }.buildReplyMarkup())
             .build()
 
-        sender.send(editMessageReplyMarkup)
+        sender.send { execute(editMessageReplyMarkup) }
     }
 
     override fun isAcceptable(data: String) = data.startsWith("timeRestore-")

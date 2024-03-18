@@ -11,7 +11,6 @@ import me.centralhardware.znatoki.telegram.statistic.userId
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument
 import org.telegram.telegrambots.meta.api.objects.InputFile
-import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 import java.io.File
 
@@ -52,7 +51,7 @@ abstract class BaseReport(
             .chatId(chatId)
             .document(InputFile(file))
             .build()
-        sender.send(sendDocument)
+        sender.send{ execute(sendDocument) }
         file.delete()
     }
 

@@ -23,8 +23,8 @@ class MonthlyReport(
             .forEach { org ->
                 serviceMapper.getIds(org.id).forEach {
                     reportService.getReportPrevious(it).forEach { file ->
-                        sender.send(SendDocument.builder().chatId(it).document(InputFile(file)).build())
-                        sender.send(SendDocument.builder().chatId(org.owner).document(InputFile(file)).build())
+                        sender.send{execute(SendDocument.builder().chatId(it).document(InputFile(file)).build())}
+                        sender.send{execute(SendDocument.builder().chatId(org.owner).document(InputFile(file)).build())}
                         file.delete()
                     }
                 }

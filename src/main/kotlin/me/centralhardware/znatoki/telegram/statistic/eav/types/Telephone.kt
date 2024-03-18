@@ -4,7 +4,6 @@ import arrow.core.Either
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
 import me.centralhardware.znatoki.telegram.statistic.validateTelephone
 import org.telegram.telegrambots.meta.api.objects.Update
-import java.util.*
 
 class Telephone : Type {
 

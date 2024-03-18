@@ -8,10 +8,10 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Role
 
 fun String.toRole(): Role = enumValueOf(this)
 
-fun String.parseStringList(): List<String> = this.split(":")
+fun String.parseStringList() = split(":")
 
-fun String.parseLongList(): List<Long> = this.split(":").map { it.toLong() }
+fun String.parseLongList() = split(":").map { it.toLong() }
 
 fun String.toCustomProperties(): PropertyDefs = Json.decodeFromString(this)
 fun String.toProperties(): List<Property> = Json.decodeFromString(this)
- fun List<Property>.toJson(): String = Json.encodeToString(ListSerializer(Property.serializer()),this)
+fun List<Property>.toJson() = Json.encodeToString(ListSerializer(Property.serializer()),this)

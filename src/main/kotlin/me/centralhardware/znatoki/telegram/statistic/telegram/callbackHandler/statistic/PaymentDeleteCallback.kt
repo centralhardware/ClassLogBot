@@ -41,7 +41,7 @@ class PaymentDeleteCallback(private val paymentMapper: PaymentMapper,
                 row { btn("восстановить", "paymentRestore-$id") }
             }.buildReplyMarkup())
             .build()
-        sender.send(editMessageReplyMarkup)
+        sender.send {execute(editMessageReplyMarkup)}
     }
 
     override fun isAcceptable(data: String): Boolean = data.startsWith("paymentDelete-")

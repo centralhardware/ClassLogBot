@@ -52,7 +52,7 @@ class InlineHandler(
             .cacheTime(0)
             .build()
 
-        sender.send(answerInlineQuery)
+        sender.send{execute(answerInlineQuery)}
 
         return true
     }

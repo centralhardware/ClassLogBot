@@ -43,4 +43,7 @@ class ReplyRow {
 
     fun btn(text: String) = row.add(text)
 
+    fun yes() = btn("да")
+    fun no() = btn("нет")
+
 }

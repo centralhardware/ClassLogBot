@@ -39,7 +39,7 @@ class ExcelDsl(
 }
 
 class SheetDsl(private val sheet: Sheet){
-    var rowIndex: Int = 0
+    private var rowIndex: Int = 0
 
     fun row(initializer: RowDsl.() -> Unit){
         RowDsl(sheet, rowIndex).apply(initializer).build()
@@ -58,7 +58,7 @@ class SheetDsl(private val sheet: Sheet){
     }
 }
 
-class RowDsl(private val sheet: Sheet, val rowIndex: Int){
+class RowDsl(private val sheet: Sheet, private val rowIndex: Int){
     private val cells: MutableList<String> = mutableListOf()
 
     fun  emptyCell() = cell("")

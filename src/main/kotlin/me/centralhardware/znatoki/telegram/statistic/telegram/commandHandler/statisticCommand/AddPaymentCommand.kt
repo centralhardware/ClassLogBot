@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
-import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.Role
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender

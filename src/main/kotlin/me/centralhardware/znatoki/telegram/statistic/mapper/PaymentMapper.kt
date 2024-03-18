@@ -121,14 +121,14 @@ class PaymentMapper(private val session: Session) {
         ).map { row -> row.longOrNull("sum") }.asSingle
     )?: 0
 
-    fun getCredit(clientId: Int): Int = session.run(
+    fun getCredit(clientId: Int): Long = session.run(
         queryOf("""
             SELECT sum(amount) as sum
             FROM payment
             WHERE pupil_id = :client_id
                 AND is_deleted = false
             """, mapOf("client_id" to clientId)
-        ).map { row -> row.int("sum") }.asSingle
+        ).map { row -> row.longOrNull("sum") }.asSingle
     )?: 0
 
     fun paymentExists(clientId: Int): Boolean = session.run(

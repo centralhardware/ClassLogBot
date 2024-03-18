@@ -46,48 +46,16 @@ class TelegramSender(
             message.replyMarkup(removeMarkup)
         }
 
-        send(message.build())
-    }
-
-    fun downloadFile(getFile: GetFile): Result<File> {
-        return runCatching { telegramClient.downloadFile(telegramClient.execute(getFile)) }
-    }
-
-    fun send(method: Any?) {
-        limiter.limit {
-            when (method) {
-                is BotApiMethodMessage -> {
-                    telegramClient.execute(method)
-                }
-                is SendPhoto -> {
-                    telegramClient.execute(method)
-                }
-                is DeleteMessage -> {
-                    telegramClient.execute(method)
-                }
-                is AnswerCallbackQuery -> {
-                    telegramClient.execute(method)
-                }
-                is SendChatAction -> {
-                    telegramClient.execute(method)
-                }
-                is AnswerInlineQuery -> {
-                    telegramClient.execute(method)
-                }
-                is SendDocument -> {
-                    telegramClient.execute(method)
-                }
-                is EditMessageText -> {
-                    telegramClient.execute(method)
-                }
-                is EditMessageReplyMarkup -> {
-                    telegramClient.execute(method)
-                }
-            }
+        send {
+            telegramClient.execute(message.build())
         }
     }
 
-    fun sendMessageFromResource(key: ConstantEnum, chatId: Long, deleteKeyboard: Boolean) {
+    fun send(block: OkHttpTelegramClient.() -> Unit) = limiter.limit{
+        block(telegramClient)
+    }
+
+    private fun sendMessageFromResource(key: ConstantEnum, chatId: Long, deleteKeyboard: Boolean) {
         sendText(resourceBundle.getString(key.key()), chatId, deleteKeyboard)
     }
 
@@ -96,18 +64,24 @@ class TelegramSender(
     }
 
     fun sendMessageAndRemoveKeyboard(text: String, chatId: Long) {
-        send(SendMessage.builder()
-                .chatId(chatId)
-                .text(text)
-                .replyMarkup(replyKeyboardRemove)
-                .build())
+        send {
+            execute(
+                SendMessage.builder()
+                    .chatId(chatId)
+                    .text(text)
+                    .replyMarkup(replyKeyboardRemove)
+                    .build()
+            )
+        }
     }
 
     fun sendMessageWithMarkdown(text: String, chatId: Long) {
-        send(SendMessage.builder()
+        send{
+            execute(SendMessage.builder()
                 .chatId(chatId)
                 .text(text)
                 .parseMode(PARSE_MODE_MARKDOWN)
                 .build())
+        }
     }
 }

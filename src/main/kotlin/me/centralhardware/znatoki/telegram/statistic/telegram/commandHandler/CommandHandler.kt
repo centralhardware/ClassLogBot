@@ -6,7 +6,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.Handler
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
 import me.centralhardware.znatoki.telegram.statistic.userId
 import org.apache.commons.lang3.StringUtils
-import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 
 abstract class CommandHandler(
@@ -30,8 +29,8 @@ abstract class CommandHandler(
 
     abstract fun getRequiredRole(): Role?
 
-    fun checkAuth(update: Update): Boolean {
-        val id = update.userId()!!
+    private fun checkAuth(update: Update): Boolean {
+        val id = update.userId()
         val user = userMapper.getById(id)
 
         val requiredRole = getRequiredRole() ?: return true
@@ -61,6 +60,6 @@ abstract class CommandHandler(
     }
 
     private fun sendAccessDenied(update: Update) {
-        sender.sendText("Недостаточно прав", update.userId()!!)
+        sender.sendText("Недостаточно прав", update.userId())
     }
 }

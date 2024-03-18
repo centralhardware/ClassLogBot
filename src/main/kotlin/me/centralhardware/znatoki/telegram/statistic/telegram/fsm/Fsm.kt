@@ -5,14 +5,11 @@ import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
-import me.centralhardware.znatoki.telegram.statistic.mapper.OrganizationMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
-import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
+import me.centralhardware.znatoki.telegram.statistic.organizationMapper
+import me.centralhardware.znatoki.telegram.statistic.sender
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
 import me.centralhardware.znatoki.telegram.statistic.userId
-import me.centralhardware.znatoki.telegram.statistic.utils.organizationMapper
-import me.centralhardware.znatoki.telegram.statistic.utils.sender
-import me.centralhardware.znatoki.telegram.statistic.utils.userMapper
+import me.centralhardware.znatoki.telegram.statistic.userMapper
 import org.telegram.telegrambots.meta.api.objects.Update
 import ru.nsk.kstatemachine.Event
 import ru.nsk.kstatemachine.TransitionParams
@@ -42,13 +39,15 @@ fun processCustomProperties(
 
             builder.next()?.let { next ->
                 if (next.second.isNotEmpty()) {
-                    sender().send(replyKeyboard {
-                        text(next.first)
-                        chatId(chatId)
-                        next.second.forEach {
-                            row { btn(it) }
-                        }
-                    }.build())
+                    sender().send{
+                        execute(replyKeyboard {
+                            text(next.first)
+                            chatId(chatId)
+                            next.second.forEach {
+                                row { btn(it) }
+                            }
+                        }.build())
+                    }
                 } else {
                     sender().sendText(next.first, chatId)
                 }

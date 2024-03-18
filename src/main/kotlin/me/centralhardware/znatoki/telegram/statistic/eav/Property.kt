@@ -3,8 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic.eav
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import kotlinx.serialization.Serializable
-import me.centralhardware.znatoki.telegram.statistic.eav.jackson.JacksonTypeAdapter
-import me.centralhardware.znatoki.telegram.statistic.eav.jackson.TypeAdapter
+import me.centralhardware.znatoki.telegram.statistic.eav.json.JacksonTypeAdapter
+import me.centralhardware.znatoki.telegram.statistic.eav.json.TypeAdapter
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type
 
 @Serializable

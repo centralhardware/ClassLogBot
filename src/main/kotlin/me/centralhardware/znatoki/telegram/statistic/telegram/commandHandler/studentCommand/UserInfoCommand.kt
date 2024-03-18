@@ -10,7 +10,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.CommandHandler
 import me.centralhardware.znatoki.telegram.statistic.userId
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 
 /**

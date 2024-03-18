@@ -6,11 +6,10 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.userId
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 
 @Component
-class ResetCommand(val storage: Storage, sender: TelegramSender, userMapper: UserMapper) : CommandHandler(
+class ResetCommand(private val storage: Storage, sender: TelegramSender, userMapper: UserMapper) : CommandHandler(
     sender,
     userMapper
 ) {

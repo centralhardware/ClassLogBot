@@ -1,18 +1,14 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
-import me.centralhardware.znatoki.telegram.statistic.escapeHashtag
-import me.centralhardware.znatoki.telegram.statistic.formatDateTime
-import me.centralhardware.znatoki.telegram.statistic.print
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.inlineKeyboard
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import me.centralhardware.znatoki.telegram.statistic.userId
-import me.centralhardware.znatoki.telegram.statistic.utils.*
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
@@ -72,11 +68,16 @@ fun createTimeFsm() = createStdLibStateMachine("time", enableUndo = true) {
             targetState = TimeStates.Confirm
         }
         onEntry {
-            val res = confirm(it.argTime().first, it.argTime().second)
+            val res = property(it.argTime().first, it.argTime().second)
             if (!res) machine.undo()
         }
     }
-    addFinalState(TimeStates.Confirm)
+    addFinalState(TimeStates.Confirm){
+        onEntry { confirm(it.argTime().first, it.argTime().second) }
+    }
+    onFinished {
+        storage().remove(it.argTime().first.userId())
+    }
 }
 
 
@@ -91,19 +92,23 @@ fun startTimeFsm(update: Update): ServiceBuilder{
 
     when {
         user.services.size != 1 -> {
-            sender().send(replyKeyboard {
-                text("Выберите предмет")
-                chatId(user.id)
-                user.services.forEach { row { servicesMapper().getNameById(it)?.let { btn(it) } } }
-            }.build())
+            sender().send{
+                execute(replyKeyboard {
+                    text("Выберите предмет")
+                    chatId(user.id)
+                    user.services.forEach { row { servicesMapper().getNameById(it)?.let { btn(it) } } }
+                }.build())
+            }
         }
         else -> {
             sender().sendText("Введите фио. /complete - для окончания ввода", userId)
-            sender().send(inlineKeyboard {
-                text("нажмите для поиска фио")
-                chatId(userId)
-                row { switchToInline() }
-            })
+            sender().send{
+                execute(inlineKeyboard {
+                    text("нажмите для поиска фио")
+                    chatId(userId)
+                    row { switchToInline() }
+                }.build())
+            }
         }
     }
     return builder
@@ -126,11 +131,13 @@ fun subject(update: Update, builder: ServiceBuilder): Boolean {
 
             sender().sendText("Введите фио. /complete - для окончания ввода", userId)
 
-            sender().send(inlineKeyboard {
-                chatId(userId)
-                text("нажмите для поиска фио")
-                row { switchToInline() }
-            }.build())
+            sender().send{
+                execute(inlineKeyboard {
+                    chatId(userId)
+                    text("нажмите для поиска фио")
+                    row { switchToInline() }
+                }.build())
+            }
         }.isRight()
 }
 
@@ -160,7 +167,7 @@ fun fio(update: Update, builder: ServiceBuilder): Boolean {
             sender().sendText("Введите стоимость занятия", userId)
             return true
         }
-        return fioValidator().validate(text)
+        fioValidator().validate(text)
             .mapLeft { error -> sender().sendText(error, userId) }
             .map {
                 val id = text.split(" ").first().toInt()
@@ -172,7 +179,8 @@ fun fio(update: Update, builder: ServiceBuilder): Boolean {
                 builder.clientId(id)
 
                 sender().sendText("ФИО сохранено", userId)
-            }.isRight()
+            }
+        return false
     }
 }
 
@@ -195,11 +203,13 @@ fun amount(update: Update, builder: ServiceBuilder): Boolean {
                 val next = builder.nextProperty()!!
 
                 if (next.second.isNotEmpty()) {
-                    sender().send(replyKeyboard {
-                        chatId(userId)
-                        text(next.first)
-                        next.second.forEach { row { btn(it) } }
-                    }.build())
+                    sender().send{
+                        execute(replyKeyboard {
+                            chatId(userId)
+                            text(next.first)
+                            next.second.forEach { row { btn(it) } }
+                        }.build())
+                    }
                 } else {
                     sender().sendText(next.first, userId)
                 }
@@ -226,24 +236,26 @@ fun property(update: Update, builder: ServiceBuilder): Boolean {
 }
 
 fun confirmMessage(userId: Long, builder: ServiceBuilder) {
-    sender().send(replyKeyboard {
-        chatId(userId)
-        text(
-            """
+    sender().send{
+        execute(replyKeyboard {
+            chatId(userId)
+            text(
+                """
                             услуга: ${servicesMapper().getNameById(builder.serviceId)}
                             ФИО: ${
-                builder.clientIds.stream().map { clientService().getFioById(it) }.toList().joinToString(";")
-            }
+                    builder.clientIds.stream().map { clientService().getFioById(it) }.toList().joinToString(";")
+                }
                             стоимость: ${builder.amount}
                             Сохранить?
                             """.trimIndent()
-        )
-        row { btn("да") }
-        row { btn("нет") }
-    })
+            )
+            row { yes() }
+            row { no() }
+        }.build())
+    }
 }
 
-fun confirm(update: Update, builder: ServiceBuilder): Boolean{
+fun confirm(update: Update, builder: ServiceBuilder){
     val text = update.message.text
     val userId = update.userId()
     if (Objects.equals(text, "да")) {
@@ -275,12 +287,11 @@ fun confirm(update: Update, builder: ServiceBuilder): Boolean{
             .forEach { photo ->
                 minioService().delete(photo.value!!)
                     .onFailure {
-                        sender().send("Ошибка при удаление фотографии")
+                        sender().sendText("Ошибка при удаление фотографии", update.userId())
                     }
             }
         sender().sendText("Отменено", userId)
     }
-    return true
 }
 
 fun sendLog(services: List<Service>, userId: Long) {
@@ -294,7 +305,7 @@ fun sendLog(services: List<Service>, userId: Long) {
         val log = """
                     #занятие
                     Время: ${service.dateTime.formatDateTime()}
-                    Предмет: #${servicesMapper().getNameById(service.serviceId).escapeHashtag()}
+                    Предмет: ${servicesMapper().getNameById(service.serviceId).hashtag()}
                     ${organizationMapper().getById(service.organizationId)?.clientName}: ${
             services.toClientIds().joinToString(", ") {
                 "#${clientService().getFioById(it).replace(" ", "_")}(${
@@ -305,7 +316,7 @@ fun sendLog(services: List<Service>, userId: Long) {
             }
         }
                     Стоимость: ${service.amount}
-                    Преподаватель: #${userMapper().getById(userId)?.name.escapeHashtag()}
+                    Преподаватель: ${userMapper().getById(userId)?.name.hashtag()}
                     ${service.properties.print()}
                     """.trimIndent()
 
@@ -322,7 +333,7 @@ fun sendLog(services: List<Service>, userId: Long) {
                         .caption(log)
                         .replyMarkup(keyboard)
                         .build()
-                    sender().send(sendPhoto)
+                    sender().send{execute(sendPhoto)}
                 }
         } else {
             val message = SendMessage
@@ -330,7 +341,7 @@ fun sendLog(services: List<Service>, userId: Long) {
                 .chatId(logId)
                 .text(log)
                 .replyMarkup(keyboard)
-            sender().send(message.build())
+            sender().send{execute(message.build())}
         }
     }
 }

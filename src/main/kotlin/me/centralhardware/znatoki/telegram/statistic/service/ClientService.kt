@@ -58,7 +58,6 @@ class ClientService(
     fun findById(id: Int): Client? = repository.findById(id)
         .filter { !it.deleted }.getOrNull()
 
-    fun findByFioAndId(fio: String): Client? = repository.findByFioAndId(fio)
 
     fun checkExistenceByFio(name: String, secondName: String, lastName: String)
     = repository.findAllByNameAndSecondNameAndLastName(name, secondName, lastName).any { !it.deleted }

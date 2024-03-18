@@ -1,14 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
 import jakarta.persistence.*
-import me.centralhardware.znatoki.telegram.statistic.NoArg
+import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
-import me.centralhardware.znatoki.telegram.statistic.formatDate
-import me.centralhardware.znatoki.telegram.statistic.makeBold
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
-import me.centralhardware.znatoki.telegram.statistic.print
-import me.centralhardware.znatoki.telegram.statistic.utils.BeanUtils
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UpdateTimestamp
@@ -49,7 +45,8 @@ class Client(
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "modify_date")
     val modifyDate: LocalDateTime = LocalDateTime.now(),
-    val created_by: Long,
+    @Column(name = "created_by")
+    val createdBy: Long,
     val updateBy: Long?,
     @Column(name = "deleted", columnDefinition = "boolean default false")
     var deleted: Boolean = false
@@ -65,7 +62,7 @@ class Client(
         Баланс=${BeanUtils.getBean(PaymentMapper::class.java).getCredit(id!!)}
         дата создания=${createDate.formatDate().makeBold()}
         дата изменения=${modifyDate.formatDate().makeBold()}
-        создано=$created_by
+        создано=$createdBy
         редактировано=${updateBy}
     """.trimIndent()
 
@@ -81,7 +78,7 @@ class Client(
     }
 }
 
-fun Client.fio(): String = "$name $lastName $secondName"
+fun Client.fio(): String = "$name $lastName $secondName".replace("\\s{2,}".toRegex(), " ")
 
 class ClientBuilder: Builder{
     lateinit var  name: String
@@ -89,9 +86,7 @@ class ClientBuilder: Builder{
     lateinit var  lastName: String
     lateinit var  properties: List<Property>
     lateinit var  organizationId: UUID
-    lateinit var  createDate: LocalDateTime
-    lateinit var  modifyDate: LocalDateTime
-    var  created_by by Delegates.notNull<Long>()
+    var  createdBy by Delegates.notNull<Long>()
     lateinit var propertiesBuilder: PropertiesBuilder
 
     fun nextProperty() = propertiesBuilder.next()
@@ -102,8 +97,8 @@ class ClientBuilder: Builder{
         lastName = lastName,
         properties = properties,
         organizationId = organizationId,
-        created_by = created_by,
-        updateBy = created_by
+        createdBy = createdBy,
+        updateBy = createdBy
     )
 
 }

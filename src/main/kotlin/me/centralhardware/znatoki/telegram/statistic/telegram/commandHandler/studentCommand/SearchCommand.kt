@@ -12,7 +12,6 @@ import me.centralhardware.znatoki.telegram.statistic.userId
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 import java.util.stream.Collectors
 
@@ -46,14 +45,16 @@ class SearchCommand(
 
         sender.sendMessageFromResource(I18n.Message.SEARCH_RESULT, update.userId())
         for (client in searchResult) {
-            sender.send(inlineKeyboard {
-                text("${client.name} ${client.secondName} ${client.lastName} \n")
-                chatId(update.userId())
-                row { btn("информация", "/user_info${client.id}") }
-                if (telegramService.hasWriteRight(update.userId())) {
-                    row { btn("удалить", "/delete_user${client.id}") }
-                }
-            })
+            sender.send{
+                execute(inlineKeyboard {
+                    text("${client.name} ${client.secondName} ${client.lastName} \n")
+                    chatId(update.userId())
+                    row { btn("информация", "/user_info${client.id}") }
+                    if (telegramService.hasWriteRight(update.userId())) {
+                        row { btn("удалить", "/delete_user${client.id}") }
+                    }
+                }.build())
+            }
         }
     }
 

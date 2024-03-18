@@ -1,9 +1,10 @@
-package me.centralhardware.znatoki.telegram.statistic.utils
+package me.centralhardware.znatoki.telegram.statistic
 
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.validate.AmountValidator
 import me.centralhardware.znatoki.telegram.statistic.validate.FioValidator
 import me.centralhardware.znatoki.telegram.statistic.validate.ServiceValidator
@@ -20,7 +21,7 @@ class BeanUtils : ApplicationContextAware {
     companion object {
         var applicationContext: ApplicationContext? = null
         fun <T> getBean(clazz: Class<T>): T {
-            return applicationContext?.getBean(clazz)?: throw IllegalArgumentException()
+            return applicationContext?.getBean(clazz) ?: throw IllegalArgumentException()
         }
     }
 
@@ -45,4 +46,6 @@ fun serviceMapper() = BeanUtils.getBean(ServiceMapper::class.java)
 fun userMapper() = BeanUtils.getBean(UserMapper::class.java)
 fun organizationMapper() = BeanUtils.getBean(OrganizationMapper::class.java)
 fun clientService() = BeanUtils.getBean(ClientService::class.java)
-fun minioService() =  BeanUtils.getBean(MinioService::class.java)
+fun minioService() = BeanUtils.getBean(MinioService::class.java)
+
+fun storage() = BeanUtils.getBean(Storage::class.java)

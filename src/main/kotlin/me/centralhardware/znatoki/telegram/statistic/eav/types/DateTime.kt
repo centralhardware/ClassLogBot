@@ -4,8 +4,6 @@ import arrow.core.Either
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
 import me.centralhardware.znatoki.telegram.statistic.parseDateTime
 import org.telegram.telegrambots.meta.api.objects.Update
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 class DateTime : Type {
 

@@ -18,14 +18,7 @@ import java.util.*
 class MinioService(private val minioClient: MinioClient) {
 
     fun upload(file: File, dateTime: LocalDateTime): Result<String> = runCatching {
-        val fileNew = Paths.get(String.format("%s/%s/%s/%s/%s:%s-%s.jpg",
-            Config.Minio.basePath,
-            dateTime.year,
-            dateTime.month,
-            dateTime.dayOfMonth,
-            dateTime.hour,
-            dateTime.minute,
-            UUID.randomUUID()))
+        val fileNew = Paths.get("${Config.Minio.basePath}/${dateTime.year}/${dateTime.dayOfMonth}/${dateTime.hour}:${dateTime.minute}=${UUID.randomUUID()}")
 
         Files.createParentDirs(fileNew.toFile())
         Files.touch(fileNew.toFile())

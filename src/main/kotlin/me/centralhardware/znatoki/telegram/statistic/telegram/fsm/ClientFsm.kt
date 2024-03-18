@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
@@ -7,8 +8,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import me.centralhardware.znatoki.telegram.statistic.userId
-import me.centralhardware.znatoki.telegram.statistic.utils.*
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
@@ -43,7 +42,7 @@ fun createClientFsm() = createStdLibStateMachine("client", enableUndo = true) {
             targetState = ClientState.Fio
         }
         onEntry {
-            val res = fio(it.argClient().first, it.argClient().second)
+            val res = property(it.argClient().first, it.argClient().second)
             if (!res) machine.undo()
         }
     }
@@ -95,11 +94,13 @@ fun fio(update: Update, builder: ClientBuilder): Boolean{
         builder.propertiesBuilder = PropertiesBuilder(org.clientCustomProperties.propertyDefs.toMutableList())
         val next = builder.nextProperty()!!
         if (next.second.isNotEmpty()) {
-            sender().send(replyKeyboard {
-                chatId(chatId)
-                text(next.first)
-                next.second.forEach { row { btn(it) } }
-            })
+            sender().send{
+                execute(replyKeyboard {
+                    chatId(chatId)
+                    text(next.first)
+                    next.second.forEach { row { btn(it) } }
+                }.build())
+            }
         } else {
             sender().sendText(next.first, chatId)
         }
@@ -126,7 +127,7 @@ fun property(update: Update, builder: ClientBuilder): Boolean {
 fun finish(p: List<Property>, chatId: Long, builder: ClientBuilder){
     builder.let{
         it.organizationId = userMapper().getById(chatId)!!.organizationId
-        it.created_by = chatId
+        it.createdBy = chatId
         if (it.properties.isNotEmpty()) it.properties = p
     }
 
@@ -154,6 +155,6 @@ fun sendLog(client: Client, chatId: Long) {
             .chatId(logId)
             .parseMode("Markdown")
             .build()
-        sender().send(message)
+        sender().send { execute(message) }
     }
 }

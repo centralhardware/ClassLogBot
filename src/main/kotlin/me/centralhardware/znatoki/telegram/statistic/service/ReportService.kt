@@ -30,21 +30,21 @@ class ReportService(
         val times = getTime.invoke(id)
         if (CollectionUtils.isEmpty(times)) return emptyList()
 
-        val user = userMapper.getById(times.first().chatId)?.let {
-            it.services.mapNotNull { service ->
-                val date = times.stream()
-                    .filter { time -> time.serviceId == service }
+        val user = userMapper.getById(times.first().chatId)?.let {user ->
+            user.services.mapNotNull { serviceId ->
+                val service = times.stream()
+                    .filter { time -> time.serviceId == serviceId }
                     .findFirst()
                     .orElse(null)
 
-                date?.let { _date ->
+                service?.let {
                     MonthReport(
-                        it.name,
-                        service,
-                        servicesMapper.getKeyById(service)!!,
-                        _date.dateTime,
-                        organizationMapper.getReportFields(it.organizationId),
-                        organizationMapper.getById(it.organizationId)!!.clientName,
+                        user.name,
+                        serviceId,
+                        servicesMapper.getKeyById(serviceId)!!,
+                        it.dateTime,
+                        organizationMapper.getReportFields(user.organizationId),
+                        organizationMapper.getById(user.organizationId)!!.clientName,
                         id
                     ).generate(times)
                 }

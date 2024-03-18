@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.report
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import me.centralhardware.znatoki.telegram.statistic.BeanUtils
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
@@ -9,7 +10,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.formatDate
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
-import me.centralhardware.znatoki.telegram.statistic.utils.BeanUtils
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

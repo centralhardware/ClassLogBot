@@ -72,7 +72,7 @@ class ServiceMapper(private val session: Session) {
         )
     }
 
-    fun getTimes(
+    private fun getTimes(
         userId: Long,
         startDate: LocalDateTime,
         endDate: LocalDateTime
@@ -100,7 +100,7 @@ class ServiceMapper(private val session: Session) {
     )
 
     fun getTodayTimes(chatId: Long): List<Service> {
-        return getTimes(chatId, LocalDateTime.now().with(LocalTime.MIN), LocalDateTime.now())
+        return getTimes(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
     }
 
     fun getCuurentMontTimes(chatId: Long): List<Service> {

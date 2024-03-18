@@ -1,17 +1,13 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
-import me.centralhardware.znatoki.telegram.statistic.escapeHashtag
-import me.centralhardware.znatoki.telegram.statistic.formatDateTime
-import me.centralhardware.znatoki.telegram.statistic.print
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.inlineKeyboard
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import me.centralhardware.znatoki.telegram.statistic.userId
-import me.centralhardware.znatoki.telegram.statistic.utils.*
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
@@ -78,10 +74,7 @@ fun createPaymentFsm() = createStdLibStateMachine("payment", enableUndo = true){
         transition<UpdateEvent.UpdateEvent> {
             targetState = PaymentStates.Property
         }
-        onEntry {
-            val res = confirm(it.argPayment().first, it.argPayment().second)
-            if (!res) machine.undo()
-        }
+        onEntry { confirm(it.argPayment().first, it.argPayment().second) }
     }
 }
 
@@ -93,24 +86,28 @@ fun pupil(update: Update, builder: PaymentBuilder): Boolean{
             val id = fio.split(" ")[0].toInt()
 
             builder.clientId = id
-            sender().send(replyKeyboard {
-                chatId(userId)
-                text("Выберите предмет")
-                userMapper().getById(userId)?.services?.forEach {
-                    row { servicesMapper().getNameById(it)?.let { name -> btn(name) } }
-                }
-            })
+            sender().send{
+                execute(replyKeyboard {
+                    chatId(userId)
+                    text("Выберите предмет")
+                    userMapper().getById(userId)?.services?.forEach {
+                        row { servicesMapper().getNameById(it)?.let { name -> btn(name) } }
+                    }
+                }.build())
+            }
         }.isRight()
 }
 
 fun startPaymentFsm(update: Update): PaymentBuilder{
     sender().sendText("Введите фио", update.userId())
     val builder = PaymentBuilder()
-    sender().send(inlineKeyboard {
-        chatId(update.userId())
-        text("нажмите для поиска фио")
-        row { switchToInline() }
-    }.build())
+    sender().send{
+        execute(inlineKeyboard {
+            chatId(update.userId())
+            text("нажмите для поиска фио")
+            row { switchToInline() }
+        }.build())
+    }
     return builder
 }
 
@@ -136,30 +133,34 @@ fun amount(update: Update, builder: PaymentBuilder): Boolean{
             val org = organizationMapper().getById(znatokiUser.organizationId)!!
             if (org.paymentCustomProperties.isEmpty()
             ) {
-                sender().send(replyKeyboard {
-                    chatId(userId)
-                    text(
-                        builder.let {
-                            """
+                sender().send{
+                    execute(replyKeyboard {
+                        chatId(userId)
+                        text(
+                            builder.let {
+                                """
                                         ФИО: ${
-                                clientService().findById(it.clientId)?.fio()
-                            }
+                                    clientService().findById(it.clientId)?.fio()
+                                }
                                         Оплата: ${it.amount}
                                         """
-                        }
-                    )
-                    row { btn("да") }
-                    row { btn("нет") }
-                })
+                            }
+                        )
+                        row { yes() }
+                        row { no() }
+                    }.build())
+                }
             } else {
                 builder.propertiesBuilder = PropertiesBuilder(org.paymentCustomProperties.propertyDefs.toMutableList())
                 val next = builder.nextProperty()!!
                 if (next.second.isNotEmpty()) {
-                    sender().send(replyKeyboard {
-                        chatId(userId)
-                        text(next.first)
-                        next.second.forEach { row { btn(it) } }
-                    }.build())
+                    sender().send{
+                        execute(replyKeyboard {
+                            chatId(userId)
+                            text(next.first)
+                            next.second.forEach { row { btn(it) } }
+                        }.build())
+                    }
                 } else {
                     sender().sendText(next.first, userId)
                 }
@@ -180,26 +181,28 @@ fun property(update: Update, builder: PaymentBuilder): Boolean{
         builder.propertiesBuilder
     ) { properties ->
         builder.properties = properties
-        sender().send(replyKeyboard {
-            chatId(userId)
-            text(
-                """
+        sender().send{
+            execute(replyKeyboard {
+                chatId(userId)
+                text(
+                    """
                                         ФИО: ${
-                    clientService().findById(builder.clientId)?.fio()
-                }
+                        clientService().findById(builder.clientId)?.fio()
+                    }
                                         Оплата: ${builder.amount}
                                         """
-            )
+                )
 
-            row { btn("да") }
-            row { btn("нет") }
-        })
+                row { yes() }
+                row { no() }
+            }.build())
+        }
         isFinished = true
     }
     return isFinished
 }
 
-fun confirm(update: Update, builder: PaymentBuilder): Boolean{
+fun confirm(update: Update, builder: PaymentBuilder){
     val userId = update.userId()
     if (update.message.text == "да") {
         builder.organizationId = userMapper().getById(userId)!!.organizationId
@@ -211,7 +214,7 @@ fun confirm(update: Update, builder: PaymentBuilder): Boolean{
                 Payment(
                     chatId = userId,
                     clientId = payment.clientId,
-                    amount = abs(paymentMapper().getCredit(payment.clientId)) + (payment.amount * 2),
+                    amount = (abs(paymentMapper().getCredit(payment.clientId)) + (payment.amount * 2)).toInt(),
                     organizationId = payment.organizationId
                 )
             )
@@ -222,12 +225,10 @@ fun confirm(update: Update, builder: PaymentBuilder): Boolean{
             .filter { it.type is Photo }
             .forEach { photo ->
                 minioService().delete(photo.value!!)
-                    .onFailure { sender().send("Ошибка при удаление фотографии") }
+                    .onFailure { sender().sendText("Ошибка при удаление фотографии", update.userId()) }
             }
         sender().sendText("Отменено", userId)
     }
-
-    return true
 }
 
 fun sendLog(payment: Payment, paymentId: Int, userId: Long) {
@@ -239,11 +240,11 @@ fun sendLog(payment: Payment, paymentId: Int, userId: Long) {
         val text = """
                 #оплата
                 Время: ${payment.dateTime.formatDateTime()}
-                Организация: #${organizationMapper().getById(payment.organizationId)!!.name.escapeHashtag()}
-                Клиент: #${clientService().findById(payment.clientId)?.fio().escapeHashtag()}
+                Организация: ${organizationMapper().getById(payment.organizationId)!!.name.hashtag()}
+                Клиент: ${clientService().findById(payment.clientId)?.fio().hashtag()}
                 Предмет: ${servicesMapper().getNameById(payment.serviceId!!)}
                 Оплата: ${payment.amount}
-                Оплатил: #${userMapper().getById(userId)!!.name.escapeHashtag()}
+                Оплатил: ${userMapper().getById(userId)!!.name.hashtag()}
                 ${payment.properties.print()}
             """.trimIndent()
         val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
@@ -267,7 +268,7 @@ fun sendLog(payment: Payment, paymentId: Int, userId: Long) {
                         .caption(text)
                         .replyMarkup(keyboard)
                         .build()
-                    sender().send(sendPhoto)
+                    sender().send{execute(sendPhoto)}
                 }
         } else {
             val message = SendMessage.builder()
@@ -275,7 +276,7 @@ fun sendLog(payment: Payment, paymentId: Int, userId: Long) {
                 .chatId(logId)
                 .replyMarkup(keyboard)
                 .build()
-            sender().send(message)
+            sender().send{execute(message)}
         }
     }
 }

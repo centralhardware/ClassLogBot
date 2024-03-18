@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.eav
 
 import kotlinx.serialization.Serializable
-import me.centralhardware.znatoki.telegram.statistic.eav.jackson.TypeAdapter
+import me.centralhardware.znatoki.telegram.statistic.eav.json.TypeAdapter
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type
 
 @Serializable
