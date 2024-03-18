@@ -63,7 +63,7 @@ fun createPaymentFsm() = createStdLibStateMachine("payment", enableUndo = true){
     }
     addState(PaymentStates.Property){
         transition<UpdateEvent.UpdateEvent> {
-            targetState = PaymentStates.Property
+            targetState = PaymentStates.Confirm
         }
         onEntry {
             val res = property(it.argPayment().first, it.argPayment().second)
@@ -75,6 +75,9 @@ fun createPaymentFsm() = createStdLibStateMachine("payment", enableUndo = true){
             targetState = PaymentStates.Property
         }
         onEntry { confirm(it.argPayment().first, it.argPayment().second) }
+    }
+    onFinished {
+        storage().remove(it.argPayment().first.userId())
     }
 }
 
@@ -206,6 +209,7 @@ fun confirm(update: Update, builder: PaymentBuilder){
     val userId = update.userId()
     if (update.message.text == "да") {
         builder.organizationId = userMapper().getById(userId)!!.organizationId
+        builder.chatId = userId
         val payment = builder.build()
         val paymentId = paymentMapper().insert(payment)
         sendLog(payment, paymentId, userId)

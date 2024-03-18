@@ -270,7 +270,6 @@ fun confirm(update: Update, builder: ServiceBuilder){
 
             paymentMapper().insert(
                 Payment(
-                    chatId = userId,
                     clientId = it.clientId,
                     amount = it.amount * -1,
                     timeId = it.id,

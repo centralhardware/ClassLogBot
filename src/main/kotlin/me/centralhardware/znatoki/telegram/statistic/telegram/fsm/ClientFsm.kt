@@ -46,6 +46,9 @@ fun createClientFsm() = createStdLibStateMachine("client", enableUndo = true) {
             if (!res) machine.undo()
         }
     }
+    onFinished {
+        storage().remove(it.argTime().first.userId())
+    }
 }
 
 fun startClientFsm(update: Update): ServiceBuilder{

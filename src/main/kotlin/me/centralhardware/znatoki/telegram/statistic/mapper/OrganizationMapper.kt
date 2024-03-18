@@ -1,11 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
-import kotliquery.Row
 import kotliquery.Session
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization
+import me.centralhardware.znatoki.telegram.statistic.entity.parseOrganization
 import me.centralhardware.znatoki.telegram.statistic.parseStringList
-import me.centralhardware.znatoki.telegram.statistic.toCustomProperties
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -28,22 +27,6 @@ class OrganizationMapper(private val session: Session) {
         )
     }
 
-    private val orMapper: (Row) -> Organization = { row ->
-        Organization(
-            row.uuid("id"),
-            row.string("name"),
-            row.long("owner"),
-            row.long("log_chat_id"),
-            row.string("service_custom_properties").toCustomProperties(),
-            row.string("client_custom_properties").toCustomProperties(),
-            row.string("payment_custom_properties").toCustomProperties(),
-            row.string("grafana_username"),
-            row.string("grafana_password"),
-            row.string("grafana_url"),
-            row.string("client_name")
-        )
-    }
-
     fun getByOwner(id: Long): Organization? = session.run(
         queryOf(
             """
@@ -51,7 +34,7 @@ class OrganizationMapper(private val session: Session) {
             FROM organization
             WHERE owner = :id
             """, mapOf("id" to id)
-        ).map(orMapper).asSingle
+        ).map{ it.parseOrganization() }.asSingle
     )
 
     fun getById(id: UUID): Organization? = session.run(
@@ -61,7 +44,7 @@ class OrganizationMapper(private val session: Session) {
             FROM organization
             WHERE id = :id
             """, mapOf("id" to id)
-        ).map(orMapper).asSingle
+        ).map { it.parseOrganization() }.asSingle
     )
 
     fun getOwners(): List<Organization> = session.run(
@@ -70,7 +53,7 @@ class OrganizationMapper(private val session: Session) {
             SELECT *
             FROM organization
             """
-        ).map(orMapper).asList
+        ).map{ it.parseOrganization() }.asList
     )
 
     fun exist(ownerId: Long): Boolean = session.run(

@@ -1,13 +1,12 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
-import kotliquery.Row
 import kotliquery.Session
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
+import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.util.*
 
 @Component
@@ -59,19 +58,6 @@ class ServiceMapper(private val session: Session) {
         )
     )
 
-    val servicesMapper: (Row) -> Service = { row ->
-        Service(
-            row.uuid("id"),
-            row.localDateTime("date_time"),
-            row.long("chat_id"),
-            row.long("service_id"),
-            row.int("pupil_id"),
-            row.int("amount"),
-            row.uuid("org_id"),
-            row.string("properties").toProperties(),
-        )
-    }
-
     private fun getTimes(
         userId: Long,
         startDate: LocalDateTime,
@@ -96,7 +82,7 @@ class ServiceMapper(private val session: Session) {
                 "startDate" to startDate,
                 "endDate" to endDate
             )
-        ).map(servicesMapper).asList
+        ).map { it.parseTime() }.asList
     )
 
     fun getTodayTimes(chatId: Long): List<Service> {

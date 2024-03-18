@@ -1,9 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
-import kotliquery.Row
 import kotliquery.Session
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Services
+import me.centralhardware.znatoki.telegram.statistic.entity.parseServices
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -30,16 +30,6 @@ class ServicesMapper(private val session: Session) {
         )
     )
 
-    val servicesMapper: (Row) -> Services = { row ->
-        Services(
-            row.long("id"),
-            row.string("key"),
-            row.string("name"),
-            row.uuid("organization_id"),
-            row.boolean("allow_multiply_clients")
-        )
-    }
-
     fun getServicesByOrganization(orgId: UUID): List<Services> = session.run(
         queryOf(
             """
@@ -47,7 +37,7 @@ class ServicesMapper(private val session: Session) {
             FROM  services
             WHERE organization_id = :orgId
             """, mapOf("orgId" to orgId)
-        ).map(servicesMapper).asList
+        ).map{ it.parseServices() }.asList
     )
 
     fun getServiceId(orgId: UUID, services: String): Long? = session.run(

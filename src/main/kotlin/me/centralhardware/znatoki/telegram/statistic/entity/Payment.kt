@@ -9,7 +9,7 @@ import kotlin.properties.Delegates
 data class Payment (
     val id: Int? = null,
     val dateTime: LocalDateTime = LocalDateTime.now(),
-    val chatId: Long,
+    val chatId: Long? = null,
     val clientId: Int,
     val amount: Int,
     val timeId: UUID? = null,

@@ -13,7 +13,7 @@ import java.util.*
 @Component
 class PaymentMapper(private val session: Session) {
 
-    fun insert(payment: Payment): Int = session.updateAndReturnGeneratedKey(
+    fun insert(payment: Payment): Int = session.run(
         queryOf("""
             INSERT INTO payment(
                 date_time,
@@ -42,8 +42,8 @@ class PaymentMapper(private val session: Session) {
             "organizationId" to payment.organizationId,
             "properties" to payment.properties.toJson(),
             "serviceId" to payment.serviceId)
-        )
-    )?.toInt()!!
+        ).map { row -> row.int("id") }.asSingle
+    )!!
 
     fun setDeleteByTimeId(timeId: UUID, isDelete: Boolean) = session.run(
         queryOf("""
@@ -138,8 +138,8 @@ class PaymentMapper(private val session: Session) {
                 FROM payment 
                 WHERE amount > 0 AND pupil_id = :client_id
                     AND is_deleted = false
-            )
+            ) as e
             """, mapOf("client_id" to clientId)
-        ).map { row -> row.boolean("amount") }.asSingle
+        ).map { row -> row.boolean("e") }.asSingle
     )?: false
 }

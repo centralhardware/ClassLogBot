@@ -1,7 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
+import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
+import me.centralhardware.znatoki.telegram.statistic.toProperties
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.properties.Delegates
@@ -17,6 +19,16 @@ class Service(
     val properties: List<Property>
 )
 
+fun Row.parseTime() = Service(
+    uuid("id"),
+    localDateTime("date_time"),
+    long("chat_id"),
+    long("service_id"),
+    int("pupil_id"),
+    int("amount"),
+    uuid("org_id"),
+    string("properties").toProperties(),
+)
 
 class ServiceBuilder: Builder {
     lateinit var id: UUID
