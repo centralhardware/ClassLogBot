@@ -16,7 +16,7 @@ import ru.nsk.kstatemachine.*
 sealed class ClientState : DefaultState() {
     object Initial : ClientState()
     object Fio : ClientState()
-    object Properties : ClientState()
+    object Properties : ClientState(), FinalState
 }
 
 fun createClientFsm() = createStdLibStateMachine("client", enableUndo = true) {

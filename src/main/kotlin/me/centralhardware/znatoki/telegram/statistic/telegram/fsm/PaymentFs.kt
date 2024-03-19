@@ -22,7 +22,7 @@ sealed class PaymentStates: DefaultState(){
     object Service: PaymentStates()
     object Amount: PaymentStates()
     object Property: PaymentStates()
-    object Confirm: PaymentStates()
+    object Confirm: PaymentStates(), FinalState
 }
 
 fun createPaymentFsm() = createStdLibStateMachine("payment", enableUndo = true){
