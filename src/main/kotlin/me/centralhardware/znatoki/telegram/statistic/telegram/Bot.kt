@@ -60,7 +60,6 @@ class Bot(
     private fun onUpdateReceived(update: Update) {
         try {
             clickhouse.log(update, "znatokiStatistic")
-            logUpdate(update)
 
             val userId = update.userId()
 
@@ -106,17 +105,4 @@ class Bot(
             it.handle(update)
             true
         } ?: false
-
-    private fun logUpdate(update: Update) {
-        when {
-            update.hasMessage() -> with(update.message) {
-                log.info("Receive message username: {}, firstName: {}, lastName: {}, id: {}, text: {}",
-                    from.userName, from.firstName, from.lastName, from.id, text)
-            }
-            update.hasCallbackQuery() -> with(update.callbackQuery) {
-                log.info("Receive callback username: {}, firstName: {}, lastName: {}, id: {}, callbackDate: {}",
-                    from.userName, from.firstName, from.lastName, from.id, data)
-            }
-        }
-    }
 }

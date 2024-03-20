@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.Update
 
 @Component
-open class Date : Type {
+object Date : Type {
 
     override fun format(name: String, isOptional: Boolean) =
         "Введите $name в формате dd MM yyyy ${if(isOptional) OPTIONAL_TEXT else ""}"
@@ -15,7 +15,7 @@ open class Date : Type {
     override fun validate(update: Update, variants: List<String>): Either<String, Unit> =
         runCatching { update.message.text.parseDate() }
             .fold(
-                { Either.Left("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy")},
-                { Either.Right(Unit)}
+                { Either.Right(Unit)},
+                { Either.Left("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy")}
             )
 }

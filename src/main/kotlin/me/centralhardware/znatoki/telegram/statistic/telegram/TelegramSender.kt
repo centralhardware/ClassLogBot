@@ -23,7 +23,6 @@ import java.util.*
 class TelegramSender(
     private val limiter: Limiter,
     private val resourceBundle: ResourceBundle,
-    private val replyKeyboardRemove: ReplyKeyboardRemove,
     private val telegramClient: OkHttpTelegramClient
 ) {
 
@@ -63,13 +62,17 @@ class TelegramSender(
         sendMessageFromResource(key, chatId, true)
     }
 
+    val removeKeyboard: ReplyKeyboardRemove = ReplyKeyboardRemove
+        .builder()
+        .removeKeyboard(true)
+        .build()
     fun sendMessageAndRemoveKeyboard(text: String, chatId: Long) {
         send {
             execute(
                 SendMessage.builder()
                     .chatId(chatId)
                     .text(text)
-                    .replyMarkup(replyKeyboardRemove)
+                    .replyMarkup(removeKeyboard)
                     .build()
             )
         }

@@ -5,10 +5,8 @@ import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
-import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import ru.nsk.kstatemachine.*
@@ -16,51 +14,43 @@ import ru.nsk.kstatemachine.*
 sealed class ClientState : DefaultState() {
     object Initial : ClientState()
     object Fio : ClientState()
-    object Properties : ClientState(), FinalState
+    object Properties : ClientState()
+    object Finish : ClientState(), FinalState
 }
 
 fun createClientFsm() = createStdLibStateMachine("client", enableUndo = true) {
-    logger = StateMachine.Logger { lazyMessage ->
-        LoggerFactory.getLogger("fsm").info(lazyMessage())
-    }
+    logger = fsmLog
     addInitialState(ClientState.Initial) {
         transition<UpdateEvent.UpdateEvent> {
             targetState = ClientState.Fio
         }
     }
-    addState(ClientState.Fio){
+    addState(ClientState.Fio) {
         transition<UpdateEvent.UpdateEvent> {
-            targetState = ClientState.Fio
+            targetState = ClientState.Properties
         }
-        onEntry {
-            val res = fio(it.argClient().first, it.argClient().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState<ClientBuilder>(it, this, ::fio) }
     }
-    addState(ClientState.Properties){
+    addState(ClientState.Properties) {
         transition<UpdateEvent.UpdateEvent> {
-            targetState = ClientState.Fio
+            targetState = ClientState.Finish
         }
-        onEntry {
-            val res = property(it.argClient().first, it.argClient().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState<ClientBuilder>(it, this, ::property) }
     }
-    onFinished {
-        storage().remove(it.argTime().first.userId())
-    }
+    addState(ClientState.Finish)
+    onFinished { removeFromStorage<ClientBuilder>(it) }
 }
 
-fun startClientFsm(update: Update): ServiceBuilder{
+fun startClientFsm(update: Update): ClientBuilder {
     sender().sendMessageAndRemoveKeyboard(
         resourceBundle().getString("INPUT_FIO_IN_FORMAT"),
         update.userId()
     )
-    return ServiceBuilder()
+    return ClientBuilder()
 }
 
 
-fun fio(update: Update, builder: ClientBuilder): Boolean{
+fun fio(update: Update, builder: ClientBuilder): Boolean {
     val chatId = update.userId()
     val telegramUser = userMapper().getById(chatId)!!
     val words = update.message.text.split(" ")
@@ -68,7 +58,7 @@ fun fio(update: Update, builder: ClientBuilder): Boolean{
         sender().sendMessageFromResource(I18n.Message.INPUT_FIO_REQUIRED_FORMAT, chatId)
         return false
     }
-    builder.let{
+    builder.let {
         when (words.size) {
             3 -> {
                 it.secondName = words[0]
@@ -92,12 +82,11 @@ fun fio(update: Update, builder: ClientBuilder): Boolean{
 
     if (org.clientCustomProperties.isEmpty()) {
         finish(listOf(), chatId, builder)
-        return true
     } else {
         builder.propertiesBuilder = PropertiesBuilder(org.clientCustomProperties.propertyDefs.toMutableList())
         val next = builder.nextProperty()!!
         if (next.second.isNotEmpty()) {
-            sender().send{
+            sender().send {
                 execute(replyKeyboard {
                     chatId(chatId)
                     text(next.first)
@@ -107,31 +96,23 @@ fun fio(update: Update, builder: ClientBuilder): Boolean{
         } else {
             sender().sendText(next.first, chatId)
         }
-        return false
     }
-
+    return true
 }
 
 fun property(update: Update, builder: ClientBuilder): Boolean {
-    val chatId = update.userId()
     val telegramUser = userMapper().getById(update.userId())!!
-    val org = organizationMapper().getById(telegramUser.organizationId)!!
 
-    if (org.clientCustomProperties.isEmpty()) return true
+    if (organizationMapper().getById(telegramUser.organizationId)!!.clientCustomProperties.isEmpty()) return true
 
-    var isFinished = false
-    processCustomProperties(update, builder.propertiesBuilder) {
-        finish(it, chatId, builder)
-        isFinished = true
-    }
-    return isFinished
+    return processCustomProperties(update, builder.propertiesBuilder) { finish(it, update.userId(), builder) }
 }
 
-fun finish(p: List<Property>, chatId: Long, builder: ClientBuilder){
-    builder.let{
-        it.organizationId = userMapper().getById(chatId)!!.organizationId
-        it.createdBy = chatId
-        if (it.properties.isNotEmpty()) it.properties = p
+fun finish(p: List<Property>, chatId: Long, builder: ClientBuilder) {
+    builder.apply {
+        organizationId = userMapper().getById(chatId)!!.organizationId
+        createdBy = chatId
+        properties = p
     }
 
     val client = builder.build()
@@ -151,9 +132,9 @@ fun sendLog(client: Client, chatId: Long) {
         val message = SendMessage.builder()
             .text(
                 """
-                         #${organizationMapper().getById(client.organizationId)!!.clientName}   
-                        ${client.getInfo(serviceMapper().getServicesForCLient(client.id!!).mapNotNull { servicesMapper().getNameById(it) })}
-                        """.trimIndent()
+                #${organizationMapper().getById(client.organizationId)!!.clientName}   
+                ${client.getInfo(serviceMapper().getServicesForCLient(client.id!!).mapNotNull { servicesMapper().getNameById(it) })}
+                """.trimIndent()
             )
             .chatId(logId)
             .parseMode("Markdown")

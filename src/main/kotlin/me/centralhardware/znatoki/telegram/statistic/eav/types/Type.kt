@@ -27,3 +27,13 @@ sealed interface Type {
     fun name(): String = this.javaClass.simpleName
 
 }
+
+fun String.toType() = when (this) {
+    "Date" -> Date
+    "DateTime" -> DateTime
+    "Enumeration" -> Enumeration
+    "Integer" -> Integer
+    "Photo" -> Photo
+    "Telephone" -> Telephone
+    "Text" -> Text
+    else -> throw IllegalArgumentException()}

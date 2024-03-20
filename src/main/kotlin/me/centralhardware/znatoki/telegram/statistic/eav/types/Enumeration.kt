@@ -5,7 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OP
 import org.telegram.telegrambots.meta.api.objects.Update
 
 typealias EnumType = Enumeration
-class Enumeration : Type {
+object Enumeration : Type {
     override fun format(name: String, isOptional: Boolean): String {
         return "Выберите $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }

@@ -8,7 +8,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.inlineKeyboard
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.InputFile
@@ -26,9 +25,7 @@ sealed class PaymentStates: DefaultState(){
 }
 
 fun createPaymentFsm() = createStdLibStateMachine("payment", enableUndo = true){
-    logger = StateMachine.Logger { lazyMessage ->
-        LoggerFactory.getLogger("fsm").info(lazyMessage())
-    }
+    logger = fsmLog
     addInitialState(PaymentStates.Initial){
         transition<UpdateEvent.UpdateEvent> {
             targetState = PaymentStates.Pupil
@@ -38,53 +35,39 @@ fun createPaymentFsm() = createStdLibStateMachine("payment", enableUndo = true){
         transition<UpdateEvent.UpdateEvent> {
             targetState = PaymentStates.Service
         }
-        onEntry {
-            val res = pupil(it.argPayment().first, it.argPayment().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState(it, this, ::pupil) }
     }
     addState(PaymentStates.Service){
         transition<UpdateEvent.UpdateEvent> {
             targetState = PaymentStates.Amount
         }
-        onEntry {
-            val res = service(it.argPayment().first, it.argPayment().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState(it, this, ::service) }
     }
     addState(PaymentStates.Amount){
         transition<UpdateEvent.UpdateEvent> {
             targetState = PaymentStates.Property
         }
-        onEntry {
-            val res = amount(it.argPayment().first, it.argPayment().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState<PaymentBuilder>(it, this, ::amount) }
     }
     addState(PaymentStates.Property){
         transition<UpdateEvent.UpdateEvent> {
             targetState = PaymentStates.Confirm
         }
-        onEntry {
-            val res = property(it.argPayment().first, it.argPayment().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState<PaymentBuilder>(it, this, ::property) }
     }
     addState(PaymentStates.Confirm){
         transition<UpdateEvent.UpdateEvent> {
             targetState = PaymentStates.Property
         }
-        onEntry { confirm(it.argPayment().first, it.argPayment().second) }
+        onEntry { process<PaymentBuilder>(it, ::confirm) }
     }
-    onFinished {
-        storage().remove(it.argPayment().first.userId())
-    }
+    onFinished { removeFromStorage<PaymentBuilder>(it) }
 }
 
 fun pupil(update: Update, builder: PaymentBuilder): Boolean{
     val userId = update.userId()
     return fioValidator().validate(update.message.text)
-        .mapLeft { error -> sender().sendText(error, userId) }
+        .mapLeft(mapError(userId))
         .map { fio ->
             val id = fio.split(" ")[0].toInt()
 
@@ -118,7 +101,7 @@ fun service(update: Update, builder: PaymentBuilder): Boolean{
     val userId = update.userId()
     val znatokiUser = userMapper().getById(userId)!!
     return serviceValidator().validate(Pair(update.message.text, znatokiUser.organizationId))
-        .mapLeft { error -> sender().sendText(error, userId) }
+        .mapLeft(mapError(userId))
         .map { service ->
             builder.serviceId = servicesMapper().getServiceId(znatokiUser.organizationId, service)!!
 
@@ -130,7 +113,7 @@ fun amount(update: Update, builder: PaymentBuilder): Boolean{
     val userId = update.userId()
     val znatokiUser = userMapper().getById(userId)!!
     return amountValidator().validate(update.message.text)
-        .mapLeft { error -> sender().sendText(error, userId) }
+        .mapLeft(mapError(userId))
         .map { amount ->
             builder.amount = amount
             val org = organizationMapper().getById(znatokiUser.organizationId)!!
@@ -178,8 +161,7 @@ fun property(update: Update, builder: PaymentBuilder): Boolean{
 
     if (org.paymentCustomProperties.isEmpty()) return true
 
-    var isFinished = false
-    processCustomProperties(
+    return processCustomProperties(
         update,
         builder.propertiesBuilder
     ) { properties ->
@@ -200,12 +182,10 @@ fun property(update: Update, builder: PaymentBuilder): Boolean{
                 row { no() }
             }.build())
         }
-        isFinished = true
     }
-    return isFinished
 }
 
-fun confirm(update: Update, builder: PaymentBuilder){
+fun confirm(update: Update, builder: PaymentBuilder): Boolean{
     val userId = update.userId()
     if (update.message.text == "да") {
         builder.organizationId = userMapper().getById(userId)!!.organizationId
@@ -233,6 +213,7 @@ fun confirm(update: Update, builder: PaymentBuilder){
             }
         sender().sendText("Отменено", userId)
     }
+    return true
 }
 
 fun sendLog(payment: Payment, paymentId: Int, userId: Long) {

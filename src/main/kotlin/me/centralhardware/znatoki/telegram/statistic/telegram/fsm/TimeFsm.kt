@@ -27,9 +27,7 @@ sealed class TimeStates : DefaultState() {
 }
 
 fun createTimeFsm() = createStdLibStateMachine("time", enableUndo = true) {
-    logger = StateMachine.Logger { lazyMessage ->
-        LoggerFactory.getLogger("fsm").info(lazyMessage())
-    }
+    logger = fsmLog
     addInitialState(TimeStates.Initial) {
         transition<UpdateEvent.UpdateEvent> {
             targetState = TimeStates.Subject
@@ -39,45 +37,30 @@ fun createTimeFsm() = createStdLibStateMachine("time", enableUndo = true) {
         transition<UpdateEvent.UpdateEvent> {
             targetState = TimeStates.Fio
         }
-        onEntry {
-            val res = subject(it.argTime().first, it.argTime().second)
-            if (!res) machine.undo()
-        }
-        onExit {  }
+        onEntry { processState(it, this, ::subject) }
     }
     addState(TimeStates.Fio) {
         transition<UpdateEvent.UpdateEvent> {
             targetState = TimeStates.Amount
         }
-        onEntry {
-            val res = fio(it.argTime().first, it.argTime().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState<ServiceBuilder>(it, this, ::fio) }
     }
     addState(TimeStates.Amount) {
         transition<UpdateEvent.UpdateEvent> {
             targetState = TimeStates.Properties
         }
-        onEntry {
-            val res = amount(it.argTime().first, it.argTime().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState<ServiceBuilder>(it, this, ::amount) }
     }
     addState(TimeStates.Properties) {
         transition<UpdateEvent.UpdateEvent> {
             targetState = TimeStates.Confirm
         }
-        onEntry {
-            val res = property(it.argTime().first, it.argTime().second)
-            if (!res) machine.undo()
-        }
+        onEntry { processState<ServiceBuilder>(it, this, ::property) }
     }
     addFinalState(TimeStates.Confirm){
-        onEntry { confirm(it.argTime().first, it.argTime().second) }
+        onEntry { process<ServiceBuilder>(it, ::confirm) }
     }
-    onFinished {
-        storage().remove(it.argTime().first.userId())
-    }
+    onFinished { removeFromStorage<ServiceBuilder>(it) }
 }
 
 
@@ -125,7 +108,7 @@ fun subject(update: Update, builder: ServiceBuilder): Boolean {
     }
 
     return serviceValidator().validate(Pair(update.message.text, znatokiUser.organizationId))
-        .mapLeft { error -> sender().sendText(error, userId) }
+        .mapLeft(mapError(userId))
         .map { service ->
             builder.serviceId = servicesMapper().getServiceId(znatokiUser.organizationId, service)!!
 
@@ -146,7 +129,7 @@ fun fio(update: Update, builder: ServiceBuilder): Boolean {
     val userId = update.userId()
     if (!servicesMapper().isAllowMultiplyClients(builder.serviceId)!!) {
         return fioValidator().validate(text)
-            .mapLeft { error -> sender().sendText(error, userId) }
+            .mapLeft(mapError(userId))
             .map {
                 val id = text.split(" ").first().toInt()
                 if (builder.clientIds.contains(id)) {
@@ -190,7 +173,7 @@ fun amount(update: Update, builder: ServiceBuilder): Boolean {
     val znatokiUser = userMapper().getById(userId)!!
     val org = organizationMapper().getById(znatokiUser.organizationId)!!
     return amountValidator().validate(text)
-        .mapLeft { error -> sender().sendText(error, userId) }
+        .mapLeft(mapError(userId))
         .map { amount ->
             builder.amount = amount
 
@@ -223,16 +206,13 @@ fun property(update: Update, builder: ServiceBuilder): Boolean {
     val org = organizationMapper().getById(znatokiUser.organizationId)!!
     if (org.serviceCustomProperties.isEmpty()) return true
 
-    var isFinished = false
-    processCustomProperties(
+    return processCustomProperties(
         update,
         builder.propertiesBuilder
     ) { properties ->
         builder.properties = properties
         confirmMessage(userId, builder)
-        isFinished = true
     }
-    return isFinished
 }
 
 fun confirmMessage(userId: Long, builder: ServiceBuilder) {
@@ -255,7 +235,7 @@ fun confirmMessage(userId: Long, builder: ServiceBuilder) {
     }
 }
 
-fun confirm(update: Update, builder: ServiceBuilder){
+fun confirm(update: Update, builder: ServiceBuilder): Boolean{
     val text = update.message.text
     val userId = update.userId()
     if (Objects.equals(text, "да")) {
@@ -291,6 +271,7 @@ fun confirm(update: Update, builder: ServiceBuilder){
             }
         sender().sendText("Отменено", userId)
     }
+    return true
 }
 
 fun sendLog(services: List<Service>, userId: Long) {

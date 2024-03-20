@@ -19,14 +19,14 @@ class PropertiesBuilder(propertyDefs: MutableList<PropertyDef>) {
     fun next(): Pair<String, List<String>>? {
         if (propertyDefs.isEmpty()) return null
 
+        current = propertyDefs.first()
+        propertyDefs.removeFirst()
+
         val res =  if (current.type is EnumType) {
             Pair(current.type.format(current.name, current.isOptional), current.enumeration)
         } else {
             Pair(current.type.format(current.name, current.isOptional), listOf())
         }
-
-        current = propertyDefs.first()
-        propertyDefs.remove(current)
 
         return res
     }

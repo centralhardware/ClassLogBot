@@ -12,19 +12,7 @@ object TypeAdapter: KSerializer<Type>{
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("type", PrimitiveKind.STRING)
 
 
-    override fun deserialize(decoder: Decoder): Type {
-        val value = decoder.decodeString()
-        return when (value) {
-            "Date" -> Date()
-            "DateTime" -> DateTime()
-            "Enumeration" -> Enumeration()
-            "Integer" -> Integer()
-            "Photo" -> Photo()
-            "Telephone" -> Telephone()
-            "Text" -> Text()
-            else -> throw IllegalArgumentException()
-        }
-    }
+    override fun deserialize(decoder: Decoder): Type = decoder.decodeString().toType()
 
     override fun serialize(encoder: Encoder, value: Type) {
         encoder.encodeString(value.name())

@@ -8,7 +8,7 @@ import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.objects.Update
 import java.time.LocalDateTime
 
-open class Photo : Type {
+object Photo : Type {
     override fun format(name: String, isOptional: Boolean): String {
         return "Отправьте фото $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }

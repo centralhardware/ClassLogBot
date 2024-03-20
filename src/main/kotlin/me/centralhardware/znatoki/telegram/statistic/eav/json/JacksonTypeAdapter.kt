@@ -17,16 +17,7 @@ object JacksonTypeAdapter {
 
     object Deserializator: JsonDeserializer<Type>(){
         override fun deserialize(jsonParser: JsonParser, p1: DeserializationContext): Type =
-            when (jsonParser.valueAsString) {
-                "Date" -> Date()
-                "DateTime" -> DateTime()
-                "Enumeration" -> Enumeration()
-                "Integer" -> Integer()
-                "Photo" -> Photo()
-                "Telephone" -> Telephone()
-                "Text" -> Text()
-                else -> throw IllegalArgumentException()
-            }
+            jsonParser.valueAsString.toType()
     }
 
 }

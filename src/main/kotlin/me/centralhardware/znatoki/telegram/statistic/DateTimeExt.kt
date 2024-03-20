@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -20,5 +21,5 @@ fun LocalDateTime.formatDate(): String = format(DateTimeFormatter.ofPattern("dd.
 
 fun String?.parseDateTime(): Result<LocalDateTime> =
     runCatching { LocalDateTime.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy HH;mm")) }
-fun String?.parseDate(): Result<LocalDateTime> =
-    runCatching { LocalDateTime.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy")) }
+fun String?.parseDate(): Result<LocalDate> =
+    runCatching { LocalDate.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy")) }
