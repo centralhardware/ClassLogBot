@@ -4,8 +4,8 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Role
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.CommandHandler
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.createPaymentFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startPaymentFsm
 import me.centralhardware.znatoki.telegram.statistic.userId
 import org.springframework.stereotype.Component
@@ -22,7 +22,7 @@ class AddPaymentCommand(
             return
         }
 
-        storage.create(update.userId(), createPaymentFsm(), startPaymentFsm(update))
+        storage.create(update.userId(), PaymentFsm(startPaymentFsm(update)))
     }
 
     override fun isAcceptable(data: String): Boolean = data.equals("/addPayment", true)

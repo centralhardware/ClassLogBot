@@ -9,19 +9,19 @@ import ru.nsk.kstatemachine.StateMachine
 @Component
 class Storage {
 
-    private val fsm: MutableMap<Long, Pair<StateMachine, Builder>> = mutableMapOf()
+    private val fsms: MutableMap<Long, Fsm<Builder>> = mutableMapOf()
 
-    fun create(chatId: Long, stateMachine: StateMachine, builder: Builder){
-        fsm[chatId] = Pair(stateMachine, builder)
+    fun <B: Builder> create(chatId: Long, fsm: Fsm<B>){
+        fsms[chatId] = fsm as Fsm<Builder>
     }
 
     fun process(chatId: Long, update: Update) =
-        fsm[chatId]?.let {
-            runBlocking { it.first.processEvent(UpdateEvent.UpdateEvent, Pair(update, it.second)) }
+        fsms[chatId]?.let {
+            runBlocking { it.processEvent(update) }
         }
 
-    fun remove(chatId: Long) = fsm.remove(chatId)
+    fun remove(chatId: Long) = fsms.remove(chatId)
 
-    fun contain(chatId: Long): Boolean = fsm.containsKey(chatId)
+    fun contain(chatId: Long): Boolean = fsms.containsKey(chatId)
 
 }

@@ -1,17 +1,45 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
-import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
-import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
-import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.objects.Update
 import ru.nsk.kstatemachine.*
 
-sealed interface UpdateEvent {
-    object UpdateEvent : Event
+object UpdateEvent : Event
+
+abstract class Fsm<B: Builder>(private val builder: B){
+
+    private val stateMachine: StateMachine
+
+    init {
+        stateMachine = createFSM()
+    }
+
+    abstract fun createFSM(): StateMachine
+
+    fun processEvent(update: Update) = runBlocking { stateMachine.processEvent(UpdateEvent, update) }
+
+    suspend fun processState(t: TransitionParams<*>, state: DefaultState, block: (Update, B) -> Boolean){
+        if (t.event is WrappedEvent) return
+
+        val res = runCatching { process(t, block) }
+            .onFailure {
+                LoggerFactory.getLogger("fsm").warn("", it)
+                sender().sendText("Данный тип сообщения не поддерживается или произошла ошибка", t.arg().userId(), false,)
+            }
+            .getOrDefault(false)
+
+        if (!res) state.machine.undo()
+    }
+
+    fun process(t: TransitionParams<*>, block: (Update, B) -> Boolean) = block.invoke(t.arg(), builder)
+
+    fun removeFromStorage(t: TransitionParams<*>) = storage().remove(t.arg().userId())
+
 }
+
 
 val fsmLog = StateMachine.Logger { lazyMessage ->
     LoggerFactory.getLogger("fsm").info(lazyMessage())
@@ -24,64 +52,4 @@ fun getLogUser(userId: Long): Long? =
         organizationMapper().getById(user)?.logChatId
     }
 
-fun processCustomProperties(
-    update: Update,
-    builder: PropertiesBuilder,
-    onFinish: (List<Property>) -> Unit
-): Boolean {
-    val chatId = update.userId()
-
-    var isFinished = false
-    builder.validate(update)
-        .mapLeft { error ->
-            sender().sendText(error, chatId)
-        }
-        .map {
-            builder.setProperty(update)
-
-            builder.next()?.let { next ->
-                if (next.second.isNotEmpty()) {
-                    sender().send{
-                        execute(replyKeyboard {
-                            text(next.first)
-                            chatId(chatId)
-                            next.second.forEach {
-                                row { btn(it) }
-                            }
-                        }.build())
-                    }
-                } else {
-                    sender().sendText(next.first, chatId)
-                }
-            } ?: run {
-                onFinish(builder.properties)
-                isFinished = true
-            }
-        }
-    return isFinished
-}
-
-suspend fun <B: Builder> processState(t: TransitionParams<*>, state: DefaultState, block: (Update, B) -> Boolean){
-    if (t.event is WrappedEvent) return
-
-    val res = runCatching { process(t, block) }
-        .onFailure {
-            LoggerFactory.getLogger("fsm").warn("", it)
-            sender().sendText("Данный тип сообщения не поддерживается или произошла ошибка", t.getArg<B>().first.userId(), false,)
-        }
-        .getOrDefault(false)
-
-    if (!res) state.machine.undo()
-}
-
-
-fun <B: Builder> process(t: TransitionParams<*>, block: (Update, B) -> Boolean): Boolean{
-    val argument = t.getArg<B>()
-    return block.invoke(argument.first, argument.second)
-}
-
-fun <B: Builder> removeFromStorage(t: TransitionParams<*>){
-    storage().remove(t.getArg<B>().first.userId())
-}
-
-fun <B: Builder> TransitionParams<*>.getArg() = argument as Pair<Update, B>
+fun TransitionParams<*>.arg() = this.argument as Update

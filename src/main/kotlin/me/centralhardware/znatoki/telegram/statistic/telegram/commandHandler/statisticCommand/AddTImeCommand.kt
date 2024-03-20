@@ -5,7 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.CommandHandler
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.createTimeFsm
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startTimeFsm
 import me.centralhardware.znatoki.telegram.statistic.userId
 import org.springframework.stereotype.Component
@@ -27,7 +27,7 @@ class AddTimeCommand(
         }
 
 
-        storage.create(update.userId(), createTimeFsm(), startTimeFsm(update))
+        storage.create(update.userId(), TimeFsm(startTimeFsm(update)))
     }
 
     override fun isAcceptable(data: String): Boolean = data.equals("/addTime", ignoreCase = true)

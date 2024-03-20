@@ -4,8 +4,8 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Role
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.CommandHandler
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ClientFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.createClientFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startClientFsm
 import me.centralhardware.znatoki.telegram.statistic.userId
 import org.springframework.stereotype.Component
@@ -25,7 +25,7 @@ class AddClientCommand(
             sender.sendText("Сначала сохраните текущую запись", update.userId(), false)
             return
         }
-        storage.create(update.userId(), createClientFsm(), startClientFsm(update))
+        storage.create(update.userId(), ClientFsm(startClientFsm(update)))
     }
 
     override fun isAcceptable(data: String): Boolean = data.equals("/addPupil", ignoreCase = true)
