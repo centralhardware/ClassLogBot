@@ -5,6 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OP
 import org.apache.commons.lang3.StringUtils
 import org.telegram.telegrambots.meta.api.objects.Update
 
+typealias NumberType = Integer
 object Integer : Type {
 
     override fun format(name: String, isOptional: Boolean): String {

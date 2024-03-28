@@ -3,7 +3,9 @@ package me.centralhardware.znatoki.telegram.statistic.report
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import me.centralhardware.znatoki.telegram.statistic.BeanUtils
+import me.centralhardware.znatoki.telegram.statistic.clientService
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
+import me.centralhardware.znatoki.telegram.statistic.eav.types.NumberType
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
@@ -15,6 +17,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.Comparator
 
 class MonthReport(
     private val fio: String,
@@ -40,7 +43,7 @@ class MonthReport(
 
         val fioToTimes: Multimap<Client, Service> = ArrayListMultimap.create()
         filteredServices.forEach { service ->
-            BeanUtils.getBean(ClientService::class.java).findById(service.clientId)?.let { client ->
+            clientService().findById(service.clientId)?.let { client ->
                 fioToTimes.put(client, service)
             }
         }
@@ -49,9 +52,10 @@ class MonthReport(
         val totalGroup = AtomicInteger()
 
         val i = AtomicInteger(1)
-//        val comparator: Comparator<Map.Entry<Client, Collection<Service>>> = getComparator(
-//            BeanUtils.getBean(ClientService::class.java).findById(filteredServices.first().clientId)!!
-//        )
+        val comparator: Comparator<Client> = getComparator(
+            BeanUtils.getBean(ClientService::class.java).findById(filteredServices.first().clientId)!!
+        )
+        fioToTimes
 
         return excel(fio, serviceName, date) {
             sheet("отчет") {
@@ -74,7 +78,10 @@ class MonthReport(
                     cell("Даты посещений")
                 }
 
-                fioToTimes.asMap().forEach { (client, fioTimes) ->
+                fioToTimes
+                    .asMap()
+                    .toSortedMap<Client, Collection<Service>>(comparator)
+                    .forEach { (client, fioTimes) ->
                     val individual = fioTimes.count { id2times[it.id].size == 1 }
                     val group = fioTimes.count { id2times[it.id].size != 1 }
                     totalIndividual.addAndGet(individual)
@@ -114,41 +121,35 @@ class MonthReport(
         }.build()
     }
 
-//    private fun getComparator(client: Client): Comparator<Map.Entry<Client, Collection<Service>>> {
-//        val props = client.properties.filter { reportFields.contains(it.name) }
-//
-//        var comparator = props.firstOrNull()?.let { property ->
-//            if (property.type is Integer) {
-//                Comparator.comparing {
-//                    val propValue = getProperty(it.key, property.name)?.value
-//                    if (StringUtils.isNotBlank(propValue)) propValue else null
-//                }
-//            } else {
-//                Comparator.comparing { obj: Map.Entry<Client, Collection<Service>> -> getProperty(obj.key, property.name)?.value }
-//            }
-//        }
-//
-//        props.drop(1).forEach { property ->
-//            comparator = if (property.type is Integer) {
-//                comparator?.thenComparing<Map.Entry<Client, Collection<Service>>, Int?> {
-//                    val propValue = getProperty(it.key, property.name)?.value
-//                    if (StringUtils.isNotBlank(propValue)) propValue?.toInt() else null
-//                }
-//
-//            } else {
-//                comparator?.thenComparing { obj: Map.Entry<Client, Collection<Service>> -> getProperty(obj.key, property.name)?.value }
-//            }
-//        }
-//
-//        return comparator.thenComparing(
-//            Comparator.comparing<Map.Entry<Client, Collection<Service>>, String?> {
-//                it.key.fio()
-//            }).nullsLast(Collator.getInstance(Locale.Builder().setLanguage("ru").setRegion("RU").build())) ?:
-//                Comparator.comparing<Map.Entry<Client, Collection<Service>>, String> {
-//                    it.key.fio()
-//                }
-//            }
-//    }
+    private fun getComparator(client: Client): Comparator<Client> {
+        val props = client.properties.filter { reportFields.contains(it.name) }
+
+        var comparator: Comparator<Client> = props.first().let { property ->
+            if (property.type is NumberType) {
+                compareBy(nullsLast()) {
+                    val propValue = getProperty(it, property.name)?.value
+                    if (!propValue.isNullOrBlank()) propValue.toInt() else null
+                }
+            } else {
+                compareBy(nullsLast()) {
+                    getProperty(it, property.name)?.value
+                }
+            }
+        }
+
+        props.drop(1).forEach { property ->
+            if (property.type is NumberType) {
+                comparator.thenBy(nullsLast()) {
+                    val propValue = getProperty(it, property.name)?.value
+                    if (!propValue.isNullOrBlank()) propValue.toInt() else null
+                }
+            } else {
+                comparator.thenBy(nullsLast()) { getProperty(it, property.name)?.value }
+            }
+        }
+
+        return comparator.thenBy { it.fio() }
+    }
 
     private fun getProperty(client: Client, name: String): Property? =
         client.properties.firstOrNull { it.name == name}

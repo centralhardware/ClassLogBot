@@ -50,7 +50,7 @@ class Client(
     val updateBy: Long?,
     @Column(name = "deleted", columnDefinition = "boolean default false")
     var deleted: Boolean = false
-){
+) {
 
     fun getInfo(services: List<String>) = """
         id=${id.makeBold()}

@@ -14,7 +14,7 @@ class AmountValidator : Validator<String, Int> {
             }
 
             parsedValue <= 0 -> {
-                Either.Left("Введенное значение должно быть числом")
+                Either.Left("Введенное значение должно быть больше нуля")
             }
 
             else -> {
