@@ -63,17 +63,6 @@ class ServicesMapper(private val session: Session) {
         ).map { row -> row.string("name") }.asSingle
     )
 
-
-    fun getKeyById(id: Long): String? = session.run(
-        queryOf(
-            """
-            SELECT key
-            FROM  services
-            WHERE id = :id
-            """, mapOf("id" to id)
-        ).map { row -> row.string("key") }.asSingle
-    )
-
     fun isAllowMultiplyClients(id: Long): Boolean? = session.run(
         queryOf(
             """

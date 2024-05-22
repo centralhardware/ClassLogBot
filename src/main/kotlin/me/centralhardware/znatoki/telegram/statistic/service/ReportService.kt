@@ -41,7 +41,7 @@ class ReportService(
                     MonthReport(
                         user.name,
                         serviceId,
-                        servicesMapper.getKeyById(serviceId)!!,
+                        servicesMapper.getNameById(serviceId)!!,
                         it.dateTime,
                         organizationMapper.getReportFields(user.organizationId),
                         organizationMapper.getById(user.organizationId)!!.clientName,
