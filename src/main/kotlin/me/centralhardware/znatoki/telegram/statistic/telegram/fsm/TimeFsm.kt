@@ -14,6 +14,15 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.Update
 import ru.nsk.kstatemachine.*
+import ru.nsk.kstatemachine.state.DefaultState
+import ru.nsk.kstatemachine.state.FinalState
+import ru.nsk.kstatemachine.state.addFinalState
+import ru.nsk.kstatemachine.state.addInitialState
+import ru.nsk.kstatemachine.state.onEntry
+import ru.nsk.kstatemachine.state.onFinished
+import ru.nsk.kstatemachine.state.transition
+import ru.nsk.kstatemachine.statemachine.StateMachine
+import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 import java.util.*
 
 sealed class TimeStates : DefaultState() {
@@ -26,7 +35,7 @@ sealed class TimeStates : DefaultState() {
 }
 
 class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
-    override fun createFSM(): StateMachine = createStdLibStateMachine("time", enableUndo = true) {
+    override fun createFSM(): StateMachine = createStdLibStateMachine("time", creationArguments = StateMachine.CreationArguments(isUndoEnabled = true)) {
         logger = fsmLog
         addInitialState(TimeStates.Initial) {
             transition<UpdateEvent> {

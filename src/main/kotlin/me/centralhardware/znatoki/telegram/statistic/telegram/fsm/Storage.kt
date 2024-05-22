@@ -4,7 +4,6 @@ import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.entity.*
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.Update
-import ru.nsk.kstatemachine.StateMachine
 
 @Component
 class Storage {

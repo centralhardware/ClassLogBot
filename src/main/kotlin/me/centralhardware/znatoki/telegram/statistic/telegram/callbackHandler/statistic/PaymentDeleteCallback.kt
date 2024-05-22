@@ -9,8 +9,8 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.Ca
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
-import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.User
+import org.telegram.telegrambots.meta.api.objects.message.Message
 
 @Component
 class PaymentDeleteCallback(private val paymentMapper: PaymentMapper,

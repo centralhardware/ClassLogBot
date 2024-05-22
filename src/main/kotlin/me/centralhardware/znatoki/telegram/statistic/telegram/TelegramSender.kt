@@ -40,8 +40,7 @@ class TelegramSender(
                 .text(text)
 
         if (removeKeyboard) {
-            val removeMarkup = ReplyKeyboardRemove()
-            removeMarkup.removeKeyboard = true
+            val removeMarkup = ReplyKeyboardRemove.builder().removeKeyboard(true).build();
             message.replyMarkup(removeMarkup)
         }
 

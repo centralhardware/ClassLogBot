@@ -5,7 +5,13 @@ import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.objects.Update
+import ru.nsk.kstatemachine.event.Event
 import ru.nsk.kstatemachine.*
+import ru.nsk.kstatemachine.event.WrappedEvent
+import ru.nsk.kstatemachine.state.DefaultState
+import ru.nsk.kstatemachine.statemachine.StateMachine
+import ru.nsk.kstatemachine.statemachine.undo
+import ru.nsk.kstatemachine.transition.TransitionParams
 
 object UpdateEvent : Event
 

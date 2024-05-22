@@ -9,7 +9,11 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
-import ru.nsk.kstatemachine.*
+import ru.nsk.kstatemachine.state.*
+import ru.nsk.kstatemachine.statemachine.StateMachine
+import ru.nsk.kstatemachine.statemachine.StateMachine.CreationArguments
+import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
+
 
 sealed class ClientState : DefaultState() {
     object Initial : ClientState()
@@ -19,7 +23,7 @@ sealed class ClientState : DefaultState() {
 }
 
 class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
-    override fun createFSM(): StateMachine = createStdLibStateMachine("client", enableUndo = true) {
+    override fun createFSM(): StateMachine = createStdLibStateMachine("client", creationArguments = CreationArguments(isUndoEnabled = true)) {
         logger = fsmLog
         addInitialState(ClientState.Initial) {
             transition<UpdateEvent> {
