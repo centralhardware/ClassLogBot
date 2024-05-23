@@ -1,9 +1,9 @@
 plugins {
     kotlin("jvm") version "2.0.0"
     id("org.springframework.boot") version "3.2.3"
-    id("org.jetbrains.kotlin.plugin.allopen") version "1.9.23"
-    kotlin("plugin.noarg") version "1.9.23"
-    kotlin("plugin.serialization") version "1.9.23"
+    id("org.jetbrains.kotlin.plugin.allopen") version "2.0.0"
+    kotlin("plugin.noarg") version "2.0.0"
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
