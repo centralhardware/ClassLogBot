@@ -32,10 +32,10 @@ noArg {
     annotation("me.centralhardware.znatoki.telegram.statistic.NoArg")
 }
 
-val tg_versoin = "7.2.1"
-var spring_boot_version = "3.2.5"
-var poi_version = "5.2.5"
-var kstatemachine_version = "0.30.0"
+val tgVersoin = "7.2.1"
+var springBootVersion = "3.2.5"
+var poiVersion = "5.2.5"
+var kstatemachineVersion = "0.30.0"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:1.2.4")
@@ -43,32 +43,25 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    implementation("io.github.nsk90:kstatemachine:$kstatemachine_version")
-    implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachine_version")
+    implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
+    implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
-
-    implementation("org.telegram:telegrambots-springboot-longpolling-starter:$tg_versoin")
-    implementation("org.telegram:telegrambots-client:$tg_versoin")
-
-    implementation("org.apache.commons:commons-lang3:3.14.0")
-    implementation("com.google.guava:guava:33.2.0-jre")
-    implementation("org.apache.commons:commons-collections4:4.4")
+    implementation("org.telegram:telegrambots-springboot-longpolling-starter:$tgVersoin")
+    implementation("org.telegram:telegrambots-client:$tgVersoin")
 
     implementation("io.minio:minio:8.5.10")
 
     implementation("jakarta.annotation:jakarta.annotation-api:3.0.0-M1")
     implementation("ch.qos.logback:logback-classic:1.5.6")
 
-    implementation("org.springframework.boot:spring-boot-starter:$spring_boot_version")
+    implementation("org.springframework.boot:spring-boot-starter:$springBootVersion")
 
-    implementation("org.apache.poi:poi:$poi_version")
-    implementation("org.apache.poi:poi-ooxml:$poi_version")
+    implementation("org.apache.poi:poi:$poiVersion")
+    implementation("org.apache.poi:poi-ooxml:$poiVersion")
 
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$spring_boot_version")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
 
     implementation("org.postgresql:postgresql:42.7.3")
-
-    implementation("commons-validator:commons-validator:1.8.0")
 
     implementation("org.hibernate.search:hibernate-search-mapper-orm-orm6:6.2.3.Final")
     implementation("org.hibernate.search:hibernate-search-backend-lucene:6.2.3.Final")
