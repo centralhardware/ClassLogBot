@@ -10,25 +10,6 @@ import java.util.*
 @Component
 class ServicesMapper(private val session: Session) {
 
-    fun insert(services: Services) = session.execute(
-        queryOf(
-            """
-            INSERT INTO services (
-                key,
-                name,
-                organization_id
-            ) VALUES (
-                :key,
-                :name,
-                :orgId
-            )
-            """, mapOf(
-                "key" to services.key,
-                "name" to services.name,
-                "orgId" to services.orgId
-            )
-        )
-    )
 
     fun getServicesByOrganization(orgId: UUID): List<Services> = session.run(
         queryOf(

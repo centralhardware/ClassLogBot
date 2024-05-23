@@ -57,4 +57,4 @@ class ServiceBuilder: Builder {
     }
 }
 
-fun List<Service>.toClientIds(): List<Int> = this.map { it.clientId }.toList()
+fun Collection<Service>.toClientIds(): List<Int> = this.map { it.clientId }.toList()
