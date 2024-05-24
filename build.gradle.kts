@@ -33,7 +33,7 @@ noArg {
 }
 
 val tgVersoin = "7.2.1"
-var springBootVersion = "3.2.5"
+var springBootVersion = "3.3.0"
 var poiVersion = "5.2.5"
 var kstatemachineVersion = "0.30.0"
 
