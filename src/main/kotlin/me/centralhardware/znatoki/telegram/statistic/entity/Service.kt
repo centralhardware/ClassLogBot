@@ -40,6 +40,8 @@ class ServiceBuilder: Builder {
     lateinit var propertiesBuilder: PropertiesBuilder
     var clientIds: MutableSet<Int> = HashSet()
 
+    fun serviceId() = runCatching { serviceId }.getOrNull()
+
     fun clientId(clientId: Int) = clientIds.add(clientId)
 
     fun nextProperty() = propertiesBuilder.next()

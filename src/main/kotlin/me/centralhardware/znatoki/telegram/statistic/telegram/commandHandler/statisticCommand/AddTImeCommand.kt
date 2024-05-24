@@ -26,8 +26,12 @@ class AddTimeCommand(
             return
         }
 
-
-        storage.create(update.userId(), TimeFsm(startTimeFsm(update)))
+        val builder = startTimeFsm(update)
+        val fsm = TimeFsm(builder)
+        storage.create(update.userId(), fsm)
+        if (builder.serviceId() != null){
+            storage.process(update.userId(), update)
+        }
     }
 
     override fun isAcceptable(data: String): Boolean = data.equals("/addTime", ignoreCase = true)

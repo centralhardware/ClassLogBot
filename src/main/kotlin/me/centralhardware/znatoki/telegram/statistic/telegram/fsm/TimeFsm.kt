@@ -13,7 +13,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.Update
-import ru.nsk.kstatemachine.*
 import ru.nsk.kstatemachine.state.DefaultState
 import ru.nsk.kstatemachine.state.FinalState
 import ru.nsk.kstatemachine.state.addFinalState
@@ -118,7 +117,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                     sender().sendText("Введите стоимость занятия", userId)
                 }.isRight()
         } else {
-            if (Objects.equals(text, "/complete")) {
+            if (text == "/complete") {
                 if (builder.clientIds.isEmpty()) {
                     sender().sendText("Необходимо ввести как минимум одно ФИО", userId)
                     return false
