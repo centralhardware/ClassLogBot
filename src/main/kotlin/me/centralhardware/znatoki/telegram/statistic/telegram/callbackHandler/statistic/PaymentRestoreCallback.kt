@@ -14,7 +14,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 suspend fun paymentRestoreCallback(query: DataCallbackQuery) {
     val id = query.data.replace("paymentRestore-", "").toInt()
 
-    if (PaymentMapper.getOrgById(id) != UserMapper.getById(query.from.id.chatId.long)?.organizationId) {
+    if (PaymentMapper.getOrgById(id) != UserMapper.findById(query.from.id.chatId.long)?.organizationId) {
         bot.sendMessage(query.from, "Доступ запрещен")
         return
     }

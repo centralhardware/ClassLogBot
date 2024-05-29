@@ -47,7 +47,7 @@ object DailyReport{
                     """
                         Время: ${it.first().dateTime.formatTime()}
                         Предмет: ${ServicesMapper.getNameById(it.first().serviceId)}
-                        ${OrganizationMapper.getById(it.first().organizationId)!!.clientName}: ${
+                        ${OrganizationMapper.findById(it.first().organizationId)!!.clientName}: ${
                         it.toClientIds().joinToString(", ") { clientId -> ClientMapper.getFioById(clientId) }
                     }
                         Стоимость: ${it.first().amount}

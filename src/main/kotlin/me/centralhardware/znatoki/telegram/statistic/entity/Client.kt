@@ -22,21 +22,6 @@ class Client(
     val updateBy: Long?,
     var deleted: Boolean = false
 ) {
-
-    fun getInfo(services: List<String>) = """
-        id=${id.makeBold()}
-        фамилия=${secondName.makeBold()}
-        имя=${name.makeBold()}
-        отчество=${lastName.makeBold()}
-        ${properties.print()}
-        Предметы=${services.joinToString(",").makeBold()}
-        Баланс=${PaymentMapper.getCredit(id!!)}
-        дата создания=${createDate.formatDate().makeBold()}
-        дата изменения=${modifyDate.formatDate().makeBold()}
-        создано=$createdBy
-        редактировано=${updateBy}
-        """.trimIndent()
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -52,6 +37,20 @@ class Client(
 
 
 }
+
+fun Client.getInfo(services: List<String>) = """
+        id=${id.makeBold()}
+        фамилия=${secondName.makeBold()}
+        имя=${name.makeBold()}
+        отчество=${lastName.makeBold()}
+        ${properties.print()}
+        Предметы=${services.joinToString(",").makeBold()}
+        Баланс=${PaymentMapper.getCredit(id!!)}
+        дата создания=${createDate.formatDate().makeBold()}
+        дата изменения=${modifyDate.formatDate().makeBold()}
+        создано=$createdBy
+        редактировано=${updateBy}
+        """.trimIndent()
 
 fun Client.fio(): String = "$name $lastName $secondName".replace("\\s{2,}".toRegex(), " ")
 

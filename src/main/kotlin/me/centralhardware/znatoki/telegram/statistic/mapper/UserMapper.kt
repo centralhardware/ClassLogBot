@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.parseUser
 
 object UserMapper {
 
-    fun getById(id: Long): TelegramUser? = session.run(
+    fun findById(id: Long): TelegramUser? = session.run(
         queryOf(
             """
             SELECT *
@@ -19,22 +19,22 @@ object UserMapper {
     )
 
     fun hasWriteRight(id: Long): Boolean {
-        return getById(id)?.role?.let {
+        return findById(id)?.role?.let {
             it == Role.READ_WRITE ||
                     it == Role.ADMIN
         } ?: false
     }
 
     fun hasReadRight(id: Long): Boolean {
-        return getById(id)?.role?.let {
+        return findById(id)?.role?.let {
             it == Role.READ ||
                     it == Role.READ_WRITE ||
                     it == Role.ADMIN
         } ?: false
     }
 
-    fun isAdmin(id: Long): Boolean {
-        return getById(id)?.role?.let {
+    fun hasAdminRight(id: Long): Boolean {
+        return findById(id)?.role?.let {
             it == Role.ADMIN
         } ?: false
     }

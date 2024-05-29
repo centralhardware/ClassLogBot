@@ -18,7 +18,7 @@ object ClientService {
 
 
     fun init() {
-        fixedRateTimer(name = "updateLucene", period = 1000L) {
+        fixedRateTimer(name = "updateLucene", period = 60000L) {
             val index = ByteBuffersDirectory()
             val analyzer = StandardAnalyzer()
             val indexWriterConfig = IndexWriterConfig(analyzer)
@@ -49,11 +49,8 @@ object ClientService {
     }
 
     fun search(fio: String): List<Client> {
-        // Разделяем входную строку на отдельные слова
-        val words = fio.split(" ")
-
         // Создаем поисковые запросы для каждого слова по каждому полю (имя, фамилия и отчество)
-        val queries = words.flatMap { word ->
+        val queries = fio.split(" ").flatMap { word ->
             listOf(
                 FuzzyQuery(Term("name", word), 2),
                 FuzzyQuery(Term("secondName", word), 2),

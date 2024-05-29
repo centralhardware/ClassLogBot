@@ -9,7 +9,7 @@ import java.util.*
 
 object OrganizationMapper {
 
-    fun getById(id: UUID): Organization? = session.run(
+    fun findById(id: UUID): Organization? = session.run(
         queryOf(
             """
             SELECT *
@@ -27,16 +27,6 @@ object OrganizationMapper {
             """
         ).map{ it.parseOrganization() }.asList
     )
-
-    fun exist(ownerId: Long): Boolean = session.run(
-        queryOf(
-            """
-            SELECT exists(SELECT id
-                          FROM  organization
-                          WHERE owner = :owner_id) as e
-            """, mapOf("owner_id" to ownerId)
-        ).map { row -> row.boolean("e") }.asSingle
-    )?: false
 
     fun getInlineFields(id: UUID): List<String> = session.run(
         queryOf(

@@ -16,7 +16,7 @@ import org.apache.commons.collections4.CollectionUtils
 import java.util.stream.Collectors
 
 suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<String>) {
-    val orgId = UserMapper.getById(message.userId())!!.organizationId
+    val orgId = UserMapper.findById(message.userId())!!.organizationId
     val searchText = args.joinToString(separator = " ")
     val searchResult = ClientService.search(searchText)
         .stream()

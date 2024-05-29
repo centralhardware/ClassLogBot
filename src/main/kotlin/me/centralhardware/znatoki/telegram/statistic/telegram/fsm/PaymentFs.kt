@@ -88,7 +88,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
                 builder.clientId = id
                 bot.sendTextMessage(message.chat, "Выберите предмет", replyMarkup = replyKeyboard {
-                    UserMapper.getById(userId)?.services?.forEach {
+                    UserMapper.findById(userId)?.services?.forEach {
                         row { ServicesMapper.getNameById(it)?.let { name -> simpleButton(name) } }
                     }
                 })
@@ -97,7 +97,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     suspend fun service(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
         val userId = message.userId()
-        val znatokiUser = UserMapper.getById(userId)!!
+        val znatokiUser = UserMapper.findById(userId)!!
         return validateService(Pair(message.content.asTextedInput()!!.text!!, znatokiUser.organizationId))
             .mapLeft(mapError(message))
             .map { service ->
@@ -109,12 +109,12 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     private suspend fun amount(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
         val userId = message.userId()
-        val znatokiUser = UserMapper.getById(userId)!!
+        val znatokiUser = UserMapper.findById(userId)!!
         return validateAmount(message.content.asTextedInput()!!.text!!)
             .mapLeft(mapError(message))
             .map { amount ->
                 builder.amount = amount
-                val org = OrganizationMapper.getById(znatokiUser.organizationId)!!
+                val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
                 if (org.paymentCustomProperties.isEmpty()
                 ) {
                     bot.sendTextMessage(message.chat, builder.let {
@@ -142,8 +142,8 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
         val userId = message.userId()
-        val znatokiUser = UserMapper.getById(userId)!!
-        val org = OrganizationMapper.getById(znatokiUser.organizationId)!!
+        val znatokiUser = UserMapper.findById(userId)!!
+        val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
 
         if (org.paymentCustomProperties.isEmpty()) return true
 
@@ -167,7 +167,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
         val userId = message.userId()
         val text = message.text!!
         if (text == "да") {
-            builder.organizationId = UserMapper.getById(userId)!!.organizationId
+            builder.organizationId = UserMapper.findById(userId)!!.organizationId
             builder.chatId = userId
             val payment = builder.build()
             val paymentId = PaymentMapper.insert(payment)
@@ -210,11 +210,11 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
             val text = """
                 #оплата
                 Время: ${payment.dateTime.formatDateTime()}
-                Организация: ${OrganizationMapper.getById(payment.organizationId)!!.name.hashtag()}
+                Организация: ${OrganizationMapper.findById(payment.organizationId)!!.name.hashtag()}
                 Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
                 Предмет: ${ServicesMapper.getNameById(payment.serviceId!!)}
                 Оплата: ${payment.amount}
-                Оплатил: ${UserMapper.getById(userId)!!.name.hashtag()}
+                Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
                 ${payment.properties.print()}
             """.trimIndent()
             val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()

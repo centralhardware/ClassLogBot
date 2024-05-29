@@ -80,8 +80,8 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     private suspend fun subject(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
         val userId = message.userId()
-        val user = UserMapper.getById(userId)!!
-        val znatokiUser = UserMapper.getById(userId)!!
+        val user = UserMapper.findById(userId)!!
+        val znatokiUser = UserMapper.findById(userId)!!
 
         if (user.services.size == 1) {
             builder.serviceId = user.services.first()
@@ -143,8 +143,8 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     private suspend fun amount(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
         val userId = message.userId()
-        val znatokiUser = UserMapper.getById(userId)!!
-        val org = OrganizationMapper.getById(znatokiUser.organizationId)!!
+        val znatokiUser = UserMapper.findById(userId)!!
+        val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
         return validateAmount(message.text!!)
             .mapLeft(mapError(message))
             .map { amount ->
@@ -171,8 +171,8 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
         val userId = message.userId()
-        val znatokiUser = UserMapper.getById(userId)!!
-        val org = OrganizationMapper.getById(znatokiUser.organizationId)!!
+        val znatokiUser = UserMapper.findById(userId)!!
+        val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
         if (org.serviceCustomProperties.isEmpty()) return true
 
         return builder.propertiesBuilder.process(
@@ -202,11 +202,11 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
         val serviceId = UUID.randomUUID()
 
         builder.id = serviceId
-        builder.organizationId = UserMapper.getById(userId)!!.organizationId
+        builder.organizationId = UserMapper.findById(userId)!!.organizationId
 
         val services = builder.build()
         services.forEach {
-            ServiceMapper.insertTime(it)
+            ServiceMapper.insert(it)
 
             PaymentMapper.insert(
                 Payment(
@@ -245,7 +245,7 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
                     #занятие
                     Время: ${service.dateTime.formatDateTime()}
                     Предмет: ${ServicesMapper.getNameById(service.serviceId).hashtag()}
-                    ${OrganizationMapper.getById(service.organizationId)?.clientName}: ${
+                    ${OrganizationMapper.findById(service.organizationId)?.clientName}: ${
             services.toClientIds().joinToString(", ") {
                 "#${ClientMapper.getFioById(it).replace(" ", "_")}(${
                     PaymentMapper.getCredit(
@@ -255,7 +255,7 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
             }
         }
                     Стоимость: ${service.amount}
-                    Преподаватель: ${UserMapper.getById(userId)?.name.hashtag()}
+                    Преподаватель: ${UserMapper.findById(userId)?.name.hashtag()}
                     ${service.properties.print()}
                     """.trimIndent()
 
@@ -290,11 +290,11 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
 
 suspend fun startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder {
     val userId = message.userId()
-    val user = UserMapper.getById(userId)!!
+    val user = UserMapper.findById(userId)!!
     val builder = ServiceBuilder()
     builder.chatId = userId
-    if (UserMapper.getById(userId)!!.services.size == 1) {
-        builder.serviceId = UserMapper.getById(userId)!!.services.first()
+    if (UserMapper.findById(userId)!!.services.size == 1) {
+        builder.serviceId = UserMapper.findById(userId)!!.services.first()
     }
 
     when {

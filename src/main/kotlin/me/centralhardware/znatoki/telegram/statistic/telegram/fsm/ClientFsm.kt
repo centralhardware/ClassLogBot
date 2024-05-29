@@ -15,6 +15,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
+import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
 import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.i18n.load
 import me.centralhardware.znatoki.telegram.statistic.i18n.resourceBundle
@@ -58,7 +59,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
 
     private suspend fun fio(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
         val chatId = message.userId()
-        val telegramUser = UserMapper.getById(chatId)!!
+        val telegramUser = UserMapper.findById(chatId)!!
         val words = message.content.asTextContent()!!.text.split(" ")
         if (words.size !in 2..3) {
             bot.sendTextMessage(message.chat, I18n.Message.INPUT_FIO_REQUIRED_FORMAT.load())
@@ -89,7 +90,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
             return false
         }
 
-        val org = OrganizationMapper.getById(telegramUser.organizationId)!!
+        val org = OrganizationMapper.findById(telegramUser.organizationId)!!
 
         if (org.clientCustomProperties.isEmpty()) {
             finish(listOf(), message, builder)
@@ -108,16 +109,16 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
-        val telegramUser = UserMapper.getById(message.userId())!!
+        val telegramUser = UserMapper.findById(message.userId())!!
 
-        if (OrganizationMapper.getById(telegramUser.organizationId)!!.clientCustomProperties.isEmpty()) return true
+        if (OrganizationMapper.findById(telegramUser.organizationId)!!.clientCustomProperties.isEmpty()) return true
 
         return builder.propertiesBuilder.process(message){ runBlocking { finish(it, message, builder) } }
     }
 
     private suspend fun finish(p: List<Property>, message: CommonMessage<MessageContent>, builder: ClientBuilder) {
         builder.apply {
-            organizationId = UserMapper.getById(message.userId())!!.organizationId
+            organizationId = UserMapper.findById(message.userId())!!.organizationId
             createdBy = message.userId()
             properties = p
         }
@@ -138,7 +139,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     private suspend fun sendLog(client: Client, chatId: Long) {
         getLogUser(chatId)?.let { logId ->
             bot.send(logId, text = """
-                #${OrganizationMapper.getById(client.organizationId)!!.clientName}   
+                #${OrganizationMapper.findById(client.organizationId)!!.clientName}   
                 ${
                 client.getInfo(
                     ServiceMapper.getServicesForClient(client.id!!)

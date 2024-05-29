@@ -23,7 +23,7 @@ object ReportService{
         val times = getTime.invoke(id)
         if (CollectionUtils.isEmpty(times)) return emptyList()
 
-        val user = UserMapper.getById(times.first().chatId)?.let {user ->
+        val user = UserMapper.findById(times.first().chatId)?.let { user ->
             user.services.mapNotNull { serviceId ->
                 val service = times.stream()
                     .filter { time -> time.serviceId == serviceId }
@@ -37,7 +37,7 @@ object ReportService{
                         ServicesMapper.getNameById(serviceId)!!,
                         it.dateTime,
                         OrganizationMapper.getReportFields(user.organizationId),
-                        OrganizationMapper.getById(user.organizationId)!!.clientName,
+                        OrganizationMapper.findById(user.organizationId)!!.clientName,
                         id
                     ).generate(times)
                 }

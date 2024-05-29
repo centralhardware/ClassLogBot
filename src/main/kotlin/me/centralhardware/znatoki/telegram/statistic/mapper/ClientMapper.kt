@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.toJson
 
 object ClientMapper {
 
-    fun existsByFio(fio: String) = session.run(
+    fun existsByFio(fio: String): Boolean = session.run(
         queryOf(
             """
             SELECT EXISTS(
@@ -93,7 +93,7 @@ object ClientMapper {
         ).map { it.parseClient() }.asList
     )
 
-    fun getFioById(id: Int) = session.run(
+    fun getFioById(id: Int): String = session.run(
         queryOf(
             """
             SELECT concat(name, ' ', last_name, ' ', second_name) as fio

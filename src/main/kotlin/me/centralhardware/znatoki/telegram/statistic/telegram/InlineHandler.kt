@@ -20,7 +20,7 @@ suspend fun processInline(query: BaseInlineQuery) {
 
     val i = AtomicInteger()
     val articles = ClientService.search(text)
-        .filter { it.organizationId == UserMapper.getById(query.user.id.chatId.long)!!.organizationId }
+        .filter { it.organizationId == UserMapper.findById(query.user.id.chatId.long)!!.organizationId }
         .map {
             InlineQueryResultArticle(
                 InlineQueryId(i.getAndIncrement().toString()),

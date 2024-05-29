@@ -63,8 +63,8 @@ val fsmLog = StateMachine.Logger { lazyMessage ->
 fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error -> runBlocking { bot.sendTextMessage(message.chat, error) } }
 
 fun getLogUser(userId: Long): ChatId? =
-    UserMapper.getById(userId)?.organizationId?.let { user ->
-        OrganizationMapper.getById(user)?.logChatId?.toChatId()
+    UserMapper.findById(userId)?.organizationId?.let { user ->
+        OrganizationMapper.findById(user)?.logChatId?.toChatId()
     }
 
 fun TransitionParams<*>.arg() = this.argument as CommonMessage<MessageContent>

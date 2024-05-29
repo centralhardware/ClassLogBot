@@ -21,7 +21,7 @@ object ServiceMapper {
         ).map { row -> row.uuid("org_id") }.asSingle
     )
 
-    fun insertTime(service: Service) = session.execute(
+    fun insert(service: Service) = session.execute(
         queryOf(
             """
             INSERT INTO service (
@@ -56,7 +56,7 @@ object ServiceMapper {
         )
     )
 
-    private fun getTimes(
+    private fun findAllByUserId(
         userId: Long,
         startDate: LocalDateTime,
         endDate: LocalDateTime
@@ -84,11 +84,11 @@ object ServiceMapper {
     )
 
     fun getTodayTimes(chatId: Long): List<Service> {
-        return getTimes(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
+        return findAllByUserId(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
     }
 
     fun getCurrentMontTimes(chatId: Long): List<Service> {
-        return getTimes(
+        return findAllByUserId(
             chatId,
             LocalDateTime.now().startOfMonth(),
             LocalDateTime.now().endOfMonth()
@@ -96,7 +96,7 @@ object ServiceMapper {
     }
 
     fun getPrevMonthTimes(chatId: Long): List<Service> {
-        return getTimes(
+        return findAllByUserId(
             chatId,
             LocalDateTime.now().prevMonth().startOfMonth(),
             LocalDateTime.now().prevMonth().endOfMonth()

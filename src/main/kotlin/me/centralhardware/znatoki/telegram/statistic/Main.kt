@@ -6,13 +6,19 @@ import dev.inmo.kslog.common.defaultMessageFormatter
 import dev.inmo.kslog.common.setDefaultKSLog
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
+import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.telegramBotWithBehaviourAndLongPolling
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
+import dev.inmo.tgbotapi.extensions.utils.asFromUser
+import dev.inmo.tgbotapi.extensions.utils.fromUserOrNull
 import dev.inmo.tgbotapi.types.BotCommand
+import dev.inmo.tgbotapi.types.update.abstracts.Update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
+import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
+import me.centralhardware.znatoki.telegram.statistic.i18n.load
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentDeleteCallback
@@ -91,7 +97,7 @@ suspend fun main() {
 
         createSubContextAndDoWithUpdatesFilter(
             stopOnCompletion = false,
-            updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.isAdmin(it.userId()) }) {
+            updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasAdminRight(it.userId()) }) {
             onCommand("grafana") { grafanaCommand(it) }
             onCommandWithArgs("dailyReport") { message, args -> dailyReportCommand(message, args) }
 

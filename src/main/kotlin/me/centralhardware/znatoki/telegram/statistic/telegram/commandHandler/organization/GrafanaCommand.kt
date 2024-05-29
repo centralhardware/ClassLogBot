@@ -9,9 +9,9 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.userId
 
 suspend fun grafanaCommand(message: CommonMessage<TextContent>){
-    val user = UserMapper.getById(message.userId())!!
+    val user = UserMapper.findById(message.userId())!!
 
-    val org = OrganizationMapper.getById(user.organizationId)!!
+    val org = OrganizationMapper.findById(user.organizationId)!!
     bot.sendMessage(
         message.chat,
         """

@@ -16,7 +16,7 @@ import java.util.*
 suspend fun timeDeleteCallback(query: DataCallbackQuery) {
     val id = UUID.fromString(query.data.replace("timeDelete-", ""))
 
-    if (ServiceMapper.getOrgId(id) != UserMapper.getById(query.from.id.chatId.long)?.organizationId) {
+    if (ServiceMapper.getOrgId(id) != UserMapper.findById(query.from.id.chatId.long)?.organizationId) {
         bot.sendMessage(query.from,"Доступ запрещен")
         return
     }
