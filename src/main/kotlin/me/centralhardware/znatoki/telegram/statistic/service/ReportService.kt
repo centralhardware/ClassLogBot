@@ -12,7 +12,7 @@ import java.io.File
 object ReportService{
 
     fun getReportsCurrent(id: Long): List<File> {
-        return getReport(ServiceMapper::getCuurentMontTimes, id)
+        return getReport(ServiceMapper::getCurrentMontTimes, id)
     }
 
     fun getReportPrevious(id: Long): List<File> {

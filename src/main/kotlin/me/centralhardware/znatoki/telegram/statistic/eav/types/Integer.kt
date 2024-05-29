@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OP
 import org.apache.commons.lang3.StringUtils
 
 typealias NumberType = Integer
-object Integer : Type {
+data object Integer : Type {
 
     override fun format(name: String, isOptional: Boolean): String {
         return "Введите $name (число). ${if (isOptional) OPTIONAL_TEXT else ""}"

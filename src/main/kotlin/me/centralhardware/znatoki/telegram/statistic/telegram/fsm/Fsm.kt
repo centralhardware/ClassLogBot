@@ -4,6 +4,7 @@ import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.ChatId
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.types.toChatId
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
@@ -63,7 +64,7 @@ fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error
 
 fun getLogUser(userId: Long): ChatId? =
     UserMapper.getById(userId)?.organizationId?.let { user ->
-        OrganizationMapper.getById(user)?.logChatId?.toId()
+        OrganizationMapper.getById(user)?.logChatId?.toChatId()
     }
 
 fun TransitionParams<*>.arg() = this.argument as CommonMessage<MessageContent>

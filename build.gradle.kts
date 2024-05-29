@@ -11,7 +11,6 @@ repositories {
     maven { setUrl("https://jitpack.io") }
 }
 
-val tgVersoin = "7.2.1"
 var poiVersion = "5.2.5"
 var kstatemachineVersion = "0.30.0"
 

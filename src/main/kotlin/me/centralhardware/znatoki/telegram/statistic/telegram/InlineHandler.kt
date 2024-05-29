@@ -5,7 +5,6 @@ import dev.inmo.tgbotapi.types.InlineQueries.InlineQueryResult.InlineQueryResult
 import dev.inmo.tgbotapi.types.InlineQueries.InputMessageContent.InputTextMessageContent
 import dev.inmo.tgbotapi.types.InlineQueries.query.BaseInlineQuery
 import dev.inmo.tgbotapi.types.InlineQueryId
-import dev.inmo.tgbotapi.utils.buildEntities
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
@@ -22,22 +21,27 @@ suspend fun processInline(query: BaseInlineQuery) {
     val i = AtomicInteger()
     val articles = ClientService.search(text)
         .filter { it.organizationId == UserMapper.getById(query.user.id.chatId.long)!!.organizationId }
-        .filterNot(Client::deleted)
         .map {
-
             InlineQueryResultArticle(
                 InlineQueryId(i.getAndIncrement().toString()),
                 getFio(it),
                 InputTextMessageContent(
-                    buildEntities {
-                        getFio(it)
-                    }
+                    getFio(it)
                 ),
                 description = getBio(it)
             )
-        }.toList()
+        }.toMutableList()
 
-    bot.answerInlineQuery(query, articles)
+    if (articles.isEmpty()) {
+        val noResultsArticle = InlineQueryResultArticle(
+            InlineQueryId(i.getAndIncrement().toString()),
+            "/complete",
+            InputTextMessageContent("Закончить ввод")
+        )
+        articles.add(noResultsArticle)
+    }
+
+    bot.answerInlineQuery(query, results = articles, isPersonal = true, cachedTime = 0)
 }
 
 private fun getFio(client: Client): String = "${client.id} ${client.fio()}"

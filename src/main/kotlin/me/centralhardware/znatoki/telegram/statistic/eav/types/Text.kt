@@ -8,7 +8,7 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
 import org.apache.commons.lang3.StringUtils
 
-object Text: Type {
+data object Text: Type {
     override fun format(name: String, isOptional: Boolean): String {
         return "Введите $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }

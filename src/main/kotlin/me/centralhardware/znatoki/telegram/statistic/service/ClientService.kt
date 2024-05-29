@@ -7,9 +7,7 @@ import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.TextField
 import org.apache.lucene.index.*
-import org.apache.lucene.search.FuzzyQuery
-import org.apache.lucene.search.IndexSearcher
-import org.apache.lucene.search.Query
+import org.apache.lucene.search.*
 import org.apache.lucene.store.ByteBuffersDirectory
 import java.io.IOException
 import kotlin.concurrent.fixedRateTimer
@@ -19,7 +17,7 @@ object ClientService {
     private var directory: ByteBuffersDirectory? = null
 
 
-    init {
+    fun init() {
         fixedRateTimer(name = "updateLucene", period = 1000L) {
             val index = ByteBuffersDirectory()
             val analyzer = StandardAnalyzer()
@@ -30,13 +28,15 @@ object ClientService {
                 .forEach { client ->
                     try {
                         val document = Document()
-                        document.add(
-                            TextField(
-                                "fio", (client.name.toLowerCase() + " " +
-                                        client.secondName.toLowerCase()).toString() + " " +
-                                        client.lastName.toLowerCase(), Field.Store.YES
-                            )
-                        )
+                        document.add(TextField(
+                            "name", client.name.toLowerCase(), Field.Store.YES
+                        ))
+                        document.add(TextField(
+                            "lastName", client.lastName.toLowerCase(), Field.Store.YES
+                        ))
+                        document.add(TextField(
+                            "secondName", client.secondName.toLowerCase(), Field.Store.YES
+                        ))
                         document.add(TextField("id", client.id.toString(), Field.Store.YES))
                         writer.addDocument(document)
                     } catch (e: IOException) {
@@ -49,13 +49,27 @@ object ClientService {
     }
 
     fun search(fio: String): List<Client> {
-        val fuzzyQuery: Query =
-            FuzzyQuery(Term("fio", fio), 2)
+        // Разделяем входную строку на отдельные слова
+        val words = fio.split(" ")
+
+        // Создаем поисковые запросы для каждого слова по каждому полю (имя, фамилия и отчество)
+        val queries = words.flatMap { word ->
+            listOf(
+                FuzzyQuery(Term("name", word), 2),
+                FuzzyQuery(Term("secondName", word), 2),
+                FuzzyQuery(Term("lastName", word), 2)
+            )
+        }
+
+        // Конструируем BooleanQuery, объединяя все запросы
+        val combinedQuery = BooleanQuery.Builder()
+        queries.forEach { query ->
+            combinedQuery.add(query, BooleanClause.Occur.SHOULD)
+        }
 
         val indexReader: IndexReader = DirectoryReader.open(directory)
         val searcher = IndexSearcher(indexReader)
-        val topDocs = searcher.search(fuzzyQuery, 10)
-
+        val topDocs = searcher.search(combinedQuery.build(), 10)
         return topDocs.scoreDocs
             .map { searcher.doc(it.doc) }
             .mapNotNull { it:Document -> ClientMapper.findById(it["id"].toInt()) }

@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student
 
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
+import dev.inmo.tgbotapi.types.message.MarkdownParseMode
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
@@ -18,9 +19,9 @@ suspend fun userInfoCallback(query: DataCallbackQuery) {
         }
 
         val info = client.getInfo(
-            ServiceMapper.getServicesForCLient(client.id!!)
+            ServiceMapper.getServicesForClient(client.id!!)
                 .mapNotNull { ServicesMapper.getNameById(it) }.toList()
         )
-        bot.sendMessage(query.from, info)
+        bot.sendMessage(query.from, info, parseMode = MarkdownParseMode)
     }?: bot.sendMessage(query.from, I18n.Message.USER_NOT_FOUND.load())
 }

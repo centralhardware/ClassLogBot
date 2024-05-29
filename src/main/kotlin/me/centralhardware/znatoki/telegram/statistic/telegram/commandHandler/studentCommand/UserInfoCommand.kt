@@ -22,7 +22,7 @@ suspend fun userInfoCommand(message: CommonMessage<TextContent>, args: Array<Str
         bot.sendMessage(
             message.chat,
             client.getInfo(
-                ServiceMapper.getServicesForCLient(client.id!!).mapNotNull { ServicesMapper.getNameById(it) }.toList()
+                ServiceMapper.getServicesForClient(client.id!!).mapNotNull { ServicesMapper.getNameById(it) }.toList()
             )
         )
     } ?: bot.sendMessage(message.chat, I18n.Message.PUPIL_NOT_FOUND.load())

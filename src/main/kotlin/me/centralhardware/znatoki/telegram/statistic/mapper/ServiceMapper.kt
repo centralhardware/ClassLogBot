@@ -87,7 +87,7 @@ object ServiceMapper {
         return getTimes(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
     }
 
-    fun getCuurentMontTimes(chatId: Long): List<Service> {
+    fun getCurrentMontTimes(chatId: Long): List<Service> {
         return getTimes(
             chatId,
             LocalDateTime.now().startOfMonth(),
@@ -126,7 +126,7 @@ object ServiceMapper {
         ).asUpdate
     )
 
-    fun getServicesForCLient(id: Int): List<Long> = session.run(
+    fun getServicesForClient(id: Int): List<Long> = session.run(
         queryOf(
             """
             SELECT DISTINCT service_id

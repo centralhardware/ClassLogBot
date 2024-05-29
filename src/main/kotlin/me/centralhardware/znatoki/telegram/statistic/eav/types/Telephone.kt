@@ -7,7 +7,7 @@ import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
 import me.centralhardware.znatoki.telegram.statistic.validateTelephone
 
-object Telephone : Type {
+data object Telephone : Type {
 
     override fun format(name: String, isOptional: Boolean): String {
         return "Введите телефон $name. ${if (isOptional) OPTIONAL_TEXT else ""}"

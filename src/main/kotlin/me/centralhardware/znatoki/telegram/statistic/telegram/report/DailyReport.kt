@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.report
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.types.toChatId
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Organization
@@ -13,7 +14,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.OrganizationMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
-import me.centralhardware.znatoki.telegram.statistic.toId
 import java.util.*
 
 object DailyReport{
@@ -32,7 +32,7 @@ object DailyReport{
         val times = ServiceMapper.getTodayTimes(id)
         if (times.isEmpty()) return
 
-        bot.sendTextMessage(sendTo.toId(), "Занятия проведенные за сегодня")
+        bot.sendTextMessage(sendTo.toChatId(), "Занятия проведенные за сегодня")
 
         val id2times: Multimap<UUID, Service> = ArrayListMultimap.create()
         times.forEach { service: Service ->
@@ -43,7 +43,7 @@ object DailyReport{
             .sortedBy { it.first().dateTime }
             .forEach {
                 bot.sendTextMessage(
-                    sendTo.toId(),
+                    sendTo.toChatId(),
                     """
                         Время: ${it.first().dateTime.formatTime()}
                         Предмет: ${ServicesMapper.getNameById(it.first().serviceId)}
@@ -54,7 +54,7 @@ object DailyReport{
                     """.trimIndent()
                 )
             }
-        bot.sendTextMessage(sendTo.toId(), "Проверьте правильность внесенных данных")
+        bot.sendTextMessage(sendTo.toChatId(), "Проверьте правильность внесенных данных")
     }
 
 }

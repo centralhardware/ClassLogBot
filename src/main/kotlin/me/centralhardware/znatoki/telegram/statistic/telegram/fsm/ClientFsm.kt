@@ -128,7 +128,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         bot.sendTextMessage(
             message.chat,
             client.getInfo(
-                ServiceMapper.getServicesForCLient(client.id!!)
+                ServiceMapper.getServicesForClient(client.id!!)
                     .mapNotNull { ServicesMapper.getNameById(it) })
         )
         sendLog(client, message.userId())
@@ -141,7 +141,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                 #${OrganizationMapper.getById(client.organizationId)!!.clientName}   
                 ${
                 client.getInfo(
-                    ServiceMapper.getServicesForCLient(client.id!!)
+                    ServiceMapper.getServicesForClient(client.id!!)
                         .mapNotNull { ServicesMapper.getNameById(it) })
             }
                 """.trimIndent(), parseMode = MarkdownParseMode

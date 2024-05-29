@@ -15,7 +15,7 @@ import java.util.*
 
 object MinioService {
 
-    val minioClient = MinioClient.builder()
+    private val minioClient = MinioClient.builder()
         .endpoint(Config.Minio.url, Config.Minio.port, false)
         .credentials(Config.Minio.accessKey,
             Config.Minio.secretKey)

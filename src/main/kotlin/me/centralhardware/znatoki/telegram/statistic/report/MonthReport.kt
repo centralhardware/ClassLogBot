@@ -10,13 +10,11 @@ import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.formatDate
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
-import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.Comparator
 
 class MonthReport(
     private val fio: String,

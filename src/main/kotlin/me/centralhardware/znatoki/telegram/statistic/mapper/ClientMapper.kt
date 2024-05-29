@@ -74,7 +74,7 @@ object ClientMapper {
             """
                 SELECT *
                 FROM client
-                WHERE id = :id AND deleted = false
+                WHERE deleted = false
             """
         ).map { it.parseClient() }.asList
     )

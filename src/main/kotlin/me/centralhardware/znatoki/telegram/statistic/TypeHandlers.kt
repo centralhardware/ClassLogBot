@@ -13,5 +13,5 @@ fun String.parseStringList() = split(":")
 fun String.parseLongList() = split(":").map { it.toLong() }
 
 fun String.toCustomProperties(): PropertyDefs = Json.decodeFromString(this)
-fun String.toProperties(): List<Property> = Json.decodeFromString(this)
+fun String.toProperties(): List<Property> = Json{isLenient=true}.decodeFromString(this)
 fun List<Property>.toJson() = Json.encodeToString(ListSerializer(Property.serializer()), this)

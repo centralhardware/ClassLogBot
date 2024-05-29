@@ -35,7 +35,7 @@ class Client(
         дата изменения=${modifyDate.formatDate().makeBold()}
         создано=$createdBy
         редактировано=${updateBy}
-    """.trimIndent()
+        """.trimIndent()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

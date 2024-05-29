@@ -14,7 +14,7 @@ import java.nio.file.Files
 import java.time.LocalDateTime
 import kotlin.io.path.writeBytes
 
-object Photo : Type {
+data object Photo : Type {
     override fun format(name: String, isOptional: Boolean): String {
         return "Отправьте фото $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }

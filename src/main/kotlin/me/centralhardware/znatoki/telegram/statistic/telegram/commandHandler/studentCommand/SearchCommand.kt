@@ -1,8 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand
 
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
-import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
-import dev.inmo.tgbotapi.types.buttons.inline.dataInlineButton
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.TextContent
 import dev.inmo.tgbotapi.utils.row
@@ -32,10 +32,10 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
     searchResult.forEach { client ->
         bot.sendMessage(message.chat,
             "${client.name} ${client.secondName} ${client.lastName}",
-            replyMarkup = replyKeyboard(){
-                row { dataInlineButton("информация", "/user_info${client.id}") }
+            replyMarkup = inlineKeyboard{
+                row { dataButton("информация", "/user_info${client.id}") }
                 if (UserMapper.hasWriteRight(message.userId())){
-                    row { dataInlineButton("удалить", "/delete_user${client.id}") }
+                    row { dataButton("удалить", "/delete_user${client.id}") }
                 }
             })
     }

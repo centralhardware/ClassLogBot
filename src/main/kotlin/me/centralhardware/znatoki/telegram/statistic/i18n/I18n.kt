@@ -34,5 +34,5 @@ interface ConstantEnum {
     fun key(): String
 }
 
-val resourceBundle = ResourceBundle.getBundle("Strings", Locale.US)
+val resourceBundle: ResourceBundle = ResourceBundle.getBundle("Strings", Locale.US)
 fun ConstantEnum.load(): String = resourceBundle.getString(key())

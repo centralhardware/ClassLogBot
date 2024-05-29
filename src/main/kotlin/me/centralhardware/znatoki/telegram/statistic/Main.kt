@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentDeleteCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentRestoreCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.timeDeleteCallback
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory
 val log = LoggerFactory.getLogger("bot")
 lateinit var bot: TelegramBot
 suspend fun main() {
+    ClientService.init()
     val res = telegramBotWithBehaviourAndLongPolling(
         Config.Telegram.token,
         defaultExceptionsHandler = { log.info("", it) },

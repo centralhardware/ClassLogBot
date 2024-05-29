@@ -8,7 +8,7 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
 
 typealias EnumType = Enumeration
-object Enumeration : Type {
+data object Enumeration : Type {
     override fun format(name: String, isOptional: Boolean): String {
         return "Выберите $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }

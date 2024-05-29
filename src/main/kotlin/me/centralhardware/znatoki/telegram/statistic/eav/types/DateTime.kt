@@ -7,7 +7,7 @@ import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
 import me.centralhardware.znatoki.telegram.statistic.parseDateTime
 
-object DateTime : Type {
+data object DateTime : Type {
 
     override fun format(name: String, isOptional: Boolean): String {
         return "Введите $name в формате dd MM yyyy HH;mm ${if (isOptional) OPTIONAL_TEXT else ""}"

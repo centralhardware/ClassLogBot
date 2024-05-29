@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
-import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
+import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
+import dev.inmo.tgbotapi.extensions.api.send.send
+import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
@@ -8,9 +10,9 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
+import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
-import dev.inmo.tgbotapi.types.switchInlineQueryField
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
@@ -21,15 +23,8 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
-import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
-import ru.nsk.kstatemachine.state.DefaultState
-import ru.nsk.kstatemachine.state.FinalState
-import ru.nsk.kstatemachine.state.addFinalState
-import ru.nsk.kstatemachine.state.addInitialState
-import ru.nsk.kstatemachine.state.onEntry
-import ru.nsk.kstatemachine.state.onFinished
-import ru.nsk.kstatemachine.state.transition
+import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
 import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 import java.util.*
@@ -100,9 +95,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
                 bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
 
-                bot.sendTextMessage(message.chat, "нажмите для поиска фио", replyMarkup = inlineKeyboard {
-                    row { switchInlineQueryField }
-                })
+                bot.sendTextMessage(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)
             }.isRight()
     }
 
@@ -198,10 +191,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
         }
                             стоимость: ${builder.amount}
                             Сохранить?
-                            """.trimIndent(), replyMarkup = replyKeyboard {
-            row { yes() }
-            row { no() }
-        })
+                            """.trimIndent(), replyMarkup = yesNoKeyboard)
     }
 }
 
@@ -229,7 +219,7 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
         }
 
         sendLog(services, userId)
-        bot.sendTextMessage(message.chat, "Сохранено")
+        bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
     } else if (text == "нет") {
         builder.properties
             .filter { it.type is Photo }
@@ -239,7 +229,7 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
                         runBlocking { bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии") }
                     }
             }
-        bot.sendTextMessage(message.chat, "Отменено")
+        bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
     }
     return true
 }
@@ -272,9 +262,10 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
         val hasPhoto = service.properties.count { it.type is Photo }
 
         if (hasPhoto == 1) {
+            bot.sendActionUploadPhoto(logId)
             service.properties.filter { it.type is Photo }
                 .forEach { photo ->
-                    bot.sendDocument(
+                    bot.sendPhoto(
                         logId,
                         InputFile.fromInput("Отчет") {
                             MinioService.get(photo.value!!).onFailure {
@@ -286,7 +277,8 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
                                 }
                             }.getOrThrow()
                         },
-                        replyMarkup = keyboard
+                        replyMarkup = keyboard,
+                        text = log
                     )
                 }
         } else {
@@ -314,7 +306,7 @@ suspend fun startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder
 
         else -> {
             bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
-            bot.sendTextMessage(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)
+            bot.send(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)
         }
     }
     return builder

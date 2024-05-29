@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
-import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
+import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.utils.asTextedInput
@@ -10,6 +10,7 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
+import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
@@ -123,10 +124,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                         }
                                         Оплата: ${it.amount}
                                         """
-                    }, replyMarkup = replyKeyboard {
-                        row { yes() }
-                        row { no() }
-                    })
+                    }, replyMarkup = yesNoKeyboard)
                 } else {
                     builder.propertiesBuilder =
                         PropertiesBuilder(org.paymentCustomProperties.propertyDefs.toMutableList())
@@ -159,10 +157,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                     ClientMapper.findById(builder.clientId)?.fio()
                 }
                                         Оплата: ${builder.amount}
-                                        """, replyMarkup = replyKeyboard {
-                    row { yes() }
-                    row { no() }
-                })
+                                        """, replyMarkup = yesNoKeyboard)
             }
 
         }
@@ -187,7 +182,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                     )
                 )
             }
-            bot.sendTextMessage(message.chat, "Сохранено")
+            bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
         } else if (text == "нет") {
             builder.properties.stream()
                 .filter { it.type is Photo }
@@ -202,7 +197,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                             }
                         }
                 }
-            bot.sendTextMessage(message.chat, "Отменено")
+            bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
         }
         return true
     }
@@ -224,11 +219,12 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
             """.trimIndent()
             val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
             if (hasPhoto == 1L) {
+                bot.sendActionUploadPhoto(logId)
                 payment.properties
                     .filter { it.type is Photo }
                     .forEach { photo ->
                         bot.sendActionUploadPhoto(logId)
-                        bot.sendDocument(
+                        bot.sendPhoto(
                             logId,
                             InputFile.fromInput("") {
                                 MinioService.get(photo.value!!).onFailure {
@@ -240,7 +236,8 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                                     }
                                 }.getOrThrow()
                             },
-                            replyMarkup = keyboard
+                            replyMarkup = keyboard,
+                            text = text
                         )
                     }
             } else {
