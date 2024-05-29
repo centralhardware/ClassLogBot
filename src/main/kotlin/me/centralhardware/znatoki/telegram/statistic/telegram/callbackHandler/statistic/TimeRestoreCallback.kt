@@ -1,55 +1,32 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import dev.inmo.tgbotapi.extensions.api.edit.edit
+import dev.inmo.tgbotapi.extensions.api.send.sendMessage
+import dev.inmo.tgbotapi.extensions.utils.messageDataCallbackQueryOrNull
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
+import dev.inmo.tgbotapi.types.buttons.inline.dataInlineButton
+import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
+import dev.inmo.tgbotapi.utils.row
+import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
-import me.centralhardware.znatoki.telegram.statistic.service.TelegramService
-import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
-import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.inlineKeyboard
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.CallbackHandler
-import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery
-import org.telegram.telegrambots.meta.api.objects.User
-import org.telegram.telegrambots.meta.api.objects.message.Message
-import java.util.UUID
+import java.util.*
 
-@Component
-class TimeRestoreCallback(
-    private val serviceMapper: ServiceMapper,
-    private val paymentMapper: PaymentMapper,
-    sender: TelegramSender,
-    telegramService: TelegramService,
-    userMapper: UserMapper
-) : CallbackHandler(sender, telegramService, userMapper) {
+suspend fun timeRestoreCallback(query: DataCallbackQuery) {
+    val id = UUID.fromString(query.data.replace("timeRestore-", ""))
 
-    override fun handle(callbackQuery: CallbackQuery,
-                        from: User,
-                        data: String) {
-        if (!telegramService.isAdmin(from.id)) {
-            sender.sendText("Доступ запрещен", from.id)
-        }
-
-        val id = UUID.fromString(data.replace("timeRestore-", ""))
-
-        if (serviceMapper.getOrgId(id) != getTelegramUser(from)?.organizationId) {
-            sender.sendText("Доступ запрещен", from.id)
-            return
-        }
-
-        serviceMapper.setDeleted(id, false)
-        paymentMapper.setDeleteByTimeId(id, false)
-
-        val editMessageReplyMarkup = EditMessageReplyMarkup.builder()
-            .messageId((callbackQuery.message as Message).messageId)
-            .chatId(callbackQuery.message.chatId)
-            .replyMarkup(inlineKeyboard {
-                row { btn("удалить", "timeDelete-$id") }
-            }.buildReplyMarkup())
-            .build()
-
-        sender.send { execute(editMessageReplyMarkup) }
+    if (ServiceMapper.getOrgId(id) != UserMapper.getById(query.from.id.chatId.long)?.organizationId) {
+        bot.sendMessage(query.from, "Доступ запрещен")
+        return
     }
 
-    override fun isAcceptable(data: String) = data.startsWith("timeRestore-")
+    ServiceMapper.setDeleted(id, false)
+    PaymentMapper.setDeleteByTimeId(id, false)
+
+    query.messageDataCallbackQueryOrNull() ?.message ?. let {
+        bot.edit(it, replyMarkup = inlineKeyboard(){
+            row { dataInlineButton("удалить", "timeDelete-$id") }
+        })
+    }
 }

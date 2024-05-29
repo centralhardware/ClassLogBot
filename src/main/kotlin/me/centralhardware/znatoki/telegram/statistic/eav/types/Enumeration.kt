@@ -1,8 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.eav.types
 
 import arrow.core.Either
+import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
-import org.telegram.telegrambots.meta.api.objects.Update
 
 typealias EnumType = Enumeration
 object Enumeration : Type {
@@ -10,8 +13,8 @@ object Enumeration : Type {
         return "Выберите $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }
 
-    override fun validate(update: Update, variants: List<String>): Either<String, Unit> {
-        return if (update.hasMessage() && variants.contains(update.message.text)) {
+    override fun validate(message: CommonMessage<MessageContent>, variants: List<String>): Either<String, Unit> {
+        return if (message.content is TextContent && variants.contains(message.text)) {
             Either.Right(Unit)
         } else {
             Either.Left("Выберите вариант из кастомный клавиатуры")

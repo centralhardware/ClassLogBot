@@ -1,8 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.i18n
 
+import java.util.*
+
 object I18n {
 
-    enum class Error(private val key: String): ConstantEnum {
+    enum class Error(private val key: String) : ConstantEnum {
         ACCESS_DENIED("ACCESS_DENIED");
 
         override fun key(): String {
@@ -10,7 +12,7 @@ object I18n {
         }
     }
 
-    enum class Message(private val key: String): ConstantEnum {
+    enum class Message(private val key: String) : ConstantEnum {
         INPUT_FIO_REQUIRED_FORMAT("INPUT_FIO_REQUIRED_FORMAT"),
         FIO_ALREADY_IN_DATABASE("FIO_ALREADY_IN_DATABASE"),
         CREATE_PUPIL_FINISHED("CREATE_PUPIL_FINISHED"),
@@ -31,3 +33,6 @@ object I18n {
 interface ConstantEnum {
     fun key(): String
 }
+
+val resourceBundle = ResourceBundle.getBundle("Strings", Locale.US)
+fun ConstantEnum.load(): String = resourceBundle.getString(key())

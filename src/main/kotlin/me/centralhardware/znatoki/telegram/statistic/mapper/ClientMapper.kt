@@ -1,11 +1,12 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
-import kotliquery.Session
 import kotliquery.queryOf
-import org.springframework.stereotype.Component
+import me.centralhardware.znatoki.telegram.statistic.configuration.session
+import me.centralhardware.znatoki.telegram.statistic.entity.Client
+import me.centralhardware.znatoki.telegram.statistic.entity.parseClient
+import me.centralhardware.znatoki.telegram.statistic.toJson
 
-@Component
-class ClientMapper(private val session: Session) {
+object ClientMapper {
 
     fun existsByFio(fio: String) = session.run(
         queryOf(
@@ -18,6 +19,88 @@ class ClientMapper(private val session: Session) {
             ) as e
         """, mapOf("fio" to fio)
         ).map { row -> row.boolean("e") }.asSingle
-    )?: false
+    ) ?: false
+
+    fun save(client: Client) = session.execute(
+        queryOf(
+            """
+               INSERT INTO client (
+                        create_date,
+                        last_name,
+                        modify_date,
+                        name,
+                        second_name,
+                        created_by,
+                        deleted,
+                        organization_id,
+                        properties
+               ) VALUES (
+                    :create_date,
+                    :last_name,
+                    :modify_date,
+                    :name,
+                    :second_name,
+                    :created_by,
+                    :deleted,
+                    :organization_id,
+                    :properties
+               )
+            """, mapOf(
+                "create_date" to client.createDate,
+                "last_name" to client.lastName,
+                "modify_date" to client.modifyDate,
+                "name" to client.name,
+                "second_name" to client.secondName,
+                "created_by" to client.createdBy,
+                "deleted" to client.deleted,
+                "organization_id" to client.organizationId,
+                "properties" to client.properties.toJson()
+            )
+        )
+    )
+
+    fun findById(id: Int): Client? = session.run(
+        queryOf(
+            """
+                SELECT *
+                FROM client
+                WHERE id = :id
+            """, mapOf("id" to id)
+        ).map { it.parseClient() }.asSingle
+    )
+
+    fun findAll(): List<Client> = session.run(
+        queryOf(
+            """
+                SELECT *
+                FROM client
+                WHERE id = :id AND deleted = false
+            """
+        ).map { it.parseClient() }.asList
+    )
+
+    fun findAllByFio(name: String, secondName: String, lastName: String): List<Client> = session.run(
+        queryOf(
+            """
+                SELECT *
+                FROM client
+                WHERE name = :name AND second_name = :secondName AND last_name = :lastName
+            """, mapOf(
+                "name" to name,
+                "second_name" to secondName,
+                "last_name" to lastName
+            )
+        ).map { it.parseClient() }.asList
+    )
+
+    fun getFioById(id: Int) = session.run(
+        queryOf(
+            """
+            SELECT concat(name, ' ', last_name, ' ', second_name) as fio
+            from client
+            WHERE id = :id
+        """, mapOf("id" to id)
+        ).map { row -> row.string("fio") }.asSingle
+    )?: ""
 
 }

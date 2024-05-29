@@ -1,5 +1,18 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
+import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
+import dev.inmo.tgbotapi.requests.abstracts.InputFile
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.types.switchInlineQueryField
+import dev.inmo.tgbotapi.utils.row
+import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo
@@ -7,12 +20,9 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
-import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.inlineKeyboard
-import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
-import org.telegram.telegrambots.meta.api.objects.InputFile
-import org.telegram.telegrambots.meta.api.objects.Update
+import me.centralhardware.znatoki.telegram.statistic.mapper.*
+import me.centralhardware.znatoki.telegram.statistic.service.ClientService
+import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import ru.nsk.kstatemachine.state.DefaultState
 import ru.nsk.kstatemachine.state.FinalState
 import ru.nsk.kstatemachine.state.addFinalState
@@ -34,126 +44,121 @@ sealed class TimeStates : DefaultState() {
 }
 
 class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
-    override fun createFSM(): StateMachine = createStdLibStateMachine("time", creationArguments = StateMachine.CreationArguments(isUndoEnabled = true)) {
-        logger = fsmLog
-        addInitialState(TimeStates.Initial) {
-            transition<UpdateEvent> {
-                targetState = TimeStates.Subject
+    override fun createFSM(): StateMachine =
+        createStdLibStateMachine("time", creationArguments = StateMachine.CreationArguments(isUndoEnabled = true)) {
+            logger = fsmLog
+            addInitialState(TimeStates.Initial) {
+                transition<UpdateEvent> {
+                    targetState = TimeStates.Subject
+                }
             }
-        }
-        addState(TimeStates.Subject) {
-            transition<UpdateEvent> {
-                targetState = TimeStates.Fio
+            addState(TimeStates.Subject) {
+                transition<UpdateEvent> {
+                    targetState = TimeStates.Fio
+                }
+                onEntry { processState(it, this, ::subject) }
             }
-            onEntry { processState(it, this, ::subject) }
-        }
-        addState(TimeStates.Fio) {
-            transition<UpdateEvent> {
-                targetState = TimeStates.Amount
+            addState(TimeStates.Fio) {
+                transition<UpdateEvent> {
+                    targetState = TimeStates.Amount
+                }
+                onEntry { processState(it, this, ::fio) }
             }
-            onEntry { processState(it, this, ::fio) }
-        }
-        addState(TimeStates.Amount) {
-            transition<UpdateEvent> {
-                targetState = TimeStates.Properties
+            addState(TimeStates.Amount) {
+                transition<UpdateEvent> {
+                    targetState = TimeStates.Properties
+                }
+                onEntry { processState(it, this, ::amount) }
             }
-            onEntry { processState(it, this, ::amount) }
-        }
-        addState(TimeStates.Properties) {
-            transition<UpdateEvent> {
-                targetState = TimeStates.Confirm
+            addState(TimeStates.Properties) {
+                transition<UpdateEvent> {
+                    targetState = TimeStates.Confirm
+                }
+                onEntry { processState(it, this, ::property) }
             }
-            onEntry { processState(it, this, ::property) }
+            addFinalState(TimeStates.Confirm) {
+                onEntry { process(it, ::confirm) }
+            }
+            onFinished { removeFromStorage(it) }
         }
-        addFinalState(TimeStates.Confirm) {
-            onEntry { process(it, ::confirm) }
-        }
-        onFinished { removeFromStorage(it) }
-    }
 
 
-    fun subject(update: Update, builder: ServiceBuilder): Boolean {
-        val userId = update.userId()
-        val user = userMapper().getById(userId)!!
-        val znatokiUser = userMapper().getById(userId)!!
+    private suspend fun subject(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+        val userId = message.userId()
+        val user = UserMapper.getById(userId)!!
+        val znatokiUser = UserMapper.getById(userId)!!
 
         if (user.services.size == 1) {
             builder.serviceId = user.services.first()
             return true
         }
 
-        return serviceValidator().validate(Pair(update.message.text, znatokiUser.organizationId))
-            .mapLeft(mapError(userId))
+        return validateService(Pair(message.text!!, znatokiUser.organizationId))
+            .mapLeft(mapError(message))
             .map { service ->
-                builder.serviceId = servicesMapper().getServiceId(znatokiUser.organizationId, service)!!
+                builder.serviceId = ServicesMapper.getServiceId(znatokiUser.organizationId, service)!!
 
-                sender().sendText("Введите фио. /complete - для окончания ввода", userId)
+                bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
 
-                sender().send {
-                    execute(inlineKeyboard {
-                        chatId(userId)
-                        text("нажмите для поиска фио")
-                        row { switchToInline() }
-                    }.build())
-                }
+                bot.sendTextMessage(message.chat, "нажмите для поиска фио", replyMarkup = inlineKeyboard {
+                    row { switchInlineQueryField }
+                })
             }.isRight()
     }
 
-    fun fio(update: Update, builder: ServiceBuilder): Boolean {
-        val text = update.message.text
-        val userId = update.userId()
-        if (!servicesMapper().isAllowMultiplyClients(builder.serviceId)!!) {
-            return fioValidator().validate(text)
-                .mapLeft(mapError(userId))
+    private suspend fun fio(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+        val text = message.text!!
+        if (!ServicesMapper.isAllowMultiplyClients(builder.serviceId)!!) {
+            return validateFio(text)
+                .mapLeft(mapError(message))
                 .map {
                     val id = text.split(" ").first().toInt()
                     if (builder.clientIds.contains(id)) {
-                        sender().sendText("Данное ФИО уже добавлено", userId)
+                        bot.sendTextMessage(message.chat, "Данное ФИО уже добавлено")
                         return false
                     }
 
                     builder.clientId(id)
 
-                    sender().sendText("Введите стоимость занятия", userId)
+                    bot.sendTextMessage(message.chat, "Введите стоимость занятия")
                 }.isRight()
         } else {
             if (text == "/complete") {
                 if (builder.clientIds.isEmpty()) {
-                    sender().sendText("Необходимо ввести как минимум одно ФИО", userId)
+                    bot.sendTextMessage(message.chat, "Необходимо ввести как минимум одно ФИО")
                     return false
                 }
-                sender().sendText("Введите стоимость занятия", userId)
+                bot.sendTextMessage(message.chat, "Введите стоимость занятия")
                 return true
             }
-            fioValidator().validate(text)
-                .mapLeft { error -> sender().sendText(error, userId) }
+            validateFio(text)
+                .mapLeft(mapError(message))
                 .map {
                     val id = text.split(" ").first().toInt()
                     if (builder.clientIds.contains(id)) {
-                        sender().sendText("Данное ФИО уже добавлено", userId)
+                        runBlocking { bot.sendTextMessage(message.chat, "Данное ФИО уже добавлено") }
                         return false
                     }
 
                     builder.clientId(id)
 
-                    sender().sendText("ФИО сохранено", userId)
+                    bot.sendTextMessage(message.chat, "ФИО сохранено")
                 }
             return false
         }
     }
 
-    fun amount(update: Update, builder: ServiceBuilder): Boolean {
-        val text = update.message.text
-        val userId = update.userId()
-        val znatokiUser = userMapper().getById(userId)!!
-        val org = organizationMapper().getById(znatokiUser.organizationId)!!
-        return amountValidator().validate(text)
-            .mapLeft(mapError(userId))
+    private suspend fun amount(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+        val userId = message.userId()
+        val znatokiUser = UserMapper.getById(userId)!!
+        val org = OrganizationMapper.getById(znatokiUser.organizationId)!!
+        return validateAmount(message.text!!)
+            .mapLeft(mapError(message))
             .map { amount ->
                 builder.amount = amount
 
                 if (org.serviceCustomProperties.isEmpty()) {
-                    confirmMessage(userId, builder)
+                    confirmMessage(message, builder)
                 } else {
                     builder.propertiesBuilder =
                         PropertiesBuilder(org.serviceCustomProperties.propertyDefs.toMutableList())
@@ -161,178 +166,155 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                     val next = builder.nextProperty()!!
 
                     if (next.second.isNotEmpty()) {
-                        sender().send {
-                            execute(replyKeyboard {
-                                chatId(userId)
-                                text(next.first)
-                                next.second.forEach { row { btn(it) } }
-                            }.build())
-                        }
+                        bot.sendTextMessage(message.chat, next.first, replyMarkup = replyKeyboard {
+                            next.second.forEach { row { simpleButton(it) } }
+                        })
                     } else {
-                        sender().sendText(next.first, userId)
+                        bot.sendTextMessage(message.chat, next.first)
                     }
                 }
             }.isRight()
     }
 
-    fun property(update: Update, builder: ServiceBuilder): Boolean {
-        val userId = update.userId()
-        val znatokiUser = userMapper().getById(userId)!!
-        val org = organizationMapper().getById(znatokiUser.organizationId)!!
+    suspend fun property(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+        val userId = message.userId()
+        val znatokiUser = UserMapper.getById(userId)!!
+        val org = OrganizationMapper.getById(znatokiUser.organizationId)!!
         if (org.serviceCustomProperties.isEmpty()) return true
 
         return builder.propertiesBuilder.process(
-            update
+            message
         ) { properties ->
             builder.properties = properties
-            confirmMessage(userId, builder)
+            runBlocking { confirmMessage(message, builder) }
         }
     }
 
-    fun confirmMessage(userId: Long, builder: ServiceBuilder) {
-        sender().send {
-            execute(replyKeyboard {
-                chatId(userId)
-                text(
-                    """
-                            услуга: ${servicesMapper().getNameById(builder.serviceId)}
+    private suspend fun confirmMessage(message: CommonMessage<MessageContent>, builder: ServiceBuilder) {
+        bot.sendTextMessage(message.chat, """
+                            услуга: ${ServicesMapper.getNameById(builder.serviceId)}
                             ФИО: ${
-                        builder.clientIds.stream().map { clientService().getFioById(it) }.toList().joinToString(";")
-                    }
+            builder.clientIds.stream().map { ClientMapper.getFioById(it) }.toList().joinToString(";")
+        }
                             стоимость: ${builder.amount}
                             Сохранить?
-                            """.trimIndent()
-                )
-                row { yes() }
-                row { no() }
-            }.build())
-        }
+                            """.trimIndent(), replyMarkup = replyKeyboard {
+            row { yes() }
+            row { no() }
+        })
     }
+}
 
-    fun confirm(update: Update, builder: ServiceBuilder): Boolean {
-        val text = update.message.text
-        val userId = update.userId()
-        if (Objects.equals(text, "да")) {
-            val serviceId = UUID.randomUUID()
+private suspend fun confirm(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+    val text = message.text
+    val userId = message.userId()
+    if (text == "да") {
+        val serviceId = UUID.randomUUID()
 
-            builder.id = serviceId
-            builder.organizationId = userMapper().getById(userId)!!.organizationId
+        builder.id = serviceId
+        builder.organizationId = UserMapper.getById(userId)!!.organizationId
 
-            val services = builder.build()
-            services.forEach {
-                serviceMapper().insertTime(it)
+        val services = builder.build()
+        services.forEach {
+            ServiceMapper.insertTime(it)
 
-                paymentMapper().insert(
-                    Payment(
-                        clientId = it.clientId,
-                        amount = it.amount * -1,
-                        timeId = it.id,
-                        organizationId = it.organizationId
-                    )
+            PaymentMapper.insert(
+                Payment(
+                    clientId = it.clientId,
+                    amount = it.amount * -1,
+                    timeId = it.id,
+                    organizationId = it.organizationId
                 )
+            )
+        }
+
+        sendLog(services, userId)
+        bot.sendTextMessage(message.chat, "Сохранено")
+    } else if (text == "нет") {
+        builder.properties
+            .filter { it.type is Photo }
+            .forEach { photo ->
+                MinioService.delete(photo.value!!)
+                    .onFailure {
+                        runBlocking { bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии") }
+                    }
             }
-
-            sendLog(services, userId)
-            sender().sendText("Сохранено", userId)
-        } else if (Objects.equals(text, "нет")) {
-            builder.properties
-                .filter { it.type is Photo }
-                .forEach { photo ->
-                    minioService().delete(photo.value!!)
-                        .onFailure {
-                            sender().sendText("Ошибка при удаление фотографии", update.userId())
-                        }
-                }
-            sender().sendText("Отменено", userId)
-        }
-        return true
+        bot.sendTextMessage(message.chat, "Отменено")
     }
+    return true
+}
 
-    fun sendLog(services: List<Service>, userId: Long) {
-        getLogUser(userId)?.let { logId ->
-            val service = services.first()
-            val keyboard = inlineKeyboard {
-                text("?")
-                row { btn("удалить", "timeDelete-${service.id}") }
-            }.buildReplyMarkup()
+private suspend fun sendLog(services: List<Service>, userId: Long) {
+    getLogUser(userId)?.let { logId ->
+        val service = services.first()
+        val keyboard = inlineKeyboard {
+            row { dataButton("удалить", "timeDelete-${service.id}") }
+        }
 
-            val log = """
+        val log = """
                     #занятие
                     Время: ${service.dateTime.formatDateTime()}
-                    Предмет: ${servicesMapper().getNameById(service.serviceId).hashtag()}
-                    ${organizationMapper().getById(service.organizationId)?.clientName}: ${
-                services.toClientIds().joinToString(", ") {
-                    "#${clientService().getFioById(it).replace(" ", "_")}(${
-                        paymentMapper().getCredit(
-                            service.clientId
-                        )
-                    })"
-                }
+                    Предмет: ${ServicesMapper.getNameById(service.serviceId).hashtag()}
+                    ${OrganizationMapper.getById(service.organizationId)?.clientName}: ${
+            services.toClientIds().joinToString(", ") {
+                "#${ClientMapper.getFioById(it).replace(" ", "_")}(${
+                    PaymentMapper.getCredit(
+                        service.clientId
+                    )
+                })"
             }
+        }
                     Стоимость: ${service.amount}
-                    Преподаватель: ${userMapper().getById(userId)?.name.hashtag()}
+                    Преподаватель: ${UserMapper.getById(userId)?.name.hashtag()}
                     ${service.properties.print()}
                     """.trimIndent()
 
-            val hasPhoto = service.properties.count { it.type is Photo }
+        val hasPhoto = service.properties.count { it.type is Photo }
 
-            if (hasPhoto == 1) {
-                service.properties.filter { it.type is Photo }
-                    .forEach { photo ->
-                        val sendPhoto = SendPhoto.builder()
-                            .photo(InputFile(minioService().get(photo.value!!).onFailure {
-                                sender().sendText("Ошибка во время отправки лога", userId)
-                            }.getOrThrow(), "отчет"))
-                            .chatId(logId)
-                            .caption(log)
-                            .replyMarkup(keyboard)
-                            .build()
-                        sender().send { execute(sendPhoto) }
-                    }
-            } else {
-                val message = SendMessage
-                    .builder()
-                    .chatId(logId)
-                    .text(log)
-                    .replyMarkup(keyboard)
-                sender().send { execute(message.build()) }
-            }
+        if (hasPhoto == 1) {
+            service.properties.filter { it.type is Photo }
+                .forEach { photo ->
+                    bot.sendDocument(
+                        logId,
+                        InputFile.fromInput("Отчет") {
+                            MinioService.get(photo.value!!).onFailure {
+                                runBlocking {
+                                    bot.sendTextMessage(
+                                        logId,
+                                        "Ошибка во время отправки лога"
+                                    )
+                                }
+                            }.getOrThrow()
+                        },
+                        replyMarkup = keyboard
+                    )
+                }
+        } else {
+            bot.sendTextMessage(logId, log, replyMarkup = keyboard)
         }
     }
-
-
 }
 
 
-fun startTimeFsm(update: Update): ServiceBuilder {
-    val userId = update.userId()
-    val user = userMapper().getById(userId)!!
+suspend fun startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder {
+    val userId = message.userId()
+    val user = UserMapper.getById(userId)!!
     val builder = ServiceBuilder()
     builder.chatId = userId
-    if (userMapper().getById(userId)!!.services.size == 1) {
-        builder.serviceId = userMapper().getById(userId)!!.services.first()
+    if (UserMapper.getById(userId)!!.services.size == 1) {
+        builder.serviceId = UserMapper.getById(userId)!!.services.first()
     }
 
     when {
         user.services.size != 1 -> {
-            sender().send {
-                execute(replyKeyboard {
-                    text("Выберите предмет")
-                    chatId(user.id)
-                    user.services.forEach { row { servicesMapper().getNameById(it)?.let { btn(it) } } }
-                }.build())
-            }
+            bot.sendTextMessage(message.chat, "Выберите предмет", replyMarkup = replyKeyboard {
+                user.services.forEach { row { ServicesMapper.getNameById(it)?.let { simpleButton(it) } } }
+            })
         }
 
         else -> {
-            sender().sendText("Введите фио. /complete - для окончания ввода", userId)
-            sender().send {
-                execute(inlineKeyboard {
-                    text("нажмите для поиска фио")
-                    chatId(userId)
-                    row { switchToInline() }
-                }.build())
-            }
+            bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
+            bot.sendTextMessage(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)
         }
     }
     return builder

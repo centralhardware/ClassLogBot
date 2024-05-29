@@ -1,8 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.eav
 
 import arrow.core.Either
+import dev.inmo.tgbotapi.extensions.utils.asTextContent
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.EnumType
-import org.telegram.telegrambots.meta.api.objects.Update
 import java.util.*
 
 class PropertiesBuilder(propertyDefs: MutableList<PropertyDef>) {
@@ -31,16 +34,16 @@ class PropertiesBuilder(propertyDefs: MutableList<PropertyDef>) {
         return res
     }
 
-    fun validate(update: Update): Either<String, Unit> {
+    fun validate(message: CommonMessage<MessageContent>): Either<String, Unit> {
         return if (current.type is EnumType) {
-            current.type.validate(update, *current.enumeration.toTypedArray())
+            current.type.validate(message, *current.enumeration.toTypedArray())
         } else {
-            current.type.validate(update)
+            current.type.validate(message)
         }
     }
 
-    fun setProperty(value: Update): Boolean {
-        return if (value.hasMessage() && Objects.equals(value.message.text, "/skip")) {
+    fun setProperty(value: CommonMessage<MessageContent>): Boolean {
+        return if (value.content is TextContent && value.content.asTextContent()!!.text == "/skip") {
             properties.add(Property(current.name, current.type))
             true
         } else {

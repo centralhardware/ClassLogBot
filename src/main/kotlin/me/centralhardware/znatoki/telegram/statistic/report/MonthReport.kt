@@ -2,14 +2,13 @@ package me.centralhardware.znatoki.telegram.statistic.report
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
-import me.centralhardware.znatoki.telegram.statistic.BeanUtils
-import me.centralhardware.znatoki.telegram.statistic.clientService
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.eav.types.NumberType
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.formatDate
+import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import java.io.File
@@ -43,7 +42,7 @@ class MonthReport(
 
         val fioToTimes: Multimap<Client, Service> = ArrayListMultimap.create()
         filteredServices.forEach { service ->
-            clientService().findById(service.clientId)?.let { client ->
+            ClientMapper.findById(service.clientId)?.let { client ->
                 fioToTimes.put(client, service)
             }
         }
@@ -53,9 +52,8 @@ class MonthReport(
 
         val i = AtomicInteger(1)
         val comparator: Comparator<Client> = getComparator(
-            BeanUtils.getBean(ClientService::class.java).findById(filteredServices.first().clientId)!!
+            ClientMapper.findById(filteredServices.first().clientId)!!
         )
-        fioToTimes
 
         return excel(fio, serviceName, date) {
             sheet("отчет") {
@@ -65,7 +63,7 @@ class MonthReport(
                 row {
                     cell("№")
                     cell("ФИО $clientName")
-                    BeanUtils.getBean(ClientService::class.java).findById(filteredServices.first().clientId)?.let {
+                    ClientMapper.findById(filteredServices.first().clientId)?.let {
                         it.properties
                             .map { it.name }
                             .filter { reportFields.contains(it) }
@@ -98,11 +96,10 @@ class MonthReport(
                     row {
                         cell(i.getAndIncrement())
                         cell(client.fio())
-                        client.properties.filter { reportFields.contains(it.name) }.map { cell(it.value) }
+                        client.properties.filter { reportFields.contains(it.name) }.map { cell(it.value?:"") }
                         cell(individual)
                         cell(group)
-                        cell(BeanUtils.getBean(PaymentMapper::class.java)
-                            .getPaymentsSumByClient(userId, fioTimes.first().serviceId, client.id!!, date))
+                        cell(PaymentMapper.getPaymentsSumByClient(userId, fioTimes.first().serviceId, client.id!!, date))
                         emptyCell()
                         cell(datesStr)
                     }
@@ -113,8 +110,7 @@ class MonthReport(
                     emptyCell()
                     cell(totalIndividual)
                     cell(totalGroup)
-                    cell(BeanUtils.getBean(PaymentMapper::class.java)
-                        .getPaymentsSum(userId, filteredServices.first().serviceId, date))
+                    cell(PaymentMapper.getPaymentsSum(userId, filteredServices.first().serviceId, date))
                 }
 
             }
@@ -124,7 +120,7 @@ class MonthReport(
     private fun getComparator(client: Client): Comparator<Client> {
         val props = client.properties.filter { reportFields.contains(it.name) }
 
-        var comparator: Comparator<Client> = props.first().let { property ->
+        val comparator: Comparator<Client> = props.first().let { property ->
             if (property.type is NumberType) {
                 compareBy(nullsLast()) {
                     val propValue = getProperty(it, property.name)?.value

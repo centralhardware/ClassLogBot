@@ -1,34 +1,18 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand
 
-import me.centralhardware.znatoki.telegram.statistic.entity.Role
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
-import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.CommandHandler
+import dev.inmo.tgbotapi.extensions.api.send.sendMessage
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.TextContent
+import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ClientFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startClientFsm
 import me.centralhardware.znatoki.telegram.statistic.userId
-import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.objects.Update
 
-@Component
-class AddClientCommand(
-    private val storage: Storage,
-    sender: TelegramSender,
-    userMapper: UserMapper
-) : CommandHandler(
-    sender, userMapper
-) {
-
-    override fun handle(update: Update) {
-        if (storage.contain(update.userId())) {
-            sender.sendText("Сначала сохраните текущую запись", update.userId(), false)
-            return
-        }
-        storage.create(update.userId(), ClientFsm(startClientFsm(update)))
+suspend fun addClientCommand(message: CommonMessage<TextContent>) {
+    if (Storage.contain(message.userId())) {
+        bot.sendMessage(message.chat, "Сначала сохраните текущую запись")
+        return
     }
-
-    override fun isAcceptable(data: String): Boolean = data.equals("/addPupil", ignoreCase = true)
-
-    override fun getRequiredRole(): Role = Role.READ_WRITE
+    Storage.create(message.userId(), ClientFsm(startClientFsm(message)))
 }

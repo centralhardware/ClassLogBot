@@ -1,30 +1,32 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report
 
+import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
+import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
+import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
+import dev.inmo.tgbotapi.requests.abstracts.InputFile
+import dev.inmo.tgbotapi.types.ChatId
+import dev.inmo.tgbotapi.types.RawChatId
+import kotlinx.coroutines.runBlocking
+import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.mapper.OrganizationMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
-import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
-import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument
-import org.telegram.telegrambots.meta.api.objects.InputFile
+import me.centralhardware.znatoki.telegram.statistic.toId
 
-@Component
-class MonthlyReport(
-    private val reportService: ReportService,
-    private val serviceMapper: ServiceMapper,
-    private val sender: TelegramSender,
-    private val organizationMapper: OrganizationMapper
-) {
+class MonthlyReport{
 
-    @Scheduled(cron = "0 0 10 1 * *")
+//    @Scheduled(cron = "0 0 10 1 * *")
     fun report() {
-        organizationMapper.getOwners()
+        OrganizationMapper.getOwners()
             .forEach { org ->
-                serviceMapper.getIds(org.id).forEach {
-                    reportService.getReportPrevious(it).forEach { file ->
-                        sender.send{execute(SendDocument.builder().chatId(it).document(InputFile(file)).build())}
-                        sender.send{execute(SendDocument.builder().chatId(org.owner).document(InputFile(file)).build())}
+                ServiceMapper.getIds(org.id).forEach {
+                    ReportService.getReportPrevious(it).forEach { file ->
+                        runBlocking {
+                            bot.sendActionUploadDocument(it.toId())
+                            bot.sendDocument(it.toId(), InputFile(file))
+                            bot.sendActionUploadDocument(org.owner.toId())
+                            bot.sendDocument(org.owner.toId(), InputFile(file))
+                        }
                         file.delete()
                     }
                 }

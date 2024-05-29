@@ -1,40 +1,24 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
-import me.centralhardware.znatoki.telegram.statistic.entity.Role
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
-import me.centralhardware.znatoki.telegram.statistic.telegram.TelegramSender
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.CommandHandler
+import dev.inmo.tgbotapi.extensions.api.send.sendMessage
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.TextContent
+import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startTimeFsm
 import me.centralhardware.znatoki.telegram.statistic.userId
-import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.objects.Update
 
-@Component
-class AddTimeCommand(
-    private val storage: Storage,
-    sender: TelegramSender,
-    userMapper: UserMapper
-) : CommandHandler(sender, userMapper) {
-
-    override fun handle(update: Update) {
-        val userId = update.userId()
-
-        if (storage.contain(userId)) {
-            sender.sendText("Сначала сохраните текущую запись", userId, false)
-            return
-        }
-
-        val builder = startTimeFsm(update)
-        val fsm = TimeFsm(builder)
-        storage.create(update.userId(), fsm)
-        if (builder.serviceId() != null){
-            storage.process(update.userId(), update)
-        }
+suspend fun addTimeCommand(message: CommonMessage<TextContent>) {
+    if (Storage.contain(message.userId())) {
+        bot.sendMessage(message.chat, "Сначала сохраните текущую запись")
+        return
     }
 
-    override fun isAcceptable(data: String): Boolean = data.equals("/addTime", ignoreCase = true)
-
-    override fun getRequiredRole(): Role = Role.READ
+    val builder = startTimeFsm(message)
+    val fsm = TimeFsm(builder)
+    Storage.create(message.userId(), fsm)
+    if (builder.serviceId() != null){
+        Storage.process(message)
+    }
 }

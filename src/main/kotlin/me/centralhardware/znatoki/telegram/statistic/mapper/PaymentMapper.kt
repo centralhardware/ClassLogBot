@@ -1,17 +1,15 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
-import kotliquery.Session
 import kotliquery.queryOf
+import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.startOfMonth
 import me.centralhardware.znatoki.telegram.statistic.toJson
-import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 import java.util.*
 
-@Component
-class PaymentMapper(private val session: Session) {
+object PaymentMapper {
 
     fun insert(payment: Payment): Int = session.run(
         queryOf("""

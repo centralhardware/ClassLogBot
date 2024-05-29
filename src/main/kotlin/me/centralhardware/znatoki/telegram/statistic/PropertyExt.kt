@@ -1,15 +1,21 @@
 package me.centralhardware.znatoki.telegram.statistic
 
+import dev.inmo.tgbotapi.extensions.api.send.send
+import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.utils.row
+import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Telephone
-import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import org.telegram.telegrambots.meta.api.objects.Update
 
 private fun Property.applyTypeFormat(): Property {
     return if (this.type is Telephone) {
-        this.value.formatTelephone()?.let { this.withValue(it) }?: this
+        this.value.formatTelephone()?.let { this.withValue(it) } ?: this
     } else {
         this
     }
@@ -22,33 +28,29 @@ fun List<Property>.print(): String {
         .joinToString("\n") { property -> "${property.name}=${property.value.makeBold()}" }
 }
 
-fun PropertiesBuilder.process(
-    update: Update,
+suspend fun PropertiesBuilder.process(
+    message: CommonMessage<MessageContent>,
     onFinish: (List<Property>) -> Unit
 ): Boolean {
-    val chatId = update.userId()
-
     var isFinished = false
-    validate(update)
+    validate(message)
         .mapLeft { error ->
-            sender().sendText(error, chatId)
+            bot.sendTextMessage(message.chat, error)
         }
         .map {
-            setProperty(update)
+            setProperty(message)
 
             next()?.let { next ->
                 if (next.second.isNotEmpty()) {
-                    sender().send{
-                        execute(replyKeyboard {
-                            text(next.first)
-                            chatId(chatId)
+                    runBlocking {
+                        bot.send(message.chat, text = next.first, replyMarkup = replyKeyboard {
                             next.second.forEach {
-                                row { btn(it) }
+                                row { simpleButton(it) }
                             }
-                        }.build())
+                        })
                     }
                 } else {
-                    sender().sendText(next.first, chatId)
+                    bot.sendTextMessage(message.chat, next.first)
                 }
             } ?: run {
                 onFinish(properties)

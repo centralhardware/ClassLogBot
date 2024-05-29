@@ -1,14 +1,12 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
-import kotliquery.Session
 import kotliquery.queryOf
+import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Services
 import me.centralhardware.znatoki.telegram.statistic.entity.parseServices
-import org.springframework.stereotype.Component
 import java.util.*
 
-@Component
-class ServicesMapper(private val session: Session) {
+object ServicesMapper {
 
 
     fun getServicesByOrganization(orgId: UUID): List<Services> = session.run(

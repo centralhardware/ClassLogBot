@@ -1,8 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.eav.types
 
 import arrow.core.Either
+import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.types.message.content.TextContent
 import kotlinx.serialization.Serializable
-import org.telegram.telegrambots.meta.api.objects.Update
 
 @Serializable
 sealed interface Type {
@@ -12,16 +15,16 @@ sealed interface Type {
     }
 
     fun format(name: String, isOptional: Boolean): String
-    fun validate(update: Update, variants: List<String>): Either<String, Unit>
+    fun validate(message: CommonMessage<MessageContent>, variants: List<String>): Either<String, Unit>
 
-    fun extract(update: Update): String? = update.message.text
+    fun extract(message: CommonMessage<MessageContent>): String? = message.text
 
-    fun validate(update: Update, vararg variants: String): Either<String, Unit> {
-        if (update.hasMessage() && update.message.text == "/skip") {
+    fun validate(message: CommonMessage<MessageContent>, vararg variants: String): Either<String, Unit> {
+        if (message.content is TextContent && message.text == "/skip") {
             return Either.Right(Unit)
         }
 
-        return validate(update, variants.toList())
+        return validate(message, variants.toList())
     }
 
     fun name(): String = this.javaClass.simpleName

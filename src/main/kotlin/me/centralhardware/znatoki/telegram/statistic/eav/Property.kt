@@ -1,9 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.eav
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import kotlinx.serialization.Serializable
-import me.centralhardware.znatoki.telegram.statistic.eav.json.JacksonTypeAdapter
 import me.centralhardware.znatoki.telegram.statistic.eav.json.TypeAdapter
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type
 
@@ -11,8 +8,6 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Type
 data class Property(
     val name: String,
     @Serializable(with = TypeAdapter::class)
-    @JsonSerialize(using = JacksonTypeAdapter.Serializer::class)
-    @JsonDeserialize(using = JacksonTypeAdapter.Deserializator::class)
     val type: Type,
     var value: String? = ""
 ) {

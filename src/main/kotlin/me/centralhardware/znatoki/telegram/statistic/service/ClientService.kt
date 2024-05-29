@@ -1,64 +1,66 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
-import jakarta.persistence.EntityManager
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
-import me.centralhardware.znatoki.telegram.statistic.repository.ClientRepository
-import jakarta.transaction.Transactional
-import me.centralhardware.znatoki.telegram.statistic.Open
-import me.centralhardware.znatoki.telegram.statistic.entity.fio
-import org.hibernate.search.mapper.orm.Search
-import org.hibernate.search.mapper.orm.session.SearchSession
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
-import org.springframework.scheduling.annotation.Scheduled
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
-import kotlin.jvm.optionals.getOrNull
+import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
+import org.apache.lucene.analysis.standard.StandardAnalyzer
+import org.apache.lucene.document.Document
+import org.apache.lucene.document.Field
+import org.apache.lucene.document.TextField
+import org.apache.lucene.index.*
+import org.apache.lucene.search.FuzzyQuery
+import org.apache.lucene.search.IndexSearcher
+import org.apache.lucene.search.Query
+import org.apache.lucene.store.ByteBuffersDirectory
+import java.io.IOException
+import kotlin.concurrent.fixedRateTimer
 
-@Service
-@Open
-class ClientService(
-    private val repository: ClientRepository,
-    private val entityManager: EntityManager,
-    private val log: Logger = LoggerFactory.getLogger(ClientService::class.java)
-)
-{
-    fun getFioById(id: Int) = findById(id)?.fio() ?: ""
+object ClientService {
 
-    fun save(client: Client): Client {
-        CompletableFuture.runAsync(this::updateIndex)
-        return repository.save(client)
-    }
+    private var directory: ByteBuffersDirectory? = null
 
-    @Transactional
-    fun search(text: String): List<Client>{
-        val query = text.lowercase()
-        val session: SearchSession = Search.session(entityManager)
-        return session.search(Client::class.java)
-            .where { f -> f.match()
-                .fields("name", "secondName", "lastName")
-                .matching(query)
-                .fuzzy()
-            }
-            .fetchHits(10) as List<Client>
-    }
 
-    @Scheduled(fixedRate = 60, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
-    @Transactional
-    fun updateIndex() {
-        try {
-            log.info("update lucene index")
-            Search.session(entityManager).massIndexer().startAndWait()
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
+    init {
+        fixedRateTimer(name = "updateLucene", period = 1000L) {
+            val index = ByteBuffersDirectory()
+            val analyzer = StandardAnalyzer()
+            val indexWriterConfig = IndexWriterConfig(analyzer)
+            val writer = IndexWriter(index, indexWriterConfig)
+
+            ClientMapper.findAll()
+                .forEach { client ->
+                    try {
+                        val document = Document()
+                        document.add(
+                            TextField(
+                                "fio", (client.name.toLowerCase() + " " +
+                                        client.secondName.toLowerCase()).toString() + " " +
+                                        client.lastName.toLowerCase(), Field.Store.YES
+                            )
+                        )
+                        document.add(TextField("id", client.id.toString(), Field.Store.YES))
+                        writer.addDocument(document)
+                    } catch (e: IOException) {
+                        throw java.lang.RuntimeException(e)
+                    }
+                }
+            writer.close()
+            directory = index
         }
     }
 
-    fun findById(id: Int): Client? = repository.findById(id)
-        .filter { !it.deleted }.getOrNull()
+    fun search(fio: String): List<Client> {
+        val fuzzyQuery: Query =
+            FuzzyQuery(Term("fio", fio), 2)
+
+        val indexReader: IndexReader = DirectoryReader.open(directory)
+        val searcher = IndexSearcher(indexReader)
+        val topDocs = searcher.search(fuzzyQuery, 10)
+
+        return topDocs.scoreDocs
+            .map { searcher.doc(it.doc) }
+            .mapNotNull { it:Document -> ClientMapper.findById(it["id"].toInt()) }
+            .toList()
+    }
 
 
-    fun checkExistenceByFio(name: String, secondName: String, lastName: String)
-    = repository.findAllByNameAndSecondNameAndLastName(name, secondName, lastName).any { !it.deleted }
 }

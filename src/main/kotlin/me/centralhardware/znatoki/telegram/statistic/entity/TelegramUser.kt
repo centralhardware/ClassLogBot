@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
 import kotliquery.Row
+import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.parseLongList
 import me.centralhardware.znatoki.telegram.statistic.toRole
 import java.util.UUID

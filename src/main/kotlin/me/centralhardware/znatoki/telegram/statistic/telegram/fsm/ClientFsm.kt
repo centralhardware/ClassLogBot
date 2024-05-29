@@ -1,14 +1,24 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import dev.inmo.tgbotapi.extensions.api.send.send
+import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.extensions.utils.asTextContent
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
+import dev.inmo.tgbotapi.types.message.MarkdownParseMode
+import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.utils.row
+import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
-import me.centralhardware.znatoki.telegram.statistic.telegram.bulider.replyKeyboard
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.objects.Update
+import me.centralhardware.znatoki.telegram.statistic.i18n.load
+import me.centralhardware.znatoki.telegram.statistic.i18n.resourceBundle
+import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
 import ru.nsk.kstatemachine.statemachine.StateMachine.CreationArguments
@@ -46,12 +56,12 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         onFinished { removeFromStorage(it) }
     }
 
-    fun fio(update: Update, builder: ClientBuilder): Boolean {
-        val chatId = update.userId()
-        val telegramUser = userMapper().getById(chatId)!!
-        val words = update.message.text.split(" ")
+    private suspend fun fio(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
+        val chatId = message.userId()
+        val telegramUser = UserMapper.getById(chatId)!!
+        val words = message.content.asTextContent()!!.text.split(" ")
         if (words.size !in 2..3) {
-            sender().sendMessageFromResource(I18n.Message.INPUT_FIO_REQUIRED_FORMAT, chatId)
+            bot.sendTextMessage(message.chat, I18n.Message.INPUT_FIO_REQUIRED_FORMAT.load())
             return false
         }
         builder.let {
@@ -69,86 +79,82 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                 }
             }
         }
-        if (clientService().checkExistenceByFio(builder.name, builder.secondName, builder.lastName)) {
-            sender().sendMessageFromResource(I18n.Message.FIO_ALREADY_IN_DATABASE, chatId)
+        if (ClientMapper.findAllByFio(
+                builder.name,
+                builder.secondName,
+                builder.lastName
+            ).isNotEmpty()
+        ) {
+            bot.sendTextMessage(message.chat, I18n.Message.FIO_ALREADY_IN_DATABASE.load())
             return false
         }
 
-        val org = organizationMapper().getById(telegramUser.organizationId)!!
+        val org = OrganizationMapper.getById(telegramUser.organizationId)!!
 
         if (org.clientCustomProperties.isEmpty()) {
-            finish(listOf(), chatId, builder)
+            finish(listOf(), message, builder)
         } else {
             builder.propertiesBuilder = PropertiesBuilder(org.clientCustomProperties.propertyDefs.toMutableList())
             val next = builder.nextProperty()!!
             if (next.second.isNotEmpty()) {
-                sender().send {
-                    execute(replyKeyboard {
-                        chatId(chatId)
-                        text(next.first)
-                        next.second.forEach { row { btn(it) } }
-                    }.build())
-                }
+                bot.send(message.chat, text = next.first, replyMarkup = replyKeyboard {
+                    next.second.forEach { row { simpleButton(it) } }
+                })
             } else {
-                sender().sendText(next.first, chatId)
+                bot.sendTextMessage(message.chat, next.first)
             }
         }
         return true
     }
 
-    fun property(update: Update, builder: ClientBuilder): Boolean {
-        val telegramUser = userMapper().getById(update.userId())!!
+    suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
+        val telegramUser = UserMapper.getById(message.userId())!!
 
-        if (organizationMapper().getById(telegramUser.organizationId)!!.clientCustomProperties.isEmpty()) return true
+        if (OrganizationMapper.getById(telegramUser.organizationId)!!.clientCustomProperties.isEmpty()) return true
 
-        return builder.propertiesBuilder.process(update){ finish(it, update.userId(), builder) }
+        return builder.propertiesBuilder.process(message){ runBlocking { finish(it, message, builder) } }
     }
 
-    fun finish(p: List<Property>, chatId: Long, builder: ClientBuilder) {
+    private suspend fun finish(p: List<Property>, message: CommonMessage<MessageContent>, builder: ClientBuilder) {
         builder.apply {
-            organizationId = userMapper().getById(chatId)!!.organizationId
-            createdBy = chatId
+            organizationId = UserMapper.getById(message.userId())!!.organizationId
+            createdBy = message.userId()
             properties = p
         }
 
         val client = builder.build()
-        clientService().save(client)
+        ClientMapper.save(client)
 
-        sender().sendMessageWithMarkdown(
+        bot.sendTextMessage(
+            message.chat,
             client.getInfo(
-                serviceMapper().getServicesForCLient(client.id!!)
-                    .mapNotNull { servicesMapper().getNameById(it) }), chatId
+                ServiceMapper.getServicesForCLient(client.id!!)
+                    .mapNotNull { ServicesMapper.getNameById(it) })
         )
-        sendLog(client, chatId)
-        sender().sendMessageFromResource(I18n.Message.CREATE_PUPIL_FINISHED, chatId)
+        sendLog(client, message.userId())
+        bot.sendTextMessage(message.chat, I18n.Message.CREATE_PUPIL_FINISHED.load())
     }
 
-    fun sendLog(client: Client, chatId: Long) {
+    private suspend fun sendLog(client: Client, chatId: Long) {
         getLogUser(chatId)?.let { logId ->
-            val message = SendMessage.builder()
-                .text(
-                    """
-                #${organizationMapper().getById(client.organizationId)!!.clientName}   
+            bot.send(logId, text = """
+                #${OrganizationMapper.getById(client.organizationId)!!.clientName}   
                 ${
-                        client.getInfo(
-                            serviceMapper().getServicesForCLient(client.id!!)
-                                .mapNotNull { servicesMapper().getNameById(it) })
-                    }
-                """.trimIndent()
-                )
-                .chatId(logId)
-                .parseMode("Markdown")
-                .build()
-            sender().send { execute(message) }
+                client.getInfo(
+                    ServiceMapper.getServicesForCLient(client.id!!)
+                        .mapNotNull { ServicesMapper.getNameById(it) })
+            }
+                """.trimIndent(), parseMode = MarkdownParseMode
+            )
         }
     }
 
 }
 
-fun startClientFsm(update: Update): ClientBuilder {
-    sender().sendMessageAndRemoveKeyboard(
-        resourceBundle().getString("INPUT_FIO_IN_FORMAT"),
-        update.userId()
+suspend fun startClientFsm(message: CommonMessage<MessageContent>): ClientBuilder {
+    bot.sendTextMessage(
+        message.chat,
+        resourceBundle.getString("INPUT_FIO_IN_FORMAT")
     )
     return ClientBuilder()
 }
