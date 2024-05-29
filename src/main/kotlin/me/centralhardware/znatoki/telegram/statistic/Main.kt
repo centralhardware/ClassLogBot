@@ -90,7 +90,7 @@ suspend fun main() {
             onCommandWithArgs("i") { message, args -> userInfoCommand(message, args) }
             onCommandWithArgs("s") { message, args -> searchCommand(message, args) }
 
-            onDataCallbackQuery(Regex("\\/user_info\\d+\$")) { userInfoCallback(it) }
+            onDataCallbackQuery(Regex("user_info\\d+\$")) { userInfoCallback(it) }
 
             onBaseInlineQuery { processInline(it) }
         }
@@ -101,17 +101,17 @@ suspend fun main() {
             onCommand("grafana") { grafanaCommand(it) }
             onCommandWithArgs("dailyReport") { message, args -> dailyReportCommand(message, args) }
 
-            onDataCallbackQuery(Regex("\\/delete_user\\d+\$")) { deleteUserCallback(it) }
+            onDataCallbackQuery(Regex("delete_user\\d+\$")) { deleteUserCallback(it) }
             onDataCallbackQuery(Regex("timeRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
                 timeRestoreCallback(it)
             }
             onDataCallbackQuery(Regex("timeDelete-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
                 timeDeleteCallback(it)
             }
-            onDataCallbackQuery(Regex("paymentRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+            onDataCallbackQuery(Regex("paymentRestore-\\d+\$")) {
                 paymentRestoreCallback(it)
             }
-            onDataCallbackQuery(Regex("paymentRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+            onDataCallbackQuery(Regex("paymentDelete-\\d+\$")) {
                 paymentDeleteCallback(it)
             }
         }

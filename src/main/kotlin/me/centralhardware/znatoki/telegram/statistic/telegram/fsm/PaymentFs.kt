@@ -87,11 +87,13 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                 val id = fio.split(" ")[0].toInt()
 
                 builder.clientId = id
-                bot.sendTextMessage(message.chat, "Выберите предмет", replyMarkup = replyKeyboard {
-                    UserMapper.findById(userId)?.services?.forEach {
-                        row { ServicesMapper.getNameById(it)?.let { name -> simpleButton(name) } }
-                    }
-                })
+                UserMapper.findById(userId)?.services?.let { services ->
+                    bot.sendTextMessage(message.chat, "Выберите предмет", replyMarkup = replyKeyboard {
+                        services.forEach {
+                            row { ServicesMapper.getNameById(it)?.let { name -> simpleButton(name) } }
+                        }
+                    })
+                }
             }.isRight()
     }
 
@@ -103,7 +105,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
             .map { service ->
                 builder.serviceId = ServicesMapper.getServiceId(znatokiUser.organizationId, service)!!
 
-                bot.sendTextMessage(message.chat, "Введите сумму оплаты")
+                bot.sendTextMessage(message.chat, "Введите сумму оплаты", replyMarkup = ReplyKeyboardRemove())
             }.isRight()
     }
 

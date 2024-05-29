@@ -9,7 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 
 suspend fun deleteUserCallback(query: DataCallbackQuery) {
-    ClientMapper.findById(query.data.replace("/delete_user", "").toInt())?.let {
+    ClientMapper.findById(query.data.replace("delete_user", "").toInt())?.let {
         if (it.organizationId != UserMapper.findById(query.from.id.chatId.long)?.organizationId){
             bot.sendMessage(query.from, "Доступ запрещен")
             return

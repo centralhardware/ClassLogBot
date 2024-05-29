@@ -33,9 +33,9 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
         bot.sendMessage(message.chat,
             "${client.name} ${client.secondName} ${client.lastName}",
             replyMarkup = inlineKeyboard{
-                row { dataButton("информация", "/user_info${client.id}") }
+                row { dataButton("информация", "user_info${client.id}") }
                 if (UserMapper.hasWriteRight(message.userId())){
-                    row { dataButton("удалить", "/delete_user${client.id}") }
+                    row { dataButton("удалить", "delete_user${client.id}") }
                 }
             })
     }
