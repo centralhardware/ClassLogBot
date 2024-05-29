@@ -21,7 +21,7 @@ object ClientMapper {
         ).map { row -> row.boolean("e") }.asSingle
     ) ?: false
 
-    fun save(client: Client) = session.execute(
+    fun save(client: Client): Int = session.run(
         queryOf(
             """
                INSERT INTO client (
@@ -43,8 +43,8 @@ object ClientMapper {
                     :created_by,
                     :deleted,
                     :organization_id,
-                    :properties
-               )
+                    :properties::JSONB
+               ) RETURNING id
             """, mapOf(
                 "create_date" to client.createDate,
                 "last_name" to client.lastName,
@@ -56,8 +56,8 @@ object ClientMapper {
                 "organization_id" to client.organizationId,
                 "properties" to client.properties.toJson()
             )
-        )
-    )
+        ).map { it.int("id") }.asSingle
+    )!!
 
     fun findById(id: Int): Client? = session.run(
         queryOf(

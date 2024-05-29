@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.properties.Delegates
 
 class Client(
-    val id: Int? = null,
+    var id: Int? = null,
     val name: String,
     val secondName: String,
     val lastName: String,

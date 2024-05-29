@@ -4,6 +4,7 @@ import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
+import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
@@ -50,7 +51,7 @@ suspend fun PropertiesBuilder.process(
                         })
                     }
                 } else {
-                    bot.sendTextMessage(message.chat, next.first)
+                    bot.sendTextMessage(message.chat, next.first, replyMarkup = ReplyKeyboardRemove())
                 }
             } ?: run {
                 onFinish(properties)

@@ -124,7 +124,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         }
 
         val client = builder.build()
-        ClientMapper.save(client)
+        client.id = ClientMapper.save(client)
 
         bot.sendTextMessage(
             message.chat,
