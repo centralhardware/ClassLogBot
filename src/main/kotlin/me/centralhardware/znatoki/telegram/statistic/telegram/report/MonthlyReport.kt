@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.report
 
+import dev.inmo.krontab.doOnce
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
@@ -10,10 +11,8 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.OrganizationMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 
-class MonthlyReport{
-
-//    @Scheduled(cron = "0 0 10 1 * *")
-    fun report() {
+suspend fun monthReport() {
+    doOnce("0 0 10 1 * *") {
         OrganizationMapper.getOwners()
             .forEach { org ->
                 ServiceMapper.getIds(org.id).forEach {
@@ -29,5 +28,4 @@ class MonthlyReport{
                 }
             }
     }
-
 }

@@ -37,6 +37,9 @@ dependencies {
     implementation("org.apache.lucene:lucene-queryparser:9.10.0")
 
     implementation("com.github.centralhardware:telegram-bot-commons:2a55dd22e2")
+
+    implementation("dev.inmo:krontab:2.3.0")
+
     testImplementation("org.mockito:mockito-core:5.12.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
 }

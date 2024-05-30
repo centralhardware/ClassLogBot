@@ -28,11 +28,11 @@ fun validateAmount(value: String): Either<String, Int> {
     }
 }
 
-fun validateService(value: Pair<String, UUID>): Either<String, String> {
-    val services = ServicesMapper.getServicesByOrganization(value.second)
+fun validateService(serviceName: String, serviceId: UUID): Either<String, String> {
+    val services = ServicesMapper.getServicesByOrganization(serviceId)
     val servicesNames = services.map { it.name }
-    return if (servicesNames.contains(value.first)) {
-        Either.Right(value.first)
+    return if (servicesNames.contains(serviceName)) {
+        Either.Right(serviceName)
     } else {
         Either.Left("Выберите услугу из списка")
     }

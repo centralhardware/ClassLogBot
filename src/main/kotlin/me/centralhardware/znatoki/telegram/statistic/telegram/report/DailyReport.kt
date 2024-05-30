@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.report
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import dev.inmo.krontab.doOnce
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.toChatId
 import kotlinx.coroutines.runBlocking
@@ -16,9 +17,8 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 import java.util.*
 
-object DailyReport{
-
-    fun report() {
+suspend fun dailyReport() {
+    doOnce("0 0 22 * * *") {
         OrganizationMapper.getOwners()
             .asSequence()
             .map(Organization::id)
@@ -27,34 +27,33 @@ object DailyReport{
             .toList()
             .forEach { runBlocking { getReport(it) } }
     }
+}
 
-    suspend fun getReport(id: Long, sendTo: Long = id) {
-        val times = ServiceMapper.getTodayTimes(id)
-        if (times.isEmpty()) return
+suspend fun getReport(id: Long, sendTo: Long = id) {
+    val times = ServiceMapper.getTodayTimes(id)
+    if (times.isEmpty()) return
 
-        bot.sendTextMessage(sendTo.toChatId(), "Занятия проведенные за сегодня")
+    bot.sendTextMessage(sendTo.toChatId(), "Занятия проведенные за сегодня")
 
-        val id2times: Multimap<UUID, Service> = ArrayListMultimap.create()
-        times.forEach { service: Service ->
-            id2times.put(service.id, service)
-        }
+    val id2times: Multimap<UUID, Service> = ArrayListMultimap.create()
+    times.forEach { service: Service ->
+        id2times.put(service.id, service)
+    }
 
-        id2times.asMap().values
-            .sortedBy { it.first().dateTime }
-            .forEach {
-                bot.sendTextMessage(
-                    sendTo.toChatId(),
-                    """
+    id2times.asMap().values
+        .sortedBy { it.first().dateTime }
+        .forEach {
+            bot.sendTextMessage(
+                sendTo.toChatId(),
+                """
                         Время: ${it.first().dateTime.formatTime()}
                         Предмет: ${ServicesMapper.getNameById(it.first().serviceId)}
                         ${OrganizationMapper.findById(it.first().organizationId)!!.clientName}: ${
-                        it.toClientIds().joinToString(", ") { clientId -> ClientMapper.getFioById(clientId) }
-                    }
+                    it.toClientIds().joinToString(", ") { clientId -> ClientMapper.getFioById(clientId) }
+                }
                         Стоимость: ${it.first().amount}
                     """.trimIndent()
-                )
-            }
-        bot.sendTextMessage(sendTo.toChatId(), "Проверьте правильность внесенных данных")
-    }
-
+            )
+        }
+    bot.sendTextMessage(sendTo.toChatId(), "Проверьте правильность внесенных данных")
 }

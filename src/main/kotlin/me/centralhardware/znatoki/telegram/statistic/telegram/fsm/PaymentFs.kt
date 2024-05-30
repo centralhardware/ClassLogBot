@@ -100,7 +100,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     suspend fun service(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
         val userId = message.userId()
         val znatokiUser = UserMapper.findById(userId)!!
-        return validateService(Pair(message.content.asTextedInput()!!.text!!, znatokiUser.organizationId))
+        return validateService(message.content.asTextedInput()!!.text!!, znatokiUser.organizationId)
             .mapLeft(mapError(message))
             .map { service ->
                 builder.serviceId = ServicesMapper.getServiceId(znatokiUser.organizationId, service)!!

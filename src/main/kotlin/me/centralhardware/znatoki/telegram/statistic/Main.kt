@@ -6,19 +6,15 @@ import dev.inmo.kslog.common.defaultMessageFormatter
 import dev.inmo.kslog.common.setDefaultKSLog
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
-import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.telegramBotWithBehaviourAndLongPolling
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
-import dev.inmo.tgbotapi.extensions.utils.asFromUser
-import dev.inmo.tgbotapi.extensions.utils.fromUserOrNull
 import dev.inmo.tgbotapi.types.BotCommand
-import dev.inmo.tgbotapi.types.update.abstracts.Update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.filter
-import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
-import me.centralhardware.znatoki.telegram.statistic.i18n.load
+import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentDeleteCallback
@@ -40,12 +36,18 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.userInfoCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
+import me.centralhardware.znatoki.telegram.statistic.telegram.report.dailyReport
+import me.centralhardware.znatoki.telegram.statistic.telegram.report.monthReport
 import org.slf4j.LoggerFactory
 
 val log = LoggerFactory.getLogger("bot")
 lateinit var bot: TelegramBot
 suspend fun main() {
     ClientService.init()
+    GlobalScope.launch {
+        monthReport()
+        dailyReport()
+    }
     val res = telegramBotWithBehaviourAndLongPolling(
         Config.Telegram.token,
         defaultExceptionsHandler = { log.info("", it) },

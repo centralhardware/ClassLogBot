@@ -88,7 +88,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
             return true
         }
 
-        return validateService(Pair(message.text!!, znatokiUser.organizationId))
+        return validateService(message.text!!, znatokiUser.organizationId)
             .mapLeft(mapError(message))
             .map { service ->
                 builder.serviceId = ServicesMapper.getServiceId(znatokiUser.organizationId, service)!!
