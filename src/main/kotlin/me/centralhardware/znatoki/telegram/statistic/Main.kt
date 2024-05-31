@@ -46,6 +46,8 @@ suspend fun main() {
     ClientService.init()
     GlobalScope.launch {
         monthReport()
+    }
+    GlobalScope.launch {
         dailyReport()
     }
     val res = telegramBotWithBehaviourAndLongPolling(
