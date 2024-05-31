@@ -28,10 +28,9 @@ private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long
         }
         return
     }
-    if (UserMapper.hasWriteRight(userId)) {
-        getTime.invoke(userId).forEach {
-            send(chat.id, it)
-        }
+
+    getTime.invoke(userId).forEach {
+        send(chat.id, it)
     }
 }
 

@@ -81,11 +81,6 @@ suspend fun main() {
             stopOnCompletion = false,
             updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasWriteRight(it.userId()) }) {
             onCommand(Regex("addPupil|addpupil")) { addClientCommand(it) }
-            onCommand(Regex("addTime|addtime")) { addTimeCommand(it) }
-            onCommand(Regex("addPayment|addpayment")) { addPaymentCommand(it) }
-
-            onCommand("report") { reportCommand(it) }
-            onCommand(Regex("reportPrevious|reportprevious")) { reportPreviousCommand(it) }
         }
 
         createSubContextAndDoWithUpdatesFilter(
@@ -93,6 +88,10 @@ suspend fun main() {
             updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }) {
             onCommandWithArgs("i") { message, args -> userInfoCommand(message, args) }
             onCommandWithArgs("s") { message, args -> searchCommand(message, args) }
+            onCommand("report") { reportCommand(it) }
+            onCommand(Regex("reportPrevious|reportprevious")) { reportPreviousCommand(it) }
+            onCommand(Regex("addTime|addtime")) { addTimeCommand(it) }
+            onCommand(Regex("addPayment|addpayment")) { addPaymentCommand(it) }
 
             onDataCallbackQuery(Regex("user_info\\d+\$")) { userInfoCallback(it) }
 
