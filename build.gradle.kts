@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
@@ -43,26 +44,4 @@ dependencies {
 
     testImplementation("org.mockito:mockito-core:5.12.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-}
-
-tasks {
-    val fatJar = register<Jar>("fatJar") {
-        dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources")) // We need this for Gradle optimization to work
-        archiveClassifier.set("standalone") // Naming the jar
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        manifest { attributes(mapOf("Main-Class" to "me.centralhardware.znatoki.telegram.statistic.MainKt")) } // Provided we set it up in the application plugin configuration
-        val sourcesMain = sourceSets.main.get()
-        val contents = configurations.runtimeClasspath.get()
-            .map { if (it.isDirectory) it else zipTree(it) } +
-                sourcesMain.output
-        from(contents)
-    }
-    build {
-        dependsOn(fatJar) // Trigger fat jar creation during build
-    }
-}
-
-tasks.withType<org.gradle.jvm.tasks.Jar>() {
-    exclude("META-INF/BC1024KE.RSA", "META-INF/BC1024KE.SF", "META-INF/BC1024KE.DSA")
-    exclude("META-INF/BC2048KE.RSA", "META-INF/BC2048KE.SF", "META-INF/BC2048KE.DSA")
 }
