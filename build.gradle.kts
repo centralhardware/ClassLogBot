@@ -60,3 +60,8 @@ tasks {
         dependsOn(fatJar) // Trigger fat jar creation during build
     }
 }
+
+tasks.withType<org.gradle.jvm.tasks.Jar>() {
+    exclude("META-INF/BC1024KE.RSA", "META-INF/BC1024KE.SF", "META-INF/BC1024KE.DSA")
+    exclude("META-INF/BC2048KE.RSA", "META-INF/BC2048KE.SF", "META-INF/BC2048KE.DSA")
+}
