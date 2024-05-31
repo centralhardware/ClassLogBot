@@ -55,6 +55,9 @@ tasks {
             .map { if (it.isDirectory) it else zipTree(it) } +
                 sourcesMain.output
         from(contents)
+        from("./resources/services"){
+            include("META-INF/services/org.apache.lucene.codecs.Codec")
+        }
     }
     build {
         dependsOn(fatJar) // Trigger fat jar creation during build
@@ -64,4 +67,6 @@ tasks {
 tasks.withType<org.gradle.jvm.tasks.Jar>() {
     exclude("META-INF/BC1024KE.RSA", "META-INF/BC1024KE.SF", "META-INF/BC1024KE.DSA")
     exclude("META-INF/BC2048KE.RSA", "META-INF/BC2048KE.SF", "META-INF/BC2048KE.DSA")
+    exclude("META-INF/services/org.apache.lucene.codecs.Codec")
 }
+
