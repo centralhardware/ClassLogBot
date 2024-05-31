@@ -10,6 +10,7 @@ WORKDIR /znatokiBot
 
 COPY --from=gradle /home/gradle/build/libs/znatokiStatistic-1.0-SNAPSHOT-standalone.jar .
 
+RUN apt-get update
 RUN apt-get install tzdata curl fontconfig libfreetype6 -y
 
 ENV TZ Asia/Novosibirsk
