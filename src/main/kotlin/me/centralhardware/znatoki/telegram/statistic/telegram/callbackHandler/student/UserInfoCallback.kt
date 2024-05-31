@@ -10,15 +10,9 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.load
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 
 suspend fun userInfoCallback(query: DataCallbackQuery) {
     ClientMapper.findById(query.data.replace("user_info", "").toInt())?.let { client ->
-        if (client.organizationId != UserMapper.findById(query.from.id.chatId.long)?.organizationId) {
-            bot.sendMessage(query.from,"Доступ запрещен")
-            return
-        }
-
         val info = client.getInfo(
             ServiceMapper.getServicesForClient(client.id!!)
                 .mapNotNull { ServicesMapper.getNameById(it) }.toList()

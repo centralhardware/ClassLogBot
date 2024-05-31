@@ -90,12 +90,10 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
             return false
         }
 
-        val org = OrganizationMapper.findById(telegramUser.organizationId)!!
-
-        if (org.clientCustomProperties.isEmpty()) {
+        if (ConfigMapper.clientProperties().isEmpty()) {
             finish(listOf(), message, builder)
         } else {
-            builder.propertiesBuilder = PropertiesBuilder(org.clientCustomProperties.propertyDefs.toMutableList())
+            builder.propertiesBuilder = PropertiesBuilder(ConfigMapper.clientProperties().propertyDefs.toMutableList())
             val next = builder.nextProperty()!!
             if (next.second.isNotEmpty()) {
                 bot.send(message.chat, text = next.first, replyMarkup = replyKeyboard {
@@ -109,16 +107,13 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
-        val telegramUser = UserMapper.findById(message.userId())!!
-
-        if (OrganizationMapper.findById(telegramUser.organizationId)!!.clientCustomProperties.isEmpty()) return true
+        if (ConfigMapper.clientProperties().isEmpty()) return true
 
         return builder.propertiesBuilder.process(message){ runBlocking { finish(it, message, builder) } }
     }
 
     private suspend fun finish(p: List<Property>, message: CommonMessage<MessageContent>, builder: ClientBuilder) {
         builder.apply {
-            organizationId = UserMapper.findById(message.userId())!!.organizationId
             createdBy = message.userId()
             properties = p
         }
@@ -137,17 +132,15 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     }
 
     private suspend fun sendLog(client: Client, chatId: Long) {
-        getLogUser(chatId)?.let { logId ->
-            bot.send(logId, text = """
-                #${OrganizationMapper.findById(client.organizationId)!!.clientName}   
+        bot.send(ConfigMapper.logChat(), text = """
+                #${ConfigMapper.clientName()}   
                 ${
-                client.getInfo(
-                    ServiceMapper.getServicesForClient(client.id!!)
-                        .mapNotNull { ServicesMapper.getNameById(it) })
-            }
-                """.trimIndent(), parseMode = MarkdownParseMode
-            )
+            client.getInfo(
+                ServiceMapper.getServicesForClient(client.id!!)
+                    .mapNotNull { ServicesMapper.getNameById(it) })
         }
+                """.trimIndent(), parseMode = MarkdownParseMode
+        )
     }
 
 }

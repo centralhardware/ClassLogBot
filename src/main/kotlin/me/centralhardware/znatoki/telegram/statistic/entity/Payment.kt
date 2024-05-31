@@ -13,7 +13,6 @@ data class Payment (
     val clientId: Int,
     val amount: Int,
     val timeId: UUID? = null,
-    val organizationId: UUID,
     val serviceId: Long? = null,
     val properties: MutableList<Property> = ArrayList()
 )
@@ -22,7 +21,6 @@ class PaymentBuilder: Builder{
     var chatId by Delegates.notNull<Long>()
     var clientId by Delegates.notNull<Int>()
     var amount by Delegates.notNull<Int>()
-    lateinit var organizationId: UUID
     var serviceId by Delegates.notNull<Long>()
     var properties: List<Property> = ArrayList()
     lateinit var propertiesBuilder: PropertiesBuilder
@@ -33,7 +31,6 @@ class PaymentBuilder: Builder{
         chatId = chatId,
         clientId = clientId,
         amount = amount,
-        organizationId = organizationId,
         serviceId = serviceId,
         properties = propertiesBuilder.properties
     )

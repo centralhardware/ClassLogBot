@@ -3,7 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic
 import arrow.core.Either
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
-import java.util.*
 
 fun validateFio(value: String): Either<String, String> = if (ClientMapper.existsByFio(value)) {
     Either.Right(value)
@@ -28,8 +27,8 @@ fun validateAmount(value: String): Either<String, Int> {
     }
 }
 
-fun validateService(serviceName: String, serviceId: UUID): Either<String, String> {
-    val services = ServicesMapper.getServicesByOrganization(serviceId)
+fun validateService(serviceName: String): Either<String, String> {
+    val services = ServicesMapper.findAll()
     val servicesNames = services.map { it.name }
     return if (servicesNames.contains(serviceName)) {
         Either.Right(serviceName)

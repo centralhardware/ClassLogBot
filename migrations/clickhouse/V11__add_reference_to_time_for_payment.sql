@@ -1,1 +1,0 @@
-ALTER TABLE znatoki_payment ADD COLUMN time_id Nullable(UUID)

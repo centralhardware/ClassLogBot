@@ -1,12 +1,14 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
 import kotliquery.Row
-import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
+import me.centralhardware.znatoki.telegram.statistic.formatDate
+import me.centralhardware.znatoki.telegram.statistic.makeBold
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
+import me.centralhardware.znatoki.telegram.statistic.print
+import me.centralhardware.znatoki.telegram.statistic.toProperties
 import java.time.LocalDateTime
-import java.util.*
 import kotlin.properties.Delegates
 
 class Client(
@@ -15,7 +17,6 @@ class Client(
     val secondName: String,
     val lastName: String,
     val properties: List<Property>,
-    val organizationId: UUID,
     val createDate: LocalDateTime = LocalDateTime.now(),
     val modifyDate: LocalDateTime = LocalDateTime.now(),
     val createdBy: Long,
@@ -60,7 +61,6 @@ fun Row.parseClient(): Client = Client(
     string("second_name"),
     string("last_name"),
     string("properties").toProperties(),
-    uuid("organization_id"),
     localDateTime("create_date"),
     localDateTime("modify_date"),
     long("created_by"),
@@ -73,7 +73,6 @@ class ClientBuilder: Builder{
     lateinit var  secondName: String
     lateinit var  lastName: String
     lateinit var  properties: List<Property>
-    lateinit var  organizationId: UUID
     var  createdBy by Delegates.notNull<Long>()
     lateinit var propertiesBuilder: PropertiesBuilder
 
@@ -84,7 +83,6 @@ class ClientBuilder: Builder{
         secondName = secondName,
         lastName = lastName,
         properties = properties,
-        organizationId = organizationId,
         createdBy = createdBy,
         updateBy = createdBy
     )

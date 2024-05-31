@@ -1,1 +1,0 @@
-DROP DATABASE znatoki_student_bot;

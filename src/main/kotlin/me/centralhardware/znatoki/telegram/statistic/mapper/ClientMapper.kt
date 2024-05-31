@@ -32,7 +32,6 @@ object ClientMapper {
                         second_name,
                         created_by,
                         deleted,
-                        organization_id,
                         properties
                ) VALUES (
                     :create_date,
@@ -42,7 +41,6 @@ object ClientMapper {
                     :second_name,
                     :created_by,
                     :deleted,
-                    :organization_id,
                     :properties::JSONB
                ) RETURNING id
             """, mapOf(
@@ -53,11 +51,19 @@ object ClientMapper {
                 "second_name" to client.secondName,
                 "created_by" to client.createdBy,
                 "deleted" to client.deleted,
-                "organization_id" to client.organizationId,
                 "properties" to client.properties.toJson()
             )
         ).map { it.int("id") }.asSingle
     )!!
+    fun delete(id: Int) = session.update(
+        queryOf(
+            """
+               UPDATE client 
+               SET deleted = true
+               WHERE id = :id
+            """, mapOf("id" to id)
+        )
+    )
 
     fun findById(id: Int): Client? = session.run(
         queryOf(

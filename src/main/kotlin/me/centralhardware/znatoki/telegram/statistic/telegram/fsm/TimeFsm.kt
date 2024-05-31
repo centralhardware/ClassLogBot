@@ -88,10 +88,10 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
             return true
         }
 
-        return validateService(message.text!!, znatokiUser.organizationId)
+        return validateService(message.text!!)
             .mapLeft(mapError(message))
             .map { service ->
-                builder.serviceId = ServicesMapper.getServiceId(znatokiUser.organizationId, service)!!
+                builder.serviceId = ServicesMapper.getServiceId(service)!!
 
                 bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
 
@@ -144,17 +144,16 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
     private suspend fun amount(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
         val userId = message.userId()
         val znatokiUser = UserMapper.findById(userId)!!
-        val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
         return validateAmount(message.text!!)
             .mapLeft(mapError(message))
             .map { amount ->
                 builder.amount = amount
 
-                if (org.serviceCustomProperties.isEmpty()) {
+                if (ConfigMapper.serviceProperties().isEmpty()) {
                     confirmMessage(message, builder)
                 } else {
                     builder.propertiesBuilder =
-                        PropertiesBuilder(org.serviceCustomProperties.propertyDefs.toMutableList())
+                        PropertiesBuilder(ConfigMapper.serviceProperties().propertyDefs.toMutableList())
 
                     val next = builder.nextProperty()!!
 
@@ -171,9 +170,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
         val userId = message.userId()
-        val znatokiUser = UserMapper.findById(userId)!!
-        val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
-        if (org.serviceCustomProperties.isEmpty()) return true
+        if (ConfigMapper.serviceProperties().isEmpty()) return true
 
         return builder.propertiesBuilder.process(
             message
@@ -202,7 +199,6 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
         val serviceId = UUID.randomUUID()
 
         builder.id = serviceId
-        builder.organizationId = UserMapper.findById(userId)!!.organizationId
 
         val services = builder.build()
         services.forEach {
@@ -213,7 +209,6 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
                     clientId = it.clientId,
                     amount = it.amount * -1,
                     timeId = it.id,
-                    organizationId = it.organizationId
                 )
             )
         }
@@ -235,55 +230,53 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
 }
 
 private suspend fun sendLog(services: List<Service>, userId: Long) {
-    getLogUser(userId)?.let { logId ->
-        val service = services.first()
-        val keyboard = inlineKeyboard {
-            row { dataButton("удалить", "timeDelete-${service.id}") }
-        }
+    val service = services.first()
+    val keyboard = inlineKeyboard {
+        row { dataButton("удалить", "timeDelete-${service.id}") }
+    }
 
-        val log = """
+    val log = """
                     #занятие
                     Время: ${service.dateTime.formatDateTime()}
                     Предмет: ${ServicesMapper.getNameById(service.serviceId).hashtag()}
-                    ${OrganizationMapper.findById(service.organizationId)?.clientName}: ${
-            services.toClientIds().joinToString(", ") {
-                "#${ClientMapper.getFioById(it).replace(" ", "_")}(${
-                    PaymentMapper.getCredit(
-                        service.clientId
-                    )
-                })"
-            }
+                    ${ConfigMapper.clientName()}: ${
+        services.toClientIds().joinToString(", ") {
+            "#${ClientMapper.getFioById(it).replace(" ", "_")}(${
+                PaymentMapper.getCredit(
+                    service.clientId
+                )
+            })"
         }
+    }
                     Стоимость: ${service.amount}
                     Преподаватель: ${UserMapper.findById(userId)?.name.hashtag()}
                     ${service.properties.print()}
                     """.trimIndent()
 
-        val hasPhoto = service.properties.count { it.type is Photo }
+    val hasPhoto = service.properties.count { it.type is Photo }
 
-        if (hasPhoto == 1) {
-            bot.sendActionUploadPhoto(logId)
-            service.properties.filter { it.type is Photo }
-                .forEach { photo ->
-                    bot.sendPhoto(
-                        logId,
-                        InputFile.fromInput("Отчет") {
-                            MinioService.get(photo.value!!).onFailure {
-                                runBlocking {
-                                    bot.sendTextMessage(
-                                        logId,
-                                        "Ошибка во время отправки лога"
-                                    )
-                                }
-                            }.getOrThrow()
-                        },
-                        replyMarkup = keyboard,
-                        text = log
-                    )
-                }
-        } else {
-            bot.sendTextMessage(logId, log, replyMarkup = keyboard)
-        }
+    if (hasPhoto == 1) {
+        bot.sendActionUploadPhoto(ConfigMapper.logChat())
+        service.properties.filter { it.type is Photo }
+            .forEach { photo ->
+                bot.sendPhoto(
+                    ConfigMapper.logChat(),
+                    InputFile.fromInput("Отчет") {
+                        MinioService.get(photo.value!!).onFailure {
+                            runBlocking {
+                                bot.sendTextMessage(
+                                    ConfigMapper.logChat(),
+                                    "Ошибка во время отправки лога"
+                                )
+                            }
+                        }.getOrThrow()
+                    },
+                    replyMarkup = keyboard,
+                    text = log
+                )
+            }
+    } else {
+        bot.sendTextMessage(ConfigMapper.logChat(), log, replyMarkup = keyboard)
     }
 }
 

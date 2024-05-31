@@ -7,24 +7,18 @@ import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.toChatId
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
-import me.centralhardware.znatoki.telegram.statistic.entity.Organization
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
 import me.centralhardware.znatoki.telegram.statistic.formatTime
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.OrganizationMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 import java.util.*
 
 suspend fun dailyReport() {
     doOnce("0 0 22 * * *") {
-        OrganizationMapper.getOwners()
-            .asSequence()
-            .map(Organization::id)
-            .map(ServiceMapper::getIds)
-            .flatten()
-            .toList()
+        ServiceMapper.getIds()
             .forEach { runBlocking { getReport(it) } }
     }
 }
@@ -48,7 +42,7 @@ suspend fun getReport(id: Long, sendTo: Long = id) {
                 """
                         Время: ${it.first().dateTime.formatTime()}
                         Предмет: ${ServicesMapper.getNameById(it.first().serviceId)}
-                        ${OrganizationMapper.findById(it.first().organizationId)!!.clientName}: ${
+                        ${ConfigMapper.clientName()}: ${
                     it.toClientIds().joinToString(", ") { clientId -> ClientMapper.getFioById(clientId) }
                 }
                         Стоимость: ${it.first().amount}

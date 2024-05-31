@@ -13,15 +13,10 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.userId
 import org.apache.commons.collections4.CollectionUtils
-import java.util.stream.Collectors
 
 suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<String>) {
-    val orgId = UserMapper.findById(message.userId())!!.organizationId
     val searchText = args.joinToString(separator = " ")
     val searchResult = ClientService.search(searchText)
-        .stream()
-        .filter { it.organizationId == orgId }
-        .collect(Collectors.toList())
 
     if (CollectionUtils.isEmpty(searchResult)) {
         bot.sendMessage(message.chat, I18n.Message.NOTHING_FOUND.load())

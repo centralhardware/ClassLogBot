@@ -8,6 +8,15 @@ import me.centralhardware.znatoki.telegram.statistic.entity.parseUser
 
 object UserMapper {
 
+    fun getAdminsId(): List<Long> = session.run(
+        queryOf(
+            """
+               SELECT id
+               WHERE role = 'ADMIN'
+            """
+        ).map { it.long("id") }.asList
+    )
+
     fun findById(id: Long): TelegramUser? = session.run(
         queryOf(
             """

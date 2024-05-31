@@ -23,7 +23,7 @@ private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long
     }
 
     if (UserMapper.hasAdminRight(userId)) {
-        ServiceMapper.getIds(UserMapper.findById(userId)!!.organizationId).forEach {
+        ServiceMapper.getIds().forEach {
             getTime.invoke(it).forEach { send(chat.id, it) }
         }
         return
@@ -48,5 +48,9 @@ suspend fun reportCommand(message: CommonMessage<TextContent>) {
 }
 
 suspend fun reportPreviousCommand(message: CommonMessage<TextContent>) {
-    createReport(message.userId(), message.chat) { ReportService.getReportPrevious(it) }
+    bot.sendActionTyping(message.chat)
+    createReport(message.userId(), message.chat) {
+        runBlocking { bot.sendActionUploadDocument(message.chat) }
+        ReportService.getReportPrevious(it)
+    }
 }

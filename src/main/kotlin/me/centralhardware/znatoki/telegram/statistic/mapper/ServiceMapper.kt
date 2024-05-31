@@ -10,17 +10,6 @@ import java.util.*
 
 object ServiceMapper {
 
-    fun getOrgId(id: UUID): UUID? = session.run(
-        queryOf(
-            """
-            SELECT org_id
-            FROM service
-            WHERE id = :id
-            LIMIT 1
-            """, mapOf("id" to id)
-        ).map { row -> row.uuid("org_id") }.asSingle
-    )
-
     fun insert(service: Service) = session.execute(
         queryOf(
             """
@@ -31,7 +20,6 @@ object ServiceMapper {
                 service_id,
                 amount,
                 pupil_id,
-                org_id,
                 properties
             ) VALUES (
                 :dateTime,
@@ -40,7 +28,6 @@ object ServiceMapper {
                 :serviceId,
                 :amount,
                 :clientId,
-                :organizationId,
                 :properties::JSONB
             )
             """, mapOf(
@@ -50,7 +37,6 @@ object ServiceMapper {
                 "serviceId" to service.serviceId,
                 "amount" to service.amount,
                 "clientId" to service.clientId,
-                "organizationId" to service.organizationId,
                 "properties" to service.properties.toJson()
             )
         )
@@ -103,13 +89,13 @@ object ServiceMapper {
         )
     }
 
-    fun getIds(orgId: UUID): List<Long> = session.run(
+    fun getIds(): List<Long> = session.run(
         queryOf(
             """
             SELECT DISTINCT chat_id
             FROM service
             WHERE is_deleted = false AND org_id = :org_id
-            """, mapOf("org_id" to orgId)
+            """
         ).map { row -> row.long("chat_id") }.asList
     )
 

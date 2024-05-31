@@ -1,7 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
-import me.centralhardware.znatoki.telegram.statistic.mapper.OrganizationMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
@@ -36,8 +35,6 @@ object ReportService{
                         serviceId,
                         ServicesMapper.getNameById(serviceId)!!,
                         it.dateTime,
-                        OrganizationMapper.getReportFields(user.organizationId),
-                        OrganizationMapper.findById(user.organizationId)!!.clientName,
                         id
                     ).generate(times)
                 }

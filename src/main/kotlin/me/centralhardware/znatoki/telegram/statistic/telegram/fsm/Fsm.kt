@@ -1,15 +1,12 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
-import dev.inmo.tgbotapi.types.ChatId
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
-import dev.inmo.tgbotapi.types.toChatId
 import kotlinx.coroutines.runBlocking
-import me.centralhardware.znatoki.telegram.statistic.*
+import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
-import me.centralhardware.znatoki.telegram.statistic.mapper.OrganizationMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
+import me.centralhardware.znatoki.telegram.statistic.userId
 import org.slf4j.LoggerFactory
 import ru.nsk.kstatemachine.event.Event
 import ru.nsk.kstatemachine.event.WrappedEvent
@@ -61,10 +58,5 @@ val fsmLog = StateMachine.Logger { lazyMessage ->
 }
 
 fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error -> runBlocking { bot.sendTextMessage(message.chat, error) } }
-
-fun getLogUser(userId: Long): ChatId? =
-    UserMapper.findById(userId)?.organizationId?.let { user ->
-        OrganizationMapper.findById(user)?.logChatId?.toChatId()
-    }
 
 fun TransitionParams<*>.arg() = this.argument as CommonMessage<MessageContent>

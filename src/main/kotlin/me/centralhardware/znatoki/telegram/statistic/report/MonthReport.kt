@@ -9,6 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.formatDate
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import java.io.File
 import java.time.LocalDateTime
@@ -21,8 +22,6 @@ class MonthReport(
     private val service: Long,
     private val serviceName: String,
     private val date: LocalDateTime,
-    private val reportFields: List<String>,
-    private val clientName: String,
     private val userId: Long
 ) {
 
@@ -60,11 +59,11 @@ class MonthReport(
                 title("${dateTime.format(DateTimeFormatter.ofPattern("MMMM"))} ${dateTime.year}", 6)
                 row {
                     cell("№")
-                    cell("ФИО $clientName")
+                    cell("ФИО ${ConfigMapper.clientName()}")
                     ClientMapper.findById(filteredServices.first().clientId)?.let {
                         it.properties
                             .map { it.name }
-                            .filter { reportFields.contains(it) }
+                            .filter { ConfigMapper.includeInReport().contains(it) }
                             .forEach { cell(it) }
                     }
                     cell("посетил индивидуально")
@@ -94,7 +93,7 @@ class MonthReport(
                     row {
                         cell(i.getAndIncrement())
                         cell(client.fio())
-                        client.properties.filter { reportFields.contains(it.name) }.map { cell(it.value?:"") }
+                        client.properties.filter { ConfigMapper.includeInReport().contains(it.name) }.map { cell(it.value?:"") }
                         cell(individual)
                         cell(group)
                         cell(PaymentMapper.getPaymentsSumByClient(userId, fioTimes.first().serviceId, client.id!!, date))
@@ -116,7 +115,7 @@ class MonthReport(
     }
 
     private fun getComparator(client: Client): Comparator<Client> {
-        val props = client.properties.filter { reportFields.contains(it.name) }
+        val props = client.properties.filter { ConfigMapper.includeInReport().contains(it.name) }
 
         val comparator: Comparator<Client> = props.first().let { property ->
             if (property.type is NumberType) {

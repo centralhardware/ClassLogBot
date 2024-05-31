@@ -15,7 +15,6 @@ class Service(
     val serviceId: Long,
     val clientId: Int,
     val amount: Int,
-    val organizationId: UUID,
     val properties: List<Property>
 )
 
@@ -26,7 +25,6 @@ fun Row.parseTime() = Service(
     long("service_id"),
     int("pupil_id"),
     int("amount"),
-    uuid("org_id"),
     string("properties").toProperties(),
 )
 
@@ -35,7 +33,6 @@ class ServiceBuilder: Builder {
     var chatId by Delegates.notNull<Long>()
     var serviceId by Delegates.notNull<Long>()
     var amount by Delegates.notNull<Int>()
-    lateinit var organizationId: UUID
     var properties: List<Property> = listOf()
     lateinit var propertiesBuilder: PropertiesBuilder
     var clientIds: MutableSet<Int> = HashSet()
@@ -53,7 +50,6 @@ class ServiceBuilder: Builder {
             serviceId = serviceId,
             clientId = it,
             amount = amount,
-            organizationId = organizationId,
             properties = propertiesBuilder.properties.toList()
         )
     }

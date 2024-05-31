@@ -19,7 +19,6 @@ object PaymentMapper {
                 pupil_id,
                 amount,
                 time_id,
-                org_id,
                 properties,
                 services
             ) VALUES (
@@ -28,7 +27,6 @@ object PaymentMapper {
                 :clientId,
                 :amount,
                 :timeId,
-                :organizationId,
                 :properties::JSONB,
                 :serviceId
             ) RETURNING id
@@ -37,7 +35,6 @@ object PaymentMapper {
             "clientId" to payment.clientId,
             "amount" to payment.amount,
             "timeId" to payment.timeId,
-            "organizationId" to payment.organizationId,
             "properties" to payment.properties.toJson(),
             "serviceId" to payment.serviceId)
         ).map { row -> row.int("id") }.asSingle
@@ -61,15 +58,6 @@ object PaymentMapper {
             """, mapOf("id" to id,
                 "is_delete" to isDelete)
         ).asUpdate
-    )
-
-    fun getOrgById(id: Int): UUID? = session.run(
-        queryOf("""
-            SELECT org_id
-            FROM payment
-            WHERE id = :id
-            """, mapOf("id" to id)
-        ).map { row -> row.uuid("org_id") }.asSingle
     )
 
     fun getPaymentsSumByClient(chatId: Long,

@@ -100,10 +100,10 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     suspend fun service(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
         val userId = message.userId()
         val znatokiUser = UserMapper.findById(userId)!!
-        return validateService(message.content.asTextedInput()!!.text!!, znatokiUser.organizationId)
+        return validateService(message.content.asTextedInput()!!.text!!)
             .mapLeft(mapError(message))
             .map { service ->
-                builder.serviceId = ServicesMapper.getServiceId(znatokiUser.organizationId, service)!!
+                builder.serviceId = ServicesMapper.getServiceId(service)!!
 
                 bot.sendTextMessage(message.chat, "Введите сумму оплаты", replyMarkup = ReplyKeyboardRemove())
             }.isRight()
@@ -116,8 +116,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
             .mapLeft(mapError(message))
             .map { amount ->
                 builder.amount = amount
-                val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
-                if (org.paymentCustomProperties.isEmpty()
+                if (ConfigMapper.paymentProperties().isEmpty()
                 ) {
                     bot.sendTextMessage(message.chat, builder.let {
                         """
@@ -129,7 +128,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                     }, replyMarkup = yesNoKeyboard)
                 } else {
                     builder.propertiesBuilder =
-                        PropertiesBuilder(org.paymentCustomProperties.propertyDefs.toMutableList())
+                        PropertiesBuilder(ConfigMapper.paymentProperties().propertyDefs.toMutableList())
                     val next = builder.nextProperty()!!
                     if (next.second.isNotEmpty()) {
                         bot.sendTextMessage(message.chat, next.first, replyMarkup = replyKeyboard {
@@ -144,10 +143,8 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
         val userId = message.userId()
-        val znatokiUser = UserMapper.findById(userId)!!
-        val org = OrganizationMapper.findById(znatokiUser.organizationId)!!
 
-        if (org.paymentCustomProperties.isEmpty()) return true
+        if (ConfigMapper.paymentProperties().isEmpty()) return true
 
         return builder.propertiesBuilder.process(
             message,
@@ -169,7 +166,6 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
         val userId = message.userId()
         val text = message.text!!
         if (text == "да") {
-            builder.organizationId = UserMapper.findById(userId)!!.organizationId
             builder.chatId = userId
             val payment = builder.build()
             val paymentId = PaymentMapper.insert(payment)
@@ -180,7 +176,6 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                         chatId = userId,
                         clientId = payment.clientId,
                         amount = (abs(PaymentMapper.getCredit(payment.clientId)) + (payment.amount * 2)).toInt(),
-                        organizationId = payment.organizationId
                     )
                 )
             }
@@ -205,46 +200,43 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     }
 
     private suspend fun sendLog(payment: Payment, paymentId: Int, userId: Long) {
-        getLogUser(userId)?.let { logId ->
-            val keyboard = inlineKeyboard {
-                row { dataButton("удалить", "paymentDelete-${paymentId}") }
-            }
-            val text = """
+        val keyboard = inlineKeyboard {
+            row { dataButton("удалить", "paymentDelete-${paymentId}") }
+        }
+        val text = """
                 #оплата
                 Время: ${payment.dateTime.formatDateTime()}
-                Организация: ${OrganizationMapper.findById(payment.organizationId)!!.name.hashtag()}
                 Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
                 Предмет: ${ServicesMapper.getNameById(payment.serviceId!!)}
                 Оплата: ${payment.amount}
                 Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
                 ${payment.properties.print()}
             """.trimIndent()
-            val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
-            if (hasPhoto == 1L) {
-                bot.sendActionUploadPhoto(logId)
-                payment.properties
-                    .filter { it.type is Photo }
-                    .forEach { photo ->
-                        bot.sendActionUploadPhoto(logId)
-                        bot.sendPhoto(
-                            logId,
-                            InputFile.fromInput("") {
-                                MinioService.get(photo.value!!).onFailure {
-                                    runBlocking {
-                                        bot.sendTextMessage(
-                                            logId,
-                                            "Ошибка во время отправки лога"
-                                        )
-                                    }
-                                }.getOrThrow()
-                            },
-                            replyMarkup = keyboard,
-                            text = text
-                        )
-                    }
-            } else {
-                bot.sendTextMessage(logId, text, replyMarkup = keyboard)
-            }
+        val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
+        if (hasPhoto == 1L) {
+            bot.sendActionUploadPhoto(ConfigMapper.logChat())
+            payment.properties
+                .filter { it.type is Photo }
+                .forEach { photo ->
+                    bot.sendActionUploadPhoto(ConfigMapper.logChat())
+                    bot.sendPhoto(
+                        ConfigMapper.logChat(),
+                        InputFile.fromInput("") {
+                            MinioService.get(photo.value!!).onFailure {
+                                runBlocking {
+                                    bot.sendTextMessage(
+                                        ConfigMapper.logChat(),
+                                        "Ошибка во время отправки лога"
+                                    )
+                                }
+                            }.getOrThrow()
+                        },
+                        replyMarkup = keyboard,
+                        text = text
+                    )
+                }
+        } else {
+            bot.sendTextMessage(ConfigMapper.logChat(), text, replyMarkup = keyboard)
         }
     }
 }
