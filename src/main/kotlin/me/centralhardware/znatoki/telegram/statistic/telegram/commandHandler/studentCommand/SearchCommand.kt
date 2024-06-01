@@ -8,7 +8,6 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
-import me.centralhardware.znatoki.telegram.statistic.i18n.load
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.userId

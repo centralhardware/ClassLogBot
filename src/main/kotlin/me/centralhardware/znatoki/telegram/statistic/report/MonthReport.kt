@@ -11,6 +11,7 @@ import me.centralhardware.znatoki.telegram.statistic.formatDate
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -20,12 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger
 class MonthReport(
     private val fio: String,
     private val service: Long,
-    private val serviceName: String,
     private val date: LocalDateTime,
     private val userId: Long
 ) {
 
     fun generate(services: List<Service>): File? {
+        val serviceName = ServicesMapper.getNameById(service)!!
+
         val filteredServices = services.filter { it.serviceId == service }
         if (filteredServices.isEmpty()) {
             return null

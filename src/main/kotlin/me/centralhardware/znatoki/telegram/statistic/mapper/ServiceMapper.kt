@@ -55,7 +55,6 @@ object ServiceMapper {
                    service_id,
                    pupil_id,
                    amount,
-                   org_id,
                    properties
             FROM service
             WHERE chat_id = :userId
@@ -94,7 +93,7 @@ object ServiceMapper {
             """
             SELECT DISTINCT chat_id
             FROM service
-            WHERE is_deleted = false AND org_id = :org_id
+            WHERE is_deleted = false
             """
         ).map { row -> row.long("chat_id") }.asList
     )

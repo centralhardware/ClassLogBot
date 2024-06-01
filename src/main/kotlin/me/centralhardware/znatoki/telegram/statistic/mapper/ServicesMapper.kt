@@ -22,7 +22,7 @@ object ServicesMapper {
             """
             SELECT id
             FROM services
-            WHERE name = :name AND organization_id = :org_id
+            WHERE name = :name
             """, mapOf(
                 "name" to services
             )

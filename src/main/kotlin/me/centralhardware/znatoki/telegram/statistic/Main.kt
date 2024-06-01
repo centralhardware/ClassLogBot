@@ -36,8 +36,8 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.userInfoCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
-import me.centralhardware.znatoki.telegram.statistic.telegram.report.dailyReport
-import me.centralhardware.znatoki.telegram.statistic.telegram.report.monthReport
+import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
+import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import org.slf4j.LoggerFactory
 
 val log = LoggerFactory.getLogger("bot")

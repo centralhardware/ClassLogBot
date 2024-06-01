@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.report
+package me.centralhardware.znatoki.telegram.statistic.report
 
 import dev.inmo.krontab.doOnce
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument

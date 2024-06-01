@@ -33,7 +33,6 @@ object ReportService{
                     MonthReport(
                         user.name,
                         serviceId,
-                        ServicesMapper.getNameById(serviceId)!!,
                         it.dateTime,
                         id
                     ).generate(times)

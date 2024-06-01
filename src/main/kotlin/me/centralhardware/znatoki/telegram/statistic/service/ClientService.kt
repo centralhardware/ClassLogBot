@@ -16,7 +16,6 @@ object ClientService {
 
     private var directory: ByteBuffersDirectory? = null
 
-
     fun init() {
         fixedRateTimer(name = "updateLucene", period = 60000L) {
             val index = ByteBuffersDirectory()
@@ -28,15 +27,21 @@ object ClientService {
                 .forEach { client ->
                     try {
                         val document = Document()
-                        document.add(TextField(
-                            "name", client.name.toLowerCase(), Field.Store.YES
-                        ))
-                        document.add(TextField(
-                            "lastName", client.lastName.toLowerCase(), Field.Store.YES
-                        ))
-                        document.add(TextField(
-                            "secondName", client.secondName.toLowerCase(), Field.Store.YES
-                        ))
+                        document.add(
+                            TextField(
+                                "name", client.name.toLowerCase(), Field.Store.YES
+                            )
+                        )
+                        document.add(
+                            TextField(
+                                "lastName", client.lastName.toLowerCase(), Field.Store.YES
+                            )
+                        )
+                        document.add(
+                            TextField(
+                                "secondName", client.secondName.toLowerCase(), Field.Store.YES
+                            )
+                        )
                         document.add(TextField("id", client.id.toString(), Field.Store.YES))
                         writer.addDocument(document)
                     } catch (e: IOException) {
@@ -69,7 +74,7 @@ object ClientService {
         val topDocs = searcher.search(combinedQuery.build(), 10)
         return topDocs.scoreDocs
             .map { searcher.doc(it.doc) }
-            .mapNotNull { it:Document -> ClientMapper.findById(it["id"].toInt()) }
+            .mapNotNull { it: Document -> ClientMapper.findById(it["id"].toInt()) }
             .toList()
     }
 

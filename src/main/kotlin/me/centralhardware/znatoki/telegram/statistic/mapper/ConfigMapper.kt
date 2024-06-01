@@ -11,10 +11,11 @@ object ConfigMapper {
     fun get(key: String) = session.run(
         queryOf(
             """
-               SELECT value 
-               WHERE key = :key
+                SELECT value 
+                FROM config
+                WHERE key = :key
             """, mapOf("key" to key)
-        ).map { it.string("key") }.asSingle
+        ).map { it.string("value") }.asSingle
     )!!
 
     fun logChat()               = get("logChatId").toLong().toChatId()

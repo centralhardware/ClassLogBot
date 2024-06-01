@@ -17,8 +17,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
 import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
-import me.centralhardware.znatoki.telegram.statistic.i18n.load
-import me.centralhardware.znatoki.telegram.statistic.i18n.resourceBundle
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
@@ -148,7 +146,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
 suspend fun startClientFsm(message: CommonMessage<MessageContent>): ClientBuilder {
     bot.sendTextMessage(
         message.chat,
-        resourceBundle.getString("INPUT_FIO_IN_FORMAT")
+        I18n.Message.INPUT_FIO_IN_FORMAT.load()
     )
     return ClientBuilder()
 }

@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic.telegram.report
+package me.centralhardware.znatoki.telegram.statistic.report
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap

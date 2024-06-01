@@ -8,7 +8,6 @@ data class Services(
     var id: Long,
     var key: String,
     var name: String,
-    var orgId: UUID,
     var allowMultiplyClients: Boolean,
     var properties: List<Property> = listOf()
 )
@@ -17,6 +16,5 @@ fun Row.parseServices() = Services(
     long("id"),
     string("key"),
     string("name"),
-    uuid("organization_id"),
     boolean("allow_multiply_clients")
 )
