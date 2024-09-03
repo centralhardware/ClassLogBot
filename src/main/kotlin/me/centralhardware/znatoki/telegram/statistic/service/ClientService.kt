@@ -73,6 +73,8 @@ object ClientService {
         val searcher = IndexSearcher(indexReader)
         val topDocs = searcher.search(combinedQuery.build(), 10)
         return topDocs.scoreDocs
+            .sortedBy { it.score }
+            .reversed()
             .map { searcher.doc(it.doc) }
             .mapNotNull { it: Document -> ClientMapper.findById(it["id"].toInt()) }
             .toList()

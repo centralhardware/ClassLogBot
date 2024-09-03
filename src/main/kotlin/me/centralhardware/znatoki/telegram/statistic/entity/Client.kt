@@ -53,7 +53,7 @@ fun Client.getInfo(services: List<String>) = """
         редактировано=${updateBy}
         """.trimIndent()
 
-fun Client.fio(): String = "$name $lastName $secondName".replace("\\s{2,}".toRegex(), " ")
+fun Client.fio(): String = "$name $secondName $lastName".replace("\\s{2,}".toRegex(), " ")
 
 fun Row.parseClient(): Client = Client(
     int("id"),
