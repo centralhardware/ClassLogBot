@@ -6,7 +6,7 @@ import dev.inmo.kslog.common.defaultMessageFormatter
 import dev.inmo.kslog.common.setDefaultKSLog
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
-import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoWithUpdatesFilter
+import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.telegramBotWithBehaviourAndLongPolling
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
 import dev.inmo.tgbotapi.types.BotCommand
@@ -77,14 +77,12 @@ suspend fun main() {
 
 
 
-        createSubContextAndDoWithUpdatesFilter(
-            stopOnCompletion = false,
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasWriteRight(it.userId()) }) {
             onCommand(Regex("addPupil|addpupil")) { addClientCommand(it) }
         }
 
-        createSubContextAndDoWithUpdatesFilter(
-            stopOnCompletion = false,
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }) {
             onCommandWithArgs("i") { message, args -> userInfoCommand(message, args) }
             onCommandWithArgs("s") { message, args -> searchCommand(message, args) }
@@ -98,8 +96,7 @@ suspend fun main() {
             onBaseInlineQuery { processInline(it) }
         }
 
-        createSubContextAndDoWithUpdatesFilter(
-            stopOnCompletion = false,
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasAdminRight(it.userId()) }) {
             onCommand("grafana") { grafanaCommand(it) }
             onCommandWithArgs("dailyReport") { message, args -> dailyReportCommand(message, args) }
