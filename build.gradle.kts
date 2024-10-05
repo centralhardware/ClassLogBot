@@ -14,8 +14,8 @@ repositories {
 }
 
 var poiVersion = "5.3.0"
-var kstatemachineVersion = "0.30.0"
-var luceneVersion = "9.11.1"
+var kstatemachineVersion = "0.31.1"
+var luceneVersion = "9.12.0"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:1.2.4")
@@ -24,12 +24,12 @@ dependencies {
     implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
-    implementation("dev.inmo:tgbotapi:18.1.0")
+    implementation("dev.inmo:tgbotapi:18.2.1")
 
     implementation("io.minio:minio:8.5.12")
 
     implementation("org.slf4j:slf4j-api:2.0.16")
-    implementation("ch.qos.logback:logback-classic:1.5.7")
+    implementation("ch.qos.logback:logback-classic:1.5.8")
 
     implementation("org.apache.poi:poi:$poiVersion")
     implementation("org.apache.poi:poi-ooxml:$poiVersion")
@@ -40,7 +40,7 @@ dependencies {
     implementation("org.apache.lucene:lucene-queryparser:$luceneVersion")
     implementation("org.apache.lucene:lucene-codecs:$luceneVersion")
 
-    implementation("dev.inmo:krontab:2.4.0")
+    implementation("dev.inmo:krontab:2.5.0")
 
     testImplementation("org.mockito:mockito-core:5.13.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.0")

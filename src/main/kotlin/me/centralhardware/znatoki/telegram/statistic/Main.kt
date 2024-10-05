@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic
 
+import com.sun.net.httpserver.HttpServer
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.LogLevel
 import dev.inmo.kslog.common.defaultMessageFormatter
@@ -39,10 +40,12 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import org.slf4j.LoggerFactory
+import java.net.InetSocketAddress
 
 val log = LoggerFactory.getLogger("bot")
 lateinit var bot: TelegramBot
 suspend fun main() {
+    HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") { it.sendResponseHeaders(200, 0); it.responseBody.close() }; start() }
     ClientService.init()
     GlobalScope.launch {
         monthReport()
