@@ -45,7 +45,7 @@ import java.net.InetSocketAddress
 val log = LoggerFactory.getLogger("bot")
 lateinit var bot: TelegramBot
 suspend fun main() {
-    KSLog("ZnatokiStatistic", minLoggingLevel = LogLevel.INFO)
+    setDefaultKSLog(KSLog("ZnatokiStatistic", minLoggingLevel = LogLevel.INFO))
     HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") { it.sendResponseHeaders(200, 0); it.responseBody.close() }; start() }
     ClientService.init()
     GlobalScope.launch {
