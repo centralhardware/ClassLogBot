@@ -3,7 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic
 import com.sun.net.httpserver.HttpServer
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.LogLevel
-import dev.inmo.kslog.common.defaultMessageFormatter
 import dev.inmo.kslog.common.setDefaultKSLog
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
@@ -39,13 +38,21 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
+import me.centralhardware.znatoki.telegram.statistic.telegram.KtorPipelineStepsHolder
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 
 val log = LoggerFactory.getLogger("bot")
 lateinit var bot: TelegramBot
 suspend fun main() {
-    HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") { it.sendResponseHeaders(200, 0); it.responseBody.close() }; start() }
+    HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") {
+        if (KtorPipelineStepsHolder.health) {
+            it.sendResponseHeaders(200, 0);
+        } else {
+            it.sendResponseHeaders(400, 0);
+        }
+        it.responseBody.close()
+    }; start() }
     ClientService.init()
     GlobalScope.launch {
         monthReport()
@@ -56,7 +63,8 @@ suspend fun main() {
     val res = telegramBotWithBehaviourAndLongPolling(
         Config.Telegram.token,
         defaultExceptionsHandler = { log.info("", it) },
-        scope = CoroutineScope(Dispatchers.IO)
+        scope = CoroutineScope(Dispatchers.IO),
+        builder = { pipelineStepsHolder = KtorPipelineStepsHolder() }
     ) {
         setDefaultKSLog(
             KSLog("ZnatokiStatistic", minLoggingLevel = LogLevel.INFO)
