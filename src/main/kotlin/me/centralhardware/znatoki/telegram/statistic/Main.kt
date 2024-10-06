@@ -45,7 +45,6 @@ import java.net.InetSocketAddress
 val log = LoggerFactory.getLogger("bot")
 lateinit var bot: TelegramBot
 suspend fun main() {
-    setDefaultKSLog(KSLog("ZnatokiStatistic", minLoggingLevel = LogLevel.INFO))
     HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") { it.sendResponseHeaders(200, 0); it.responseBody.close() }; start() }
     ClientService.init()
     GlobalScope.launch {
@@ -60,9 +59,7 @@ suspend fun main() {
         scope = CoroutineScope(Dispatchers.IO)
     ) {
         setDefaultKSLog(
-            KSLog { level: LogLevel, tag: String?, message: Any, throwable: Throwable? ->
-                println(defaultMessageFormatter(level, tag, message, throwable))
-            }
+            KSLog("ZnatokiStatistic", minLoggingLevel = LogLevel.INFO)
         )
         setMyCommands(
             BotCommand("addtime", "Добавить запись"),
