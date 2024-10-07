@@ -6,6 +6,7 @@ import dev.inmo.kslog.common.LogLevel
 import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.setDefaultKSLog
 import dev.inmo.tgbotapi.bot.TelegramBot
+import dev.inmo.tgbotapi.bot.ktor.telegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.telegramBotWithBehaviourAndLongPolling
@@ -43,7 +44,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.HealthCheckKtorPip
 import java.net.InetSocketAddress
 
 val healthCheck = HealthCheckKtorPipelineStepsHolder()
-;lateinit var bot: TelegramBot
+val bot: TelegramBot = telegramBot(Config.Telegram.token)
 suspend fun main() {
     HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") {
         if (healthCheck.health.value) {
@@ -60,7 +61,7 @@ suspend fun main() {
     GlobalScope.launch {
         dailyReport()
     }
-    val res = telegramBotWithBehaviourAndLongPolling(
+    telegramBotWithBehaviourAndLongPolling(
         Config.Telegram.token,
         defaultExceptionsHandler = { KSLog.info("", it) },
         scope = CoroutineScope(Dispatchers.IO),
@@ -126,6 +127,4 @@ suspend fun main() {
         }
 
     }
-    bot = res.first
-    res.second.join()
 }
