@@ -11,6 +11,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven("https://jitpack.io")
 }
 
 var poiVersion = "5.3.0"
@@ -25,6 +26,7 @@ dependencies {
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
     implementation("dev.inmo:tgbotapi:18.2.1")
+    implementation("com.github.centralhardware:telegram-bot-commons:main-SNAPSHOT")
 
     implementation("io.minio:minio:8.5.12")
 

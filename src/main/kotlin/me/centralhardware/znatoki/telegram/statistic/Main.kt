@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic
 import com.sun.net.httpserver.HttpServer
 import dev.inmo.kslog.common.*
 import dev.inmo.tgbotapi.bot.TelegramBot
+import dev.inmo.tgbotapi.bot.ktor.HealthCheckKtorPipelineStepsHolder
 import dev.inmo.tgbotapi.bot.ktor.telegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
@@ -18,7 +19,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
-import me.centralhardware.znatoki.telegram.statistic.telegram.HealthCheckKtorPipelineStepsHolder
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentDeleteCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentRestoreCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.timeDeleteCallback
@@ -43,12 +43,7 @@ import java.net.InetSocketAddress
 val healthCheck = HealthCheckKtorPipelineStepsHolder()
 val bot: TelegramBot = telegramBot(Config.Telegram.token)
 suspend fun main() {
-    KSLoggerDefaultPlatformLoggerLambda = { level, tag, message, throwable ->
-        println(message)
-    }
-    setDefaultKSLog(
-        KSLog("ZnatokiStatistic", minLoggingLevel = LogLevel.INFO)
-    )
+    KSLog.configure("ZnatokiStatistic")
     HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") {
         if (healthCheck.health.value) {
             it.sendResponseHeaders(200, 0);
