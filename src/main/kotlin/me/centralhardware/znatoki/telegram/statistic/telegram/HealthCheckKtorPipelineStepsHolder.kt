@@ -5,20 +5,19 @@ import dev.inmo.tgbotapi.bot.ktor.KtorPipelineStepsHolder
 import dev.inmo.tgbotapi.requests.GetUpdates
 import dev.inmo.tgbotapi.requests.abstracts.Request
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import kotlinx.coroutines.flow.MutableStateFlow
 
-class KtorPipelineStepsHolder : KtorPipelineStepsHolder {
+class HealthCheckKtorPipelineStepsHolder : KtorPipelineStepsHolder {
 
-    companion object {
-        var health: Boolean = false;
-    }
+    val health: MutableStateFlow<Boolean> = MutableStateFlow(false);
 
     override suspend fun <T : Any> onRequestException(request: Request<T>, t: Throwable): T? {
         if (t is HttpRequestTimeoutException &&
             t.message!!.startsWith("Request timeout has expired [url=https://api.telegram.org/bot")
         ) {
-            health = true;
+            health.value = true
         } else {
-            health = false;
+            health.value = false
         }
 
         return super.onRequestException(request, t)
@@ -30,9 +29,8 @@ class KtorPipelineStepsHolder : KtorPipelineStepsHolder {
         callsFactories: List<KtorCallFactory>
     ): T {
         if (request is GetUpdates && result.isSuccess) {
-            health = true
+            health.value = true
         }
-
         return super.onRequestReturnResult(result, request, callsFactories)
     }
 
