@@ -1,5 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.info
+import dev.inmo.kslog.common.warning
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
@@ -7,7 +10,6 @@ import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
 import me.centralhardware.znatoki.telegram.statistic.userId
-import org.slf4j.LoggerFactory
 import ru.nsk.kstatemachine.event.Event
 import ru.nsk.kstatemachine.event.WrappedEvent
 import ru.nsk.kstatemachine.state.DefaultState
@@ -35,7 +37,7 @@ abstract class Fsm<B: Builder>(private val builder: B){
 
         val res = runCatching { process(t, block) }
             .onFailure {
-                LoggerFactory.getLogger("fsm").warn("", it)
+                KSLog.warning("", it)
                 bot.sendTextMessage(
                     t.arg().chat,
                     "Данный тип сообщения не поддерживается или произошла ошибка"
@@ -54,7 +56,7 @@ abstract class Fsm<B: Builder>(private val builder: B){
 
 
 val fsmLog = StateMachine.Logger { lazyMessage ->
-    LoggerFactory.getLogger("fsm").info(lazyMessage())
+    KSLog.info(lazyMessage())
 }
 
 fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error -> runBlocking { bot.sendTextMessage(message.chat, error) } }
