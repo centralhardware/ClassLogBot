@@ -1,10 +1,10 @@
-FROM gradle:jdk23 as gradle
+FROM gradle:jdk22 as gradle
 
 COPY ./ ./
 
 RUN gradle shadowJar
 
-FROM openjdk:23-slim
+FROM openjdk:22-slim
 
 WORKDIR /znatokiBot
 

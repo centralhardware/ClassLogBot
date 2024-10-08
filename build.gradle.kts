@@ -46,10 +46,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.0")
 }
 
-kotlin {
-    jvmToolchain(21)
-}
-
 tasks {
     named<ShadowJar>("shadowJar") {
         archiveBaseName.set("shadow")
