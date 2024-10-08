@@ -1,7 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic
 
-import com.sun.net.httpserver.HttpServer
-import dev.inmo.kslog.common.*
+import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.configure
+import dev.inmo.kslog.common.info
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.bot.ktor.HealthCheckKtorPipelineStepsHolder
 import dev.inmo.tgbotapi.bot.ktor.telegramBot
@@ -38,20 +39,11 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.userInfoCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
-import java.net.InetSocketAddress
 
 val healthCheck = HealthCheckKtorPipelineStepsHolder()
 val bot: TelegramBot = telegramBot(Config.Telegram.token)
 suspend fun main() {
     KSLog.configure("ZnatokiStatistic")
-    HttpServer.create().apply { bind(InetSocketAddress(80), 0); createContext("/health") {
-        if (healthCheck.health.value) {
-            it.sendResponseHeaders(200, 0);
-        } else {
-            it.sendResponseHeaders(400, 0);
-        }
-        it.responseBody.close()
-    }; start() }
     ClientService.init()
     GlobalScope.launch {
         monthReport()
