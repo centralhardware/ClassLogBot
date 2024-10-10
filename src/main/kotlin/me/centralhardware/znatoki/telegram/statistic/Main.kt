@@ -3,8 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.configure
 import dev.inmo.kslog.common.info
+import dev.inmo.tgbotapi.HealthCheck
 import dev.inmo.tgbotapi.bot.TelegramBot
-import dev.inmo.tgbotapi.bot.ktor.HealthCheckKtorPipelineStepsHolder
 import dev.inmo.tgbotapi.bot.ktor.telegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
@@ -40,7 +40,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
-val healthCheck = HealthCheckKtorPipelineStepsHolder()
 val bot: TelegramBot = telegramBot(Config.Telegram.token)
 suspend fun main() {
     KSLog.configure("ZnatokiStatistic")
@@ -54,9 +53,9 @@ suspend fun main() {
     telegramBotWithBehaviourAndLongPolling(
         Config.Telegram.token,
         defaultExceptionsHandler = { KSLog.info("", it) },
-        scope = CoroutineScope(Dispatchers.IO),
-        builder = { pipelineStepsHolder = healthCheck }
+        scope = CoroutineScope(Dispatchers.IO)
     ) {
+        HealthCheck.addBot(this)
         setMyCommands(
             BotCommand("addtime", "Добавить запись"),
             BotCommand("addpayment", "Добавить оплату"),
