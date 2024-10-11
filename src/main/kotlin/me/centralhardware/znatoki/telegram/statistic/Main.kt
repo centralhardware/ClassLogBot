@@ -2,10 +2,11 @@ package me.centralhardware.znatoki.telegram.statistic
 
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.configure
-import dev.inmo.kslog.common.info
 import dev.inmo.tgbotapi.HealthCheck
+import dev.inmo.tgbotapi.KSLogExceptionsHandler
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.bot.ktor.telegramBot
+import dev.inmo.tgbotapi.botToken
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.telegramBotWithBehaviourAndLongPolling
@@ -51,8 +52,8 @@ suspend fun main() {
         dailyReport()
     }
     telegramBotWithBehaviourAndLongPolling(
-        Config.Telegram.token,
-        defaultExceptionsHandler = { KSLog.info("", it) },
+        botToken,
+        defaultExceptionsHandler = KSLogExceptionsHandler,
         scope = CoroutineScope(Dispatchers.IO)
     ) {
         HealthCheck.addBot(this)
