@@ -2,18 +2,13 @@ package me.centralhardware.znatoki.telegram.statistic
 
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.configure
-import dev.inmo.tgbotapi.HealthCheck
-import dev.inmo.tgbotapi.KSLogExceptionsHandler
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.bot.ktor.telegramBot
-import dev.inmo.tgbotapi.botToken
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
-import dev.inmo.tgbotapi.extensions.behaviour_builder.telegramBotWithBehaviourAndLongPolling
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
+import dev.inmo.tgbotapi.longPolling
 import dev.inmo.tgbotapi.types.BotCommand
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -51,12 +46,7 @@ suspend fun main() {
     GlobalScope.launch {
         dailyReport()
     }
-    telegramBotWithBehaviourAndLongPolling(
-        botToken,
-        defaultExceptionsHandler = KSLogExceptionsHandler,
-        scope = CoroutineScope(Dispatchers.IO)
-    ) {
-        HealthCheck.addBot(this)
+    longPolling {
         setMyCommands(
             BotCommand("addtime", "Добавить запись"),
             BotCommand("addpayment", "Добавить оплату"),
