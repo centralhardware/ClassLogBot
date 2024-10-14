@@ -1,9 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic
 
-import dev.inmo.kslog.common.KSLog
-import dev.inmo.kslog.common.configure
+import dev.inmo.tgbotapi.AppConfig
 import dev.inmo.tgbotapi.bot.TelegramBot
-import dev.inmo.tgbotapi.bot.ktor.telegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
@@ -36,9 +34,9 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
-val bot: TelegramBot = telegramBot(Config.Telegram.token)
+lateinit var bot: TelegramBot
 suspend fun main() {
-    KSLog.configure("ZnatokiStatistic")
+    AppConfig.init("ZnatokiStatistic")
     ClientService.init()
     GlobalScope.launch {
         monthReport()
@@ -46,7 +44,7 @@ suspend fun main() {
     GlobalScope.launch {
         dailyReport()
     }
-    longPolling {
+    bot = longPolling {
         setMyCommands(
             BotCommand("addtime", "Добавить запись"),
             BotCommand("addpayment", "Добавить оплату"),
@@ -103,5 +101,5 @@ suspend fun main() {
             }
         }
 
-    }
+    }.first
 }
