@@ -18,4 +18,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 ENV TZ Asia/Novosibirsk
 
-CMD ["java", "-jar", "shadow-1.0-SNAPSHOT-all.jar" ]
+CMD ["java", "-jar", "shadow-1.0-SNAPSHOT-all.jar" , "--add-modules", "jdk.incubator.vector"]
