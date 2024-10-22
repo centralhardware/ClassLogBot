@@ -75,7 +75,7 @@ object ClientService {
         return topDocs.scoreDocs
             .sortedBy { it.score }
             .reversed()
-            .map { searcher.doc(it.doc) }
+            .map { searcher.storedFields().document(it.doc) }
             .mapNotNull { it: Document -> ClientMapper.findById(it["id"].toInt()) }
             .toList()
     }
