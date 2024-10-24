@@ -26,6 +26,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
+import ru.nsk.kstatemachine.statemachine.buildCreationArguments
 import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 import java.util.*
 
@@ -40,7 +41,7 @@ sealed class TimeStates : DefaultState() {
 
 class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
     override fun createFSM(): StateMachine =
-        createStdLibStateMachine("time", creationArguments = StateMachine.CreationArguments(isUndoEnabled = true)) {
+        createStdLibStateMachine("time", creationArguments = buildCreationArguments { isUndoEnabled = true }) {
             logger = fsmLog
             addInitialState(TimeStates.Initial) {
                 transition<UpdateEvent> {

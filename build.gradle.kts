@@ -15,7 +15,7 @@ repositories {
 }
 
 var poiVersion = "5.3.0"
-var kstatemachineVersion = "0.31.1"
+var kstatemachineVersion = "0.32.0"
 var luceneVersion = "10.0.0"
 
 dependencies {

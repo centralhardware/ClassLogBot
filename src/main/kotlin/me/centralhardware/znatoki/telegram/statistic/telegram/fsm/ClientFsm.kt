@@ -20,7 +20,7 @@ import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
-import ru.nsk.kstatemachine.statemachine.StateMachine.CreationArguments
+import ru.nsk.kstatemachine.statemachine.buildCreationArguments
 import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 
 
@@ -32,7 +32,9 @@ sealed class ClientState : DefaultState() {
 }
 
 class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
-    override fun createFSM(): StateMachine = createStdLibStateMachine("client", creationArguments = CreationArguments(isUndoEnabled = true)) {
+    override fun createFSM(): StateMachine = createStdLibStateMachine("client", creationArguments = buildCreationArguments {
+        isUndoEnabled = true
+    }) {
         logger = fsmLog
         addInitialState(ClientState.Initial) {
             transition<UpdateEvent> {

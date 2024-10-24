@@ -25,6 +25,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
+import ru.nsk.kstatemachine.statemachine.buildCreationArguments
 import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 import kotlin.math.abs
 
@@ -39,7 +40,7 @@ sealed class PaymentStates : DefaultState() {
 
 class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     override fun createFSM(): StateMachine =
-        createStdLibStateMachine("payment", creationArguments = StateMachine.CreationArguments(isUndoEnabled = true)) {
+        createStdLibStateMachine("payment", creationArguments = buildCreationArguments { isUndoEnabled = true }) {
             logger = fsmLog
             addInitialState(PaymentStates.Initial) {
                 transition<UpdateEvent> {
