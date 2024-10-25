@@ -28,7 +28,7 @@ dependencies {
     implementation("dev.inmo:tgbotapi:18.2.2")
     implementation("com.github.centralhardware:telegram-bot-commons:1b5b37063e")
 
-    implementation("io.minio:minio:8.5.12")
+    implementation("io.minio:minio:8.5.13")
 
 
     implementation("org.apache.poi:poi:$poiVersion")
