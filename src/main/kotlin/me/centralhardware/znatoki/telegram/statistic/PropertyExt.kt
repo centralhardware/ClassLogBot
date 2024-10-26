@@ -23,8 +23,7 @@ private fun Property.applyTypeFormat(): Property {
 }
 
 fun List<Property>.print(): String {
-    return this
-        .filterNot { it.type is Photo }
+    return this.filterNot { it.type is Photo }
         .map { it.applyTypeFormat() }
         .joinToString("\n") { property -> "${property.name}=${property.value.makeBold()}" }
 }
@@ -35,28 +34,32 @@ suspend fun PropertiesBuilder.process(
 ): Boolean {
     var isFinished = false
     validate(message)
-        .mapLeft { error ->
-            bot.sendTextMessage(message.chat, error)
-        }
+        .mapLeft { error -> bot.sendTextMessage(message.chat, error) }
         .map {
             setProperty(message)
 
             next()?.let { next ->
                 if (next.second.isNotEmpty()) {
                     runBlocking {
-                        bot.send(message.chat, text = next.first, replyMarkup = replyKeyboard {
-                            next.second.forEach {
-                                row { simpleButton(it) }
-                            }
-                        })
+                        bot.send(
+                            message.chat,
+                            text = next.first,
+                            replyMarkup =
+                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                        )
                     }
                 } else {
-                    bot.sendTextMessage(message.chat, next.first, replyMarkup = ReplyKeyboardRemove())
+                    bot.sendTextMessage(
+                        message.chat,
+                        next.first,
+                        replyMarkup = ReplyKeyboardRemove()
+                    )
                 }
-            } ?: run {
-                onFinish(properties)
-                isFinished = true
             }
+                ?: run {
+                    onFinish(properties)
+                    isFinished = true
+                }
         }
     return isFinished
 }

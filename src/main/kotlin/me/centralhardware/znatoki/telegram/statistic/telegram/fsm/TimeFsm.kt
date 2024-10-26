@@ -14,6 +14,7 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
+import java.util.*
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
@@ -28,7 +29,6 @@ import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
 import ru.nsk.kstatemachine.statemachine.buildCreationArguments
 import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
-import java.util.*
 
 sealed class TimeStates : DefaultState() {
     object Initial : TimeStates()
@@ -41,45 +41,38 @@ sealed class TimeStates : DefaultState() {
 
 class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
     override fun createFSM(): StateMachine =
-        createStdLibStateMachine("time", creationArguments = buildCreationArguments { isUndoEnabled = true }) {
+        createStdLibStateMachine(
+            "time",
+            creationArguments = buildCreationArguments { isUndoEnabled = true }
+        ) {
             logger = fsmLog
             addInitialState(TimeStates.Initial) {
-                transition<UpdateEvent> {
-                    targetState = TimeStates.Subject
-                }
+                transition<UpdateEvent> { targetState = TimeStates.Subject }
             }
             addState(TimeStates.Subject) {
-                transition<UpdateEvent> {
-                    targetState = TimeStates.Fio
-                }
+                transition<UpdateEvent> { targetState = TimeStates.Fio }
                 onEntry { processState(it, this, ::subject) }
             }
             addState(TimeStates.Fio) {
-                transition<UpdateEvent> {
-                    targetState = TimeStates.Amount
-                }
+                transition<UpdateEvent> { targetState = TimeStates.Amount }
                 onEntry { processState(it, this, ::fio) }
             }
             addState(TimeStates.Amount) {
-                transition<UpdateEvent> {
-                    targetState = TimeStates.Properties
-                }
+                transition<UpdateEvent> { targetState = TimeStates.Properties }
                 onEntry { processState(it, this, ::amount) }
             }
             addState(TimeStates.Properties) {
-                transition<UpdateEvent> {
-                    targetState = TimeStates.Confirm
-                }
+                transition<UpdateEvent> { targetState = TimeStates.Confirm }
                 onEntry { processState(it, this, ::property) }
             }
-            addFinalState(TimeStates.Confirm) {
-                onEntry { process(it, ::confirm) }
-            }
+            addFinalState(TimeStates.Confirm) { onEntry { process(it, ::confirm) } }
             onFinished { removeFromStorage(it) }
         }
 
-
-    private suspend fun subject(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+    private suspend fun subject(
+        message: CommonMessage<MessageContent>,
+        builder: ServiceBuilder
+    ): Boolean {
         val userId = message.userId()
         val user = UserMapper.findById(userId)!!
         val znatokiUser = UserMapper.findById(userId)!!
@@ -96,11 +89,19 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
                 bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
 
-                bot.sendTextMessage(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)
-            }.isRight()
+                bot.sendTextMessage(
+                    message.chat,
+                    "нажмите для поиска фио",
+                    replyMarkup = switchToInlineKeyboard
+                )
+            }
+            .isRight()
     }
 
-    private suspend fun fio(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+    private suspend fun fio(
+        message: CommonMessage<MessageContent>,
+        builder: ServiceBuilder
+    ): Boolean {
         val text = message.text!!
         if (!ServicesMapper.isAllowMultiplyClients(builder.serviceId)!!) {
             return validateFio(text)
@@ -115,7 +116,8 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                     builder.clientId(id)
 
                     bot.sendTextMessage(message.chat, "Введите стоимость занятия")
-                }.isRight()
+                }
+                .isRight()
         } else {
             if (text == "/complete") {
                 if (builder.clientIds.isEmpty()) {
@@ -125,24 +127,25 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                 bot.sendTextMessage(message.chat, "Введите стоимость занятия")
                 return true
             }
-            validateFio(text)
-                .mapLeft(mapError(message))
-                .map {
-                    val id = text.split(" ").first().toInt()
-                    if (builder.clientIds.contains(id)) {
-                        runBlocking { bot.sendTextMessage(message.chat, "Данное ФИО уже добавлено") }
-                        return false
-                    }
-
-                    builder.clientId(id)
-
-                    bot.sendTextMessage(message.chat, "ФИО сохранено")
+            validateFio(text).mapLeft(mapError(message)).map {
+                val id = text.split(" ").first().toInt()
+                if (builder.clientIds.contains(id)) {
+                    runBlocking { bot.sendTextMessage(message.chat, "Данное ФИО уже добавлено") }
+                    return false
                 }
+
+                builder.clientId(id)
+
+                bot.sendTextMessage(message.chat, "ФИО сохранено")
+            }
             return false
         }
     }
 
-    private suspend fun amount(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+    private suspend fun amount(
+        message: CommonMessage<MessageContent>,
+        builder: ServiceBuilder
+    ): Boolean {
         val userId = message.userId()
         val znatokiUser = UserMapper.findById(userId)!!
         return validateAmount(message.text!!)
@@ -154,46 +157,61 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                     confirmMessage(message, builder)
                 } else {
                     builder.propertiesBuilder =
-                        PropertiesBuilder(ConfigMapper.serviceProperties().propertyDefs.toMutableList())
+                        PropertiesBuilder(
+                            ConfigMapper.serviceProperties().propertyDefs.toMutableList()
+                        )
 
                     val next = builder.nextProperty()!!
 
                     if (next.second.isNotEmpty()) {
-                        bot.sendTextMessage(message.chat, next.first, replyMarkup = replyKeyboard {
-                            next.second.forEach { row { simpleButton(it) } }
-                        })
+                        bot.sendTextMessage(
+                            message.chat,
+                            next.first,
+                            replyMarkup =
+                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                        )
                     } else {
                         bot.sendTextMessage(message.chat, next.first)
                     }
                 }
-            }.isRight()
+            }
+            .isRight()
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
         val userId = message.userId()
         if (ConfigMapper.serviceProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder.process(
-            message
-        ) { properties ->
+        return builder.propertiesBuilder.process(message) { properties ->
             builder.properties = properties
             runBlocking { confirmMessage(message, builder) }
         }
     }
 
-    private suspend fun confirmMessage(message: CommonMessage<MessageContent>, builder: ServiceBuilder) {
-        bot.sendTextMessage(message.chat, """
+    private suspend fun confirmMessage(
+        message: CommonMessage<MessageContent>,
+        builder: ServiceBuilder
+    ) {
+        bot.sendTextMessage(
+            message.chat,
+            """
                             услуга: ${ServicesMapper.getNameById(builder.serviceId)}
                             ФИО: ${
             builder.clientIds.stream().map { ClientMapper.getFioById(it) }.toList().joinToString(";")
         }
                             стоимость: ${builder.amount}
                             Сохранить?
-                            """.trimIndent(), replyMarkup = yesNoKeyboard)
+                            """.trimIndent(
+            ),
+            replyMarkup = yesNoKeyboard
+        )
     }
 }
 
-private suspend fun confirm(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
+private suspend fun confirm(
+    message: CommonMessage<MessageContent>,
+    builder: ServiceBuilder
+): Boolean {
     val text = message.text
     val userId = message.userId()
     if (text == "да") {
@@ -220,10 +238,11 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
         builder.properties
             .filter { it.type is Photo }
             .forEach { photo ->
-                MinioService.delete(photo.value!!)
-                    .onFailure {
-                        runBlocking { bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии") }
+                MinioService.delete(photo.value!!).onFailure {
+                    runBlocking {
+                        bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии")
                     }
+                }
             }
         bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
     }
@@ -232,11 +251,10 @@ private suspend fun confirm(message: CommonMessage<MessageContent>, builder: Ser
 
 private suspend fun sendLog(services: List<Service>, userId: Long) {
     val service = services.first()
-    val keyboard = inlineKeyboard {
-        row { dataButton("удалить", "timeDelete-${service.id}") }
-    }
+    val keyboard = inlineKeyboard { row { dataButton("удалить", "timeDelete-${service.id}") } }
 
-    val log = """
+    val log =
+        """
                     #занятие
                     Время: ${service.dateTime.formatDateTime()}
                     Предмет: ${ServicesMapper.getNameById(service.serviceId).hashtag()}
@@ -252,25 +270,29 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
                     Стоимость: ${service.amount}
                     Преподаватель: ${UserMapper.findById(userId)?.name.hashtag()}
                     ${service.properties.print()}
-                    """.trimIndent()
+                    """.trimIndent(
+        )
 
     val hasPhoto = service.properties.count { it.type is Photo }
 
     if (hasPhoto == 1) {
         bot.sendActionUploadPhoto(ConfigMapper.logChat())
-        service.properties.filter { it.type is Photo }
+        service.properties
+            .filter { it.type is Photo }
             .forEach { photo ->
                 bot.sendPhoto(
                     ConfigMapper.logChat(),
                     InputFile.fromInput("Отчет") {
-                        MinioService.get(photo.value!!).onFailure {
-                            runBlocking {
-                                bot.sendTextMessage(
-                                    ConfigMapper.logChat(),
-                                    "Ошибка во время отправки лога"
-                                )
+                        MinioService.get(photo.value!!)
+                            .onFailure {
+                                runBlocking {
+                                    bot.sendTextMessage(
+                                        ConfigMapper.logChat(),
+                                        "Ошибка во время отправки лога"
+                                    )
+                                }
                             }
-                        }.getOrThrow()
+                            .getOrThrow()
                     },
                     replyMarkup = keyboard,
                     text = log
@@ -280,7 +302,6 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
         bot.sendTextMessage(ConfigMapper.logChat(), log, replyMarkup = keyboard)
     }
 }
-
 
 suspend fun startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder {
     val userId = message.userId()
@@ -293,11 +314,17 @@ suspend fun startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder
 
     when {
         user.services.size != 1 -> {
-            bot.sendTextMessage(message.chat, "Выберите предмет", replyMarkup = replyKeyboard {
-                user.services.forEach { row { ServicesMapper.getNameById(it)?.let { simpleButton(it) } } }
-            })
+            bot.sendTextMessage(
+                message.chat,
+                "Выберите предмет",
+                replyMarkup =
+                    replyKeyboard {
+                        user.services.forEach {
+                            row { ServicesMapper.getNameById(it)?.let { simpleButton(it) } }
+                        }
+                    }
+            )
         }
-
         else -> {
             bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
             bot.send(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)

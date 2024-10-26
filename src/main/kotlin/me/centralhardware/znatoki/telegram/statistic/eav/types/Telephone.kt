@@ -13,12 +13,14 @@ data object Telephone : Type {
         return "Введите телефон $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }
 
-    override fun validate(message: CommonMessage<MessageContent>, variants: List<String>): Either<String, Unit> {
+    override fun validate(
+        message: CommonMessage<MessageContent>,
+        variants: List<String>
+    ): Either<String, Unit> {
         return if (message.text!!.validateTelephone()) {
             Either.Right(Unit)
         } else {
             Either.Left("Введите номер телефона")
         }
     }
-
 }

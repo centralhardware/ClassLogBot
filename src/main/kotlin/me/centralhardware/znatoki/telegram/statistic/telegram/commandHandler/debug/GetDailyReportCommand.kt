@@ -5,6 +5,6 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.report.getReport
 import me.centralhardware.znatoki.telegram.statistic.userId
 
-suspend fun dailyReportCommand(message: CommonMessage<TextContent>, args: Array<String>){
+suspend fun dailyReportCommand(message: CommonMessage<TextContent>, args: Array<String>) {
     getReport(args.first().toLong(), message.userId())
 }

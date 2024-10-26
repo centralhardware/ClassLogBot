@@ -24,13 +24,16 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
 
     bot.sendMessage(message.chat, I18n.Message.SEARCH_RESULT.load())
     searchResult.forEach { client ->
-        bot.sendMessage(message.chat,
+        bot.sendMessage(
+            message.chat,
             "${client.name} ${client.secondName} ${client.lastName}",
-            replyMarkup = inlineKeyboard{
-                row { dataButton("информация", "user_info${client.id}") }
-                if (UserMapper.hasWriteRight(message.userId())){
-                    row { dataButton("удалить", "delete_user${client.id}") }
+            replyMarkup =
+                inlineKeyboard {
+                    row { dataButton("информация", "user_info${client.id}") }
+                    if (UserMapper.hasWriteRight(message.userId())) {
+                        row { dataButton("удалить", "delete_user${client.id}") }
+                    }
                 }
-            })
+        )
     }
 }

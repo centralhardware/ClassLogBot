@@ -4,11 +4,12 @@ import arrow.core.Either
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
-fun validateFio(value: String): Either<String, String> = if (ClientMapper.existsByFio(value)) {
-    Either.Right(value)
-} else {
-    Either.Left("ФИО не найдено")
-}
+fun validateFio(value: String): Either<String, String> =
+    if (ClientMapper.existsByFio(value)) {
+        Either.Right(value)
+    } else {
+        Either.Left("ФИО не найдено")
+    }
 
 fun validateAmount(value: String): Either<String, Int> {
     val parsedValue = value.toIntOrNull()
@@ -16,11 +17,9 @@ fun validateAmount(value: String): Either<String, Int> {
         parsedValue == null -> {
             Either.Left("Введенное значение должно быть числом")
         }
-
         parsedValue <= 0 -> {
             Either.Left("Введенное значение должно быть больше нуля")
         }
-
         else -> {
             Either.Right(parsedValue)
         }

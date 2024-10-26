@@ -5,37 +5,38 @@ import dev.inmo.tgbotapi.types.InlineQueries.InlineQueryResult.InlineQueryResult
 import dev.inmo.tgbotapi.types.InlineQueries.InputMessageContent.InputTextMessageContent
 import dev.inmo.tgbotapi.types.InlineQueries.query.BaseInlineQuery
 import dev.inmo.tgbotapi.types.InlineQueryId
+import java.util.concurrent.atomic.AtomicInteger
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import org.apache.commons.lang3.StringUtils
-import java.util.concurrent.atomic.AtomicInteger
 
 suspend fun processInline(query: BaseInlineQuery) {
     val text = query.query
     if (StringUtils.isBlank(text)) return
 
     val i = AtomicInteger()
-    val articles = ClientService.search(text)
-        .map {
-            InlineQueryResultArticle(
-                InlineQueryId(i.getAndIncrement().toString()),
-                getFio(it),
-                InputTextMessageContent(
-                    getFio(it)
-                ),
-                description = getBio(it)
-            )
-        }.toMutableList()
+    val articles =
+        ClientService.search(text)
+            .map {
+                InlineQueryResultArticle(
+                    InlineQueryId(i.getAndIncrement().toString()),
+                    getFio(it),
+                    InputTextMessageContent(getFio(it)),
+                    description = getBio(it)
+                )
+            }
+            .toMutableList()
 
     if (articles.isEmpty()) {
-        val noResultsArticle = InlineQueryResultArticle(
-            InlineQueryId(i.getAndIncrement().toString()),
-            "/complete",
-            InputTextMessageContent("Закончить ввод")
-        )
+        val noResultsArticle =
+            InlineQueryResultArticle(
+                InlineQueryId(i.getAndIncrement().toString()),
+                "/complete",
+                InputTextMessageContent("Закончить ввод")
+            )
         articles.add(noResultsArticle)
     }
 

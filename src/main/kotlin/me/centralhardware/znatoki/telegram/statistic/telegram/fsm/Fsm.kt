@@ -6,6 +6,7 @@ import dev.inmo.kslog.common.warning
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
+import kotlin.reflect.KSuspendFunction2
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
@@ -16,11 +17,10 @@ import ru.nsk.kstatemachine.state.DefaultState
 import ru.nsk.kstatemachine.statemachine.StateMachine
 import ru.nsk.kstatemachine.statemachine.undo
 import ru.nsk.kstatemachine.transition.TransitionParams
-import kotlin.reflect.KSuspendFunction2
 
 object UpdateEvent : Event
 
-abstract class Fsm<B: Builder>(private val builder: B){
+abstract class Fsm<B : Builder>(private val builder: B) {
 
     private val stateMachine: StateMachine
 
@@ -30,35 +30,43 @@ abstract class Fsm<B: Builder>(private val builder: B){
 
     abstract fun createFSM(): StateMachine
 
-    fun processEvent(message: CommonMessage<MessageContent>) = runBlocking { stateMachine.processEvent(UpdateEvent, message) }
+    fun processEvent(message: CommonMessage<MessageContent>) = runBlocking {
+        stateMachine.processEvent(UpdateEvent, message)
+    }
 
-    suspend fun processState(t: TransitionParams<*>, state: DefaultState, block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>){
+    suspend fun processState(
+        t: TransitionParams<*>,
+        state: DefaultState,
+        block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>
+    ) {
         if (t.event is WrappedEvent) return
 
-        val res = runCatching { process(t, block) }
-            .onFailure {
-                KSLog.warning("", it)
-                bot.sendTextMessage(
-                    t.arg().chat,
-                    "Данный тип сообщения не поддерживается или произошла ошибка"
-                )
-            }
-            .getOrDefault(false)
+        val res =
+            runCatching { process(t, block) }
+                .onFailure {
+                    KSLog.warning("", it)
+                    bot.sendTextMessage(
+                        t.arg().chat,
+                        "Данный тип сообщения не поддерживается или произошла ошибка"
+                    )
+                }
+                .getOrDefault(false)
 
         if (!res) state.machine.undo()
     }
 
-    suspend fun process(t: TransitionParams<*>, block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>) = block.invoke(t.arg(), builder)
+    suspend fun process(
+        t: TransitionParams<*>,
+        block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>
+    ) = block.invoke(t.arg(), builder)
 
     fun removeFromStorage(t: TransitionParams<*>) = Storage.remove(t.arg().userId())
-
 }
 
+val fsmLog = StateMachine.Logger { lazyMessage -> KSLog.info(lazyMessage()) }
 
-val fsmLog = StateMachine.Logger { lazyMessage ->
-    KSLog.info(lazyMessage())
+fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error ->
+    runBlocking { bot.sendTextMessage(message.chat, error) }
 }
-
-fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error -> runBlocking { bot.sendTextMessage(message.chat, error) } }
 
 fun TransitionParams<*>.arg() = this.argument as CommonMessage<MessageContent>

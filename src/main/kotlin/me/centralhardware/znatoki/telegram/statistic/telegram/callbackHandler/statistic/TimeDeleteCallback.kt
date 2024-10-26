@@ -6,10 +6,10 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
+import java.util.*
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import java.util.*
 
 suspend fun timeDeleteCallback(query: DataCallbackQuery) {
     val id = UUID.fromString(query.data.replace("timeDelete-", ""))
@@ -17,9 +17,10 @@ suspend fun timeDeleteCallback(query: DataCallbackQuery) {
     ServiceMapper.setDeleted(id, true)
     PaymentMapper.setDeleteByTimeId(id, true)
 
-    query.messageDataCallbackQueryOrNull() ?.message ?. let {
-        bot.edit(it, replyMarkup = inlineKeyboard {
-            row { dataButton("восстановить", "timeRestore-$id") }
-        })
+    query.messageDataCallbackQueryOrNull()?.message?.let {
+        bot.edit(
+            it,
+            replyMarkup = inlineKeyboard { row { dataButton("восстановить", "timeRestore-$id") } }
+        )
     }
 }

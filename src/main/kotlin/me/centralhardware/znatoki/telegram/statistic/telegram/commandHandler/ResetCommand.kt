@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.userId
 
-suspend fun resetCommand(message: CommonMessage<TextContent>){
+suspend fun resetCommand(message: CommonMessage<TextContent>) {
     Storage.remove(message.userId())
     bot.sendMessage(message.chat, "Состояние сброшено", replyMarkup = ReplyKeyboardRemove())
 }

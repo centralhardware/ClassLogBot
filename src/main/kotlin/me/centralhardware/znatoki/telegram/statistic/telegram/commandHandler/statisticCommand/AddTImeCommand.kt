@@ -18,7 +18,7 @@ suspend fun addTimeCommand(message: CommonMessage<TextContent>) {
     val builder = startTimeFsm(message)
     val fsm = TimeFsm(builder)
     Storage.create(message.userId(), fsm)
-    if (builder.serviceId() != null){
+    if (builder.serviceId() != null) {
         Storage.process(message)
     }
 }

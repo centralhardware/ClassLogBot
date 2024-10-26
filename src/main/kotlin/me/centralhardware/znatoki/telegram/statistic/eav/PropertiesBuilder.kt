@@ -5,8 +5,8 @@ import dev.inmo.tgbotapi.extensions.utils.asTextContent
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.types.message.content.TextContent
-import me.centralhardware.znatoki.telegram.statistic.eav.types.EnumType
 import java.util.*
+import me.centralhardware.znatoki.telegram.statistic.eav.types.EnumType
 
 class PropertiesBuilder(propertyDefs: MutableList<PropertyDef>) {
 
@@ -25,11 +25,12 @@ class PropertiesBuilder(propertyDefs: MutableList<PropertyDef>) {
         current = propertyDefs.first()
         propertyDefs.removeFirst()
 
-        val res =  if (current.type is EnumType) {
-            Pair(current.type.format(current.name, current.isOptional), current.enumeration)
-        } else {
-            Pair(current.type.format(current.name, current.isOptional), listOf())
-        }
+        val res =
+            if (current.type is EnumType) {
+                Pair(current.type.format(current.name, current.isOptional), current.enumeration)
+            } else {
+                Pair(current.type.format(current.name, current.isOptional), listOf())
+            }
 
         return res
     }
@@ -43,7 +44,9 @@ class PropertiesBuilder(propertyDefs: MutableList<PropertyDef>) {
     }
 
     fun setProperty(value: CommonMessage<MessageContent>): Boolean {
-        return if (value.content is TextContent && value.content.asTextContent()!!.text == "/skip") {
+        return if (
+            value.content is TextContent && value.content.asTextContent()!!.text == "/skip"
+        ) {
             properties.add(Property(current.name, current.type))
             true
         } else {

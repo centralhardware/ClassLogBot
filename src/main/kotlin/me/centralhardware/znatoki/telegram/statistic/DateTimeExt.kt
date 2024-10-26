@@ -17,10 +17,15 @@ fun LocalDateTime.endOfMonth(): LocalDateTime =
 fun LocalDateTime.prevMonth(): LocalDateTime = minusMonths(1)
 
 fun LocalDateTime.formatDateTime(): String = format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm"))
+
 fun LocalDateTime.formatDate(): String = format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+
 fun LocalDateTime.formatTime(): String = format(DateTimeFormatter.ofPattern("HH:mm"))
 
-fun String?.parseDateTime(): Result<LocalDateTime> =
-    runCatching { LocalDateTime.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy HH;mm")) }
-fun String?.parseDate(): Result<LocalDate> =
-    runCatching { LocalDate.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy")) }
+fun String?.parseDateTime(): Result<LocalDateTime> = runCatching {
+    LocalDateTime.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy HH;mm"))
+}
+
+fun String?.parseDate(): Result<LocalDate> = runCatching {
+    LocalDate.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy"))
+}

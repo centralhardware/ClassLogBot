@@ -11,6 +11,4 @@ val yesNoKeyboard = replyKeyboard {
     row { simpleButton("нет") }
 }
 
-val switchToInlineKeyboard = inlineKeyboard {
-    row { inlineQueryInCurrentChatButton("inline", "") }
-}
+val switchToInlineKeyboard = inlineKeyboard { row { inlineQueryInCurrentChatButton("inline", "") } }

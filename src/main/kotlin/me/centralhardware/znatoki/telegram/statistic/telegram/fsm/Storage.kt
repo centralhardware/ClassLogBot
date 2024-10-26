@@ -10,17 +10,14 @@ object Storage {
 
     private val fsms: MutableMap<Long, Fsm<Builder>> = mutableMapOf()
 
-    fun <B: Builder> create(chatId: Long, fsm: Fsm<B>){
+    fun <B : Builder> create(chatId: Long, fsm: Fsm<B>) {
         fsms[chatId] = fsm as Fsm<Builder>
     }
 
     fun process(message: CommonMessage<MessageContent>) =
-        fsms[message.userId()]?.let {
-            runBlocking { it.processEvent(message) }
-        }
+        fsms[message.userId()]?.let { runBlocking { it.processEvent(message) } }
 
     fun remove(chatId: Long) = fsms.remove(chatId)
 
     fun contain(chatId: Long): Boolean = fsms.containsKey(chatId)
-
 }

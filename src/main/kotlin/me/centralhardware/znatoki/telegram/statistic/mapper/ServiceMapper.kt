@@ -1,18 +1,19 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import java.time.LocalDateTime
+import java.util.*
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
-import java.time.LocalDateTime
-import java.util.*
 
 object ServiceMapper {
 
-    fun insert(service: Service) = session.execute(
-        queryOf(
-            """
+    fun insert(service: Service) =
+        session.execute(
+            queryOf(
+                """
             INSERT INTO service (
                 date_time,
                 id,
@@ -30,25 +31,27 @@ object ServiceMapper {
                 :clientId,
                 :properties::JSONB
             )
-            """, mapOf(
-                "dateTime" to service.dateTime,
-                "id" to service.id,
-                "chatId" to service.chatId,
-                "serviceId" to service.serviceId,
-                "amount" to service.amount,
-                "clientId" to service.clientId,
-                "properties" to service.properties.toJson()
+            """,
+                mapOf(
+                    "dateTime" to service.dateTime,
+                    "id" to service.id,
+                    "chatId" to service.chatId,
+                    "serviceId" to service.serviceId,
+                    "amount" to service.amount,
+                    "clientId" to service.clientId,
+                    "properties" to service.properties.toJson()
+                )
             )
         )
-    )
 
     private fun findAllByUserId(
         userId: Long,
         startDate: LocalDateTime,
         endDate: LocalDateTime
-    ): List<Service> = session.run(
-        queryOf(
-            """
+    ): List<Service> =
+        session.run(
+            queryOf(
+                    """
             SELECT id,
                    date_time,
                    chat_id,
@@ -60,13 +63,12 @@ object ServiceMapper {
             WHERE chat_id = :userId
                 AND date_time between :startDate and :endDate
                 AND is_deleted=false
-            """, mapOf(
-                "userId" to userId,
-                "startDate" to startDate,
-                "endDate" to endDate
-            )
-        ).map { it.parseTime() }.asList
-    )
+            """,
+                    mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate)
+                )
+                .map { it.parseTime() }
+                .asList
+        )
 
     fun getTodayTimes(chatId: Long): List<Service> {
         return findAllByUserId(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
@@ -88,37 +90,43 @@ object ServiceMapper {
         )
     }
 
-    fun getIds(): List<Long> = session.run(
-        queryOf(
-            """
+    fun getIds(): List<Long> =
+        session.run(
+            queryOf(
+                    """
             SELECT DISTINCT chat_id
             FROM service
             WHERE is_deleted = false
             """
-        ).map { row -> row.long("chat_id") }.asList
-    )
+                )
+                .map { row -> row.long("chat_id") }
+                .asList
+        )
 
-    fun setDeleted(timeId: UUID, isDeleted: Boolean) = session.run(
-        queryOf(
-            """
+    fun setDeleted(timeId: UUID, isDeleted: Boolean) =
+        session.run(
+            queryOf(
+                    """
             UPDATE service
             SET is_deleted = :is_deleted
             WHERE id = :id
-            """, mapOf(
-                "id" to timeId,
-                "is_deleted" to isDeleted
-            )
-        ).asUpdate
-    )
+            """,
+                    mapOf("id" to timeId, "is_deleted" to isDeleted)
+                )
+                .asUpdate
+        )
 
-    fun getServicesForClient(id: Int): List<Long> = session.run(
-        queryOf(
-            """
+    fun getServicesForClient(id: Int): List<Long> =
+        session.run(
+            queryOf(
+                    """
             SELECT DISTINCT service_id
             FROM service
             WHERE pupil_id = :id ANd is_deleted=false
-            """, mapOf("id" to id)
-        ).map { row -> row.long("service_id") }.asList
-    )
-
+            """,
+                    mapOf("id" to id)
+                )
+                .map { row -> row.long("service_id") }
+                .asList
+        )
 }

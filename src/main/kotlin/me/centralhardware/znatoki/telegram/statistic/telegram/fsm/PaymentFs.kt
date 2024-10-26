@@ -14,6 +14,7 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
+import kotlin.math.abs
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
@@ -27,7 +28,6 @@ import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
 import ru.nsk.kstatemachine.statemachine.buildCreationArguments
 import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
-import kotlin.math.abs
 
 sealed class PaymentStates : DefaultState() {
     object Initial : PaymentStates()
@@ -40,47 +40,41 @@ sealed class PaymentStates : DefaultState() {
 
 class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     override fun createFSM(): StateMachine =
-        createStdLibStateMachine("payment", creationArguments = buildCreationArguments { isUndoEnabled = true }) {
+        createStdLibStateMachine(
+            "payment",
+            creationArguments = buildCreationArguments { isUndoEnabled = true }
+        ) {
             logger = fsmLog
             addInitialState(PaymentStates.Initial) {
-                transition<UpdateEvent> {
-                    targetState = PaymentStates.Pupil
-                }
+                transition<UpdateEvent> { targetState = PaymentStates.Pupil }
             }
             addState(PaymentStates.Pupil) {
-                transition<UpdateEvent> {
-                    targetState = PaymentStates.Service
-                }
+                transition<UpdateEvent> { targetState = PaymentStates.Service }
                 onEntry { processState(it, this, ::pupil) }
             }
             addState(PaymentStates.Service) {
-                transition<UpdateEvent> {
-                    targetState = PaymentStates.Amount
-                }
+                transition<UpdateEvent> { targetState = PaymentStates.Amount }
                 onEntry { processState(it, this, ::service) }
             }
             addState(PaymentStates.Amount) {
-                transition<UpdateEvent> {
-                    targetState = PaymentStates.Property
-                }
+                transition<UpdateEvent> { targetState = PaymentStates.Property }
                 onEntry { processState(it, this, ::amount) }
             }
             addState(PaymentStates.Property) {
-                transition<UpdateEvent> {
-                    targetState = PaymentStates.Confirm
-                }
+                transition<UpdateEvent> { targetState = PaymentStates.Confirm }
                 onEntry { processState(it, this, ::property) }
             }
             addState(PaymentStates.Confirm) {
-                transition<UpdateEvent> {
-                    targetState = PaymentStates.Property
-                }
+                transition<UpdateEvent> { targetState = PaymentStates.Property }
                 onEntry { process(it, ::confirm) }
             }
             onFinished { removeFromStorage(it) }
         }
 
-    private suspend fun pupil(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
+    private suspend fun pupil(
+        message: CommonMessage<MessageContent>,
+        builder: PaymentBuilder
+    ): Boolean {
         val userId = message.userId()
         return validateFio(message.content.asTextedInput()!!.text!!)
             .mapLeft(mapError(message))
@@ -89,13 +83,23 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
                 builder.clientId = id
                 UserMapper.findById(userId)?.services?.let { services ->
-                    bot.sendTextMessage(message.chat, "Выберите предмет", replyMarkup = replyKeyboard {
-                        services.forEach {
-                            row { ServicesMapper.getNameById(it)?.let { name -> simpleButton(name) } }
-                        }
-                    })
+                    bot.sendTextMessage(
+                        message.chat,
+                        "Выберите предмет",
+                        replyMarkup =
+                            replyKeyboard {
+                                services.forEach {
+                                    row {
+                                        ServicesMapper.getNameById(it)?.let { name ->
+                                            simpleButton(name)
+                                        }
+                                    }
+                                }
+                            }
+                    )
                 }
-            }.isRight()
+            }
+            .isRight()
     }
 
     suspend fun service(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
@@ -106,40 +110,57 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
             .map { service ->
                 builder.serviceId = ServicesMapper.getServiceId(service)!!
 
-                bot.sendTextMessage(message.chat, "Введите сумму оплаты", replyMarkup = ReplyKeyboardRemove())
-            }.isRight()
+                bot.sendTextMessage(
+                    message.chat,
+                    "Введите сумму оплаты",
+                    replyMarkup = ReplyKeyboardRemove()
+                )
+            }
+            .isRight()
     }
 
-    private suspend fun amount(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
+    private suspend fun amount(
+        message: CommonMessage<MessageContent>,
+        builder: PaymentBuilder
+    ): Boolean {
         val userId = message.userId()
         val znatokiUser = UserMapper.findById(userId)!!
         return validateAmount(message.content.asTextedInput()!!.text!!)
             .mapLeft(mapError(message))
             .map { amount ->
                 builder.amount = amount
-                if (ConfigMapper.paymentProperties().isEmpty()
-                ) {
-                    bot.sendTextMessage(message.chat, builder.let {
-                        """
+                if (ConfigMapper.paymentProperties().isEmpty()) {
+                    bot.sendTextMessage(
+                        message.chat,
+                        builder.let {
+                            """
                                         ФИО: ${
                             ClientMapper.findById(it.clientId)?.fio()
                         }
                                         Оплата: ${it.amount}
                                         """
-                    }, replyMarkup = yesNoKeyboard)
+                        },
+                        replyMarkup = yesNoKeyboard
+                    )
                 } else {
                     builder.propertiesBuilder =
-                        PropertiesBuilder(ConfigMapper.paymentProperties().propertyDefs.toMutableList())
+                        PropertiesBuilder(
+                            ConfigMapper.paymentProperties().propertyDefs.toMutableList()
+                        )
                     val next = builder.nextProperty()!!
                     if (next.second.isNotEmpty()) {
-                        bot.sendTextMessage(message.chat, next.first, replyMarkup = replyKeyboard {
-                            next.second.forEach { row { simpleButton(it) } }
-                        })
+                        bot.sendTextMessage(
+                            message.chat,
+                            next.first,
+                            replyMarkup =
+                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                        )
                     } else {
                         bot.sendTextMessage(message.chat, next.first)
                     }
                 }
-            }.isRight()
+            }
+            .isRight()
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
@@ -152,18 +173,24 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
         ) { properties ->
             builder.properties = properties
             runBlocking {
-                bot.sendTextMessage(message.chat, """
+                bot.sendTextMessage(
+                    message.chat,
+                    """
                                         ФИО: ${
                     ClientMapper.findById(builder.clientId)?.fio()
                 }
                                         Оплата: ${builder.amount}
-                                        """, replyMarkup = yesNoKeyboard)
+                                        """,
+                    replyMarkup = yesNoKeyboard
+                )
             }
-
         }
     }
 
-    private suspend fun confirm(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
+    private suspend fun confirm(
+        message: CommonMessage<MessageContent>,
+        builder: PaymentBuilder
+    ): Boolean {
         val userId = message.userId()
         val text = message.text!!
         if (text == "да") {
@@ -176,24 +203,23 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                     Payment(
                         chatId = userId,
                         clientId = payment.clientId,
-                        amount = (abs(PaymentMapper.getCredit(payment.clientId)) + (payment.amount * 2)).toInt(),
+                        amount =
+                            (abs(PaymentMapper.getCredit(payment.clientId)) + (payment.amount * 2))
+                                .toInt(),
                     )
                 )
             }
             bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
         } else if (text == "нет") {
-            builder.properties.stream()
+            builder.properties
+                .stream()
                 .filter { it.type is Photo }
                 .forEach { photo ->
-                    MinioService.delete(photo.value!!)
-                        .onFailure {
-                            runBlocking {
-                                bot.sendTextMessage(
-                                    message.chat,
-                                    "Ошибка при удаление фотографии"
-                                )
-                            }
+                    MinioService.delete(photo.value!!).onFailure {
+                        runBlocking {
+                            bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии")
                         }
+                    }
                 }
             bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
         }
@@ -204,7 +230,8 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
         val keyboard = inlineKeyboard {
             row { dataButton("удалить", "paymentDelete-${paymentId}") }
         }
-        val text = """
+        val text =
+            """
                 #оплата
                 Время: ${payment.dateTime.formatDateTime()}
                 Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
@@ -212,7 +239,8 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                 Оплата: ${payment.amount}
                 Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
                 ${payment.properties.print()}
-            """.trimIndent()
+            """.trimIndent(
+            )
         val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
         if (hasPhoto == 1L) {
             bot.sendActionUploadPhoto(ConfigMapper.logChat())
@@ -223,14 +251,16 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                     bot.sendPhoto(
                         ConfigMapper.logChat(),
                         InputFile.fromInput("") {
-                            MinioService.get(photo.value!!).onFailure {
-                                runBlocking {
-                                    bot.sendTextMessage(
-                                        ConfigMapper.logChat(),
-                                        "Ошибка во время отправки лога"
-                                    )
+                            MinioService.get(photo.value!!)
+                                .onFailure {
+                                    runBlocking {
+                                        bot.sendTextMessage(
+                                            ConfigMapper.logChat(),
+                                            "Ошибка во время отправки лога"
+                                        )
+                                    }
                                 }
-                            }.getOrThrow()
+                                .getOrThrow()
                         },
                         replyMarkup = keyboard,
                         text = text
@@ -245,7 +275,10 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 suspend fun startPaymentFsm(message: CommonMessage<MessageContent>): PaymentBuilder {
     bot.sendTextMessage(message.chat, "Введите фио")
     val builder = PaymentBuilder()
-    bot.sendTextMessage(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)
+    bot.sendTextMessage(
+        message.chat,
+        "нажмите для поиска фио",
+        replyMarkup = switchToInlineKeyboard
+    )
     return builder
 }
-

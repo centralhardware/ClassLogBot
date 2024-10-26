@@ -20,5 +20,4 @@ object Config {
         val username: String = System.getenv("DATASOURCE_USERNAME")
         val password: String = System.getenv("DATASOURCE_PASSWORD")
     }
-
 }

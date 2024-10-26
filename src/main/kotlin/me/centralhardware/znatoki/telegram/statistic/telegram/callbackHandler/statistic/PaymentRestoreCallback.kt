@@ -14,9 +14,10 @@ suspend fun paymentRestoreCallback(query: DataCallbackQuery) {
 
     PaymentMapper.setDelete(id, false)
 
-    query.messageDataCallbackQueryOrNull() ?.message ?. let {
-        bot.edit(it, replyMarkup = inlineKeyboard {
-            row { dataButton("удалить", "paymentDelete-$id") }
-        })
+    query.messageDataCallbackQueryOrNull()?.message?.let {
+        bot.edit(
+            it,
+            replyMarkup = inlineKeyboard { row { dataButton("удалить", "paymentDelete-$id") } }
+        )
     }
 }

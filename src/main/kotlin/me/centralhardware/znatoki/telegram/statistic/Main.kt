@@ -35,71 +35,79 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
 lateinit var bot: TelegramBot
+
 suspend fun main() {
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
-    GlobalScope.launch {
-        monthReport()
-    }
-    GlobalScope.launch {
-        dailyReport()
-    }
-    bot = longPolling {
-        setMyCommands(
-            BotCommand("addtime", "Добавить запись"),
-            BotCommand("addpayment", "Добавить оплату"),
-            BotCommand("report", "Отчет за текущий месяц"),
-            BotCommand("reportprevious", "Отчет за предыдущий месяц"),
-            BotCommand("reset", "Сбросить состояние")
-        )
+    GlobalScope.launch { monthReport() }
+    GlobalScope.launch { dailyReport() }
+    bot =
+        longPolling {
+                setMyCommands(
+                    BotCommand("addtime", "Добавить запись"),
+                    BotCommand("addpayment", "Добавить оплату"),
+                    BotCommand("report", "Отчет за текущий месяц"),
+                    BotCommand("reportprevious", "Отчет за предыдущий месяц"),
+                    BotCommand("reset", "Сбросить состояние")
+                )
 
-        onCommand("start") { startCommand(it) }
-        onCommand("reset") { resetCommand(it) }
+                onCommand("start") { startCommand(it) }
+                onCommand("reset") { resetCommand(it) }
 
-        onContentMessage({ Storage.contain(it.userId()) }) {
-            Storage.process(it)
-        }
+                onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
 
+                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                    updatesUpstreamFlow =
+                        allUpdatesFlow.filter { UserMapper.hasWriteRight(it.userId()) }
+                ) {
+                    onCommand(Regex("addPupil|addpupil")) { addClientCommand(it) }
+                }
 
+                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                    updatesUpstreamFlow =
+                        allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }
+                ) {
+                    onCommandWithArgs("i") { message, args -> userInfoCommand(message, args) }
+                    onCommandWithArgs("s") { message, args -> searchCommand(message, args) }
+                    onCommand("report") { reportCommand(it) }
+                    onCommand(Regex("reportPrevious|reportprevious")) { reportPreviousCommand(it) }
+                    onCommand(Regex("addTime|addtime")) { addTimeCommand(it) }
+                    onCommand(Regex("addPayment|addpayment")) { addPaymentCommand(it) }
 
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasWriteRight(it.userId()) }) {
-            onCommand(Regex("addPupil|addpupil")) { addClientCommand(it) }
-        }
+                    onDataCallbackQuery(Regex("user_info\\d+\$")) { userInfoCallback(it) }
 
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }) {
-            onCommandWithArgs("i") { message, args -> userInfoCommand(message, args) }
-            onCommandWithArgs("s") { message, args -> searchCommand(message, args) }
-            onCommand("report") { reportCommand(it) }
-            onCommand(Regex("reportPrevious|reportprevious")) { reportPreviousCommand(it) }
-            onCommand(Regex("addTime|addtime")) { addTimeCommand(it) }
-            onCommand(Regex("addPayment|addpayment")) { addPaymentCommand(it) }
+                    onBaseInlineQuery { processInline(it) }
+                }
 
-            onDataCallbackQuery(Regex("user_info\\d+\$")) { userInfoCallback(it) }
+                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                    updatesUpstreamFlow =
+                        allUpdatesFlow.filter { UserMapper.hasAdminRight(it.userId()) }
+                ) {
+                    onCommand("grafana") { grafanaCommand(it) }
+                    onCommandWithArgs("dailyReport") { message, args ->
+                        dailyReportCommand(message, args)
+                    }
 
-            onBaseInlineQuery { processInline(it) }
-        }
-
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow = allUpdatesFlow.filter { UserMapper.hasAdminRight(it.userId()) }) {
-            onCommand("grafana") { grafanaCommand(it) }
-            onCommandWithArgs("dailyReport") { message, args -> dailyReportCommand(message, args) }
-
-            onDataCallbackQuery(Regex("delete_user\\d+\$")) { deleteUserCallback(it) }
-            onDataCallbackQuery(Regex("timeRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-                timeRestoreCallback(it)
+                    onDataCallbackQuery(Regex("delete_user\\d+\$")) { deleteUserCallback(it) }
+                    onDataCallbackQuery(
+                        Regex(
+                            "timeRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                        )
+                    ) {
+                        timeRestoreCallback(it)
+                    }
+                    onDataCallbackQuery(
+                        Regex(
+                            "timeDelete-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                        )
+                    ) {
+                        timeDeleteCallback(it)
+                    }
+                    onDataCallbackQuery(Regex("paymentRestore-\\d+\$")) {
+                        paymentRestoreCallback(it)
+                    }
+                    onDataCallbackQuery(Regex("paymentDelete-\\d+\$")) { paymentDeleteCallback(it) }
+                }
             }
-            onDataCallbackQuery(Regex("timeDelete-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-                timeDeleteCallback(it)
-            }
-            onDataCallbackQuery(Regex("paymentRestore-\\d+\$")) {
-                paymentRestoreCallback(it)
-            }
-            onDataCallbackQuery(Regex("paymentDelete-\\d+\$")) {
-                paymentDeleteCallback(it)
-            }
-        }
-
-    }.first
+            .first
 }

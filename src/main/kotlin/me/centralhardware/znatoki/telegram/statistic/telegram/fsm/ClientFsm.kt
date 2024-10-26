@@ -23,7 +23,6 @@ import ru.nsk.kstatemachine.statemachine.StateMachine
 import ru.nsk.kstatemachine.statemachine.buildCreationArguments
 import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 
-
 sealed class ClientState : DefaultState() {
     object Initial : ClientState()
     object Fio : ClientState()
@@ -32,32 +31,31 @@ sealed class ClientState : DefaultState() {
 }
 
 class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
-    override fun createFSM(): StateMachine = createStdLibStateMachine("client", creationArguments = buildCreationArguments {
-        isUndoEnabled = true
-    }) {
-        logger = fsmLog
-        addInitialState(ClientState.Initial) {
-            transition<UpdateEvent> {
-                targetState = ClientState.Fio
+    override fun createFSM(): StateMachine =
+        createStdLibStateMachine(
+            "client",
+            creationArguments = buildCreationArguments { isUndoEnabled = true }
+        ) {
+            logger = fsmLog
+            addInitialState(ClientState.Initial) {
+                transition<UpdateEvent> { targetState = ClientState.Fio }
             }
-        }
-        addState(ClientState.Fio) {
-            transition<UpdateEvent> {
-                targetState = ClientState.Properties
+            addState(ClientState.Fio) {
+                transition<UpdateEvent> { targetState = ClientState.Properties }
+                onEntry { processState(it, this, ::fio) }
             }
-            onEntry { processState(it, this, ::fio) }
-        }
-        addState(ClientState.Properties) {
-            transition<UpdateEvent> {
-                targetState = ClientState.Finish
+            addState(ClientState.Properties) {
+                transition<UpdateEvent> { targetState = ClientState.Finish }
+                onEntry { processState(it, this, ::property) }
             }
-            onEntry { processState(it, this, ::property) }
+            addState(ClientState.Finish)
+            onFinished { removeFromStorage(it) }
         }
-        addState(ClientState.Finish)
-        onFinished { removeFromStorage(it) }
-    }
 
-    private suspend fun fio(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
+    private suspend fun fio(
+        message: CommonMessage<MessageContent>,
+        builder: ClientBuilder
+    ): Boolean {
         val chatId = message.userId()
         val telegramUser = UserMapper.findById(chatId)!!
         val words = message.content.asTextContent()!!.text.split(" ")
@@ -72,7 +70,6 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                     it.name = words[1]
                     it.lastName = words[2]
                 }
-
                 else -> {
                     it.secondName = words[0]
                     it.name = words[1]
@@ -80,11 +77,9 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                 }
             }
         }
-        if (ClientMapper.findAllByFio(
-                builder.name,
-                builder.secondName,
-                builder.lastName
-            ).isNotEmpty()
+        if (
+            ClientMapper.findAllByFio(builder.name, builder.secondName, builder.lastName)
+                .isNotEmpty()
         ) {
             bot.sendTextMessage(message.chat, I18n.Message.FIO_ALREADY_IN_DATABASE.load())
             return false
@@ -93,12 +88,15 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         if (ConfigMapper.clientProperties().isEmpty()) {
             finish(listOf(), message, builder)
         } else {
-            builder.propertiesBuilder = PropertiesBuilder(ConfigMapper.clientProperties().propertyDefs.toMutableList())
+            builder.propertiesBuilder =
+                PropertiesBuilder(ConfigMapper.clientProperties().propertyDefs.toMutableList())
             val next = builder.nextProperty()!!
             if (next.second.isNotEmpty()) {
-                bot.send(message.chat, text = next.first, replyMarkup = replyKeyboard {
-                    next.second.forEach { row { simpleButton(it) } }
-                })
+                bot.send(
+                    message.chat,
+                    text = next.first,
+                    replyMarkup = replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                )
             } else {
                 bot.sendTextMessage(message.chat, next.first)
             }
@@ -109,10 +107,16 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
         if (ConfigMapper.clientProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder.process(message){ runBlocking { finish(it, message, builder) } }
+        return builder.propertiesBuilder.process(message) {
+            runBlocking { finish(it, message, builder) }
+        }
     }
 
-    private suspend fun finish(p: List<Property>, message: CommonMessage<MessageContent>, builder: ClientBuilder) {
+    private suspend fun finish(
+        p: List<Property>,
+        message: CommonMessage<MessageContent>,
+        builder: ClientBuilder
+    ) {
         builder.apply {
             createdBy = message.userId()
             properties = p
@@ -124,31 +128,34 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         bot.sendTextMessage(
             message.chat,
             client.getInfo(
-                ServiceMapper.getServicesForClient(client.id!!)
-                    .mapNotNull { ServicesMapper.getNameById(it) })
+                ServiceMapper.getServicesForClient(client.id!!).mapNotNull {
+                    ServicesMapper.getNameById(it)
+                }
+            )
         )
         sendLog(client, message.userId())
         bot.sendTextMessage(message.chat, I18n.Message.CREATE_PUPIL_FINISHED.load())
     }
 
     private suspend fun sendLog(client: Client, chatId: Long) {
-        bot.send(ConfigMapper.logChat(), text = """
+        bot.send(
+            ConfigMapper.logChat(),
+            text =
+                """
                 #${ConfigMapper.clientName()}   
                 ${
             client.getInfo(
                 ServiceMapper.getServicesForClient(client.id!!)
                     .mapNotNull { ServicesMapper.getNameById(it) })
         }
-                """.trimIndent(), parseMode = MarkdownParseMode
+                """.trimIndent(
+                ),
+            parseMode = MarkdownParseMode
         )
     }
-
 }
 
 suspend fun startClientFsm(message: CommonMessage<MessageContent>): ClientBuilder {
-    bot.sendTextMessage(
-        message.chat,
-        I18n.Message.INPUT_FIO_IN_FORMAT.load()
-    )
+    bot.sendTextMessage(message.chat, I18n.Message.INPUT_FIO_IN_FORMAT.load())
     return ClientBuilder()
 }

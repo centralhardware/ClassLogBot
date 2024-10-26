@@ -12,10 +12,13 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
 suspend fun userInfoCallback(query: DataCallbackQuery) {
     ClientMapper.findById(query.data.replace("user_info", "").toInt())?.let { client ->
-        val info = client.getInfo(
-            ServiceMapper.getServicesForClient(client.id!!)
-                .mapNotNull { ServicesMapper.getNameById(it) }.toList()
-        )
+        val info =
+            client.getInfo(
+                ServiceMapper.getServicesForClient(client.id!!)
+                    .mapNotNull { ServicesMapper.getNameById(it) }
+                    .toList()
+            )
         bot.sendMessage(query.from, info, parseMode = MarkdownParseMode)
-    }?: bot.sendMessage(query.from, I18n.Message.USER_NOT_FOUND.load())
+    }
+        ?: bot.sendMessage(query.from, I18n.Message.USER_NOT_FOUND.load())
 }

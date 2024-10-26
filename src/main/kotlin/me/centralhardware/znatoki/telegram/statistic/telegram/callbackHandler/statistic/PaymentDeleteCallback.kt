@@ -9,14 +9,16 @@ import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 
-suspend fun paymentDeleteCallback(query: DataCallbackQuery){
+suspend fun paymentDeleteCallback(query: DataCallbackQuery) {
     val id = query.data.replace("paymentDelete-", "").toInt()
 
     PaymentMapper.setDelete(id, true)
 
-    query.messageDataCallbackQueryOrNull() ?.message ?. let {
-        bot.edit(it, replyMarkup = inlineKeyboard {
-            row { dataButton("восстановить", "paymentRestore-$id") }
-        })
+    query.messageDataCallbackQueryOrNull()?.message?.let {
+        bot.edit(
+            it,
+            replyMarkup =
+                inlineKeyboard { row { dataButton("восстановить", "paymentRestore-$id") } }
+        )
     }
 }

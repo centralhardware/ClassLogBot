@@ -8,6 +8,7 @@ import dev.inmo.tgbotapi.types.IdChatIdentifier
 import dev.inmo.tgbotapi.types.chat.PreviewChat
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.TextContent
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
@@ -15,7 +16,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.userId
-import java.io.File
 
 private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long) -> List<File>) {
     if (Storage.contain(userId)) {
@@ -23,15 +23,11 @@ private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long
     }
 
     if (UserMapper.hasAdminRight(userId)) {
-        ServiceMapper.getIds().forEach {
-            getTime.invoke(it).forEach { send(chat.id, it) }
-        }
+        ServiceMapper.getIds().forEach { getTime.invoke(it).forEach { send(chat.id, it) } }
         return
     }
 
-    getTime.invoke(userId).forEach {
-        send(chat.id, it)
-    }
+    getTime.invoke(userId).forEach { send(chat.id, it) }
 }
 
 suspend fun send(id: IdChatIdentifier, file: File) {

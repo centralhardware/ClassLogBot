@@ -13,11 +13,14 @@ data object DateTime : Type {
         return "Введите $name в формате dd MM yyyy HH;mm ${if (isOptional) OPTIONAL_TEXT else ""}"
     }
 
-    override fun validate(message: CommonMessage<MessageContent>, variants: List<String>): Either<String, Unit> =
-        message.text.parseDateTime()
+    override fun validate(
+        message: CommonMessage<MessageContent>,
+        variants: List<String>
+    ): Either<String, Unit> =
+        message.text
+            .parseDateTime()
             .fold(
                 { Either.Right(Unit) },
                 { Either.Left("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy") }
             )
-
 }

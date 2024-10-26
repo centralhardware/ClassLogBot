@@ -8,17 +8,19 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
 import org.apache.commons.lang3.StringUtils
 
-data object Text: Type {
+data object Text : Type {
     override fun format(name: String, isOptional: Boolean): String {
         return "Введите $name. ${if (isOptional) OPTIONAL_TEXT else ""}"
     }
 
-    override fun validate(message: CommonMessage<MessageContent>, variants: List<String>): Either<String, Unit> {
+    override fun validate(
+        message: CommonMessage<MessageContent>,
+        variants: List<String>
+    ): Either<String, Unit> {
         return if (message.content is TextContent && StringUtils.isNotBlank(message.text)) {
             Either.Right(Unit)
         } else {
             Either.Left("Введите текст")
         }
     }
-
 }

@@ -8,14 +8,18 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OP
 import org.apache.commons.lang3.StringUtils
 
 typealias NumberType = Integer
+
 data object Integer : Type {
 
     override fun format(name: String, isOptional: Boolean): String {
         return "Введите $name (число). ${if (isOptional) OPTIONAL_TEXT else ""}"
     }
 
-    override fun validate(message: CommonMessage<MessageContent>, variants: List<String>): Either<String, Unit> {
-        return if (StringUtils.isNumeric(message.text)) Either.Right(Unit) else Either.Left("Введите число")
+    override fun validate(
+        message: CommonMessage<MessageContent>,
+        variants: List<String>
+    ): Either<String, Unit> {
+        return if (StringUtils.isNumeric(message.text)) Either.Right(Unit)
+        else Either.Left("Введите число")
     }
-
 }

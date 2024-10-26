@@ -6,12 +6,14 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 
-suspend fun grafanaCommand(message: CommonMessage<TextContent>){
+suspend fun grafanaCommand(message: CommonMessage<TextContent>) {
     bot.sendMessage(
         message.chat,
         """
             адрес: ${ConfigMapper.grafanaUrl()}
             пользователь: ${ConfigMapper.grafanaUsername()}
             пароль: ${ConfigMapper.grafanaPassword()}
-        """.trimIndent())
+        """.trimIndent(
+        )
+    )
 }
