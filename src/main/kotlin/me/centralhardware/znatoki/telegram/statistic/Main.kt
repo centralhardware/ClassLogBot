@@ -38,10 +38,6 @@ lateinit var bot: TelegramBot
 suspend fun main() {
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
-    coroutineScope {
-        launch { monthReport() }
-        launch { dailyReport() }
-    }
     bot =
         longPolling {
                 setMyCommands(
@@ -110,4 +106,8 @@ suspend fun main() {
                 }
             }
             .first
+    coroutineScope {
+        launch { monthReport() }
+        launch { dailyReport() }
+    }
 }
