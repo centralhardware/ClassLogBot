@@ -45,7 +45,7 @@ suspend fun main() {
                     BotCommand("addpayment", "Добавить оплату"),
                     BotCommand("report", "Отчет за текущий месяц"),
                     BotCommand("reportprevious", "Отчет за предыдущий месяц"),
-                    BotCommand("reset", "Сбросить состояние")
+                    BotCommand("reset", "Сбросить состояние"),
                 )
 
                 onCommand("start") { startCommand(it) }

@@ -30,10 +30,15 @@ import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 
 sealed class PaymentStates : DefaultState() {
     object Initial : PaymentStates()
+
     object Pupil : PaymentStates()
+
     object Service : PaymentStates()
+
     object Amount : PaymentStates()
+
     object Property : PaymentStates()
+
     object Confirm : PaymentStates(), FinalState
 }
 
@@ -41,7 +46,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     override fun createFSM(): StateMachine =
         createStdLibStateMachine(
             "payment",
-            creationArguments = buildCreationArguments { isUndoEnabled = true }
+            creationArguments = buildCreationArguments { isUndoEnabled = true },
         ) {
             logger = fsmLog
             addInitialState(PaymentStates.Initial) {
@@ -72,7 +77,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     private suspend fun pupil(
         message: CommonMessage<MessageContent>,
-        builder: PaymentBuilder
+        builder: PaymentBuilder,
     ): Boolean {
         val userId = message.userId()
         return validateFio(message.content.asTextedInput()!!.text!!)
@@ -94,7 +99,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                                         }
                                     }
                                 }
-                            }
+                            },
                     )
                 }
             }
@@ -112,7 +117,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                 bot.sendTextMessage(
                     message.chat,
                     "Введите сумму оплаты",
-                    replyMarkup = ReplyKeyboardRemove()
+                    replyMarkup = ReplyKeyboardRemove(),
                 )
             }
             .isRight()
@@ -120,7 +125,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     private suspend fun amount(
         message: CommonMessage<MessageContent>,
-        builder: PaymentBuilder
+        builder: PaymentBuilder,
     ): Boolean {
         val userId = message.userId()
         val znatokiUser = UserMapper.findById(userId)!!
@@ -139,7 +144,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                                         Оплата: ${it.amount}
                                         """
                         },
-                        replyMarkup = yesNoKeyboard
+                        replyMarkup = yesNoKeyboard,
                     )
                 } else {
                     builder.propertiesBuilder =
@@ -152,7 +157,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                             message.chat,
                             next.first,
                             replyMarkup =
-                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
                         )
                     } else {
                         bot.sendTextMessage(message.chat, next.first)
@@ -167,9 +172,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
         if (ConfigMapper.paymentProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder.process(
-            message,
-        ) { properties ->
+        return builder.propertiesBuilder.process(message) { properties ->
             builder.properties = properties
             runBlocking {
                 bot.sendTextMessage(
@@ -180,7 +183,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                 }
                                         Оплата: ${builder.amount}
                                         """,
-                    replyMarkup = yesNoKeyboard
+                    replyMarkup = yesNoKeyboard,
                 )
             }
         }
@@ -188,7 +191,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     private suspend fun confirm(
         message: CommonMessage<MessageContent>,
-        builder: PaymentBuilder
+        builder: PaymentBuilder,
     ): Boolean {
         val userId = message.userId()
         when (message.text!!) {
@@ -229,8 +232,8 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                 Оплата: ${payment.amount}
                 Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
                 ${payment.properties.print()}
-            """.trimIndent(
-            )
+            """
+                .trimIndent()
         val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
         if (hasPhoto == 1L) {
             bot.sendActionUploadPhoto(ConfigMapper.logChat())
@@ -246,14 +249,14 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                                     runBlocking {
                                         bot.sendTextMessage(
                                             ConfigMapper.logChat(),
-                                            "Ошибка во время отправки лога"
+                                            "Ошибка во время отправки лога",
                                         )
                                     }
                                 }
                                 .getOrThrow()
                         },
                         replyMarkup = keyboard,
-                        text = text
+                        text = text,
                     )
                 }
         } else {
@@ -268,7 +271,7 @@ suspend fun startPaymentFsm(message: CommonMessage<MessageContent>): PaymentBuil
     bot.sendTextMessage(
         message.chat,
         "нажмите для поиска фио",
-        replyMarkup = switchToInlineKeyboard
+        replyMarkup = switchToInlineKeyboard,
     )
     return builder
 }

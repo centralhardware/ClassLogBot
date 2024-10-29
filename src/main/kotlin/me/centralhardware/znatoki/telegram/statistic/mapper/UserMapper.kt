@@ -28,7 +28,7 @@ object UserMapper {
             FROM telegram_users
             WHERE id = :id
             """,
-                    mapOf("id" to id)
+                    mapOf("id" to id),
                 )
                 .map { it.parseUser() }
                 .asSingle
@@ -41,8 +41,7 @@ object UserMapper {
     fun hasReadRight(id: Long): Boolean {
         return findById(id)?.role?.let {
             it == Role.READ || it == Role.READ_WRITE || it == Role.ADMIN
-        }
-            ?: false
+        } ?: false
     }
 
     fun hasAdminRight(id: Long): Boolean {

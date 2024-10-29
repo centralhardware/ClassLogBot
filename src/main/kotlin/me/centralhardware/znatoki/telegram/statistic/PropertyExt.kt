@@ -30,7 +30,7 @@ fun List<Property>.print(): String {
 
 suspend fun PropertiesBuilder.process(
     message: CommonMessage<MessageContent>,
-    onFinish: (List<Property>) -> Unit
+    onFinish: (List<Property>) -> Unit,
 ): Boolean {
     var isFinished = false
     validate(message)
@@ -45,14 +45,14 @@ suspend fun PropertiesBuilder.process(
                             message.chat,
                             text = next.first,
                             replyMarkup =
-                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
                         )
                     }
                 } else {
                     bot.sendTextMessage(
                         message.chat,
                         next.first,
-                        replyMarkup = ReplyKeyboardRemove()
+                        replyMarkup = ReplyKeyboardRemove(),
                     )
                 }
             }

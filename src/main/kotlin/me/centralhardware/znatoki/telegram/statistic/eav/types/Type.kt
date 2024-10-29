@@ -15,16 +15,17 @@ sealed interface Type {
     }
 
     fun format(name: String, isOptional: Boolean): String
+
     fun validate(
         message: CommonMessage<MessageContent>,
-        variants: List<String>
+        variants: List<String>,
     ): Either<String, Unit>
 
     fun extract(message: CommonMessage<MessageContent>): String? = message.text
 
     fun validate(
         message: CommonMessage<MessageContent>,
-        vararg variants: String
+        vararg variants: String,
     ): Either<String, Unit> {
         if (message.content is TextContent && message.text == "/skip") {
             return Either.Right(Unit)

@@ -18,7 +18,7 @@ suspend fun paymentDeleteCallback(query: DataCallbackQuery) {
         bot.edit(
             it,
             replyMarkup =
-                inlineKeyboard { row { dataButton("восстановить", "paymentRestore-$id") } }
+                inlineKeyboard { row { dataButton("восстановить", "paymentRestore-$id") } },
         )
     }
 }

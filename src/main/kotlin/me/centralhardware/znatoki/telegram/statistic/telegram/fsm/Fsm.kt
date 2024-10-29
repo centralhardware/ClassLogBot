@@ -37,7 +37,7 @@ abstract class Fsm<B : Builder>(private val builder: B) {
     suspend fun processState(
         t: TransitionParams<*>,
         state: DefaultState,
-        block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>
+        block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>,
     ) {
         if (t.event is WrappedEvent) return
 
@@ -47,7 +47,7 @@ abstract class Fsm<B : Builder>(private val builder: B) {
                     KSLog.warning("", it)
                     bot.sendTextMessage(
                         t.arg().chat,
-                        "Данный тип сообщения не поддерживается или произошла ошибка"
+                        "Данный тип сообщения не поддерживается или произошла ошибка",
                     )
                 }
                 .getOrDefault(false)
@@ -57,7 +57,7 @@ abstract class Fsm<B : Builder>(private val builder: B) {
 
     suspend fun process(
         t: TransitionParams<*>,
-        block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>
+        block: KSuspendFunction2<CommonMessage<MessageContent>, B, Boolean>,
     ) = block.invoke(t.arg(), builder)
 
     fun removeFromStorage(t: TransitionParams<*>) = Storage.remove(t.arg().userId())

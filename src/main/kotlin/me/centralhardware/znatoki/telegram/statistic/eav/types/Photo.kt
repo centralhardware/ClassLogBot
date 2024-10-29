@@ -21,7 +21,7 @@ data object Photo : Type {
 
     override fun validate(
         message: CommonMessage<MessageContent>,
-        variants: List<String>
+        variants: List<String>,
     ): Either<String, Unit> {
         return if (message.content is PhotoContent) {
             Either.Right(Unit)

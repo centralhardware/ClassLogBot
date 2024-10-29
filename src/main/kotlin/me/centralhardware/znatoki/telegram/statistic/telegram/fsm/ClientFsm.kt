@@ -25,8 +25,11 @@ import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 
 sealed class ClientState : DefaultState() {
     object Initial : ClientState()
+
     object Fio : ClientState()
+
     object Properties : ClientState()
+
     object Finish : ClientState(), FinalState
 }
 
@@ -34,7 +37,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     override fun createFSM(): StateMachine =
         createStdLibStateMachine(
             "client",
-            creationArguments = buildCreationArguments { isUndoEnabled = true }
+            creationArguments = buildCreationArguments { isUndoEnabled = true },
         ) {
             logger = fsmLog
             addInitialState(ClientState.Initial) {
@@ -54,7 +57,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
 
     private suspend fun fio(
         message: CommonMessage<MessageContent>,
-        builder: ClientBuilder
+        builder: ClientBuilder,
     ): Boolean {
         val chatId = message.userId()
         val telegramUser = UserMapper.findById(chatId)!!
@@ -95,7 +98,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                 bot.send(
                     message.chat,
                     text = next.first,
-                    replyMarkup = replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                    replyMarkup = replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
                 )
             } else {
                 bot.sendTextMessage(message.chat, next.first)
@@ -115,7 +118,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     private suspend fun finish(
         p: List<Property>,
         message: CommonMessage<MessageContent>,
-        builder: ClientBuilder
+        builder: ClientBuilder,
     ) {
         builder.apply {
             createdBy = message.userId()
@@ -131,7 +134,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                 ServiceMapper.getServicesForClient(client.id!!).mapNotNull {
                     ServicesMapper.getNameById(it)
                 }
-            )
+            ),
         )
         sendLog(client, message.userId())
         bot.sendTextMessage(message.chat, I18n.Message.CREATE_PUPIL_FINISHED.load())
@@ -148,9 +151,9 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                 ServiceMapper.getServicesForClient(client.id!!)
                     .mapNotNull { ServicesMapper.getNameById(it) })
         }
-                """.trimIndent(
-                ),
-            parseMode = MarkdownParseMode
+                """
+                    .trimIndent(),
+            parseMode = MarkdownParseMode,
         )
     }
 }

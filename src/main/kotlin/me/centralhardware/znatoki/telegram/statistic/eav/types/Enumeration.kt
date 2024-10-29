@@ -16,7 +16,7 @@ data object Enumeration : Type {
 
     override fun validate(
         message: CommonMessage<MessageContent>,
-        variants: List<String>
+        variants: List<String>,
     ): Either<String, Unit> {
         return if (message.content is TextContent && variants.contains(message.text)) {
             Either.Right(Unit)

@@ -4,5 +4,5 @@ enum class Role {
     BLOCK,
     READ,
     READ_WRITE,
-    ADMIN
+    ADMIN,
 }

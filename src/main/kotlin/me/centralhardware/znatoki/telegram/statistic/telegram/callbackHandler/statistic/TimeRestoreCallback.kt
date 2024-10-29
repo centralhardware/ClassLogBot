@@ -18,7 +18,7 @@ suspend fun timeRestoreCallback(query: DataCallbackQuery) {
     query.messageDataCallbackQueryOrNull()?.message?.let {
         bot.edit(
             it,
-            replyMarkup = inlineKeyboard { row { dataButton("удалить", "timeDelete-$id") } }
+            replyMarkup = inlineKeyboard { row { dataButton("удалить", "timeDelete-$id") } },
         )
     }
 }

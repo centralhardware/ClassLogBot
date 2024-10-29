@@ -33,7 +33,7 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
                     if (UserMapper.hasWriteRight(message.userId())) {
                         row { dataButton("удалить", "delete_user${client.id}") }
                     }
-                }
+                },
         )
     }
 }

@@ -11,5 +11,5 @@ fun Row.parseUser() =
         long("id"),
         string("role").toRole(),
         string("services").parseLongList(),
-        string("name")
+        string("name"),
     )

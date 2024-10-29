@@ -18,8 +18,7 @@ suspend fun userInfoCommand(message: CommonMessage<TextContent>, args: Array<Str
                 ServiceMapper.getServicesForClient(client.id!!)
                     .mapNotNull { ServicesMapper.getNameById(it) }
                     .toList()
-            )
+            ),
         )
-    }
-        ?: bot.sendMessage(message.chat, I18n.Message.PUPIL_NOT_FOUND.load())
+    } ?: bot.sendMessage(message.chat, I18n.Message.PUPIL_NOT_FOUND.load())
 }

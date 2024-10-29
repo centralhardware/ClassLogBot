@@ -33,10 +33,15 @@ import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 
 sealed class TimeStates : DefaultState() {
     object Initial : TimeStates()
+
     object Subject : TimeStates()
+
     object Fio : TimeStates()
+
     object Amount : TimeStates()
+
     object Properties : TimeStates()
+
     object Confirm : TimeStates(), FinalState
 }
 
@@ -44,7 +49,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
     override fun createFSM(): StateMachine =
         createStdLibStateMachine(
             "time",
-            creationArguments = buildCreationArguments { isUndoEnabled = true }
+            creationArguments = buildCreationArguments { isUndoEnabled = true },
         ) {
             logger = fsmLog
             addInitialState(TimeStates.Initial) {
@@ -72,7 +77,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     private suspend fun subject(
         message: CommonMessage<MessageContent>,
-        builder: ServiceBuilder
+        builder: ServiceBuilder,
     ): Boolean {
         val userId = message.userId()
         val user = UserMapper.findById(userId)!!
@@ -92,7 +97,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                 bot.sendTextMessage(
                     message.chat,
                     "нажмите для поиска фио",
-                    replyMarkup = switchToInlineKeyboard
+                    replyMarkup = switchToInlineKeyboard,
                 )
             }
             .isRight()
@@ -100,7 +105,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     private suspend fun fio(
         message: CommonMessage<MessageContent>,
-        builder: ServiceBuilder
+        builder: ServiceBuilder,
     ): Boolean {
         val text = message.text!!
         if (!ServicesMapper.isAllowMultiplyClients(builder.serviceId)!!) {
@@ -144,7 +149,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     private suspend fun amount(
         message: CommonMessage<MessageContent>,
-        builder: ServiceBuilder
+        builder: ServiceBuilder,
     ): Boolean {
         val userId = message.userId()
         val znatokiUser = UserMapper.findById(userId)!!
@@ -168,7 +173,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                             message.chat,
                             next.first,
                             replyMarkup =
-                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } }
+                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
                         )
                     } else {
                         bot.sendTextMessage(message.chat, next.first)
@@ -189,7 +194,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
 
     private suspend fun confirmMessage(
         message: CommonMessage<MessageContent>,
-        builder: ServiceBuilder
+        builder: ServiceBuilder,
     ) {
         bot.sendTextMessage(
             message.chat,
@@ -200,16 +205,16 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
         }
                             стоимость: ${builder.amount}
                             Сохранить?
-                            """.trimIndent(
-            ),
-            replyMarkup = yesNoKeyboard
+                            """
+                .trimIndent(),
+            replyMarkup = yesNoKeyboard,
         )
     }
 }
 
 private suspend fun confirm(
     message: CommonMessage<MessageContent>,
-    builder: ServiceBuilder
+    builder: ServiceBuilder,
 ): Boolean {
     when (message.text) {
         "да" -> {
@@ -255,8 +260,8 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
                     Стоимость: ${service.amount}
                     Преподаватель: ${UserMapper.findById(userId)?.name.hashtag()}
                     ${service.properties.print()}
-                    """.trimIndent(
-        )
+                    """
+            .trimIndent()
 
     val hasPhoto = service.properties.count { it.type is Photo }
 
@@ -273,14 +278,14 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
                                 runBlocking {
                                     bot.sendTextMessage(
                                         ConfigMapper.logChat(),
-                                        "Ошибка во время отправки лога"
+                                        "Ошибка во время отправки лога",
                                     )
                                 }
                             }
                             .getOrThrow()
                     },
                     replyMarkup = keyboard,
-                    text = log
+                    text = log,
                 )
             }
     } else {
@@ -307,7 +312,7 @@ suspend fun startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder
                         user.services.forEach {
                             row { ServicesMapper.getNameById(it)?.let { simpleButton(it) } }
                         }
-                    }
+                    },
             )
         }
         else -> {

@@ -20,7 +20,7 @@ class Client(
     val modifyDate: LocalDateTime = LocalDateTime.now(),
     val createdBy: Long,
     val updateBy: Long?,
-    var deleted: Boolean = false
+    var deleted: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -48,8 +48,8 @@ fun Client.getInfo(services: List<String>) =
         дата изменения=${modifyDate.formatDate().makeBold()}
         создано=$createdBy
         редактировано=${updateBy}
-        """.trimIndent(
-    )
+        """
+        .trimIndent()
 
 fun Client.fio(): String = "$name $secondName $lastName".replace("\\s{2,}".toRegex(), " ")
 
@@ -64,7 +64,7 @@ fun Row.parseClient(): Client =
         localDateTime("modify_date"),
         long("created_by"),
         longOrNull("update_by"),
-        boolean("deleted")
+        boolean("deleted"),
     )
 
 class ClientBuilder : Builder {
@@ -84,6 +84,6 @@ class ClientBuilder : Builder {
             lastName = lastName,
             properties = properties,
             createdBy = createdBy,
-            updateBy = createdBy
+            updateBy = createdBy,
         )
 }

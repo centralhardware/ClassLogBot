@@ -16,18 +16,25 @@ object ConfigMapper {
                 FROM config
                 WHERE key = :key
             """,
-                    mapOf("key" to key)
+                    mapOf("key" to key),
                 )
                 .map { it.string("value") }
                 .asSingle
         )!!
 
     fun logChat() = get("logChatId").toLong().toChatId()
+
     fun paymentProperties() = get("payment_properties").toCustomProperties()
+
     fun clientProperties() = get("client_properties").toCustomProperties()
+
     fun serviceProperties() = get("service_properties").toCustomProperties()
+
     fun includeInInline() = get("include_in_inlines").parseStringList()
+
     fun includeInReport() = get("include_in_report").parseStringList()
+
     fun clientName() = get("client_name")
+
     fun name() = get("name")
 }

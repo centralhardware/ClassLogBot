@@ -8,7 +8,7 @@ data class Services(
     var key: String,
     var name: String,
     var allowMultiplyClients: Boolean,
-    var properties: List<Property> = listOf()
+    var properties: List<Property> = listOf(),
 )
 
 fun Row.parseServices() =

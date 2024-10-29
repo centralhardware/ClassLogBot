@@ -17,7 +17,7 @@ data object Integer : Type {
 
     override fun validate(
         message: CommonMessage<MessageContent>,
-        variants: List<String>
+        variants: List<String>,
     ): Either<String, Unit> {
         return if (StringUtils.isNumeric(message.text)) Either.Right(Unit)
         else Either.Left("Введите число")

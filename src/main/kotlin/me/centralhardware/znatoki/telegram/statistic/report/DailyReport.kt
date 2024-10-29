@@ -43,8 +43,8 @@ suspend fun getReport(id: Long, sendTo: Long = id) {
                     it.toClientIds().joinToString(", ") { clientId -> ClientMapper.getFioById(clientId) }
                 }
                         Стоимость: ${it.first().amount}
-                    """.trimIndent(
-                )
+                    """
+                    .trimIndent(),
             )
         }
     bot.sendTextMessage(sendTo.toChatId(), "Проверьте правильность внесенных данных")

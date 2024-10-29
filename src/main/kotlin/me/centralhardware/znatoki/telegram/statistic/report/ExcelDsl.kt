@@ -14,7 +14,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 class ExcelDsl(
     private val fio: String,
     private val serviceName: String,
-    private val date: LocalDateTime
+    private val date: LocalDateTime,
 ) {
     private val workbook: Workbook = XSSFWorkbook()
 
@@ -82,7 +82,7 @@ fun excel(
     fio: String,
     serviceName: String,
     date: LocalDateTime,
-    initializer: ExcelDsl.() -> Unit
+    initializer: ExcelDsl.() -> Unit,
 ): ExcelDsl {
     return ExcelDsl(fio, serviceName, date).apply(initializer)
 }

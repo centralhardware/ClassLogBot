@@ -15,7 +15,7 @@ class Service(
     val serviceId: Long,
     val clientId: Int,
     val amount: Int,
-    val properties: List<Property>
+    val properties: List<Property>,
 )
 
 fun Row.parseTime() =
@@ -52,7 +52,7 @@ class ServiceBuilder : Builder {
                 serviceId = serviceId,
                 clientId = it,
                 amount = amount,
-                properties = propertiesBuilder.properties.toList()
+                properties = propertiesBuilder.properties.toList(),
             )
         }
 }

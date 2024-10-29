@@ -19,6 +19,5 @@ suspend fun userInfoCallback(query: DataCallbackQuery) {
                     .toList()
             )
         bot.sendMessage(query.from, info, parseMode = MarkdownParseMode)
-    }
-        ?: bot.sendMessage(query.from, I18n.Message.USER_NOT_FOUND.load())
+    } ?: bot.sendMessage(query.from, I18n.Message.USER_NOT_FOUND.load())
 }

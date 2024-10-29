@@ -19,12 +19,11 @@ object ClientMapper {
             ORDER BY create_date DESC
             ) as e
         """,
-                    mapOf("fio" to fio)
+                    mapOf("fio" to fio),
                 )
                 .map { row -> row.boolean("e") }
                 .asSingle
-        )
-            ?: false
+        ) ?: false
 
     fun save(client: Client): Int =
         session.run(
@@ -58,12 +57,13 @@ object ClientMapper {
                         "second_name" to client.secondName,
                         "created_by" to client.createdBy,
                         "deleted" to client.deleted,
-                        "properties" to client.properties.toJson()
-                    )
+                        "properties" to client.properties.toJson(),
+                    ),
                 )
                 .map { it.int("id") }
                 .asSingle
         )!!
+
     fun delete(id: Int) =
         session.update(
             queryOf(
@@ -72,7 +72,7 @@ object ClientMapper {
                SET deleted = true
                WHERE id = :id
             """,
-                mapOf("id" to id)
+                mapOf("id" to id),
             )
         )
 
@@ -84,7 +84,7 @@ object ClientMapper {
                 FROM client
                 WHERE id = :id
             """,
-                    mapOf("id" to id)
+                    mapOf("id" to id),
                 )
                 .map { it.parseClient() }
                 .asSingle
@@ -111,7 +111,7 @@ object ClientMapper {
                 FROM client
                 WHERE name = :name AND second_name = :secondName AND last_name = :lastName
             """,
-                    mapOf("name" to name, "second_name" to secondName, "last_name" to lastName)
+                    mapOf("name" to name, "second_name" to secondName, "last_name" to lastName),
                 )
                 .map { it.parseClient() }
                 .asList
@@ -125,10 +125,9 @@ object ClientMapper {
             from client
             WHERE id = :id
         """,
-                    mapOf("id" to id)
+                    mapOf("id" to id),
                 )
                 .map { row -> row.string("fio") }
                 .asSingle
-        )
-            ?: ""
+        ) ?: ""
 }

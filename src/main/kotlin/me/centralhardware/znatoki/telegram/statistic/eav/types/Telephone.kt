@@ -15,7 +15,7 @@ data object Telephone : Type {
 
     override fun validate(
         message: CommonMessage<MessageContent>,
-        variants: List<String>
+        variants: List<String>,
     ): Either<String, Unit> {
         return if (message.text!!.validateTelephone()) {
             Either.Right(Unit)

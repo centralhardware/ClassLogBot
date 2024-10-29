@@ -25,7 +25,7 @@ suspend fun processInline(query: BaseInlineQuery) {
                     InlineQueryId(i.getAndIncrement().toString()),
                     getFio(it),
                     InputTextMessageContent(getFio(it)),
-                    description = getBio(it)
+                    description = getBio(it),
                 )
             }
             .toMutableList()
@@ -35,7 +35,7 @@ suspend fun processInline(query: BaseInlineQuery) {
             InlineQueryResultArticle(
                 InlineQueryId(i.getAndIncrement().toString()),
                 "/complete",
-                InputTextMessageContent("Закончить ввод")
+                InputTextMessageContent("Закончить ввод"),
             )
         articles.add(noResultsArticle)
     }

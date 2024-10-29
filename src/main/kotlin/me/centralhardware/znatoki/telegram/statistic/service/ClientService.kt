@@ -51,7 +51,7 @@ object ClientService {
                 listOf(
                     FuzzyQuery(Term("name", word), 2),
                     FuzzyQuery(Term("secondName", word), 2),
-                    FuzzyQuery(Term("lastName", word), 2)
+                    FuzzyQuery(Term("lastName", word), 2),
                 )
             }
 

@@ -10,5 +10,5 @@ data class PropertyDef(
     val name: String,
     val enumeration: List<String> = listOf(),
     val isOptional: Boolean,
-    val isUnique: Boolean = false
+    val isUnique: Boolean = false,
 )

@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Type
 data class Property(
     val name: String,
     @Serializable(with = TypeAdapter::class) val type: Type,
-    var value: String? = ""
+    var value: String? = "",
 ) {
     fun withValue(value: String) = this.apply { this.value = value }
 }

@@ -22,7 +22,7 @@ class MonthReport(
     private val fio: String,
     private val service: Long,
     private val date: LocalDateTime,
-    private val userId: Long
+    private val userId: Long,
 ) {
 
     fun generate(services: List<Service>): File? {
@@ -57,7 +57,7 @@ class MonthReport(
                     title("Преподаватель: $fio", 6)
                     title(
                         "${dateTime.format(DateTimeFormatter.ofPattern("MMMM"))} ${dateTime.year}",
-                        6
+                        6,
                     )
                     row {
                         cell("№")
@@ -108,7 +108,7 @@ class MonthReport(
                                         userId,
                                         fioTimes.first().serviceId,
                                         client.id!!,
-                                        date
+                                        date,
                                     )
                                 )
                                 emptyCell()
@@ -125,7 +125,7 @@ class MonthReport(
                             PaymentMapper.getPaymentsSum(
                                 userId,
                                 filteredServices.first().serviceId,
-                                date
+                                date,
                             )
                         )
                     }

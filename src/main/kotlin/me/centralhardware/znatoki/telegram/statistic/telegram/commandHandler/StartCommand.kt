@@ -11,6 +11,6 @@ suspend fun startCommand(message: CommonMessage<TextContent>) =
         """
                          Бот предназначенный для анализа вашего бизнеса.
                          Автор: @centralhardware
-                         """.trimIndent(
-        )
+                         """
+            .trimIndent(),
     )

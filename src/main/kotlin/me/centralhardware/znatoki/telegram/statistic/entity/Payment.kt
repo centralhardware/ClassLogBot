@@ -13,7 +13,7 @@ data class Payment(
     val clientId: Int,
     val amount: Int,
     val serviceId: Long? = null,
-    val properties: MutableList<Property> = ArrayList()
+    val properties: MutableList<Property> = ArrayList(),
 )
 
 class PaymentBuilder : Builder {
@@ -32,6 +32,6 @@ class PaymentBuilder : Builder {
             clientId = clientId,
             amount = amount,
             serviceId = serviceId,
-            properties = propertiesBuilder.properties
+            properties = propertiesBuilder.properties,
         )
 }

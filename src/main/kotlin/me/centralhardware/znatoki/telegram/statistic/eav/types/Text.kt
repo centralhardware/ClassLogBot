@@ -15,7 +15,7 @@ data object Text : Type {
 
     override fun validate(
         message: CommonMessage<MessageContent>,
-        variants: List<String>
+        variants: List<String>,
     ): Either<String, Unit> {
         return if (message.content is TextContent && StringUtils.isNotBlank(message.text)) {
             Either.Right(Unit)

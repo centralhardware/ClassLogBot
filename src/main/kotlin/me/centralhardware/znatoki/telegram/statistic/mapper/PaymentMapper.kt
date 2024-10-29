@@ -37,8 +37,8 @@ object PaymentMapper {
                         "clientId" to payment.clientId,
                         "amount" to payment.amount,
                         "properties" to payment.properties.toJson(),
-                        "serviceId" to payment.serviceId
-                    )
+                        "serviceId" to payment.serviceId,
+                    ),
                 )
                 .map { row -> row.int("id") }
                 .asSingle
@@ -52,7 +52,7 @@ object PaymentMapper {
             SET is_deleted = :is_delete
             WHERE id = :id
             """,
-                    mapOf("id" to id, "is_delete" to isDelete)
+                    mapOf("id" to id, "is_delete" to isDelete),
                 )
                 .asUpdate
         )
@@ -61,7 +61,7 @@ object PaymentMapper {
         chatId: Long,
         serviceId: Long,
         clientId: Int,
-        date: LocalDateTime
+        date: LocalDateTime,
     ): Long =
         session.run(
             queryOf(
@@ -80,13 +80,12 @@ object PaymentMapper {
                         "service_id" to serviceId,
                         "client_id" to clientId,
                         "startDate" to date.startOfMonth(),
-                        "endDate" to date.endOfMonth()
-                    )
+                        "endDate" to date.endOfMonth(),
+                    ),
                 )
                 .map { row -> row.longOrNull("sum") }
                 .asSingle
-        )
-            ?: 0
+        ) ?: 0
 
     fun getPaymentsSum(chatId: Long, serviceId: Long, date: LocalDateTime): Long =
         session.run(
@@ -103,11 +102,10 @@ object PaymentMapper {
                         "chat_id" to chatId,
                         "service_id" to serviceId,
                         "startDate" to date.startOfMonth(),
-                        "endDate" to date.endOfMonth()
-                    )
+                        "endDate" to date.endOfMonth(),
+                    ),
                 )
                 .map { row -> row.longOrNull("sum") }
                 .asSingle
-        )
-            ?: 0
+        ) ?: 0
 }

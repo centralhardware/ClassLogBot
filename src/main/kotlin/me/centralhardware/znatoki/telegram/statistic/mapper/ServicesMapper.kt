@@ -9,10 +9,12 @@ object ServicesMapper {
 
     fun findAll(): List<Services> =
         session.run(
-            queryOf("""
+            queryOf(
+                    """
             SELECT *
             FROM  services
-            """)
+            """
+                )
                 .map { it.parseServices() }
                 .asList
         )
@@ -25,7 +27,7 @@ object ServicesMapper {
             FROM services
             WHERE name = :name
             """,
-                    mapOf("name" to services)
+                    mapOf("name" to services),
                 )
                 .map { row -> row.long("id") }
                 .asSingle
@@ -39,7 +41,7 @@ object ServicesMapper {
             FROM  services
             WHERE id = :id
             """,
-                    mapOf("id" to id)
+                    mapOf("id" to id),
                 )
                 .map { row -> row.string("name") }
                 .asSingle
@@ -53,7 +55,7 @@ object ServicesMapper {
             FROM services
             WHERE id = :id
             """,
-                    mapOf("id" to id)
+                    mapOf("id" to id),
                 )
                 .map { row -> row.boolean("allow_multiply_clients") }
                 .asSingle

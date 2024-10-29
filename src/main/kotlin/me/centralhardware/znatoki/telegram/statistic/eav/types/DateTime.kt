@@ -15,12 +15,12 @@ data object DateTime : Type {
 
     override fun validate(
         message: CommonMessage<MessageContent>,
-        variants: List<String>
+        variants: List<String>,
     ): Either<String, Unit> =
         message.text
             .parseDateTime()
             .fold(
                 { Either.Right(Unit) },
-                { Either.Left("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy") }
+                { Either.Left("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy") },
             )
 }

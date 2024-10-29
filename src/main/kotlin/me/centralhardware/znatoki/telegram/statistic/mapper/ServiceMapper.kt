@@ -39,15 +39,15 @@ object ServiceMapper {
                     "serviceId" to service.serviceId,
                     "amount" to service.amount,
                     "clientId" to service.clientId,
-                    "properties" to service.properties.toJson()
-                )
+                    "properties" to service.properties.toJson(),
+                ),
             )
         )
 
     private fun findAllByUserId(
         userId: Long,
         startDate: LocalDateTime,
-        endDate: LocalDateTime
+        endDate: LocalDateTime,
     ): List<Service> =
         session.run(
             queryOf(
@@ -64,7 +64,7 @@ object ServiceMapper {
                 AND date_time between :startDate and :endDate
                 AND is_deleted=false
             """,
-                    mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate)
+                    mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate),
                 )
                 .map { it.parseTime() }
                 .asList
@@ -78,7 +78,7 @@ object ServiceMapper {
         return findAllByUserId(
             chatId,
             LocalDateTime.now().startOfMonth(),
-            LocalDateTime.now().endOfMonth()
+            LocalDateTime.now().endOfMonth(),
         )
     }
 
@@ -86,7 +86,7 @@ object ServiceMapper {
         return findAllByUserId(
             chatId,
             LocalDateTime.now().prevMonth().startOfMonth(),
-            LocalDateTime.now().prevMonth().endOfMonth()
+            LocalDateTime.now().prevMonth().endOfMonth(),
         )
     }
 
@@ -111,7 +111,7 @@ object ServiceMapper {
             SET is_deleted = :is_deleted
             WHERE id = :id
             """,
-                    mapOf("id" to timeId, "is_deleted" to isDeleted)
+                    mapOf("id" to timeId, "is_deleted" to isDeleted),
                 )
                 .asUpdate
         )
@@ -124,7 +124,7 @@ object ServiceMapper {
             FROM service
             WHERE pupil_id = :id ANd is_deleted=false
             """,
-                    mapOf("id" to id)
+                    mapOf("id" to id),
                 )
                 .map { row -> row.long("service_id") }
                 .asList
