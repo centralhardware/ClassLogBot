@@ -97,7 +97,6 @@ object PaymentMapper {
             WHERE chat_id = :chat_id
                 AND services = :service_id
                 AND date_time between :startDate and :endDate
-                AND jsonb_array_length(properties) > 0
                 AND is_deleted = false
             """,
                     mapOf(
@@ -112,19 +111,4 @@ object PaymentMapper {
         )
             ?: 0
 
-    fun getCredit(clientId: Int): Long =
-        session.run(
-            queryOf(
-                    """
-            SELECT sum(amount) as sum
-            FROM payment
-            WHERE pupil_id = :client_id
-                AND is_deleted = false
-            """,
-                    mapOf("client_id" to clientId)
-                )
-                .map { row -> row.longOrNull("sum") }
-                .asSingle
-        )
-            ?: 0
 }

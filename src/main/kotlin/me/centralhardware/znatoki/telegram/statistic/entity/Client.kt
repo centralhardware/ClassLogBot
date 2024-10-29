@@ -45,7 +45,6 @@ fun Client.getInfo(services: List<String>) =
         отчество=${lastName.makeBold()}
         ${properties.print()}
         Предметы=${services.joinToString(",").makeBold()}
-        Баланс=${PaymentMapper.getCredit(id!!)}
         дата создания=${createDate.formatDate().makeBold()}
         дата изменения=${modifyDate.formatDate().makeBold()}
         создано=$createdBy

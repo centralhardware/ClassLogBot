@@ -249,11 +249,7 @@ private suspend fun sendLog(services: List<Service>, userId: Long) {
                     Предмет: ${ServicesMapper.getNameById(service.serviceId).hashtag()}
                     ${ConfigMapper.clientName()}: ${
         services.toClientIds().joinToString(", ") {
-            "#${ClientMapper.getFioById(it).replace(" ", "_")}(${
-                PaymentMapper.getCredit(
-                    service.clientId
-                )
-            })"
+            "#${ClientMapper.getFioById(it).replace(" ", "_")}"
         }
     }
                     Стоимость: ${service.amount}
