@@ -14,6 +14,8 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
@@ -75,7 +77,6 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
     ): Boolean {
         val userId = message.userId()
         val user = UserMapper.findById(userId)!!
-        val znatokiUser = UserMapper.findById(userId)!!
 
         if (user.services.size == 1) {
             builder.serviceId = user.services.first()
@@ -179,7 +180,6 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
-        val userId = message.userId()
         if (ConfigMapper.serviceProperties().isEmpty()) return true
 
         return builder.propertiesBuilder.process(message) { properties ->
@@ -212,39 +212,29 @@ private suspend fun confirm(
     message: CommonMessage<MessageContent>,
     builder: ServiceBuilder
 ): Boolean {
-    val text = message.text
-    val userId = message.userId()
-    if (text == "да") {
-        val serviceId = UUID.randomUUID()
+    when (message.text) {
+        "да" -> {
+            builder.id = UUID.randomUUID()
 
-        builder.id = serviceId
+            val services = builder.build()
 
-        val services = builder.build()
-        services.forEach {
-            ServiceMapper.insert(it)
-
-            PaymentMapper.insert(
-                Payment(
-                    clientId = it.clientId,
-                    amount = it.amount * -1,
-                    timeId = it.id,
-                )
-            )
+            sendLog(services, message.userId())
+            bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
         }
-
-        sendLog(services, userId)
-        bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
-    } else if (text == "нет") {
-        builder.properties
-            .filter { it.type is Photo }
-            .forEach { photo ->
-                MinioService.delete(photo.value!!).onFailure {
-                    runBlocking {
-                        bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии")
+        "нет" -> {
+            builder.properties
+                .filter { it.type is Photo }
+                .forEach { photo ->
+                    MinioService.delete(photo.value!!).onFailure {
+                        coroutineScope {
+                            launch {
+                                bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии")
+                            }
+                        }
                     }
                 }
-            }
-        bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
+            bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
+        }
     }
     return true
 }

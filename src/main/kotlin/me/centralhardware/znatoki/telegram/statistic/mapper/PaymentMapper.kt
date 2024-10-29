@@ -20,7 +20,6 @@ object PaymentMapper {
                 chat_id,
                 pupil_id,
                 amount,
-                time_id,
                 properties,
                 services
             ) VALUES (
@@ -28,7 +27,6 @@ object PaymentMapper {
                 :chatId,
                 :clientId,
                 :amount,
-                :timeId,
                 :properties::JSONB,
                 :serviceId
             ) RETURNING id
@@ -38,7 +36,6 @@ object PaymentMapper {
                         "chatId" to payment.chatId,
                         "clientId" to payment.clientId,
                         "amount" to payment.amount,
-                        "timeId" to payment.timeId,
                         "properties" to payment.properties.toJson(),
                         "serviceId" to payment.serviceId
                     )
@@ -47,18 +44,6 @@ object PaymentMapper {
                 .asSingle
         )!!
 
-    fun setDeleteByTimeId(timeId: UUID, isDelete: Boolean) =
-        session.run(
-            queryOf(
-                    """
-            UPDATE payment
-            SET is_deleted = :is_delete
-            WHERE time_id = :time_id
-            """,
-                    mapOf("is_delete" to isDelete, "time_id" to timeId)
-                )
-                .asUpdate
-        )
 
     fun setDelete(id: Int, isDelete: Boolean) =
         session.run(
@@ -143,22 +128,4 @@ object PaymentMapper {
                 .asSingle
         )
             ?: 0
-
-    fun paymentExists(clientId: Int): Boolean =
-        session.run(
-            queryOf(
-                    """
-            SELECT EXISTS(
-                SELECT amount
-                FROM payment 
-                WHERE amount > 0 AND pupil_id = :client_id
-                    AND is_deleted = false
-            ) as e
-            """,
-                    mapOf("client_id" to clientId)
-                )
-                .map { row -> row.boolean("e") }
-                .asSingle
-        )
-            ?: false
 }

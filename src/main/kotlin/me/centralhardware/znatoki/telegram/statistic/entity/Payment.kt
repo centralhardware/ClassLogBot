@@ -12,7 +12,6 @@ data class Payment(
     val chatId: Long? = null,
     val clientId: Int,
     val amount: Int,
-    val timeId: UUID? = null,
     val serviceId: Long? = null,
     val properties: MutableList<Property> = ArrayList()
 )

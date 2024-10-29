@@ -7,7 +7,7 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsync
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
 import dev.inmo.tgbotapi.longPolling
 import dev.inmo.tgbotapi.types.BotCommand
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
@@ -21,7 +21,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.st
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.deleteUserCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.userInfoCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.debug.dailyReportCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.organization.grafanaCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.resetCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.startCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentCommand
@@ -39,8 +38,14 @@ lateinit var bot: TelegramBot
 suspend fun main() {
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
-    GlobalScope.launch { monthReport() }
-    GlobalScope.launch { dailyReport() }
+    coroutineScope {
+        launch {
+            monthReport()
+        }
+        launch {
+            dailyReport()
+        }
+    }
     bot =
         longPolling {
                 setMyCommands(
@@ -83,7 +88,6 @@ suspend fun main() {
                     updatesUpstreamFlow =
                         allUpdatesFlow.filter { UserMapper.hasAdminRight(it.userId()) }
                 ) {
-                    onCommand("grafana") { grafanaCommand(it) }
                     onCommandWithArgs("dailyReport") { message, args ->
                         dailyReportCommand(message, args)
                     }

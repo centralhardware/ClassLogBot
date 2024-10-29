@@ -28,9 +28,6 @@ object ConfigMapper {
     fun serviceProperties() = get("service_properties").toCustomProperties()
     fun includeInInline() = get("include_in_inlines").parseStringList()
     fun includeInReport() = get("include_in_report").parseStringList()
-    fun grafanaUsername() = get("grafana_username")
-    fun grafanaPassword() = get("grafana_password")
-    fun grafanaUrl() = get("grafana_url")
     fun clientName() = get("client_name")
     fun name() = get("name")
 }

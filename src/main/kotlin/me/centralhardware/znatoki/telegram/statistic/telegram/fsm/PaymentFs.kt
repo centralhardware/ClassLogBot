@@ -192,36 +192,27 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
         builder: PaymentBuilder
     ): Boolean {
         val userId = message.userId()
-        val text = message.text!!
-        if (text == "да") {
-            builder.chatId = userId
-            val payment = builder.build()
-            val paymentId = PaymentMapper.insert(payment)
-            sendLog(payment, paymentId, userId)
-            if (PaymentMapper.paymentExists(payment.clientId)) {
-                PaymentMapper.insert(
-                    Payment(
-                        chatId = userId,
-                        clientId = payment.clientId,
-                        amount =
-                            (abs(PaymentMapper.getCredit(payment.clientId)) + (payment.amount * 2))
-                                .toInt(),
-                    )
-                )
+        when (message.text!!) {
+            "да" -> {
+                builder.chatId = userId
+                val payment = builder.build()
+                val paymentId = PaymentMapper.insert(payment)
+                sendLog(payment, paymentId, userId)
+                bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
             }
-            bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
-        } else if (text == "нет") {
-            builder.properties
-                .stream()
-                .filter { it.type is Photo }
-                .forEach { photo ->
-                    MinioService.delete(photo.value!!).onFailure {
-                        runBlocking {
-                            bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии")
+            "нет" -> {
+                builder.properties
+                    .stream()
+                    .filter { it.type is Photo }
+                    .forEach { photo ->
+                        MinioService.delete(photo.value!!).onFailure {
+                            runBlocking {
+                                bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии")
+                            }
                         }
                     }
-                }
-            bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
+                bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
+            }
         }
         return true
     }
