@@ -7,7 +7,6 @@ import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.formatDate
 import me.centralhardware.znatoki.telegram.statistic.makeBold
-import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.print
 import me.centralhardware.znatoki.telegram.statistic.toProperties
 

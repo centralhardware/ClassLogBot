@@ -110,5 +110,4 @@ object PaymentMapper {
                 .asSingle
         )
             ?: 0
-
 }
