@@ -39,12 +39,8 @@ suspend fun main() {
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
     coroutineScope {
-        launch {
-            monthReport()
-        }
-        launch {
-            dailyReport()
-        }
+        launch { monthReport() }
+        launch { dailyReport() }
     }
     bot =
         longPolling {

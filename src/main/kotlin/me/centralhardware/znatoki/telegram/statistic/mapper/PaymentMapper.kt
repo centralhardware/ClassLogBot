@@ -44,7 +44,6 @@ object PaymentMapper {
                 .asSingle
         )!!
 
-
     fun setDelete(id: Int, isDelete: Boolean) =
         session.run(
             queryOf(
