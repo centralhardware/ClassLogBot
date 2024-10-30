@@ -27,7 +27,7 @@ dependencies {
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
     implementation("dev.inmo:tgbotapi:18.2.3")
-    implementation("com.github.centralhardware:telegram-bot-commons:1aec284aa3")
+    implementation("com.github.centralhardware:telegram-bot-commons:af385ce6fe")
 
     implementation("io.minio:minio:8.5.13")
 
