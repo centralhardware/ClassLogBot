@@ -222,9 +222,7 @@ private suspend fun confirm(
 
             val services = builder.build()
 
-            services.forEach {
-                ServiceMapper.insert(it)
-            }
+            services.forEach { ServiceMapper.insert(it) }
 
             sendLog(services, message.userId())
             bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
