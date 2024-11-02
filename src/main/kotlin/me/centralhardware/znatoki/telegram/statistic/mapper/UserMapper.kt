@@ -13,7 +13,8 @@ object UserMapper {
             queryOf(
                     """
                SELECT id
-               WHERE role = 'ADMIN'
+               FROM telegram_users
+               WHERE role = 'ADMIN'           
             """
                 )
                 .map { it.long("id") }
