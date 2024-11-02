@@ -12,7 +12,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 
 suspend fun monthReport() {
-    doOnce("0 0 10 1 * *") {
+    doOnce("0 0 3 1 * *") {
         ServiceMapper.getIds().forEach {
             ReportService.getReportPrevious(it).forEach { file ->
                 runBlocking {
