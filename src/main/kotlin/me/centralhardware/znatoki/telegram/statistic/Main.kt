@@ -58,9 +58,23 @@ suspend fun main() {
 
                 createSubContextAndDoAsynchronouslyWithUpdatesFilter(
                     updatesUpstreamFlow =
-                        allUpdatesFlow.filter { UserMapper.hasWriteRight(it.userId()) }
+                        allUpdatesFlow.filter { UserMapper.hasClientPermission(it.userId()) }
                 ) {
                     onCommand(Regex("addPupil|addpupil")) { addClientCommand(it) }
+                }
+
+                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                    updatesUpstreamFlow =
+                        allUpdatesFlow.filter { UserMapper.hasPaymentPermission(it.userId()) }
+                ) {
+                    onCommand(Regex("addPayment|addpayment")) { addPaymentCommand(it) }
+                }
+
+                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                    updatesUpstreamFlow =
+                        allUpdatesFlow.filter { UserMapper.hasTimePermission(it.userId()) }
+                ) {
+                    onCommand(Regex("addTime|addtime")) { addTimeCommand(it) }
                 }
 
                 createSubContextAndDoAsynchronouslyWithUpdatesFilter(
@@ -71,8 +85,6 @@ suspend fun main() {
                     onCommandWithArgs("s") { message, args -> searchCommand(message, args) }
                     onCommand("report") { reportCommand(it) }
                     onCommand(Regex("reportPrevious|reportprevious")) { reportPreviousCommand(it) }
-                    onCommand(Regex("addTime|addtime")) { addTimeCommand(it) }
-                    onCommand(Regex("addPayment|addpayment")) { addPaymentCommand(it) }
 
                     onDataCallbackQuery(Regex("user_info\\d+\$")) { userInfoCallback(it) }
 
@@ -81,7 +93,7 @@ suspend fun main() {
 
                 createSubContextAndDoAsynchronouslyWithUpdatesFilter(
                     updatesUpstreamFlow =
-                        allUpdatesFlow.filter { UserMapper.hasAdminRight(it.userId()) }
+                        allUpdatesFlow.filter { UserMapper.hasAdminPermission(it.userId()) }
                 ) {
                     onCommandWithArgs("dailyReport") { message, args ->
                         dailyReportCommand(message, args)

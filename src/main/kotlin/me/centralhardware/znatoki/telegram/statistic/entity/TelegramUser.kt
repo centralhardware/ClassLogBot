@@ -2,14 +2,18 @@ package me.centralhardware.znatoki.telegram.statistic.entity
 
 import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.parseLongList
-import me.centralhardware.znatoki.telegram.statistic.toRole
 
-class TelegramUser(val id: Long, val role: Role, val services: List<Long>, val name: String)
+class TelegramUser(
+    val id: Long,
+    val permissions: List<Permissions>,
+    val services: List<Long>,
+    val name: String,
+)
 
 fun Row.parseUser() =
     TelegramUser(
         long("id"),
-        string("role").toRole(),
+        array<String>("permissions").map { Permissions.valueOf(it) },
         string("services").parseLongList(),
         string("name"),
     )

@@ -108,7 +108,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
         builder: ServiceBuilder,
     ): Boolean {
         val text = message.text!!
-        if (!ServicesMapper.isAllowMultiplyClients(builder.serviceId)!!) {
+        if (!ServicesMapper.isAllowMultiplyClients(builder.serviceId!!)!!) {
             return validateFio(text)
                 .mapLeft(mapError(message))
                 .map {
@@ -118,7 +118,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                         return false
                     }
 
-                    builder.clientId(id)
+                    builder.clientIds.add(id)
 
                     bot.sendTextMessage(message.chat, "Введите стоимость занятия")
                 }
@@ -139,7 +139,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
                     return false
                 }
 
-                builder.clientId(id)
+                builder.clientIds.add(id)
 
                 bot.sendTextMessage(message.chat, "ФИО сохранено")
             }
@@ -186,7 +186,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
     suspend fun property(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
         if (ConfigMapper.serviceProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder.process(message) { properties ->
+        return builder.propertiesBuilder!!.process(message) { properties ->
             builder.properties = properties
             runBlocking { confirmMessage(message, builder) }
         }
@@ -199,7 +199,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
         bot.sendTextMessage(
             message.chat,
             """
-                            услуга: ${ServicesMapper.getNameById(builder.serviceId)}
+                            услуга: ${ServicesMapper.getNameById(builder.serviceId!!)}
                             ФИО: ${
             builder.clientIds.stream().map { ClientMapper.getFioById(it) }.toList().joinToString(";")
         }
@@ -228,7 +228,7 @@ private suspend fun confirm(
             bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
         }
         "нет" -> {
-            builder.properties
+            builder.properties!!
                 .filter { it.type is Photo }
                 .forEach { photo ->
                     MinioService.delete(photo.value!!).onFailure {

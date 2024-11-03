@@ -2,7 +2,6 @@ package me.centralhardware.znatoki.telegram.statistic.entity
 
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.properties.Delegates
 import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
@@ -30,29 +29,25 @@ fun Row.parseTime() =
     )
 
 class ServiceBuilder : Builder {
-    lateinit var id: UUID
-    var chatId by Delegates.notNull<Long>()
-    var serviceId by Delegates.notNull<Long>()
-    var amount by Delegates.notNull<Int>()
-    var properties: List<Property> = listOf()
-    lateinit var propertiesBuilder: PropertiesBuilder
-    var clientIds: MutableSet<Int> = HashSet()
+    var id: UUID = UUID.randomUUID()
+    var chatId: Long? = null
+    var serviceId: Long? = null
+    var amount: Int? = null
+    var properties: List<Property>? = null
+    var propertiesBuilder: PropertiesBuilder? = null
+    var clientIds: MutableSet<Int> = mutableSetOf()
 
-    fun serviceId() = runCatching { serviceId }.getOrNull()
-
-    fun clientId(clientId: Int) = clientIds.add(clientId)
-
-    fun nextProperty() = propertiesBuilder.next()
+    fun nextProperty() = propertiesBuilder!!.next()
 
     fun build(): List<Service> =
         clientIds.map {
             Service(
                 id = id,
-                chatId = chatId,
-                serviceId = serviceId,
+                chatId = chatId!!,
+                serviceId = serviceId!!,
                 clientId = it,
-                amount = amount,
-                properties = propertiesBuilder.properties.toList(),
+                amount = amount!!,
+                properties = propertiesBuilder!!.properties.toList(),
             )
         }
 }

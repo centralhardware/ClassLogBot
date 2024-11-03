@@ -1,7 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
 import java.time.LocalDateTime
-import kotlin.properties.Delegates
 import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
@@ -21,20 +20,7 @@ class Client(
     val createdBy: Long,
     val updateBy: Long?,
     var deleted: Boolean = false,
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Client
-
-        return id == other.id
-    }
-
-    override fun hashCode(): Int {
-        return id ?: 0
-    }
-}
+)
 
 fun Client.getInfo(services: List<String>) =
     """
@@ -68,22 +54,22 @@ fun Row.parseClient(): Client =
     )
 
 class ClientBuilder : Builder {
-    lateinit var name: String
-    lateinit var secondName: String
-    lateinit var lastName: String
-    lateinit var properties: List<Property>
-    var createdBy by Delegates.notNull<Long>()
-    lateinit var propertiesBuilder: PropertiesBuilder
+    var name: String? = null
+    var secondName: String? = null
+    var lastName: String? = null
+    var properties: List<Property>? = null
+    var createdBy: Long? = null
+    var propertiesBuilder: PropertiesBuilder? = null
 
-    fun nextProperty() = propertiesBuilder.next()
+    fun nextProperty() = propertiesBuilder!!.next()
 
     fun build(): Client =
         Client(
-            name = name,
-            secondName = secondName,
-            lastName = lastName,
-            properties = properties,
-            createdBy = createdBy,
+            name = name!!,
+            secondName = secondName!!,
+            lastName = lastName!!,
+            properties = properties!!,
+            createdBy = createdBy!!,
             updateBy = createdBy,
         )
 }

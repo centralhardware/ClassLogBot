@@ -5,7 +5,6 @@ import dev.inmo.tgbotapi.types.message.MarkdownParseMode
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
-import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
@@ -19,5 +18,5 @@ suspend fun userInfoCallback(query: DataCallbackQuery) {
                     .toList()
             )
         bot.sendMessage(query.from, info, parseMode = MarkdownParseMode)
-    } ?: bot.sendMessage(query.from, I18n.Message.USER_NOT_FOUND.load())
+    } ?: bot.sendMessage(query.from, "Пользователь не найден")
 }

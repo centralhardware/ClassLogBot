@@ -139,7 +139,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                         builder.let {
                             """
                                         ФИО: ${
-                            ClientMapper.findById(it.clientId)?.fio()
+                            ClientMapper.findById(it.clientId!!)?.fio()
                         }
                                         Оплата: ${it.amount}
                                         """
@@ -172,14 +172,14 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
         if (ConfigMapper.paymentProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder.process(message) { properties ->
+        return builder.propertiesBuilder!!.process(message) { properties ->
             builder.properties = properties
             runBlocking {
                 bot.sendTextMessage(
                     message.chat,
                     """
                                         ФИО: ${
-                    ClientMapper.findById(builder.clientId)?.fio()
+                    ClientMapper.findById(builder.clientId!!)?.fio()
                 }
                                         Оплата: ${builder.amount}
                                         """,
@@ -203,7 +203,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                 bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
             }
             "нет" -> {
-                builder.properties
+                builder.properties!!
                     .stream()
                     .filter { it.type is Photo }
                     .forEach { photo ->

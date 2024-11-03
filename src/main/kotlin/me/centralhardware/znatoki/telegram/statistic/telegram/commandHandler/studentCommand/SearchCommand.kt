@@ -7,7 +7,6 @@ import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.TextContent
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.bot
-import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import me.centralhardware.znatoki.telegram.statistic.userId
@@ -18,11 +17,11 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
     val searchResult = ClientService.search(searchText)
 
     if (CollectionUtils.isEmpty(searchResult)) {
-        bot.sendMessage(message.chat, I18n.Message.NOTHING_FOUND.load())
+        bot.sendMessage(message.chat, "Ничего не найдено")
         return
     }
 
-    bot.sendMessage(message.chat, I18n.Message.SEARCH_RESULT.load())
+    bot.sendMessage(message.chat, "результаты поиска")
     searchResult.forEach { client ->
         bot.sendMessage(
             message.chat,

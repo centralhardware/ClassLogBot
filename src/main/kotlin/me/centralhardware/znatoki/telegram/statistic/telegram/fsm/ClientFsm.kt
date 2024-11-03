@@ -16,7 +16,6 @@ import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
-import me.centralhardware.znatoki.telegram.statistic.i18n.I18n
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
@@ -63,7 +62,10 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         val telegramUser = UserMapper.findById(chatId)!!
         val words = message.content.asTextContent()!!.text.split(" ")
         if (words.size !in 2..3) {
-            bot.sendTextMessage(message.chat, I18n.Message.INPUT_FIO_REQUIRED_FORMAT.load())
+            bot.sendTextMessage(
+                message.chat,
+                "Фио требуется ввести в формате: фамилия имя отчество",
+            )
             return false
         }
         builder.let {
@@ -81,10 +83,10 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
             }
         }
         if (
-            ClientMapper.findAllByFio(builder.name, builder.secondName, builder.lastName)
+            ClientMapper.findAllByFio(builder.name!!, builder.secondName!!, builder.lastName!!)
                 .isNotEmpty()
         ) {
-            bot.sendTextMessage(message.chat, I18n.Message.FIO_ALREADY_IN_DATABASE.load())
+            bot.sendTextMessage(message.chat, "Данной ФИО уже содержится в базе данных")
             return false
         }
 
@@ -110,7 +112,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
         if (ConfigMapper.clientProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder.process(message) {
+        return builder.propertiesBuilder!!.process(message) {
             runBlocking { finish(it, message, builder) }
         }
     }
@@ -137,7 +139,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
             ),
         )
         sendLog(client, message.userId())
-        bot.sendTextMessage(message.chat, I18n.Message.CREATE_PUPIL_FINISHED.load())
+        bot.sendTextMessage(message.chat, "Создание ученика закончено")
     }
 
     private suspend fun sendLog(client: Client, chatId: Long) {
@@ -159,6 +161,6 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
 }
 
 suspend fun startClientFsm(message: CommonMessage<MessageContent>): ClientBuilder {
-    bot.sendTextMessage(message.chat, I18n.Message.INPUT_FIO_IN_FORMAT.load())
+    bot.sendTextMessage(message.chat, "Введите ФИО. В формате: имя фамилия отчество.")
     return ClientBuilder()
 }

@@ -22,7 +22,7 @@ private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long
         return
     }
 
-    if (UserMapper.hasAdminRight(userId)) {
+    if (UserMapper.hasAdminPermission(userId)) {
         ServiceMapper.getIds().forEach { getTime.invoke(it).forEach { send(chat.id, it) } }
         return
     }
