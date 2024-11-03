@@ -10,4 +10,4 @@ data class Services(
     var properties: List<Property> = listOf(),
 )
 
-fun Row.parseServices() = Services(long("id"), string("key"), boolean("allow_multiply_clients"))
+fun Row.parseServices() = Services(long("id"), string("name"), boolean("allow_multiply_clients"))
