@@ -17,8 +17,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
 suspend fun dailyReport() {
-    doOnce("0 0 15 * * *") {
-        ServiceMapper.getIds().forEach { runBlocking { getReport(it) } } }
+    doOnce("0 0 15 * * *") { ServiceMapper.getIds().forEach { runBlocking { getReport(it) } } }
 }
 
 suspend fun getReport(id: Long, sendTo: Long = id) {
