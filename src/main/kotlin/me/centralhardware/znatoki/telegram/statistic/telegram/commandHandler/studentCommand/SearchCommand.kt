@@ -29,7 +29,7 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
             replyMarkup =
                 inlineKeyboard {
                     row { dataButton("информация", "user_info${client.id}") }
-                    if (UserMapper.hasWriteRight(message.userId())) {
+                    if (UserMapper.hasAdminPermission(message.userId())) {
                         row { dataButton("удалить", "delete_user${client.id}") }
                     }
                 },
