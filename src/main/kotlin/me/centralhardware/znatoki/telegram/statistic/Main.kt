@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic
 
+import dev.inmo.micro_utils.common.Warning
 import dev.inmo.tgbotapi.AppConfig
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
@@ -35,6 +36,8 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
 lateinit var bot: TelegramBot
 
+@OptIn(Warning::class)
+@Suppress("DeferredResultUnused")
 suspend fun main() {
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
