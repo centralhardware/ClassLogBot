@@ -1,6 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.report
 
-import dev.inmo.krontab.doOnce
+import dev.inmo.krontab.doOnceTz
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
@@ -12,7 +12,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 
 suspend fun monthReport() {
-    doOnce("0 0 3 1 * *") {
+    doOnceTz("0 0 10 1 * *") {
         ServiceMapper.getIds().forEach {
             ReportService.getReportPrevious(it).forEach { file ->
                 runBlocking {
