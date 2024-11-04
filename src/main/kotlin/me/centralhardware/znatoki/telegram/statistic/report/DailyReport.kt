@@ -2,7 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.report
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
-import dev.inmo.krontab.doOnce
+import dev.inmo.krontab.doOnceTz
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.toChatId
 import java.util.*
@@ -17,7 +17,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
 suspend fun dailyReport() {
-    doOnce("0 0 15 * * *") { ServiceMapper.getIds().forEach { runBlocking { getReport(it) } } }
+    doOnceTz("0 0 22 * * *") { ServiceMapper.getIds().forEach { runBlocking { getReport(it) } } }
 }
 
 suspend fun getReport(id: Long, sendTo: Long = id) {
