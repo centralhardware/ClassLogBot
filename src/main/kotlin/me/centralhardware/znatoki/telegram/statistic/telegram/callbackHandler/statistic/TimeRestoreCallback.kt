@@ -16,11 +16,18 @@ suspend fun timeRestoreCallback(query: DataCallbackQuery) {
 
     Trace.save("restoreTime", mapOf("id" to id.toString()))
     ServiceMapper.setDeleted(id, false)
+    val times = ServiceMapper.findById(id)
 
-    query.messageDataCallbackQueryOrNull()?.message?.let {
-        bot.edit(
-            it,
-            replyMarkup = inlineKeyboard { row { dataButton("удалить", "timeDelete-$id") } },
-        )
+    val keyboard = inlineKeyboard {
+        row { dataButton("удалить", "timeDelete-$id") }
+        if (times.size == 1) {
+            if (times.first().forceGroup) {
+                row { dataButton("сделать одиночным занятием", "forceGroupRemove-$id") }
+            } else {
+                row { dataButton("сделать групповым занятием", "forceGroupAdd-$id") }
+            }
+        }
     }
+
+    query.messageDataCallbackQueryOrNull()?.message?.let { bot.edit(it, replyMarkup = keyboard) }
 }

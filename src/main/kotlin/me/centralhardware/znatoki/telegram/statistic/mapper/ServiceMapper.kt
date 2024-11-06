@@ -58,13 +58,37 @@ object ServiceMapper {
                    service_id,
                    pupil_id,
                    amount,
-                   properties
+                   properties,
+                   force_group,
+                   is_deleted
             FROM service
             WHERE chat_id = :userId
                 AND date_time between :startDate and :endDate
                 AND is_deleted=false
             """,
                     mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate),
+                )
+                .map { it.parseTime() }
+                .asList
+        )
+
+    fun findById(id: UUID): List<Service> =
+        session.run(
+            queryOf(
+                    """
+            SELECT id,
+                   date_time,
+                   chat_id,
+                   service_id,
+                   pupil_id,
+                   amount,
+                   properties,
+                   force_group,
+                   is_deleted
+            FROM service
+            WHERE id = :id
+            """,
+                    mapOf("id" to id),
                 )
                 .map { it.parseTime() }
                 .asList
@@ -128,5 +152,18 @@ object ServiceMapper {
                 )
                 .map { row -> row.long("service_id") }
                 .asList
+        )
+
+    fun setForceGroup(id: UUID, forceGroup: Boolean) =
+        session.run(
+            queryOf(
+                    """
+        UPDATE service 
+        SET force_group = :force_group
+        WHERE id = :id
+    """,
+                    mapOf("id" to id, "force_group" to forceGroup),
+                )
+                .asUpdate
         )
 }

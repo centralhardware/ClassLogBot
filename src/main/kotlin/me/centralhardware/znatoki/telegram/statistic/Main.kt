@@ -15,6 +15,8 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
+import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.forceGroupAdd
+import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.forceGroupRemove
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentDeleteCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentRestoreCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.timeDeleteCallback
@@ -118,6 +120,20 @@ suspend fun main() {
                         paymentRestoreCallback(it)
                     }
                     onDataCallbackQuery(Regex("paymentDelete-\\d+\$")) { paymentDeleteCallback(it) }
+                    onDataCallbackQuery(
+                        Regex(
+                            "forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                        )
+                    ) {
+                        forceGroupAdd(it)
+                    }
+                    onDataCallbackQuery(
+                        Regex(
+                            "forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                        )
+                    ) {
+                        forceGroupRemove(it)
+                    }
                 }
             }
             .first
