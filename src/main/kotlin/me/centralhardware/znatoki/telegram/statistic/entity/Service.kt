@@ -14,7 +14,9 @@ class Service(
     val serviceId: Long,
     val clientId: Int,
     val amount: Int,
+    val forceGroup: Boolean = false,
     val properties: List<Property>,
+    val deleted: Boolean = false,
 )
 
 fun Row.parseTime() =
@@ -25,7 +27,9 @@ fun Row.parseTime() =
         long("service_id"),
         int("pupil_id"),
         int("amount"),
+        boolean("force_group"),
         string("properties").toProperties(),
+        boolean("is_deleted"),
     )
 
 class ServiceBuilder : Builder {
@@ -53,3 +57,7 @@ class ServiceBuilder : Builder {
 }
 
 fun Collection<Service>.toClientIds(): List<Int> = this.map { it.clientId }.toList()
+
+fun Collection<Service>.isIndividual() = size == 1 && !first().forceGroup
+
+fun Collection<Service>.isGroup() = size > 1 || (size == 1 && first().forceGroup)

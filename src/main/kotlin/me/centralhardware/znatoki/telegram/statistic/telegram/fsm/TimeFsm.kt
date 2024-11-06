@@ -250,7 +250,12 @@ private suspend fun confirm(
 
 private suspend fun sendLog(services: List<Service>, userId: Long) {
     val service = services.first()
-    val keyboard = inlineKeyboard { row { dataButton("удалить", "timeDelete-${service.id}") } }
+    val keyboard = inlineKeyboard {
+        row { dataButton("удалить", "timeDelete-${service.id}") }
+        if (services.size == 1) {
+            row { dataButton("сделать групповым занятием", "forceGroupAdd-${service.id}") }
+        }
+    }
 
     val log =
         """

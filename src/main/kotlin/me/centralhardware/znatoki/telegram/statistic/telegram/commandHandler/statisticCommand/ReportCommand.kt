@@ -28,7 +28,10 @@ private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long
         return
     }
 
-    getTime.invoke(userId).forEach { send(chat.id, it) }
+    getTime.invoke(userId).forEach {
+        send(chat.id, it)
+        it.delete()
+    }
 }
 
 suspend fun send(id: IdChatIdentifier, file: File) {
