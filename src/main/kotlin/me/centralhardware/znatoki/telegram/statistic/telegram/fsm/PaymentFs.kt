@@ -217,7 +217,6 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                     }
                 bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
                 Trace.save("rollbackPayment", mapOf())
-
             }
         }
         return true
