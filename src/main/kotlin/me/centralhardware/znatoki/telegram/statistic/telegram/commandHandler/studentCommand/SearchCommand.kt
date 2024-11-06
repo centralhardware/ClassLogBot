@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand
 
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
@@ -16,6 +17,7 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
     val searchText = args.joinToString(separator = " ")
     val searchResult = ClientService.search(searchText)
 
+    Trace.save("searchUser", mapOf("query" to searchText))
     if (CollectionUtils.isEmpty(searchResult)) {
         bot.sendMessage(message.chat, "Ничего не найдено")
         return
@@ -23,6 +25,10 @@ suspend fun searchCommand(message: CommonMessage<TextContent>, args: Array<Strin
 
     bot.sendMessage(message.chat, "результаты поиска")
     searchResult.forEach { client ->
+        Trace.save(
+            "findUser",
+            mapOf("query" to searchText, "userId" to client.id.toString()),
+        )
         bot.sendMessage(
             message.chat,
             "${client.name} ${client.secondName} ${client.lastName}",

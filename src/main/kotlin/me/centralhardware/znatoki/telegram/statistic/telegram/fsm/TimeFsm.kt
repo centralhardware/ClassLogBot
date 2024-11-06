@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
@@ -226,6 +227,7 @@ private suspend fun confirm(
 
             sendLog(services, message.userId())
             bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
+            Trace.save("commitTime", mapOf("id" to builder.id.toString()))
         }
         "нет" -> {
             builder.properties!!
@@ -240,6 +242,7 @@ private suspend fun confirm(
                     }
                 }
             bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
+            Trace.save("rollbackTime", mapOf())
         }
     }
     return true

@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.report
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import dev.inmo.krontab.doOnceTz
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.toChatId
 import java.util.*
@@ -24,6 +25,7 @@ suspend fun getReport(id: Long, sendTo: Long = id) {
     val times = ServiceMapper.getTodayTimes(id)
     if (times.isEmpty()) return
 
+    Trace.save("checkTimes", mapOf("id" to id.toString()))
     bot.sendTextMessage(sendTo.toChatId(), "Занятия проведенные за сегодня")
 
     val id2times: Multimap<UUID, Service> = ArrayListMultimap.create()

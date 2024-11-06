@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.utils.messageDataCallbackQueryOrNull
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
@@ -13,6 +14,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 suspend fun timeRestoreCallback(query: DataCallbackQuery) {
     val id = UUID.fromString(query.data.replace("timeRestore-", ""))
 
+    Trace.save("restoreTime", mapOf("id" to id.toString()))
     ServiceMapper.setDeleted(id, false)
 
     query.messageDataCallbackQueryOrNull()?.message?.let {
