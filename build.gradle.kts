@@ -41,7 +41,7 @@ dependencies {
     implementation("org.apache.lucene:lucene-queryparser:$luceneVersion")
     implementation("org.apache.lucene:lucene-codecs:$luceneVersion")
 
-    implementation("dev.inmo:krontab:2.6.0")
+    implementation("dev.inmo:krontab:2.6.1")
 }
 
 tasks {
