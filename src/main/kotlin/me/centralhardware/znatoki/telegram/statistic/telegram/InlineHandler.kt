@@ -24,7 +24,10 @@ suspend fun processInline(query: BaseInlineQuery) {
     val articles =
         ClientService.search(text)
             .map {
-                Trace.save("searchUserInlineResult", mapOf("query" to text, "userId" to it.id.toString()))
+                Trace.save(
+                    "searchUserInlineResult",
+                    mapOf("query" to text, "userId" to it.id.toString()),
+                )
                 InlineQueryResultArticle(
                     InlineQueryId(i.getAndIncrement().toString()),
                     getFio(it),

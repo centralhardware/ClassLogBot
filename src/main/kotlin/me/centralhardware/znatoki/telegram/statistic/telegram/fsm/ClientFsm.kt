@@ -142,7 +142,6 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         sendLog(client, message.userId())
         bot.sendTextMessage(message.chat, "Создание ученика закончено")
         Trace.save("commitClient", mapOf("id" to client.id.toString()))
-
     }
 
     private suspend fun sendLog(client: Client, chatId: Long) {
