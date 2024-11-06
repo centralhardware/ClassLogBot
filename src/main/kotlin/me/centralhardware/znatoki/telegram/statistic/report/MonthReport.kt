@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.report
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import com.google.common.collect.Multimaps
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -19,6 +20,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import java.util.concurrent.ConcurrentHashMap
 
 class MonthReport(
     private val fio: String,
@@ -36,10 +38,10 @@ class MonthReport(
         }
         val dateTime = filteredServices.first().dateTime
 
-        val id2times: Multimap<UUID, Service> = ArrayListMultimap.create()
+        val id2times: Multimap<UUID, Service> = Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         filteredServices.forEach { service -> id2times.put(service.id, service) }
 
-        val fioToTimes: Multimap<Client, Service> = ArrayListMultimap.create()
+        val fioToTimes: Multimap<Client, Service> = Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         filteredServices.forEach { service ->
             ClientMapper.findById(service.clientId)?.let { client ->
                 fioToTimes.put(client, service)
