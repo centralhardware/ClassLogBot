@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram
 
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.answers.answerInlineQuery
 import dev.inmo.tgbotapi.types.InlineQueries.InlineQueryResult.InlineQueryResultArticle
 import dev.inmo.tgbotapi.types.InlineQueries.InputMessageContent.InputTextMessageContent
@@ -17,10 +18,13 @@ suspend fun processInline(query: BaseInlineQuery) {
     val text = query.query
     if (StringUtils.isBlank(text)) return
 
+    Trace.save("searchUserInline", mapOf("query" to text))
+
     val i = AtomicInteger()
     val articles =
         ClientService.search(text)
             .map {
+                Trace.save("searchUserInlineResult", mapOf("query" to text, "userId" to it.id.toString()))
                 InlineQueryResultArticle(
                     InlineQueryId(i.getAndIncrement().toString()),
                     getFio(it),

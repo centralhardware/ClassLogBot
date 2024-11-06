@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.utils.messageDataCallbackQueryOrNull
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
@@ -12,6 +13,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 suspend fun paymentRestoreCallback(query: DataCallbackQuery) {
     val id = query.data.replace("paymentRestore-", "").toInt()
 
+    Trace.save("restorePayment", mapOf("id" to id.toString()))
     PaymentMapper.setDelete(id, false)
 
     query.messageDataCallbackQueryOrNull()?.message?.let {

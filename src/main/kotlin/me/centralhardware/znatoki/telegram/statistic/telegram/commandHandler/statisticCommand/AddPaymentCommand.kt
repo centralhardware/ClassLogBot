@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.TextContent
@@ -15,5 +16,6 @@ suspend fun addPaymentCommand(message: CommonMessage<TextContent>) {
         return
     }
 
+    Trace.save("addPayment", mapOf())
     Storage.create(message.userId(), PaymentFsm(startPaymentFsm(message)))
 }

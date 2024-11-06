@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
+import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.TextContent
@@ -15,6 +16,7 @@ suspend fun addTimeCommand(message: CommonMessage<TextContent>) {
         return
     }
 
+    Trace.save("addTime", mapOf())
     val builder = startTimeFsm(message)
     val fsm = TimeFsm(builder)
     Storage.create(message.userId(), fsm)
