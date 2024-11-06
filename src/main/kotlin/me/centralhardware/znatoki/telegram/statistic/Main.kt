@@ -44,7 +44,7 @@ suspend fun main() {
     bot =
         longPolling {
                 setMyCommands(
-                    BotCommand("addtime", "Добавить запись"),
+                    BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
                     BotCommand("report", "Отчет за текущий месяц"),
                     BotCommand("reportprevious", "Отчет за предыдущий месяц"),
                     BotCommand("addpayment", "Ведомость оплаты"),
