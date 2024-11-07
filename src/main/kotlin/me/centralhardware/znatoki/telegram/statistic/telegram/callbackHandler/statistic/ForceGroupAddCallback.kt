@@ -8,14 +8,38 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
+import java.time.LocalDateTime
 import java.util.UUID
+import korlibs.time.now
 import me.centralhardware.znatoki.telegram.statistic.bot
+import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
+import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 
 suspend fun forceGroupAdd(query: DataCallbackQuery) {
     val id = UUID.fromString(query.data.replace("forceGroupAdd-", ""))
 
     Trace.save("forceGroupAdd", mapOf("id" to id.toString()))
+
+    val chatId = query.from!!.id.chatId.long
+    val service = ServiceMapper.findById(id).first()
+    if (!UserMapper.hasAdminPermission(chatId)) {
+        if (service.chatId != chatId) {
+            bot.answerCallbackQuery(query, "Доступ запрещен", showAlert = true)
+            return
+        }
+    }
+
+    if (!service.dateTime.isInSameMonthAs(LocalDateTime.now())) {
+        bot.answerCallbackQuery(
+            query,
+            "Нельзя модифицировать запись после окончания месяца",
+            showAlert = true,
+        )
+        return
+    }
+
     ServiceMapper.setForceGroup(id, true)
     val times = ServiceMapper.findById(id)
     if (times.size > 1) {
@@ -24,10 +48,12 @@ suspend fun forceGroupAdd(query: DataCallbackQuery) {
     }
 
     val keyboard = inlineKeyboard {
-        if (times.first().deleted) {
-            row { dataButton("восстановить", "timeRestore-$id") }
-        } else {
-            row { dataButton("удалить", "timeDelete-$id") }
+        if (!query.isDm()) {
+            if (times.first().deleted) {
+                row { dataButton("восстановить", "timeRestore-$id") }
+            } else {
+                row { dataButton("удалить", "timeDelete-$id") }
+            }
         }
         row { dataButton("сделать одиночным занятием", "forceGroupRemove-$id") }
     }

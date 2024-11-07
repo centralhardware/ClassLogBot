@@ -5,7 +5,7 @@ import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Type.Companion.OPTIONAL_TEXT
-import me.centralhardware.znatoki.telegram.statistic.parseDate
+import me.centralhardware.znatoki.telegram.statistic.extensions.parseDate
 
 data object Date : Type {
 

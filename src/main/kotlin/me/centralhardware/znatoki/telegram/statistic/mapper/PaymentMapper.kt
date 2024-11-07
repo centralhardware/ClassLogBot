@@ -1,12 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import java.time.LocalDateTime
-import java.util.*
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
-import me.centralhardware.znatoki.telegram.statistic.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
-import me.centralhardware.znatoki.telegram.statistic.startOfMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 import me.centralhardware.znatoki.telegram.statistic.toJson
 
 object PaymentMapper {

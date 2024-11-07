@@ -4,7 +4,7 @@ import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.entity.*
-import me.centralhardware.znatoki.telegram.statistic.userId
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 
 object Storage {
 

@@ -6,4 +6,5 @@ enum class Permissions {
     ADD_PAYMENT,
     ADD_CLIENT,
     ADMIN,
+    FORCE_GROUP,
 }

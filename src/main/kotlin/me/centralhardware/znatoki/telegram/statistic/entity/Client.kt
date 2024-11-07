@@ -4,9 +4,9 @@ import java.time.LocalDateTime
 import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
-import me.centralhardware.znatoki.telegram.statistic.formatDate
-import me.centralhardware.znatoki.telegram.statistic.makeBold
-import me.centralhardware.znatoki.telegram.statistic.print
+import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
+import me.centralhardware.znatoki.telegram.statistic.extensions.makeBold
+import me.centralhardware.znatoki.telegram.statistic.extensions.print
 import me.centralhardware.znatoki.telegram.statistic.toProperties
 
 class Client(
