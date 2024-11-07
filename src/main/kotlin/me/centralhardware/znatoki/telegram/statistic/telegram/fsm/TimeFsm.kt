@@ -232,7 +232,7 @@ private suspend fun confirm(
             services.forEach { ServiceMapper.insert(it) }
 
             sendLog(services, message.userId())
-            if (UserMapper.hasForceGroup(message.from!!.id.chatId.long)) {
+            if (UserMapper.hasForceGroup(message.from!!.id.chatId.long) && services.size == 1) {
                 bot.sendTextMessage(
                     message.chat,
                     "Сохранено",
