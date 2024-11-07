@@ -11,6 +11,7 @@ import dev.inmo.tgbotapi.types.BotCommand
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
@@ -91,6 +92,21 @@ suspend fun main() {
                     onDataCallbackQuery(Regex("user_info\\d+\$")) { userInfoCallback(it) }
 
                     onBaseInlineQuery { processInline(it) }
+
+                    onDataCallbackQuery(
+                        Regex(
+                            "forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                        )
+                    ) {
+                        forceGroupAdd(it)
+                    }
+                    onDataCallbackQuery(
+                        Regex(
+                            "forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                        )
+                    ) {
+                        forceGroupRemove(it)
+                    }
                 }
 
                 createSubContextAndDoAsynchronouslyWithUpdatesFilter(
@@ -120,20 +136,6 @@ suspend fun main() {
                         paymentRestoreCallback(it)
                     }
                     onDataCallbackQuery(Regex("paymentDelete-\\d+\$")) { paymentDeleteCallback(it) }
-                    onDataCallbackQuery(
-                        Regex(
-                            "forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                        )
-                    ) {
-                        forceGroupAdd(it)
-                    }
-                    onDataCallbackQuery(
-                        Regex(
-                            "forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                        )
-                    ) {
-                        forceGroupRemove(it)
-                    }
                 }
             }
             .first

@@ -12,11 +12,11 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
-import me.centralhardware.znatoki.telegram.statistic.userId
 
 private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long) -> List<File>) {
     if (Storage.contain(userId)) {

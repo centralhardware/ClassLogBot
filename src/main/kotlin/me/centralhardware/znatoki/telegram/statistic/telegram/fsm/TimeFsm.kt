@@ -1,10 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import dev.inmo.tgbotapi.Trace
+import dev.inmo.tgbotapi.extensions.api.deleteMessage
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
-import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.extensions.utils.extensions.raw.from
 import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
@@ -25,6 +26,13 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
+import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
+import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
+import me.centralhardware.znatoki.telegram.statistic.extensions.print
+import me.centralhardware.znatoki.telegram.statistic.extensions.process
+import me.centralhardware.znatoki.telegram.statistic.extensions.switchToInlineKeyboard
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
+import me.centralhardware.znatoki.telegram.statistic.extensions.yesNoKeyboard
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import ru.nsk.kstatemachine.state.*
@@ -93,11 +101,9 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
             .map { service ->
                 builder.serviceId = ServicesMapper.getServiceId(service)!!
 
-                bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
-
                 bot.sendTextMessage(
                     message.chat,
-                    "нажмите для поиска фио",
+                    "Введите фио. /complete - для окончания ввода\nнажмите для поиска фио",
                     replyMarkup = switchToInlineKeyboard,
                 )
             }
@@ -226,7 +232,26 @@ private suspend fun confirm(
             services.forEach { ServiceMapper.insert(it) }
 
             sendLog(services, message.userId())
-            bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
+            if (UserMapper.hasForceGroup(message.from!!.id.chatId.long)) {
+                bot.sendTextMessage(
+                    message.chat,
+                    "Сохранено",
+                    replyMarkup =
+                        inlineKeyboard {
+                            row {
+                                dataButton(
+                                    "сделать групповым занятием",
+                                    "forceGroupAdd-${builder.id}",
+                                )
+                            }
+                        },
+                )
+                val msg =
+                    bot.sendTextMessage(message.chat, "temp", replyMarkup = ReplyKeyboardRemove())
+                bot.deleteMessage(msg.chat, msg.messageId)
+            } else {
+                bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
+            }
             Trace.save("commitTime", mapOf("id" to builder.id.toString()))
         }
         "нет" -> {
@@ -326,8 +351,11 @@ suspend fun startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder
             )
         }
         else -> {
-            bot.sendTextMessage(message.chat, "Введите фио. /complete - для окончания ввода")
-            bot.send(message.chat, "нажмите для поиска фио", replyMarkup = switchToInlineKeyboard)
+            bot.sendTextMessage(
+                message.chat,
+                "Введите фио. /complete - для окончания ввода\nнажмите для поиска фио",
+                replyMarkup = switchToInlineKeyboard,
+            )
         }
     }
     return builder

@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic
+package me.centralhardware.znatoki.telegram.statistic.extensions
 
 import java.util.regex.Pattern
 import javax.swing.text.MaskFormatter

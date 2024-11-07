@@ -6,8 +6,8 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.bot
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
-import me.centralhardware.znatoki.telegram.statistic.userId
 
 suspend fun resetCommand(message: CommonMessage<TextContent>) {
     Trace.save("resetState", mapOf())

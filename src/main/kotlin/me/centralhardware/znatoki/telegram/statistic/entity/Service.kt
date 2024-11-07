@@ -10,6 +10,7 @@ import me.centralhardware.znatoki.telegram.statistic.toProperties
 class Service(
     val id: UUID,
     val dateTime: LocalDateTime = LocalDateTime.now(),
+    val updateTime: LocalDateTime = LocalDateTime.now(),
     val chatId: Long,
     val serviceId: Long,
     val clientId: Int,
@@ -23,6 +24,7 @@ fun Row.parseTime() =
     Service(
         uuid("id"),
         localDateTime("date_time"),
+        localDateTime("update_time"),
         long("chat_id"),
         long("service_id"),
         int("pupil_id"),

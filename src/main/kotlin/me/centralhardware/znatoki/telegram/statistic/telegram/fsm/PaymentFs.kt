@@ -22,6 +22,13 @@ import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
+import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
+import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
+import me.centralhardware.znatoki.telegram.statistic.extensions.print
+import me.centralhardware.znatoki.telegram.statistic.extensions.process
+import me.centralhardware.znatoki.telegram.statistic.extensions.switchToInlineKeyboard
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
+import me.centralhardware.znatoki.telegram.statistic.extensions.yesNoKeyboard
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import ru.nsk.kstatemachine.state.*
@@ -269,12 +276,11 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 }
 
 suspend fun startPaymentFsm(message: CommonMessage<MessageContent>): PaymentBuilder {
-    bot.sendTextMessage(message.chat, "Введите фио")
-    val builder = PaymentBuilder()
     bot.sendTextMessage(
         message.chat,
-        "нажмите для поиска фио",
+        "Введите фио. \nнажмите для поиска фио",
         replyMarkup = switchToInlineKeyboard,
     )
+    val builder = PaymentBuilder()
     return builder
 }

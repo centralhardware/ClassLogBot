@@ -11,7 +11,7 @@ import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
-import me.centralhardware.znatoki.telegram.statistic.formatTime
+import me.centralhardware.znatoki.telegram.statistic.extensions.formatTime
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper

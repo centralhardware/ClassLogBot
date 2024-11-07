@@ -15,7 +15,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.entity.isGroup
 import me.centralhardware.znatoki.telegram.statistic.entity.isIndividual
-import me.centralhardware.znatoki.telegram.statistic.formatDate
+import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper

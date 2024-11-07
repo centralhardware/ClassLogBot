@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic
+package me.centralhardware.znatoki.telegram.statistic.extensions
 
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineQueryInCurrentChatButton

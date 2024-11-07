@@ -10,7 +10,7 @@ import kotlin.reflect.KSuspendFunction2
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
-import me.centralhardware.znatoki.telegram.statistic.userId
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import ru.nsk.kstatemachine.event.Event
 import ru.nsk.kstatemachine.event.WrappedEvent
 import ru.nsk.kstatemachine.state.DefaultState

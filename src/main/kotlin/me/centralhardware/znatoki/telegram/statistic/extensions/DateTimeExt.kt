@@ -1,4 +1,4 @@
-package me.centralhardware.znatoki.telegram.statistic
+package me.centralhardware.znatoki.telegram.statistic.extensions
 
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -29,3 +29,6 @@ fun String?.parseDateTime(): Result<LocalDateTime> = runCatching {
 fun String?.parseDate(): Result<LocalDate> = runCatching {
     LocalDate.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy"))
 }
+
+fun LocalDateTime.isInSameMonthAs(other: LocalDateTime): Boolean =
+    this.year == other.year && this.month == other.month

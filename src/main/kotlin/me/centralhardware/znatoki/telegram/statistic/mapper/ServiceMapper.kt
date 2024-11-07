@@ -7,6 +7,10 @@ import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
+import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.startOfDay
+import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 
 object ServiceMapper {
 
@@ -16,6 +20,7 @@ object ServiceMapper {
                 """
             INSERT INTO service (
                 date_time,
+                update_time,
                 id,
                 chat_id,
                 service_id,
@@ -24,6 +29,7 @@ object ServiceMapper {
                 properties
             ) VALUES (
                 :dateTime,
+                :updateTime,
                 :id,
                 :chatId,
                 :serviceId,
@@ -34,6 +40,7 @@ object ServiceMapper {
             """,
                 mapOf(
                     "dateTime" to service.dateTime,
+                    "updateTime" to service.updateTime,
                     "id" to service.id,
                     "chatId" to service.chatId,
                     "serviceId" to service.serviceId,
@@ -54,6 +61,7 @@ object ServiceMapper {
                     """
             SELECT id,
                    date_time,
+                   update_time,
                    chat_id,
                    service_id,
                    pupil_id,
@@ -78,6 +86,7 @@ object ServiceMapper {
                     """
             SELECT id,
                    date_time,
+                   update_time,
                    chat_id,
                    service_id,
                    pupil_id,
@@ -132,10 +141,15 @@ object ServiceMapper {
             queryOf(
                     """
             UPDATE service
-            SET is_deleted = :is_deleted
+            SET is_deleted = :is_deleted,
+                update_time = :update_time
             WHERE id = :id
             """,
-                    mapOf("id" to timeId, "is_deleted" to isDeleted),
+                    mapOf(
+                        "id" to timeId,
+                        "is_deleted" to isDeleted,
+                        "update_time" to LocalDateTime.now(),
+                    ),
                 )
                 .asUpdate
         )
@@ -159,10 +173,15 @@ object ServiceMapper {
             queryOf(
                     """
         UPDATE service 
-        SET force_group = :force_group
+        SET force_group = :force_group,
+            update_time = :update_time
         WHERE id = :id
     """,
-                    mapOf("id" to id, "force_group" to forceGroup),
+                    mapOf(
+                        "id" to id,
+                        "force_group" to forceGroup,
+                        "update_time" to LocalDateTime.now(),
+                    ),
                 )
                 .asUpdate
         )
