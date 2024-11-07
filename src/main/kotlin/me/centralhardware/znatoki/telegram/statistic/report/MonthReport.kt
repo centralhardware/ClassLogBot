@@ -158,7 +158,7 @@ class MonthReport(
                         .forEach { id, services ->
                             val fios =
                                 if (services.size == 1) {
-                                    ClientMapper.findById(services.first().clientId)!!.fio()
+                                    "  " + ClientMapper.findById(services.first().clientId)!!.fio()
                                 } else {
                                     val i = AtomicInteger(1)
                                     services
