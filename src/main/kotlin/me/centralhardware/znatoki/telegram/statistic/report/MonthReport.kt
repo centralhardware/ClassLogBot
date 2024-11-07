@@ -22,6 +22,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import org.apache.poi.ss.usermodel.HorizontalAlignment
 
 class MonthReport(
     private val fio: String,
@@ -105,7 +106,7 @@ class MonthReport(
 
                             row {
                                 cell(i.getAndIncrement())
-                                cell(client.fio())
+                                cell(client.fio(), HorizontalAlignment.LEFT)
                                 client.properties
                                     .filter { ConfigMapper.includeInReport().contains(it.name) }
                                     .map { cell(it.value ?: "") }
@@ -120,7 +121,7 @@ class MonthReport(
                                     )
                                 )
                                 emptyCell()
-                                cell(datesStr)
+                                cell(datesStr, HorizontalAlignment.LEFT)
                             }
                         }
                     row {
@@ -167,7 +168,7 @@ class MonthReport(
                                         .joinToString("\n")
                                 }
                             row {
-                                cell(fios)
+                                cell(fios, HorizontalAlignment.LEFT)
                                 cell(services.first().dateTime.formatDateTime())
                                 cell(services.first().amount)
                                 if (services.size == 1) {

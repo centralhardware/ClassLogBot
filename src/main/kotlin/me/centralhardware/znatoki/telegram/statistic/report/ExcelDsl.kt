@@ -62,18 +62,21 @@ class SheetDsl(private val sheet: Sheet) {
 }
 
 class RowDsl(private val sheet: Sheet, private val rowIndex: Int) {
-    private val cells: MutableList<String> = mutableListOf()
+    private val cells: MutableList<Pair<String, HorizontalAlignment>> = mutableListOf()
 
     fun emptyCell() = cell("")
 
-    fun <T> cell(t: T) = cells.addLast(t.toString())
+    fun <T> cell(t: T, align: HorizontalAlignment = HorizontalAlignment.CENTER) =
+        cells.add(Pair(t.toString(), align))
 
     fun build() {
         val row = sheet.createRow(rowIndex)
-        sheet.autoSizeColumn(rowIndex)
         cells.forEachIndexed { i, v ->
+            val cellStyle = sheet.workbook.createCellStyle().apply { alignment = v.second }
             val cell = row.createCell(i)
-            cell.setCellValue(v)
+            cell.setCellValue(v.first)
+            cell.cellStyle = cellStyle
+            sheet.autoSizeColumn(i)
         }
     }
 }
