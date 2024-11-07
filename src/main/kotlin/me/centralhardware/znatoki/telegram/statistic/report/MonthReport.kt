@@ -16,6 +16,8 @@ import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.entity.isGroup
 import me.centralhardware.znatoki.telegram.statistic.entity.isIndividual
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
+import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
+import me.centralhardware.znatoki.telegram.statistic.extensions.print
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
@@ -61,7 +63,7 @@ class MonthReport(
                     title("Отчет по оплате и посещаемости занятий по $serviceName", 6)
                     title("Преподаватель: $fio", 6)
                     title(
-                        "${dateTime.format(DateTimeFormatter.ofPattern("MMMM"))} ${dateTime.year}",
+                        "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
                         6,
                     )
                     row {
@@ -135,6 +137,44 @@ class MonthReport(
                             )
                         )
                     }
+                }
+                sheet("Журнал") {
+                    title("Журнал занятий по $serviceName", 3)
+                    title("Преподаватель: $fio", 3)
+                    title(
+                        "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
+                        3,
+                    )
+                    row {
+                        cell("ученик")
+                        cell("Дата")
+                        cell("Сумма")
+                        cell("Принудительно групповое")
+                    }
+                    filteredServices
+                        .sortedByDescending { it.dateTime }
+                        .groupBy { it.id }
+                        .forEach { id, services ->
+                            val fios =
+                                if (services.size == 1) {
+                                    ClientMapper.findById(services.first().clientId)!!.fio()
+                                } else {
+                                    val i = AtomicInteger(1)
+                                    services
+                                        .map {
+                                            "${i.getAndAdd(1)} - ${ClientMapper.findById(it.clientId)!!.fio()}"
+                                        }
+                                        .joinToString("\n")
+                                }
+                            row {
+                                cell(fios)
+                                cell(services.first().dateTime.formatDateTime())
+                                cell(services.first().amount)
+                                if (services.size == 1) {
+                                    cell(services.first().forceGroup.print())
+                                }
+                            }
+                        }
                 }
             }
             .build()
