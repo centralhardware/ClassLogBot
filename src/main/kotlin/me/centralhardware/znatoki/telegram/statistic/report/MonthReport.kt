@@ -20,7 +20,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
-import java.util.concurrent.ConcurrentHashMap
 
 class MonthReport(
     private val fio: String,
@@ -38,10 +37,12 @@ class MonthReport(
         }
         val dateTime = filteredServices.first().dateTime
 
-        val id2times: Multimap<UUID, Service> = Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
+        val id2times: Multimap<UUID, Service> =
+            Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         filteredServices.forEach { service -> id2times.put(service.id, service) }
 
-        val fioToTimes: Multimap<Client, Service> = Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
+        val fioToTimes: Multimap<Client, Service> =
+            Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         filteredServices.forEach { service ->
             ClientMapper.findById(service.clientId)?.let { client ->
                 fioToTimes.put(client, service)
@@ -85,19 +86,6 @@ class MonthReport(
                         .forEach { (client, fioTimes) ->
                             val individual = fioTimes.count { id2times[it.id].isIndividual() }
                             val group = fioTimes.count { id2times[it.id].isGroup() }
-                            //
-                            //                            val individual = AtomicInteger()
-                            //                            val group = AtomicInteger()
-                            //                            fioTimes.forEach {
-                            //                                val times = id2times[it.id]
-                            //                                if (times.size == 1 &&
-                            // !times.first().forceGroup) {
-                            //                                    individual.incrementAndGet()
-                            //                                } else if (times.size > 1 ||
-                            // times.first().forceGroup) {
-                            //                                    group.incrementAndGet()
-                            //                                }
-                            //                            }
 
                             totalIndividual.addAndGet(individual)
                             totalGroup.addAndGet(group)

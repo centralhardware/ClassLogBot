@@ -20,7 +20,20 @@ class Client(
     val createdBy: Long,
     val updateBy: Long?,
     var deleted: Boolean = false,
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Client
+
+        return id == other.id
+    }
+
+    override fun hashCode(): Int {
+        return id ?: 0
+    }
+}
 
 fun Client.getInfo(services: List<String>) =
     """
