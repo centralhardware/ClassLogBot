@@ -8,6 +8,8 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsync
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
 import dev.inmo.tgbotapi.longPolling
 import dev.inmo.tgbotapi.types.BotCommand
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -42,6 +44,9 @@ lateinit var bot: TelegramBot
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
 suspend fun main() {
+    embeddedServer(Netty, port = 999) {
+        module()
+    }.start(wait = false)
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
     bot =

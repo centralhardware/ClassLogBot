@@ -17,10 +17,15 @@ repositories {
 var poiVersion = "5.3.0"
 var kstatemachineVersion = "0.32.0"
 var luceneVersion = "10.0.0"
+val ktorVersion = "3.0.1"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:1.2.4")
     implementation("com.github.seratch:kotliquery:1.9.0")
+
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+
 
     implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")

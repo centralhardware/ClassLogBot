@@ -202,7 +202,7 @@ class MonthReport(
                             cell(payment.amount)
                             cell(ServicesMapper.getNameById(payment.serviceId))
                             MinioService.getLink(payment.properties.find("фото отчетности").value!!).onSuccess {
-                                cell(it)
+                                cell(it.replace("http://10.168.0.34:9000", "https://minio.centralhardware.me"))
                             }
                         }
                     }
