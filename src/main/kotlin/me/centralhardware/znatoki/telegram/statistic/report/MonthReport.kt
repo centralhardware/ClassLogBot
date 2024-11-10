@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.report
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
+import me.centralhardware.znatoki.telegram.statistic.Config
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -202,7 +203,7 @@ class MonthReport(
                             cell(payment.amount)
                             cell(ServicesMapper.getNameById(payment.serviceId))
                             MinioService.getLink(payment.properties.find("фото отчетности").value!!).onSuccess {
-                                cell(it.replace("http://10.168.0.34:9000", "https://minio.centralhardware.me"))
+                                cell(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl))
                             }
                         }
                     }

@@ -13,6 +13,7 @@ object Config {
         val accessKey: String = System.getenv("MINIO_ACCESS_KEY")
         val secretKey: String = System.getenv("MINIO_SECRET_KEY")
         val basePath: String = System.getenv("BASE_PATH")
+        val proxyUrl: String = System.getenv("PROXY_URL")
     }
 
     object Datasource {
