@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.eav.types.NumberType
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
+import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.entity.isGroup
@@ -31,22 +32,22 @@ class MonthReport(
     private val userId: Long,
 ) {
 
-    fun generate(services: List<Service>): File? {
+    fun generate(times: List<Service>, payments: List<Payment>): File? {
         val serviceName = ServicesMapper.getNameById(service)!!
 
-        val filteredServices = services.filter { it.serviceId == service }
-        if (filteredServices.isEmpty()) {
+        if (times.isEmpty() && payments.isEmpty()) {
             return null
         }
-        val dateTime = filteredServices.first().dateTime
+
+        val dateTime = times.first().dateTime
 
         val id2times: Multimap<UUID, Service> =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
-        filteredServices.forEach { service -> id2times.put(service.id, service) }
+        times.forEach { service -> id2times.put(service.id, service) }
 
         val fioToTimes: Multimap<Client, Service> =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
-        filteredServices.forEach { service ->
+        times.forEach { service ->
             ClientMapper.findById(service.clientId)?.let { client ->
                 fioToTimes.put(client, service)
             }
@@ -57,7 +58,7 @@ class MonthReport(
 
         val i = AtomicInteger(1)
         val comparator: Comparator<Client> =
-            getComparator(ClientMapper.findById(filteredServices.first().clientId)!!)
+            getComparator(ClientMapper.findById(times.first().clientId)!!)
 
         return excel(fio, serviceName, date) {
                 sheet("отчет") {
@@ -70,7 +71,7 @@ class MonthReport(
                     row {
                         cell("№")
                         cell("ФИО ${ConfigMapper.clientName()}")
-                        ClientMapper.findById(filteredServices.first().clientId)?.let {
+                        ClientMapper.findById(times.first().clientId)?.let {
                             it.properties
                                 .map { it.name }
                                 .filter { ConfigMapper.includeInReport().contains(it) }
@@ -133,13 +134,13 @@ class MonthReport(
                         cell(
                             PaymentMapper.getPaymentsSum(
                                 userId,
-                                filteredServices.first().serviceId,
+                                times.first().serviceId,
                                 date,
                             )
                         )
                     }
                 }
-                sheet("Журнал") {
+                sheet("Журнал занятий") {
                     title("Журнал занятий по $serviceName", 3)
                     title("Преподаватель: $fio", 3)
                     title(
@@ -152,7 +153,7 @@ class MonthReport(
                         cell("Сумма")
                         cell("Принудительно групповое")
                     }
-                    filteredServices
+                    times
                         .sortedByDescending { it.dateTime }
                         .groupBy { it.id }
                         .forEach { id, services ->
@@ -177,6 +178,29 @@ class MonthReport(
                                 }
                             }
                         }
+                }
+                sheet("Журнал оплаты") {
+                    title("Журнал оплаты по $serviceName", 3)
+                    title("Преподаватель: $fio", 3)
+                    title(
+                        "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
+                        3,
+                    )
+                    row {
+                        cell("ученик")
+                        cell("Дата")
+                        cell("Сумма")
+                        cell("Предмет")
+                    }
+                    payments.forEach { payment ->
+                        row {
+                            cell(ClientMapper.findById(payment.clientId)!!.fio())
+                            cell(payment.dateTime.formatDateTime())
+                            cell(payment.amount)
+                            cell(ServicesMapper.getNameById(payment.serviceId))
+                        }
+                    }
+
                 }
             }
             .build()

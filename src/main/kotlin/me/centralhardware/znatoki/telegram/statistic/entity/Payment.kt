@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
+import kotliquery.Row
 import java.time.LocalDateTime
 import java.util.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
@@ -13,6 +14,15 @@ data class Payment(
     val amount: Int,
     val serviceId: Long,
     val properties: MutableList<Property> = ArrayList(),
+)
+
+fun Row.parsePayment() = Payment(
+    int("id"),
+    localDateTime("date_time"),
+    long("chat_id"),
+    int("pupil_id"),
+    int("amount"),
+    long("services")
 )
 
 class PaymentBuilder : Builder {

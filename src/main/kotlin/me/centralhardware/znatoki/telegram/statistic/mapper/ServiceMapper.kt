@@ -53,6 +53,7 @@ object ServiceMapper {
 
     private fun findAllByUserId(
         userId: Long,
+        serviceId: Long,
         startDate: LocalDateTime,
         endDate: LocalDateTime,
     ): List<Service> =
@@ -71,11 +72,41 @@ object ServiceMapper {
                    is_deleted
             FROM service
             WHERE chat_id = :userId
+                AND service_id = :serviceId
                 AND date_time between :startDate and :endDate
                 AND is_deleted=false
             """,
-                    mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate),
+                    mapOf("userId" to userId,"serviceId" to serviceId, "startDate" to startDate, "endDate" to endDate),
                 )
+                .map { it.parseTime() }
+                .asList
+        )
+
+    private fun findAllByUserId(
+        userId: Long,
+        startDate: LocalDateTime,
+        endDate: LocalDateTime,
+    ): List<Service> =
+        session.run(
+            queryOf(
+                """
+            SELECT id,
+                   date_time,
+                   update_time,
+                   chat_id,
+                   service_id,
+                   pupil_id,
+                   amount,
+                   properties,
+                   force_group,
+                   is_deleted
+            FROM service
+            WHERE chat_id = :userId
+                AND date_time between :startDate and :endDate
+                AND is_deleted=false
+            """,
+                mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate),
+            )
                 .map { it.parseTime() }
                 .asList
         )
@@ -103,25 +134,22 @@ object ServiceMapper {
                 .asList
         )
 
-    fun getTodayTimes(chatId: Long): List<Service> {
-        return findAllByUserId(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
-    }
+    fun getTodayTimes(chatId: Long): List<Service> =
+        findAllByUserId(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
 
-    fun getCurrentMontTimes(chatId: Long): List<Service> {
-        return findAllByUserId(
-            chatId,
-            LocalDateTime.now().startOfMonth(),
-            LocalDateTime.now().endOfMonth(),
-        )
-    }
+    fun getCurrentMontTimes(chatId: Long, serviceId: Long): List<Service> = findAllByUserId(
+        chatId,
+        serviceId,
+        LocalDateTime.now().startOfMonth(),
+        LocalDateTime.now().endOfMonth(),
+    )
 
-    fun getPrevMonthTimes(chatId: Long): List<Service> {
-        return findAllByUserId(
-            chatId,
-            LocalDateTime.now().prevMonth().startOfMonth(),
-            LocalDateTime.now().prevMonth().endOfMonth(),
-        )
-    }
+    fun getPrevMonthTimes(chatId: Long, serviceId: Long): List<Service> = findAllByUserId(
+        chatId,
+        serviceId,
+        LocalDateTime.now().prevMonth().startOfMonth(),
+        LocalDateTime.now().prevMonth().endOfMonth(),
+    )
 
     fun getIds(): List<Long> =
         session.run(

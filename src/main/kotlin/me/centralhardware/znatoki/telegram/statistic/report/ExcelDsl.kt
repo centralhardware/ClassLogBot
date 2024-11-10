@@ -1,5 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.report
 
+import org.apache.poi.ss.usermodel.CellStyle
+import org.apache.poi.ss.usermodel.HorizontalAlignment
+import org.apache.poi.ss.usermodel.Sheet
+import org.apache.poi.ss.usermodel.Workbook
+import org.apache.poi.ss.util.CellRangeAddress
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -7,9 +13,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import org.apache.poi.ss.usermodel.*
-import org.apache.poi.ss.util.CellRangeAddress
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
 class ExcelDsl(
     private val fio: String,
@@ -62,6 +65,7 @@ class SheetDsl(private val sheet: Sheet) {
 }
 
 class RowDsl(private val sheet: Sheet, private val rowIndex: Int) {
+    private val styleCache = mutableMapOf<HorizontalAlignment, CellStyle>()
     private val cells: MutableList<Pair<String, HorizontalAlignment>> = mutableListOf()
 
     fun emptyCell() = cell("")
@@ -72,10 +76,15 @@ class RowDsl(private val sheet: Sheet, private val rowIndex: Int) {
     fun build() {
         val row = sheet.createRow(rowIndex)
         cells.forEachIndexed { i, v ->
-            val cellStyle = sheet.workbook.createCellStyle().apply { alignment = v.second }
+            if (!styleCache.containsKey(v.second)) {
+                styleCache[v.second] = sheet.workbook.createCellStyle().apply {
+                    alignment = v.second
+                }
+            }
+
             val cell = row.createCell(i)
             cell.setCellValue(v.first)
-            cell.cellStyle = cellStyle
+            cell.cellStyle = styleCache[v.second]
             sheet.autoSizeColumn(i)
         }
     }

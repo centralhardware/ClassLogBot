@@ -1,7 +1,9 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
+import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import java.io.File
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
+import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.MonthReport
@@ -10,30 +12,24 @@ import org.apache.commons.collections4.CollectionUtils
 object ReportService {
 
     fun getReportsCurrent(id: Long): List<File> {
-        return getReport(ServiceMapper::getCurrentMontTimes, id)
+        return getReport(ServiceMapper::getCurrentMontTimes, PaymentMapper::getCurrentMonthPayments, id)
     }
 
     fun getReportPrevious(id: Long): List<File> {
-        return getReport(ServiceMapper::getPrevMonthTimes, id)
+        return getReport(ServiceMapper::getPrevMonthTimes, PaymentMapper::getPrevMonthPayments, id)
     }
 
-    private fun getReport(getTime: (Long) -> List<Service>, id: Long): List<File> {
-        val times = getTime.invoke(id)
-        if (CollectionUtils.isEmpty(times)) return emptyList()
-
+    private fun getReport(getTime: (Long, Long) -> List<Service>, getPayments: (Long, Long) -> List<Payment>, id: Long): List<File> {
         val user =
-            UserMapper.findById(times.first().chatId)?.let { user ->
+            UserMapper.findById(id)?.let { user ->
                 user.services.mapNotNull { serviceId ->
-                    val service =
-                        times
-                            .stream()
-                            .filter { time -> time.serviceId == serviceId }
-                            .findFirst()
-                            .orElse(null)
+                    val times = getTime.invoke(id, serviceId)
+                    val payments = getPayments.invoke(id, serviceId)
+                    if (CollectionUtils.isEmpty(times) && CollectionUtils.isEmpty(payments)) return emptyList()
 
-                    service?.let {
-                        MonthReport(user.name, serviceId, it.dateTime, id).generate(times)
-                    }
+                    val service = times.first { time -> time.serviceId == serviceId }
+
+                    MonthReport(user.name, serviceId, service.dateTime, id).generate(times, payments)
                 }
             }
 
