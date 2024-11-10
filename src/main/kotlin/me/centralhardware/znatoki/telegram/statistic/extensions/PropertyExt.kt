@@ -64,3 +64,5 @@ suspend fun PropertiesBuilder.process(
         }
     return isFinished
 }
+
+fun List<Property>.find(name: String) = first { it.name == name }

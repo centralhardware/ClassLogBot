@@ -16,6 +16,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.entity.isGroup
 import me.centralhardware.znatoki.telegram.statistic.entity.isIndividual
+import me.centralhardware.znatoki.telegram.statistic.extensions.find
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.print
@@ -23,6 +24,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import org.apache.poi.ss.usermodel.HorizontalAlignment
 
 class MonthReport(
@@ -191,13 +193,17 @@ class MonthReport(
                         cell("Дата")
                         cell("Сумма")
                         cell("Предмет")
+                        cell("фото")
                     }
                     payments.forEach { payment ->
                         row {
-                            cell(ClientMapper.findById(payment.clientId)!!.fio())
+                            cell(ClientMapper.findById(payment.clientId)!!.fio(), HorizontalAlignment.LEFT)
                             cell(payment.dateTime.formatDateTime())
                             cell(payment.amount)
                             cell(ServicesMapper.getNameById(payment.serviceId))
+                            MinioService.getLink(payment.properties.find("фото отчетности").value!!).onSuccess {
+                                cell(it)
+                            }
                         }
                     }
 

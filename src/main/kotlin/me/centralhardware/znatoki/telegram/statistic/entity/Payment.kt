@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import java.util.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
+import me.centralhardware.znatoki.telegram.statistic.toProperties
 
 data class Payment(
     val id: Int? = null,
@@ -13,7 +14,7 @@ data class Payment(
     val clientId: Int,
     val amount: Int,
     val serviceId: Long,
-    val properties: MutableList<Property> = ArrayList(),
+    val properties: List<Property> = ArrayList(),
 )
 
 fun Row.parsePayment() = Payment(
@@ -22,7 +23,8 @@ fun Row.parsePayment() = Payment(
     long("chat_id"),
     int("pupil_id"),
     int("amount"),
-    long("services")
+    long("services"),
+    string("properties").toProperties()
 )
 
 class PaymentBuilder : Builder {

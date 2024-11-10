@@ -4,9 +4,11 @@ import com.google.common.io.Files
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
 import io.ktor.utils.io.core.*
 import io.minio.GetObjectArgs
+import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioClient
 import io.minio.RemoveObjectArgs
 import io.minio.UploadObjectArgs
+import io.minio.http.Method
 import java.io.File
 import java.nio.file.Paths
 import java.time.LocalDateTime
@@ -56,4 +58,16 @@ object MinioService {
             .asMultipartFile("Отчет")
             .input
     }
+
+    fun getLink(file: String): Result<String> = runCatching {
+        minioClient.getPresignedObjectUrl(
+            GetPresignedObjectUrlArgs.builder()
+                .method(Method.GET)
+                .bucket(Config.Minio.bucket)
+                .`object`(file)
+                .expiry(7 * 24 * 60 * 60)
+                .build()
+        )
+    }
+
 }

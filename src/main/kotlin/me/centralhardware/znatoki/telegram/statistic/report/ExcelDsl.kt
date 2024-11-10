@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.report
 
+import org.apache.poi.common.usermodel.HyperlinkType
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.HorizontalAlignment
 import org.apache.poi.ss.usermodel.Sheet
@@ -83,7 +84,15 @@ class RowDsl(private val sheet: Sheet, private val rowIndex: Int) {
             }
 
             val cell = row.createCell(i)
-            cell.setCellValue(v.first)
+            if (v.first.startsWith("http")) {
+                val huperlink = sheet.workbook.creationHelper.createHyperlink(HyperlinkType.URL)
+                huperlink.address = v.first
+                cell.hyperlink = huperlink
+                cell.setCellValue("отчет")
+            } else {
+                cell.setCellValue(v.first)
+            }
+
             cell.cellStyle = styleCache[v.second]
             sheet.autoSizeColumn(i)
         }
