@@ -62,11 +62,11 @@ class MonthReport(
 
         return excel {
             sheet("отчет") {
-                title("Отчет по оплате и посещаемости занятий по $serviceName", 6)
-                title("Преподаватель: $fio", 6)
+                title("Отчет по оплате и посещаемости занятий по $serviceName", 7)
+                title("Преподаватель: $fio", 7)
                 title(
                     "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
-                    6,
+                    7,
                 )
                 row {
                     cell("№")
@@ -148,8 +148,8 @@ class MonthReport(
                     3,
                 )
                 row {
-                    cell("ученик")
                     cell("Дата")
+                    cell("ученик")
                     cell("Сумма")
                     cell("Принудительно групповое")
                 }
@@ -163,15 +163,13 @@ class MonthReport(
                                         clients[services.first().clientId]!!.fio()
                             } else {
                                 val i = AtomicInteger(1)
-                                services
-                                    .map {
-                                        "${i.getAndAdd(1)} - ${clients[it.clientId]!!.fio()}"
-                                    }
-                                    .joinToString("\n")
+                                services.joinToString("\n") {
+                                    "${i.getAndAdd(1)} - ${clients[it.clientId]!!.fio()}"
+                                }
                             }
                         row {
-                            cell(fios, HorizontalAlignment.LEFT)
                             cell(services.first().dateTime.formatDateTime())
+                            cell(fios, HorizontalAlignment.LEFT)
                             cell(services.first().amount)
                             if (services.size == 1) {
                                 cell(services.first().forceGroup.print())
@@ -187,16 +185,16 @@ class MonthReport(
                     4,
                 )
                 row {
-                    cell("ученик")
                     cell("Дата")
+                    cell("ученик")
                     cell("Сумма")
                     cell("Предмет")
                     cell("фото")
                 }
                 payments.forEach { payment ->
                     row {
-                        cell(clients[payment.clientId]!!.fio(), HorizontalAlignment.LEFT)
                         cell(payment.dateTime.formatDateTime())
+                        cell(clients[payment.clientId]!!.fio(), HorizontalAlignment.LEFT)
                         cell(payment.amount)
                         cell(ServicesMapper.getNameById(payment.serviceId))
                         MinioService.getLink(payment.properties.find("фото отчетности").value!!).onSuccess {
@@ -215,30 +213,27 @@ class MonthReport(
     private fun getComparator(client: Client): Comparator<Client> {
         val props = client.properties.filter { ConfigMapper.includeInReport().contains(it.name) }
 
-        val comparator: Comparator<Client> =
-            props.first().let { property ->
-                if (property.type is NumberType) {
-                    compareBy(nullsLast()) {
-                        val propValue = getProperty(it, property.name)?.value
-                        if (!propValue.isNullOrBlank()) propValue.toInt() else null
-                    }
-                } else {
-                    compareBy(nullsLast()) { getProperty(it, property.name)?.value }
-                }
-            }
+        var comparator: Comparator<Client> = createComparatorFunction(props.first())
 
         props.drop(1).forEach { property ->
-            if (property.type is NumberType) {
-                comparator.thenBy(nullsLast()) {
-                    val propValue = getProperty(it, property.name)?.value
-                    if (!propValue.isNullOrBlank()) propValue.toInt() else null
-                }
-            } else {
-                comparator.thenBy(nullsLast()) { getProperty(it, property.name)?.value }
-            }
+            comparator = comparator.thenComparing(createComparatorFunction(property))
         }
 
-        return comparator.thenBy { it.fio() }
+        return comparator.thenComparing { it.fio() }
+    }
+
+    private fun createComparatorFunction(property: Property): Comparator<Client> {
+        return if (property.type is NumberType) {
+            Comparator.comparing<Client, Int?>(
+                { client -> getProperty(client, property.name)?.value?.toIntOrNull() },
+                nullsLast()
+            )
+        } else {
+            Comparator.comparing<Client, String?>(
+                { client -> getProperty(client, property.name)?.value },
+                nullsLast()
+            )
+        }
     }
 
     private fun getProperty(client: Client, name: String): Property? =
