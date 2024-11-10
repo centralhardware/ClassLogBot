@@ -14,6 +14,7 @@ import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util.*
 import me.centralhardware.znatoki.telegram.statistic.Config
+import java.util.concurrent.TimeUnit
 
 object MinioService {
 
@@ -65,7 +66,7 @@ object MinioService {
                 .method(Method.GET)
                 .bucket(Config.Minio.bucket)
                 .`object`(file)
-                .expiry(7 * 24 * 60 * 60)
+                .expiry(1, TimeUnit.HOURS)
                 .build()
         )
     }
