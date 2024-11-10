@@ -1,13 +1,14 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
-import java.io.File
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.MonthReport
-import org.apache.commons.collections4.CollectionUtils
+import java.io.File
 
 object ReportService {
 
@@ -23,13 +24,15 @@ object ReportService {
         val user =
             UserMapper.findById(id)?.let { user ->
                 user.services.mapNotNull { serviceId ->
-                    val times = getTime.invoke(id, serviceId)
-                    val payments = getPayments.invoke(id, serviceId)
-                    if (CollectionUtils.isEmpty(times) && CollectionUtils.isEmpty(payments)) return emptyList()
+                    runBlocking {
+                        val times = async { getTime.invoke(id, serviceId) }
+                        val payments = async { getPayments.invoke(id, serviceId) }
 
-                    val service = times.first { time -> time.serviceId == serviceId }
+                        val service = times.await().firstOrNull() { time -> time.serviceId == serviceId }
+                        if (service != null) return@runBlocking null
 
-                    MonthReport(user.name, serviceId, service.dateTime, id).generate(times, payments)
+                        MonthReport(user.name, serviceId, service!! .dateTime, id).generate(times.await(), payments.await())
+                    }
                 }
             }
 
