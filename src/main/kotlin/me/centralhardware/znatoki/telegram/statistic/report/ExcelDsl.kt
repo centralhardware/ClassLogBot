@@ -39,8 +39,6 @@ class ExcelDsl {
 class SheetDsl(private val sheet: Sheet) {
     private var rowIndex: Int = 0
 
-    fun emtpyRow() = row {}
-
     fun row(initializer: RowDsl.() -> Unit) {
         RowDsl(sheet, rowIndex).apply(initializer)
         rowIndex++
