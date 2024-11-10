@@ -28,10 +28,10 @@ object ReportService {
                         val times = async { getTime.invoke(id, serviceId) }
                         val payments = async { getPayments.invoke(id, serviceId) }
 
-                        val service = times.await().firstOrNull() { time -> time.serviceId == serviceId }
+                        val service = times.await().firstOrNull { time -> time.serviceId == serviceId }
                         if (service == null) return@runBlocking null
 
-                        MonthReport(user.name, serviceId, service!! .dateTime, id).generate(times.await(), payments.await())
+                        MonthReport(user.name, serviceId, id).generate(times.await(), payments.await())
                     }
                 }
             }

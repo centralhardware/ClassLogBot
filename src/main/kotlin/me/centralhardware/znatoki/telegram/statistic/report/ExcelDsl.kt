@@ -12,29 +12,20 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicInteger
 
-class ExcelDsl(
-    private val fio: String,
-    private val serviceName: String,
-    private val date: LocalDateTime,
-) {
+class ExcelDsl {
     private val workbook: Workbook = XSSFWorkbook()
 
     fun sheet(name: String, initializer: SheetDsl.() -> Unit) {
         SheetDsl(workbook.createSheet(name)).apply(initializer)
     }
 
-    fun build(): File {
+    fun build(name: String): File {
         return try {
-            val temp =
-                Files.createFile(
-                        Path.of(
-                            "$fio - $serviceName ${date.format(DateTimeFormatter.ofPattern("MMMM"))} ${date.year}.xlsx"
-                        )
-                    )
-                    .toFile()
+            val path = Path.of(name)
+            Files.deleteIfExists(path)
+            val temp = Files.createFile(path).toFile()
             val outputStream = FileOutputStream(temp)
             workbook.write(outputStream)
             workbook.close()
@@ -48,8 +39,10 @@ class ExcelDsl(
 class SheetDsl(private val sheet: Sheet) {
     private var rowIndex: Int = 0
 
+    fun emtpyRow() = row {}
+
     fun row(initializer: RowDsl.() -> Unit) {
-        RowDsl(sheet, rowIndex).apply(initializer).build()
+        RowDsl(sheet, rowIndex).apply(initializer)
         rowIndex++
     }
 
@@ -67,43 +60,35 @@ class SheetDsl(private val sheet: Sheet) {
 
 class RowDsl(private val sheet: Sheet, private val rowIndex: Int) {
     private val styleCache = mutableMapOf<HorizontalAlignment, CellStyle>()
-    private val cells: MutableList<Pair<String, HorizontalAlignment>> = mutableListOf()
+    private val row = sheet.createRow(rowIndex)
+    private val i = AtomicInteger(0)
 
     fun emptyCell() = cell("")
 
-    fun <T> cell(t: T, align: HorizontalAlignment = HorizontalAlignment.CENTER) =
-        cells.add(Pair(t.toString(), align))
-
-    fun build() {
-        val row = sheet.createRow(rowIndex)
-        cells.forEachIndexed { i, v ->
-            if (!styleCache.containsKey(v.second)) {
-                styleCache[v.second] = sheet.workbook.createCellStyle().apply {
-                    alignment = v.second
-                }
-            }
-
-            val cell = row.createCell(i)
-            if (v.first.startsWith("http")) {
-                val huperlink = sheet.workbook.creationHelper.createHyperlink(HyperlinkType.URL)
-                huperlink.address = v.first
-                cell.hyperlink = huperlink
-                cell.setCellValue("отчет")
-            } else {
-                cell.setCellValue(v.first)
-            }
-
-            cell.cellStyle = styleCache[v.second]
-            sheet.autoSizeColumn(i)
+    private fun getStyle(align: HorizontalAlignment): CellStyle? {
+        styleCache[align] = sheet.workbook.createCellStyle().apply {
+            alignment = align
         }
+        return styleCache[align]
+    }
+
+    fun <T> cell(t: T, align: HorizontalAlignment = HorizontalAlignment.CENTER) {
+        val cell = row.createCell(i.get())
+        cell.setCellValue(t.toString())
+        cell.cellStyle = getStyle(align)
+        sheet.autoSizeColumn(i.get())
+        i.getAndIncrement()
+    }
+
+    fun cellHyperlink(url: String, caption: String) {
+        val cell = row.createCell(i.get())
+        cell.setCellValue(caption)
+        val hyperlink = sheet.workbook.creationHelper.createHyperlink(HyperlinkType.URL)
+        hyperlink.address = url
+        cell.hyperlink = hyperlink
     }
 }
 
-fun excel(
-    fio: String,
-    serviceName: String,
-    date: LocalDateTime,
-    initializer: ExcelDsl.() -> Unit,
-): ExcelDsl {
-    return ExcelDsl(fio, serviceName, date).apply(initializer)
+fun excel(initializer: ExcelDsl.() -> Unit): ExcelDsl {
+    return ExcelDsl().apply(initializer)
 }

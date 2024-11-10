@@ -4,19 +4,9 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import me.centralhardware.znatoki.telegram.statistic.Config
-import java.io.File
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.eav.types.NumberType
-import me.centralhardware.znatoki.telegram.statistic.entity.Client
-import me.centralhardware.znatoki.telegram.statistic.entity.Payment
-import me.centralhardware.znatoki.telegram.statistic.entity.Service
-import me.centralhardware.znatoki.telegram.statistic.entity.fio
-import me.centralhardware.znatoki.telegram.statistic.entity.isGroup
-import me.centralhardware.znatoki.telegram.statistic.entity.isIndividual
+import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.find
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
@@ -27,11 +17,14 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import org.apache.poi.ss.usermodel.HorizontalAlignment
+import java.io.File
+import java.time.format.DateTimeFormatter
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 class MonthReport(
     private val fio: String,
     private val service: Long,
-    private val date: LocalDateTime,
     private val userId: Long,
 ) {
 
@@ -40,6 +33,10 @@ class MonthReport(
 
         if (times.isEmpty() && payments.isEmpty()) {
             return null
+        }
+
+        val clients = times.associate {
+            it.clientId to ClientMapper.findById(it.clientId)
         }
 
         val dateTime = times.first().dateTime
@@ -51,7 +48,7 @@ class MonthReport(
         val fioToTimes: Multimap<Client, Service> =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         times.forEach { service ->
-            ClientMapper.findById(service.clientId)?.let { client ->
+            clients[service.clientId]?.let { client ->
                 fioToTimes.put(client, service)
             }
         }
@@ -61,156 +58,159 @@ class MonthReport(
 
         val i = AtomicInteger(1)
         val comparator: Comparator<Client> =
-            getComparator(ClientMapper.findById(times.first().clientId)!!)
+            getComparator(clients.values.first()!!)
 
-        return excel(fio, serviceName, date) {
-                sheet("отчет") {
-                    title("Отчет по оплате и посещаемости занятий по $serviceName", 6)
-                    title("Преподаватель: $fio", 6)
-                    title(
-                        "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
-                        6,
-                    )
-                    row {
-                        cell("№")
-                        cell("ФИО ${ConfigMapper.clientName()}")
-                        ClientMapper.findById(times.first().clientId)?.let {
-                            it.properties
-                                .map { it.name }
-                                .filter { ConfigMapper.includeInReport().contains(it) }
-                                .forEach { cell(it) }
-                        }
-                        cell("посетил индивидуально")
-                        cell("посетил групповые")
-                        cell("оплата")
-                        cell("Итого")
-                        cell("Даты посещений")
+        return excel {
+            sheet("отчет") {
+                title("Отчет по оплате и посещаемости занятий по $serviceName", 6)
+                title("Преподаватель: $fio", 6)
+                title(
+                    "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
+                    6,
+                )
+                row {
+                    cell("№")
+                    cell("ФИО ${ConfigMapper.clientName()}")
+                    clients[times.first().clientId]?.let {
+                        it.properties
+                            .map { it.name }
+                            .filter { ConfigMapper.includeInReport().contains(it) }
+                            .forEach { cell(it) }
                     }
-
-                    fioToTimes
-                        .asMap()
-                        .toSortedMap<Client, Collection<Service>>(comparator)
-                        .forEach { (client, fioTimes) ->
-                            val individual = fioTimes.count { id2times[it.id].isIndividual() }
-                            val group = fioTimes.count { id2times[it.id].isGroup() }
-
-                            totalIndividual.addAndGet(individual)
-                            totalGroup.addAndGet(group)
-
-                            val dates = linkedMapOf<String, Int>()
-                            fioTimes
-                                .sortedBy { it.dateTime }
-                                .forEach { service ->
-                                    val key = service.dateTime.formatDate()
-                                    dates[key] = dates.getOrDefault(key, 0) + 1
-                                }
-
-                            val datesStr =
-                                dates.entries.joinToString(",") { "${it.key}(${it.value})" }
-
-                            row {
-                                cell(i.getAndIncrement())
-                                cell(client.fio(), HorizontalAlignment.LEFT)
-                                client.properties
-                                    .filter { ConfigMapper.includeInReport().contains(it.name) }
-                                    .map { cell(it.value ?: "") }
-                                cell(individual)
-                                cell(group)
-                                cell(
-                                    PaymentMapper.getPaymentsSumByClient(
-                                        userId,
-                                        fioTimes.first().serviceId,
-                                        client.id!!,
-                                        date,
-                                    )
-                                )
-                                emptyCell()
-                                cell(datesStr, HorizontalAlignment.LEFT)
-                            }
-                        }
-                    row {
-                        emptyCell()
-                        cell("Итого")
-                        emptyCell()
-                        cell(totalIndividual)
-                        cell(totalGroup)
-                        cell(
-                            PaymentMapper.getPaymentsSum(
-                                userId,
-                                times.first().serviceId,
-                                date,
-                            )
-                        )
-                    }
+                    cell("посетил индивидуально")
+                    cell("посетил групповые")
+                    cell("оплата")
+                    cell("Итого")
+                    cell("Даты посещений")
                 }
-                sheet("Журнал занятий") {
-                    title("Журнал занятий по $serviceName", 3)
-                    title("Преподаватель: $fio", 3)
-                    title(
-                        "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
-                        3,
-                    )
-                    row {
-                        cell("ученик")
-                        cell("Дата")
-                        cell("Сумма")
-                        cell("Принудительно групповое")
-                    }
-                    times
-                        .sortedByDescending { it.dateTime }
-                        .groupBy { it.id }
-                        .forEach { id, services ->
-                            val fios =
-                                if (services.size == 1) {
-                                    "      " +
-                                        ClientMapper.findById(services.first().clientId)!!.fio()
-                                } else {
-                                    val i = AtomicInteger(1)
-                                    services
-                                        .map {
-                                            "${i.getAndAdd(1)} - ${ClientMapper.findById(it.clientId)!!.fio()}"
-                                        }
-                                        .joinToString("\n")
-                                }
-                            row {
-                                cell(fios, HorizontalAlignment.LEFT)
-                                cell(services.first().dateTime.formatDateTime())
-                                cell(services.first().amount)
-                                if (services.size == 1) {
-                                    cell(services.first().forceGroup.print())
-                                }
+
+                fioToTimes
+                    .asMap()
+                    .toSortedMap<Client, Collection<Service>>(comparator)
+                    .forEach { (client, fioTimes) ->
+                        val individual = fioTimes.count { id2times[it.id].isIndividual() }
+                        val group = fioTimes.count { id2times[it.id].isGroup() }
+
+                        totalIndividual.addAndGet(individual)
+                        totalGroup.addAndGet(group)
+
+                        val dates = linkedMapOf<String, Int>()
+                        fioTimes
+                            .sortedBy { it.dateTime }
+                            .forEach { service ->
+                                val key = service.dateTime.formatDate()
+                                dates[key] = dates.getOrDefault(key, 0) + 1
                             }
-                        }
-                }
-                sheet("Журнал оплаты") {
-                    title("Журнал оплаты по $serviceName", 3)
-                    title("Преподаватель: $fio", 3)
-                    title(
-                        "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
-                        3,
-                    )
-                    row {
-                        cell("ученик")
-                        cell("Дата")
-                        cell("Сумма")
-                        cell("Предмет")
-                        cell("фото")
-                    }
-                    payments.forEach { payment ->
+
+                        val datesStr =
+                            dates.entries.joinToString(",") { "${it.key}(${it.value})" }
+
                         row {
-                            cell(ClientMapper.findById(payment.clientId)!!.fio(), HorizontalAlignment.LEFT)
-                            cell(payment.dateTime.formatDateTime())
-                            cell(payment.amount)
-                            cell(ServicesMapper.getNameById(payment.serviceId))
-                            MinioService.getLink(payment.properties.find("фото отчетности").value!!).onSuccess {
-                                cell(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl))
-                            }
+                            cell(i.getAndIncrement())
+                            cell(client.fio(), HorizontalAlignment.LEFT)
+                            client.properties
+                                .filter { ConfigMapper.includeInReport().contains(it.name) }
+                                .map { cell(it.value ?: "") }
+                            cell(individual)
+                            cell(group)
+                            cell(
+                                PaymentMapper.getPaymentsSumByClient(
+                                    userId,
+                                    fioTimes.first().serviceId,
+                                    client.id!!,
+                                    dateTime,
+                                )
+                            )
+                            emptyCell()
+                            cell(datesStr, HorizontalAlignment.LEFT)
                         }
                     }
-
+                row {
+                    emptyCell()
+                    cell("Итого")
+                    emptyCell()
+                    cell(totalIndividual)
+                    cell(totalGroup)
+                    cell(
+                        PaymentMapper.getPaymentsSum(
+                            userId,
+                            times.first().serviceId,
+                            dateTime,
+                        )
+                    )
                 }
             }
-            .build()
+            sheet("Журнал занятий") {
+                title("Журнал занятий по $serviceName", 3)
+                title("Преподаватель: $fio", 3)
+                title(
+                    "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
+                    3,
+                )
+                row {
+                    cell("ученик")
+                    cell("Дата")
+                    cell("Сумма")
+                    cell("Принудительно групповое")
+                }
+                times
+                    .sortedByDescending { it.dateTime }
+                    .groupBy { it.id }
+                    .forEach { id, services ->
+                        val fios =
+                            if (services.size == 1) {
+                                "      " +
+                                        clients[services.first().clientId]!!.fio()
+                            } else {
+                                val i = AtomicInteger(1)
+                                services
+                                    .map {
+                                        "${i.getAndAdd(1)} - ${clients[it.clientId]!!.fio()}"
+                                    }
+                                    .joinToString("\n")
+                            }
+                        row {
+                            cell(fios, HorizontalAlignment.LEFT)
+                            cell(services.first().dateTime.formatDateTime())
+                            cell(services.first().amount)
+                            if (services.size == 1) {
+                                cell(services.first().forceGroup.print())
+                            }
+                        }
+                    }
+            }
+            sheet("Журнал оплаты") {
+                title("Журнал оплаты по $serviceName", 4)
+                title("Преподаватель: $fio", 4)
+                title(
+                    "${dateTime.format(DateTimeFormatter.ofPattern("MMMM", Locale.of("ru")))} ${dateTime.year}",
+                    4,
+                )
+                row {
+                    cell("ученик")
+                    cell("Дата")
+                    cell("Сумма")
+                    cell("Предмет")
+                    cell("фото")
+                }
+                payments.forEach { payment ->
+                    row {
+                        cell(clients[payment.clientId]!!.fio(), HorizontalAlignment.LEFT)
+                        cell(payment.dateTime.formatDateTime())
+                        cell(payment.amount)
+                        cell(ServicesMapper.getNameById(payment.serviceId))
+                        MinioService.getLink(payment.properties.find("фото отчетности").value!!).onSuccess {
+                            cellHyperlink(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl), "отчет")
+                        }
+                    }
+                }
+
+                emtpyRow()
+                title("Примечание: ссылки на отчеты действительны в течение одного часа", 4)
+
+            }
+        }
+            .build("$fio - $serviceName ${dateTime.format(DateTimeFormatter.ofPattern("MMMM"))} ${dateTime.year}.xlsx")
     }
 
     private fun getComparator(client: Client): Comparator<Client> {
