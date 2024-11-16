@@ -27,9 +27,7 @@ fun validateAmount(value: String): Either<String, Int> {
 }
 
 fun validateService(serviceName: String): Either<String, String> {
-    val services = ServicesMapper.findAll()
-    val servicesNames = services.map { it.name }
-    return if (servicesNames.contains(serviceName)) {
+    return if (ServicesMapper.exists(serviceName)) {
         Either.Right(serviceName)
     } else {
         Either.Left("Выберите услугу из списка")

@@ -115,8 +115,6 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     }
 
     suspend fun service(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
-        val userId = message.userId()
-        val znatokiUser = UserMapper.findById(userId)!!
         return validateService(message.content.asTextedInput()!!.text!!)
             .mapLeft(mapError(message))
             .map { service ->
@@ -135,8 +133,6 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
         message: CommonMessage<MessageContent>,
         builder: PaymentBuilder,
     ): Boolean {
-        val userId = message.userId()
-        val znatokiUser = UserMapper.findById(userId)!!
         return validateAmount(message.content.asTextedInput()!!.text!!)
             .mapLeft(mapError(message))
             .map { amount ->
@@ -176,8 +172,6 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
-        val userId = message.userId()
-
         if (ConfigMapper.paymentProperties().isEmpty()) return true
 
         return builder.propertiesBuilder!!.process(message) { properties ->
@@ -238,7 +232,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
                 #оплата
                 Время: ${payment.dateTime.formatDateTime()}
                 Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
-                Предмет: ${ServicesMapper.getNameById(payment.serviceId!!)}
+                Предмет: ${ServicesMapper.getNameById(payment.serviceId)}
                 Оплата: ${payment.amount}
                 Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
                 ${payment.properties.print()}

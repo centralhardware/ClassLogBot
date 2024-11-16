@@ -2,16 +2,16 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.s
 
 import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCallbackQuery
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
-import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
-import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
-suspend fun userInfoCallback(query: DataCallbackQuery) {
-    ClientMapper.findById(query.data.replace("userInfoCallback", "").toInt())?.let { client ->
+suspend fun BehaviourContext.userInfoCallback() = onDataCallbackQuery(Regex("user_info\\d+\$")) {
+    ClientMapper.findById(it.data.replace("user_info", "").toInt())?.let { client ->
         Trace.save("getUserInfo", mapOf("id" to client.id.toString()))
         val info =
             client.getInfo(
@@ -19,6 +19,6 @@ suspend fun userInfoCallback(query: DataCallbackQuery) {
                     .mapNotNull { ServicesMapper.getNameById(it) }
                     .toList()
             )
-        bot.sendMessage(query.from, info, parseMode = MarkdownParseMode)
-    } ?: bot.sendMessage(query.from, "Пользователь не найден")
+        sendMessage(it.from, info, parseMode = MarkdownParseMode)
+    } ?: sendMessage(it.from, "Пользователь не найден")
 }

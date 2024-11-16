@@ -8,14 +8,13 @@ import dev.inmo.tgbotapi.types.InlineQueries.query.BaseInlineQuery
 import dev.inmo.tgbotapi.types.InlineQueryId
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicInteger
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import org.apache.commons.lang3.StringUtils
-import kotlin.coroutines.coroutineContext
+import java.util.concurrent.atomic.AtomicInteger
 
 suspend fun processInline(query: BaseInlineQuery) {
     val text = query.query

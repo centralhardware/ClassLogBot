@@ -25,7 +25,7 @@ fun Application.module() {
         route("/{...}") {
             handle {
                 val originalRequestUri = call.request.uri
-                val targetUrl = "http://10.168.0.34:9000" + originalRequestUri // Замените example.com на целевой URL
+                val targetUrl = "http://10.168.0.34:9000$originalRequestUri"
 
                 val requestBody = call.receiveChannel().toByteArray()
 
@@ -38,7 +38,7 @@ fun Application.module() {
                             }
                         }
                     }
-                    setBody(requestBody) // Передаем тело запроса
+                    setBody(requestBody)
                 }
 
                 call.respondBytes(

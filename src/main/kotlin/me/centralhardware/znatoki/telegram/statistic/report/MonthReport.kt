@@ -206,7 +206,7 @@ class MonthReport(
                     cell("Сумма")
                     cell("фото")
                 }
-                var total = 0;
+                var total = 0
                 payments.forEach { payment ->
                     total = total + payment.amount
                     row {

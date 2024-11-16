@@ -8,7 +8,6 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
-import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
@@ -41,14 +40,12 @@ suspend fun PropertiesBuilder.process(
 
             next()?.let { next ->
                 if (next.second.isNotEmpty()) {
-                    runBlocking {
-                        bot.send(
-                            message.chat,
-                            text = next.first,
-                            replyMarkup =
-                                replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
-                        )
-                    }
+                    bot.send(
+                        message.chat,
+                        text = next.first,
+                        replyMarkup =
+                            replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
+                    )
                 } else {
                     bot.sendTextMessage(
                         message.chat,

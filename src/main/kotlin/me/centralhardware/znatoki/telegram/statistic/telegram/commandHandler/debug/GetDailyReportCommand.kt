@@ -1,10 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.debug
 
-import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
-import dev.inmo.tgbotapi.types.message.content.TextContent
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommandWithArgs
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.report.getReport
 
-suspend fun dailyReportCommand(message: CommonMessage<TextContent>, args: Array<String>) {
+suspend fun BehaviourContext.dailyReportCommand() = onCommandWithArgs("dailyReport") { message, args ->
     getReport(args.first().toLong(), message.userId())
 }

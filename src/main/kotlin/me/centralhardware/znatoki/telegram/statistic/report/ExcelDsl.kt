@@ -56,7 +56,7 @@ class SheetDsl(private val sheet: Sheet) {
     }
 }
 
-class RowDsl(private val sheet: Sheet, private val rowIndex: Int) {
+class RowDsl(private val sheet: Sheet, rowIndex: Int) {
     private val styleCache = mutableMapOf<HorizontalAlignment, CellStyle>()
     private val row = sheet.createRow(rowIndex)
     private val i = AtomicInteger(0)

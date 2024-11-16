@@ -142,7 +142,7 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
             validateFio(text).mapLeft(mapError(message)).map {
                 val id = text.split(" ").first().toInt()
                 if (builder.clientIds.contains(id)) {
-                    runBlocking { bot.sendTextMessage(message.chat, "Данное ФИО уже добавлено") }
+                    bot.sendTextMessage(message.chat, "Данное ФИО уже добавлено")
                     return false
                 }
 
@@ -158,8 +158,6 @@ class TimeFsm(builder: ServiceBuilder) : Fsm<ServiceBuilder>(builder) {
         message: CommonMessage<MessageContent>,
         builder: ServiceBuilder,
     ): Boolean {
-        val userId = message.userId()
-        val znatokiUser = UserMapper.findById(userId)!!
         return validateAmount(message.text!!)
             .mapLeft(mapError(message))
             .map { amount ->

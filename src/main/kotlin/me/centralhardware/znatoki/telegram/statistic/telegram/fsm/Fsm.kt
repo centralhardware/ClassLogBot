@@ -30,9 +30,7 @@ abstract class Fsm<B : Builder>(private val builder: B) {
 
     abstract fun createFSM(): StateMachine
 
-    fun processEvent(message: CommonMessage<MessageContent>) = runBlocking {
-        stateMachine.processEvent(UpdateEvent, message)
-    }
+    suspend fun processEvent(message: CommonMessage<MessageContent>) = stateMachine.processEvent(UpdateEvent, message)
 
     suspend fun processState(
         t: TransitionParams<*>,

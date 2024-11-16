@@ -14,6 +14,7 @@ data class Payment(
     val clientId: Int,
     val amount: Int,
     val serviceId: Long,
+    val deleted: Boolean = false,
     val properties: List<Property> = ArrayList(),
 )
 
@@ -24,6 +25,7 @@ fun Row.parsePayment() = Payment(
     int("pupil_id"),
     int("amount"),
     long("services"),
+    boolean("is_deleted"),
     string("properties").toProperties()
 )
 

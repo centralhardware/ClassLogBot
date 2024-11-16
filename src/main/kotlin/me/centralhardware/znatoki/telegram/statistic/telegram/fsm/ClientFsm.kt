@@ -61,8 +61,6 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
         message: CommonMessage<MessageContent>,
         builder: ClientBuilder,
     ): Boolean {
-        val chatId = message.userId()
-        val telegramUser = UserMapper.findById(chatId)!!
         val words = message.content.asTextContent()!!.text.split(" ")
         if (words.size !in 2..3) {
             bot.sendTextMessage(

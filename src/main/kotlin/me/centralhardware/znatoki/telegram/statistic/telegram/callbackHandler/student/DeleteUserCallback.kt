@@ -2,13 +2,13 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.s
 
 import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
-import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
-import me.centralhardware.znatoki.telegram.statistic.bot
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCallbackQuery
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 
-suspend fun deleteUserCallback(query: DataCallbackQuery) {
-    val id = query.data.replace("delete_user", "").toInt()
+suspend fun BehaviourContext.deleteUserCallback() = onDataCallbackQuery(Regex("delete_user\\d+\$")) {
+    val id = it.data.replace("delete_user", "").toInt()
     Trace.save("deleteUser", mapOf("id" to id.toString()))
     ClientMapper.delete(id)
-    bot.sendMessage(query.from, "Ученик удален")
+    sendMessage(it.from, "Ученик удален")
 }

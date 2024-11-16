@@ -4,21 +4,20 @@ import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
 import dev.inmo.tgbotapi.extensions.api.send.sendActionTyping
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.IdChatIdentifier
 import dev.inmo.tgbotapi.types.chat.PreviewChat
-import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
-import dev.inmo.tgbotapi.types.message.content.TextContent
-import java.io.File
-import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
+import java.io.File
 
-private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: (Long) -> List<File>) {
+private suspend fun createReport(userId: Long, chat: PreviewChat, getTime: suspend (Long) -> List<File>) {
     if (Storage.contain(userId)) {
         return
     }
@@ -39,20 +38,20 @@ suspend fun send(id: IdChatIdentifier, file: File) {
     file.delete()
 }
 
-suspend fun reportCommand(message: CommonMessage<TextContent>) {
+suspend fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     Trace.save("report", mapOf())
-    bot.sendActionTyping(message.chat)
-    createReport(message.userId(), message.chat) {
-        runBlocking { bot.sendActionUploadDocument(message.chat) }
-        ReportService.getReportsCurrent(it)
+    sendActionTyping(it.chat)
+    createReport(it.userId(), it.chat) { id ->
+        sendActionUploadDocument(it.chat)
+        ReportService.getReportsCurrent(id)
     }
 }
 
-suspend fun reportPreviousCommand(message: CommonMessage<TextContent>) {
+suspend fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
     Trace.save("reportPrevious", mapOf())
-    bot.sendActionTyping(message.chat)
-    createReport(message.userId(), message.chat) {
-        runBlocking { bot.sendActionUploadDocument(message.chat) }
-        ReportService.getReportPrevious(it)
+    sendActionTyping(it.chat)
+    createReport(it.userId(), it.chat) { id ->
+        sendActionUploadDocument(it.chat)
+        ReportService.getReportPrevious(id)
     }
 }

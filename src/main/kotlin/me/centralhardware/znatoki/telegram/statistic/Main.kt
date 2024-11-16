@@ -51,98 +51,72 @@ suspend fun main() {
     ClientService.init()
     bot =
         longPolling {
-                setMyCommands(
-                    BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
-                    BotCommand("report", "Отчет за текущий месяц"),
-                    BotCommand("reportprevious", "Отчет за предыдущий месяц"),
-                    BotCommand("addpayment", "Ведомость оплаты"),
-                    BotCommand("reset", "Сбросить состояние"),
-                )
+            setMyCommands(
+                BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
+                BotCommand("report", "Отчет за текущий месяц"),
+                BotCommand("reportprevious", "Отчет за предыдущий месяц"),
+                BotCommand("addpayment", "Ведомость оплаты"),
+                BotCommand("reset", "Сбросить состояние"),
+            )
 
-                onCommand("start") { startCommand(it) }
-                onCommand("reset") { resetCommand(it) }
+            startCommand()
+            resetCommand()
 
-                onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
+            onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
 
-                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                    updatesUpstreamFlow =
-                        allUpdatesFlow.filter { UserMapper.hasClientPermission(it.userId()) }
-                ) {
-                    onCommand(Regex("addPupil|addpupil")) { addClientCommand(it) }
-                }
-
-                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                    updatesUpstreamFlow =
-                        allUpdatesFlow.filter { UserMapper.hasPaymentPermission(it.userId()) }
-                ) {
-                    onCommand(Regex("addPayment|addpayment")) { addPaymentCommand(it) }
-                }
-
-                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                    updatesUpstreamFlow =
-                        allUpdatesFlow.filter { UserMapper.hasTimePermission(it.userId()) }
-                ) {
-                    onCommand(Regex("addTime|addtime")) { addTimeCommand(it) }
-                }
-
-                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                    updatesUpstreamFlow =
-                        allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }
-                ) {
-                    onCommandWithArgs("i") { message, args -> userInfoCommand(message, args) }
-                    onCommandWithArgs("s") { message, args -> searchCommand(message, args) }
-                    onCommand("report") { reportCommand(it) }
-                    onCommand(Regex("reportPrevious|reportprevious")) { reportPreviousCommand(it) }
-
-                    onDataCallbackQuery(Regex("user_info\\d+\$")) { userInfoCallback(it) }
-
-                    onBaseInlineQuery { processInline(it) }
-
-                    onDataCallbackQuery(
-                        Regex(
-                            "forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                        )
-                    ) {
-                        forceGroupAdd(it)
-                    }
-                    onDataCallbackQuery(
-                        Regex(
-                            "forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                        )
-                    ) {
-                        forceGroupRemove(it)
-                    }
-                }
-
-                createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                    updatesUpstreamFlow =
-                        allUpdatesFlow.filter { UserMapper.hasAdminPermission(it.userId()) }
-                ) {
-                    onCommandWithArgs("dailyReport") { message, args ->
-                        dailyReportCommand(message, args)
-                    }
-
-                    onDataCallbackQuery(Regex("delete_user\\d+\$")) { deleteUserCallback(it) }
-                    onDataCallbackQuery(
-                        Regex(
-                            "timeRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                        )
-                    ) {
-                        timeRestoreCallback(it)
-                    }
-                    onDataCallbackQuery(
-                        Regex(
-                            "timeDelete-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                        )
-                    ) {
-                        timeDeleteCallback(it)
-                    }
-                    onDataCallbackQuery(Regex("paymentRestore-\\d+\$")) {
-                        paymentRestoreCallback(it)
-                    }
-                    onDataCallbackQuery(Regex("paymentDelete-\\d+\$")) { paymentDeleteCallback(it) }
-                }
+            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                updatesUpstreamFlow =
+                    allUpdatesFlow.filter { UserMapper.hasClientPermission(it.userId()) }
+            ) {
+                addClientCommand()
             }
+
+            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                updatesUpstreamFlow =
+                    allUpdatesFlow.filter { UserMapper.hasPaymentPermission(it.userId()) }
+            ) {
+                addPaymentCommand()
+            }
+
+            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                updatesUpstreamFlow =
+                    allUpdatesFlow.filter { UserMapper.hasTimePermission(it.userId()) }
+            ) {
+                addTimeCommand()
+            }
+
+            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                updatesUpstreamFlow =
+                    allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }
+            ) {
+                userInfoCommand()
+                searchCommand()
+                reportCommand()
+                reportPreviousCommand()
+
+                userInfoCallback()
+
+                onBaseInlineQuery { processInline(it) }
+
+                forceGroupAdd()
+                forceGroupRemove()
+            }
+
+            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+                updatesUpstreamFlow =
+                    allUpdatesFlow.filter { UserMapper.hasAdminPermission(it.userId()) }
+            ) {
+                dailyReportCommand()
+
+                deleteUserCallback()
+
+                timeRestoreCallback()
+                timeDeleteCallback()
+
+                paymentRestoreCallback()
+                paymentDeleteCallback()
+            }
+        }
             .first
     coroutineScope {
         launch { monthReport() }

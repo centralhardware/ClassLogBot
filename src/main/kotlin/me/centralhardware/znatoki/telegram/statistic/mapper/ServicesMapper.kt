@@ -2,22 +2,23 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
-import me.centralhardware.znatoki.telegram.statistic.entity.Services
-import me.centralhardware.znatoki.telegram.statistic.entity.parseServices
 
 object ServicesMapper {
 
-    fun findAll(): List<Services> =
+    fun exists(name: String): Boolean =
         session.run(
             queryOf(
                     """
-            SELECT *
-            FROM  services
-            """
+            SELECT exists(
+                SELECT *
+                FROM  services
+                WHERE name = :name
+            ) as exists
+            """, mapOf("name" to name)
                 )
-                .map { it.parseServices() }
-                .asList
-        )
+                .map { it.boolean("exists") }
+                .asSingle
+        ) ?: false
 
     fun getServiceId(services: String): Long? =
         session.run(

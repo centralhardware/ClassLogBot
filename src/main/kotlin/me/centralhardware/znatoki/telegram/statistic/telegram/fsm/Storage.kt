@@ -2,8 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
-import kotlinx.coroutines.runBlocking
-import me.centralhardware.znatoki.telegram.statistic.entity.*
+import me.centralhardware.znatoki.telegram.statistic.entity.Builder
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 
 object Storage {
@@ -14,8 +13,8 @@ object Storage {
         fsms[chatId] = fsm as Fsm<Builder>
     }
 
-    fun process(message: CommonMessage<MessageContent>) =
-        fsms[message.userId()]?.let { runBlocking { it.processEvent(message) } }
+    suspend fun process(message: CommonMessage<MessageContent>) =
+        fsms[message.userId()]?.processEvent(message)
 
     fun remove(chatId: Long) = fsms.remove(chatId)
 
