@@ -9,12 +9,14 @@ import io.minio.MinioClient
 import io.minio.RemoveObjectArgs
 import io.minio.UploadObjectArgs
 import io.minio.http.Method
+import korlibs.time.seconds
 import java.io.File
 import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util.*
 import me.centralhardware.znatoki.telegram.statistic.Config
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
 object MinioService {
 
@@ -60,13 +62,13 @@ object MinioService {
             .input
     }
 
-    fun getLink(file: String): Result<String> = runCatching {
+    fun getLink(file: String, expire: Duration): Result<String> = runCatching {
         minioClient.getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.GET)
                 .bucket(Config.Minio.bucket)
                 .`object`(file)
-                .expiry(1, TimeUnit.HOURS)
+                .expiry(expire.seconds.toInt(), TimeUnit.SECONDS)
                 .build()
         )
     }

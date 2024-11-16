@@ -3,6 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic.report
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
+import korlibs.time.days
+import korlibs.time.hours
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.eav.types.NumberType
@@ -152,7 +154,9 @@ class MonthReport(
                     cell("ученик")
                     cell("Сумма")
                     cell("Принудительно групповое")
+                    cell("Фото")
                 }
+                var total = 0
                 times
                     .sortedByDescending { it.dateTime }
                     .groupBy { it.id }
@@ -167,15 +171,27 @@ class MonthReport(
                                     "${i.getAndAdd(1)} - ${clients[it.clientId]!!.fio()}"
                                 }
                             }
+                        total = total + services.first().amount
                         row {
                             cell(services.first().dateTime.formatDateTime())
                             cell(fios, HorizontalAlignment.LEFT)
                             cell(services.first().amount)
                             if (services.size == 1) {
                                 cell(services.first().forceGroup.print())
+                            } else {
+                                emptyCell()
                             }
+                            MinioService.getLink(services.first().properties.find("фото отчетности").value!!, 7.days)
+                                .onSuccess {
+                                    cellHyperlink(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl), "отчет")
+                                }
                         }
                     }
+                row {
+                    cell("итого")
+                    emptyCell()
+                    cell(total)
+                }
             }
             sheet("Журнал оплаты") {
                 title("Журнал оплаты по $serviceName", 4)
@@ -188,22 +204,27 @@ class MonthReport(
                     cell("Дата")
                     cell("ученик")
                     cell("Сумма")
-                    cell("Предмет")
                     cell("фото")
                 }
+                var total = 0;
                 payments.forEach { payment ->
+                    total = total + payment.amount
                     row {
                         cell(payment.dateTime.formatDateTime())
                         cell(clients[payment.clientId]!!.fio(), HorizontalAlignment.LEFT)
                         cell(payment.amount)
-                        cell(ServicesMapper.getNameById(payment.serviceId))
-                        MinioService.getLink(payment.properties.find("фото отчетности").value!!).onSuccess {
+                        MinioService.getLink(payment.properties.find("фото отчетности").value!!, 3.hours).onSuccess {
                             cellHyperlink(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl), "отчет")
                         }
                     }
                 }
+                row {
+                    cell("итого")
+                    emptyCell()
+                    cell(total)
+                }
 
-                title("Примечание: ссылки на отчеты действительны в течение одного часа", 4)
+                title("Примечание: ссылки на отчеты действительны в течение трех часов", 4)
 
             }
         }
