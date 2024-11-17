@@ -3,12 +3,12 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.warning
+import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import kotlin.reflect.KSuspendFunction2
 import kotlinx.coroutines.runBlocking
-import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import ru.nsk.kstatemachine.event.Event
@@ -20,7 +20,7 @@ import ru.nsk.kstatemachine.transition.TransitionParams
 
 object UpdateEvent : Event
 
-abstract class Fsm<B : Builder>(private val builder: B) {
+abstract class Fsm<B : Builder>(private val builder: B, val bot: TelegramBot) {
 
     private val stateMachine: StateMachine
 
@@ -59,12 +59,12 @@ abstract class Fsm<B : Builder>(private val builder: B) {
     ) = block.invoke(t.arg(), builder)
 
     fun removeFromStorage(t: TransitionParams<*>) = Storage.remove(t.arg().userId())
+
+    fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error ->
+        runBlocking { bot.sendTextMessage(message.chat, error) }
+    }
 }
 
 val fsmLog = StateMachine.Logger { lazyMessage -> KSLog.info(lazyMessage()) }
-
-fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error ->
-    runBlocking { bot.sendTextMessage(message.chat, error) }
-}
 
 fun TransitionParams<*>.arg() = this.argument as CommonMessage<MessageContent>

@@ -15,6 +15,6 @@ suspend fun BehaviourContext.addClientCommand() = onCommand(Regex("addPupil|addp
         bot.sendMessage(it.chat, "Сначала сохраните текущую запись")
         return@onCommand
     }
-    Storage.create(it.userId(), ClientFsm(startClientFsm(it)))
+    Storage.create(it.userId(), ClientFsm(startClientFsm(it), this))
 }
 

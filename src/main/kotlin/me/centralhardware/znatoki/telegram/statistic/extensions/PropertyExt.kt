@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.extensions
 
+import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
@@ -8,7 +9,6 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
-import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.eav.types.Photo
@@ -30,6 +30,7 @@ fun List<Property>.print(): String {
 
 suspend fun PropertiesBuilder.process(
     message: CommonMessage<MessageContent>,
+    bot: TelegramBot,
     onFinish: (List<Property>) -> Unit,
 ): Boolean {
     var isFinished = false

@@ -17,7 +17,7 @@ suspend fun BehaviourContext.addTimeCommand() = onCommand(Regex("addTime|addtime
 
     Trace.save("addTime", mapOf())
     val builder = startTimeFsm(it)
-    val fsm = TimeFsm(builder)
+    val fsm = TimeFsm(builder, this)
     Storage.create(it.userId(), fsm)
     if (builder.serviceId != null) {
         Storage.process(it)

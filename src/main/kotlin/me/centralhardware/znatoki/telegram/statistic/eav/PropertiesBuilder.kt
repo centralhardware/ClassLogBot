@@ -43,7 +43,7 @@ class PropertiesBuilder(propertyDefs: MutableList<PropertyDef>) {
         }
     }
 
-    fun setProperty(value: CommonMessage<MessageContent>): Boolean {
+    suspend fun setProperty(value: CommonMessage<MessageContent>): Boolean {
         return if (
             value.content is TextContent && value.content.asTextContent()!!.text == "/skip"
         ) {

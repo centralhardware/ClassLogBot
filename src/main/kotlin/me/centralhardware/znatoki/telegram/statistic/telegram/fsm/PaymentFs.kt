@@ -1,9 +1,11 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import dev.inmo.tgbotapi.Trace
+import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.utils.asTextedInput
 import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
@@ -50,7 +52,7 @@ sealed class PaymentStates : DefaultState() {
     object Confirm : PaymentStates(), FinalState
 }
 
-class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
+class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder>(builder, bot) {
     override fun createFSM(): StateMachine =
         createStdLibStateMachine(
             "payment",
@@ -174,7 +176,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     suspend fun property(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
         if (ConfigMapper.paymentProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder!!.process(message) { properties ->
+        return builder.propertiesBuilder!!.process(message, bot) { properties ->
             builder.properties = properties
             runBlocking {
                 bot.sendTextMessage(
@@ -225,7 +227,7 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
 
     private suspend fun sendLog(payment: Payment, paymentId: Int, userId: Long) {
         val keyboard = inlineKeyboard {
-            row { dataButton("удалить", "paymentDelete-${paymentId}") }
+            row { dataButton("Удалить", "paymentDelete-${paymentId}") }
         }
         val text =
             """
@@ -269,8 +271,8 @@ class PaymentFsm(builder: PaymentBuilder) : Fsm<PaymentBuilder>(builder) {
     }
 }
 
-suspend fun startPaymentFsm(message: CommonMessage<MessageContent>): PaymentBuilder {
-    bot.sendTextMessage(
+suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageContent>): PaymentBuilder {
+    sendTextMessage(
         message.chat,
         "Введите фио. \nнажмите для поиска фио",
         replyMarkup = switchToInlineKeyboard,

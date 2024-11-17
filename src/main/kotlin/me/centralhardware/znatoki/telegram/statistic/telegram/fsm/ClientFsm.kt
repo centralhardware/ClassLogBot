@@ -1,8 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import dev.inmo.tgbotapi.Trace
+import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.utils.asTextContent
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
@@ -11,7 +13,6 @@ import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
-import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
@@ -35,7 +36,7 @@ sealed class ClientState : DefaultState() {
     object Finish : ClientState(), FinalState
 }
 
-class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
+class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(builder, bot) {
     override fun createFSM(): StateMachine =
         createStdLibStateMachine(
             "client",
@@ -113,7 +114,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
         if (ConfigMapper.clientProperties().isEmpty()) return true
 
-        return builder.propertiesBuilder!!.process(message) {
+        return builder.propertiesBuilder!!.process(message, bot) {
             runBlocking { finish(it, message, builder) }
         }
     }
@@ -139,12 +140,12 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
                 }
             ),
         )
-        sendLog(client, message.userId())
+        sendLog(client)
         bot.sendTextMessage(message.chat, "Создание ученика закончено")
         Trace.save("commitClient", mapOf("id" to client.id.toString()))
     }
 
-    private suspend fun sendLog(client: Client, chatId: Long) {
+    private suspend fun sendLog(client: Client) {
         bot.send(
             ConfigMapper.logChat(),
             text =
@@ -162,7 +163,7 @@ class ClientFsm(builder: ClientBuilder) : Fsm<ClientBuilder>(builder) {
     }
 }
 
-suspend fun startClientFsm(message: CommonMessage<MessageContent>): ClientBuilder {
-    bot.sendTextMessage(message.chat, "Введите ФИО. В формате: имя фамилия отчество.")
+suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageContent>): ClientBuilder {
+    sendTextMessage(message.chat, "Введите ФИО. В формате: имя фамилия отчество.")
     return ClientBuilder()
 }

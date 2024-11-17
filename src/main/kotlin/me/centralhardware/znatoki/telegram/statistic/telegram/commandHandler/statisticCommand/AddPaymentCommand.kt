@@ -16,5 +16,5 @@ suspend fun BehaviourContext.addPaymentCommand() = onCommand(Regex("addPayment|a
     }
 
     Trace.save("addPayment", mapOf())
-    Storage.create(it.userId(), PaymentFsm(startPaymentFsm(it)))
+    Storage.create(it.userId(), PaymentFsm(startPaymentFsm(it), this))
 }

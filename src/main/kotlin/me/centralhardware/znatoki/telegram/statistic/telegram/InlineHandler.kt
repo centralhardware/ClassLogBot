@@ -2,13 +2,13 @@ package me.centralhardware.znatoki.telegram.statistic.telegram
 
 import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.answers.answerInlineQuery
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onBaseInlineQuery
 import dev.inmo.tgbotapi.types.InlineQueries.InlineQueryResult.InlineQueryResultArticle
 import dev.inmo.tgbotapi.types.InlineQueries.InputMessageContent.InputTextMessageContent
-import dev.inmo.tgbotapi.types.InlineQueries.query.BaseInlineQuery
 import dev.inmo.tgbotapi.types.InlineQueryId
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import me.centralhardware.znatoki.telegram.statistic.bot
 import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
@@ -16,9 +16,9 @@ import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import org.apache.commons.lang3.StringUtils
 import java.util.concurrent.atomic.AtomicInteger
 
-suspend fun processInline(query: BaseInlineQuery) {
-    val text = query.query
-    if (StringUtils.isBlank(text)) return
+suspend fun BehaviourContext.processInline() = onBaseInlineQuery {
+    val text = it.query
+    if (StringUtils.isBlank(text)) return@onBaseInlineQuery
 
     Trace.save("searchUserInline", mapOf("query" to text))
 
@@ -44,7 +44,7 @@ suspend fun processInline(query: BaseInlineQuery) {
         articles.add(noResultsArticle)
     }
 
-    bot.answerInlineQuery(query, results = articles, isPersonal = true, cachedTime = 0)
+    answerInlineQuery(it, results = articles, isPersonal = true, cachedTime = 0)
     coroutineScope {
         launch {
             clients.forEach { client ->

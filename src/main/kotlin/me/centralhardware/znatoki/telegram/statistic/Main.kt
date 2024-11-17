@@ -2,15 +2,13 @@ package me.centralhardware.znatoki.telegram.statistic
 
 import dev.inmo.micro_utils.common.Warning
 import dev.inmo.tgbotapi.AppConfig
-import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
-import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.*
+import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
 import dev.inmo.tgbotapi.longPolling
 import dev.inmo.tgbotapi.types.BotCommand
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import kotlinx.coroutines.coroutineScope
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
@@ -18,12 +16,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.forceGroupAdd
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.forceGroupRemove
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentDeleteCallback
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.paymentRestoreCallback
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.timeDeleteCallback
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.timeRestoreCallback
+import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.deleteUserCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.userInfoCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.debug.dailyReportCommand
@@ -39,8 +32,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
-lateinit var bot: TelegramBot
-
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
 suspend fun main() {
@@ -49,77 +40,78 @@ suspend fun main() {
     }.start(wait = false)
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
-    bot =
-        longPolling {
-            setMyCommands(
-                BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
-                BotCommand("report", "Отчет за текущий месяц"),
-                BotCommand("reportprevious", "Отчет за предыдущий месяц"),
-                BotCommand("addpayment", "Ведомость оплаты"),
-                BotCommand("reset", "Сбросить состояние"),
-            )
+    longPolling {
+        setMyCommands(
+            BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
+            BotCommand("report", "Отчет за текущий месяц"),
+            BotCommand("reportprevious", "Отчет за предыдущий месяц"),
+            BotCommand("addpayment", "Ведомость оплаты"),
+            BotCommand("reset", "Сбросить состояние"),
+        )
 
-            startCommand()
-            resetCommand()
+        startCommand()
+        resetCommand()
 
-            onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
+        onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
 
-            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                updatesUpstreamFlow =
-                    allUpdatesFlow.filter { UserMapper.hasClientPermission(it.userId()) }
-            ) {
-                addClientCommand()
-            }
-
-            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                updatesUpstreamFlow =
-                    allUpdatesFlow.filter { UserMapper.hasPaymentPermission(it.userId()) }
-            ) {
-                addPaymentCommand()
-            }
-
-            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                updatesUpstreamFlow =
-                    allUpdatesFlow.filter { UserMapper.hasTimePermission(it.userId()) }
-            ) {
-                addTimeCommand()
-            }
-
-            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                updatesUpstreamFlow =
-                    allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }
-            ) {
-                userInfoCommand()
-                searchCommand()
-                reportCommand()
-                reportPreviousCommand()
-
-                userInfoCallback()
-
-                onBaseInlineQuery { processInline(it) }
-
-                forceGroupAdd()
-                forceGroupRemove()
-            }
-
-            createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-                updatesUpstreamFlow =
-                    allUpdatesFlow.filter { UserMapper.hasAdminPermission(it.userId()) }
-            ) {
-                dailyReportCommand()
-
-                deleteUserCallback()
-
-                timeRestoreCallback()
-                timeDeleteCallback()
-
-                paymentRestoreCallback()
-                paymentDeleteCallback()
-            }
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+            updatesUpstreamFlow =
+                allUpdatesFlow.filter { UserMapper.hasClientPermission(it.userId()) }
+        ) {
+            addClientCommand()
         }
-            .first
-    coroutineScope {
-        launch { monthReport() }
-        launch { dailyReport() }
-    }
+
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+            updatesUpstreamFlow =
+                allUpdatesFlow.filter { UserMapper.hasPaymentPermission(it.userId()) }
+        ) {
+            addPaymentCommand()
+        }
+
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+            updatesUpstreamFlow =
+                allUpdatesFlow.filter { UserMapper.hasTimePermission(it.userId()) }
+        ) {
+            addTimeCommand()
+        }
+
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+            updatesUpstreamFlow =
+                allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }
+        ) {
+            userInfoCommand()
+            searchCommand()
+            reportCommand()
+            reportPreviousCommand()
+
+            userInfoCallback()
+
+            processInline()
+
+            forceGroupAdd()
+            forceGroupRemove()
+        }
+
+        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+            updatesUpstreamFlow =
+                allUpdatesFlow.filter { UserMapper.hasAdminPermission(it.userId()) }
+        ) {
+            dailyReportCommand()
+
+            deleteUserCallback()
+
+            timeRestoreCallback()
+            timeDeleteCallback()
+
+            paymentRestoreCallback()
+            paymentDeleteCallback()
+        }
+
+        launch {
+            monthReport()
+        }
+        launch {
+            dailyReport()
+        }
+    }.second.join()
 }

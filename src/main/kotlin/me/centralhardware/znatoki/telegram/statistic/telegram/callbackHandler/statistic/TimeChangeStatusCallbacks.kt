@@ -20,13 +20,13 @@ private suspend fun BehaviourContext.changeTimeStatus(id: UUID, deleted: Boolean
         if (deleted) {
             row { dataButton("Восстановить", "timeRestore-$id") }
         } else {
-            row { dataButton("удалить", "timeDelete-$id") }
+            row { dataButton("Удалить", "timeDelete-$id") }
         }
         if (times.size == 1) {
             if (times.first().forceGroup) {
-                row { dataButton("сделать одиночным занятием", "forceGroupRemove-$id") }
+                row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }
             } else {
-                row { dataButton("сделать групповым занятием", "forceGroupAdd-$id") }
+                row { dataButton("Сделать групповым занятием", "forceGroupAdd-$id") }
             }
         }
     }

@@ -21,7 +21,7 @@ sealed interface Type {
         variants: List<String>,
     ): Either<String, Unit>
 
-    fun extract(message: CommonMessage<MessageContent>): String? = message.text
+    suspend fun extract(message: CommonMessage<MessageContent>): String? = message.text
 
     fun validate(
         message: CommonMessage<MessageContent>,

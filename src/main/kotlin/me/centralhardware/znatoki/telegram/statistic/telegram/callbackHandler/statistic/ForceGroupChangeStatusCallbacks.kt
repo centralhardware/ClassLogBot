@@ -45,20 +45,20 @@ private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup
     val keyboard = inlineKeyboard {
         if (!query.isDm()) {
             if (times.first().deleted) {
-                row { dataButton("восстановить", "timeRestore-$id") }
+                row { dataButton("Восстановить", "timeRestore-$id") }
             } else {
-                row { dataButton("удалить", "timeDelete-$id") }
+                row { dataButton("Удалить", "timeDelete-$id") }
             }
         }
         if (forceGroup) {
-            row { dataButton("сделать одиночным занятием", "forceGroupRemove-$id") }
+            row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }
         } else {
-            row { dataButton("сделать групповым занятием", "forceGroupAdd-$id") }
+            row { dataButton("Сделать групповым занятием", "forceGroupAdd-$id") }
         }
     }
 
     query.messageDataCallbackQueryOrNull()
-        ?.let { me.centralhardware.znatoki.telegram.statistic.bot.edit(it.message, replyMarkup = keyboard) }
+        ?.let { edit(it.message, replyMarkup = keyboard) }
 }
 
 suspend fun BehaviourContext.forceGroupRemove() =
