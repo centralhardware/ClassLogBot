@@ -26,12 +26,12 @@ object ClientService {
             ClientMapper.findAll().forEach { client ->
                 try {
                     val document = Document()
-                    document.add(TextField("name", client.name.toLowerCase(), Field.Store.YES))
+                    document.add(TextField("name", client.name.lowercase(), Field.Store.YES))
                     document.add(
-                        TextField("lastName", client.lastName.toLowerCase(), Field.Store.YES)
+                        TextField("lastName", client.lastName.lowercase(), Field.Store.YES)
                     )
                     document.add(
-                        TextField("secondName", client.secondName.toLowerCase(), Field.Store.YES)
+                        TextField("secondName", client.secondName.lowercase(), Field.Store.YES)
                     )
                     document.add(TextField("id", client.id.toString(), Field.Store.YES))
                     writer.addDocument(document)
