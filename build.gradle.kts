@@ -33,7 +33,7 @@ dependencies {
     implementation("dev.inmo:tgbotapi:20.0.1")
     implementation("com.github.centralhardware:telegram-bot-commons:d96b131958")
 
-    implementation("io.minio:minio:8.5.13")
+    implementation("io.minio:minio:8.5.14")
 
 
     implementation("org.apache.poi:poi:$poiVersion")
