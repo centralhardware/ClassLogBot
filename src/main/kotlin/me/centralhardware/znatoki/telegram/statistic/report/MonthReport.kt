@@ -30,15 +30,18 @@ class MonthReport(
     private val userId: Long,
 ) {
 
+    val clients = mutableMapOf<Int, Client>()
+    fun getClient(id: Int): Client {
+        if (!clients.contains(id)) clients[id] = ClientMapper.findById(id)!!
+
+        return clients[id]!!
+    }
+
     fun generate(times: List<Service>, payments: List<Payment>): File? {
         val serviceName = ServicesMapper.getNameById(service)!!
 
         if (times.isEmpty() && payments.isEmpty()) {
             return null
-        }
-
-        val clients = times.associate {
-            it.clientId to ClientMapper.findById(it.clientId)
         }
 
         val dateTime = times.first().dateTime
@@ -50,7 +53,7 @@ class MonthReport(
         val fioToTimes: Multimap<Client, Service> =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         times.forEach { service ->
-            clients[service.clientId]?.let { client ->
+            getClient(service.clientId).let { client ->
                 fioToTimes.put(client, service)
             }
         }
@@ -60,7 +63,7 @@ class MonthReport(
 
         val i = AtomicInteger(1)
         val comparator: Comparator<Client> =
-            getComparator(clients.values.first()!!)
+            getComparator(clients.values.first())
 
         return excel {
             sheet("отчет") {
@@ -73,7 +76,7 @@ class MonthReport(
                 row {
                     cell("№")
                     cell("ФИО ${ConfigMapper.clientName()}")
-                    clients[times.first().clientId]?.let {
+                    getClient(times.first().clientId).let {
                         it.properties
                             .map { it.name }
                             .filter { ConfigMapper.includeInReport().contains(it) }
@@ -164,11 +167,11 @@ class MonthReport(
                         val fios =
                             if (services.size == 1) {
                                 "      " +
-                                        clients[services.first().clientId]!!.fio()
+                                        getClient(services.first().clientId).fio()
                             } else {
                                 val i = AtomicInteger(1)
                                 services.joinToString("\n") {
-                                    "${i.getAndAdd(1)} - ${clients[it.clientId]!!.fio()}"
+                                    "${i.getAndAdd(1)} - ${getClient(it.clientId).fio()}"
                                 }
                             }
                         total = total + services.first().amount
@@ -211,7 +214,7 @@ class MonthReport(
                     total = total + payment.amount
                     row {
                         cell(payment.dateTime.formatDateTime())
-                        cell(clients[payment.clientId]!!.fio(), HorizontalAlignment.LEFT)
+                        cell(getClient(payment.clientId).fio(), HorizontalAlignment.LEFT)
                         cell(payment.amount)
                         MinioService.getLink(payment.properties.find("фото отчетности").value!!, 3.hours).onSuccess {
                             cellHyperlink(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl), "отчет")
