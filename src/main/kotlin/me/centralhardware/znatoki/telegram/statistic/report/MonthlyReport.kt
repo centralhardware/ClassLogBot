@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.report
 
-import dev.inmo.krontab.doOnceTz
+import dev.inmo.krontab.buildSchedule
+import dev.inmo.krontab.utils.asTzFlowWithDelays
 import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
@@ -12,7 +13,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 
 suspend fun BehaviourContext.monthReport() {
-    doOnceTz("0 0 10 1 * *") {
+    buildSchedule("0 0 10 1 * *").asTzFlowWithDelays().collect {
         ServiceMapper.getIds().forEach {
             ReportService.getReportPrevious(it).forEach { file ->
                 Trace.save("monthReport", mapOf("chatId" to it.toString()))

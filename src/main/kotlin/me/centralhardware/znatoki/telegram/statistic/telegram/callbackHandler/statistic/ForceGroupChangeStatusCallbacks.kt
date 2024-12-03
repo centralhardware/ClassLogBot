@@ -10,17 +10,18 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
+import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 import java.util.*
 
 private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup: Boolean, query: DataCallbackQuery) {
     val chatId = query.from.id.chatId.long
     val service = ServiceMapper.findById(id).first()
-    if (!UserMapper.hasAdminPermission(chatId)) {
+    if (!data.user.hasAdminPermission()) {
         if (service.chatId != chatId) {
             answerCallbackQuery(query, "Доступ запрещен", showAlert = true)
             return

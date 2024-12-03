@@ -29,6 +29,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasForceGroup
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.extensions.print
 import me.centralhardware.znatoki.telegram.statistic.extensions.process
@@ -231,7 +232,7 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
                 services.forEach { ServiceMapper.insert(it) }
 
                 sendLog(services, message.userId())
-                if (UserMapper.hasForceGroup(message.from!!.id.chatId.long) && services.size == 1) {
+                if (UserMapper.findById(message.userId())!!.hasForceGroup() && services.size == 1) {
                     bot.sendTextMessage(
                         message.chat,
                         "Сохранено",
@@ -331,21 +332,20 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
 
 suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>): ServiceBuilder {
     val userId = message.userId()
-    val user = UserMapper.findById(userId)!!
     val builder = ServiceBuilder()
     builder.chatId = userId
-    if (UserMapper.findById(userId)!!.services.size == 1) {
-        builder.serviceId = UserMapper.findById(userId)!!.services.first()
+    if (data.user.services.size == 1) {
+        builder.serviceId = data.user.services.first()
     }
 
     when {
-        user.services.size != 1 -> {
+        data.user.services.size != 1 -> {
             sendTextMessage(
                 message.chat,
                 "Выберите предмет",
                 replyMarkup =
                     replyKeyboard {
-                        user.services.forEach {
+                        data.user.services.forEach {
                             row { ServicesMapper.getNameById(it)?.let { simpleButton(it) } }
                         }
                     },

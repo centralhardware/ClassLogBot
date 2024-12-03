@@ -7,9 +7,9 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onComman
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.utils.row
-import me.centralhardware.znatoki.telegram.statistic.extensions.userId
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
+import me.centralhardware.znatoki.telegram.statistic.user
 import org.apache.commons.collections4.CollectionUtils
 
 suspend fun BehaviourContext.searchCommand() = onCommandWithArgs("s") { message, args ->
@@ -31,7 +31,7 @@ suspend fun BehaviourContext.searchCommand() = onCommandWithArgs("s") { message,
             replyMarkup =
                 inlineKeyboard {
                     row { dataButton("информация", "user_info${client.id}") }
-                    if (UserMapper.hasAdminPermission(message.userId())) {
+                    if (data.user.hasAdminPermission()) {
                         row { dataButton("удалить", "delete_user${client.id}") }
                     }
                 },

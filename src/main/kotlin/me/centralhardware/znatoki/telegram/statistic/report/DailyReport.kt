@@ -2,12 +2,12 @@ package me.centralhardware.znatoki.telegram.statistic.report
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
-import dev.inmo.krontab.doOnceTz
+import dev.inmo.krontab.buildSchedule
+import dev.inmo.krontab.utils.asTzFlowWithDelays
 import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.toChatId
-import java.util.*
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatTime
@@ -15,9 +15,12 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import java.util.*
 
 suspend fun BehaviourContext.dailyReport() {
-    doOnceTz("0 0 22 * * *") { ServiceMapper.getIds().forEach { getReport(it) } }
+    buildSchedule("0 0 22 * * *").asTzFlowWithDelays().collect {
+        ServiceMapper.getIds().forEach { getReport(it) }
+    }
 }
 
 suspend fun BehaviourContext.getReport(id: Long, sendTo: Long = id) {

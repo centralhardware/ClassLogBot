@@ -3,6 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic
 import dev.inmo.micro_utils.common.Warning
 import dev.inmo.tgbotapi.AppConfig
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextData
+import dev.inmo.tgbotapi.extensions.behaviour_builder.buildSubcontextInitialAction
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
 import dev.inmo.tgbotapi.longPolling
@@ -11,6 +13,12 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasClientPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasPaymentPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasReadRight
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasTimePermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
@@ -32,22 +40,58 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
+val defaultCommands = mutableListOf(
+    BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
+    BotCommand("report", "Отчет за текущий месяц"),
+    BotCommand("reportprevious", "Отчет за предыдущий месяц"),
+    BotCommand("reset", "Сбросить состояние")
+)
+
+var BehaviourContextData.user: TelegramUser
+    get() = get("user") as TelegramUser
+    set(value) = set("user", value)
+
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
 suspend fun main() {
     embeddedServer(Netty, port = 999) {
-        module()
+        minioProxy()
     }.start(wait = false)
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
-    longPolling {
-        setMyCommands(
-            BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
-            BotCommand("report", "Отчет за текущий месяц"),
-            BotCommand("reportprevious", "Отчет за предыдущий месяц"),
-            BotCommand("addpayment", "Ведомость оплаты"),
-            BotCommand("reset", "Сбросить состояние"),
-        )
+    longPolling(
+        subcontextInitialAction = buildSubcontextInitialAction {
+            add { update ->
+                data.user = UserMapper.findById(update.userId())!!
+            }
+        }
+    ) {
+        UserMapper.getAll().forEach { user ->
+            setMyCommands(
+                when {
+                    user.hasPaymentPermission() -> {
+                        defaultCommands.apply {
+                            add(BotCommand("addpayment", "Ведомость оплаты"))
+                        }
+                    }
+
+                    user.hasClientPermission() -> {
+                        defaultCommands.apply {
+                            add(BotCommand("addpupil", "Добавить ученика"))
+                        }
+                    }
+
+                    user.hasAdminPermission() -> {
+                        defaultCommands.apply {
+                            add(BotCommand("addpayment", "Ведомость оплаты"))
+                            add(BotCommand("addpupil", "Добавить ученика"))
+                        }
+                    }
+
+                    else -> defaultCommands
+                }
+            )
+        }
 
         startCommand()
         resetCommand()
@@ -56,28 +100,28 @@ suspend fun main() {
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.hasClientPermission(it.userId()) }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasClientPermission() }
         ) {
             addClientCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.hasPaymentPermission(it.userId()) }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasPaymentPermission() }
         ) {
             addPaymentCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.hasTimePermission(it.userId()) }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasTimePermission() }
         ) {
             addTimeCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.hasReadRight(it.userId()) }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasReadRight() }
         ) {
             userInfoCommand()
             searchCommand()
@@ -94,7 +138,7 @@ suspend fun main() {
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.hasAdminPermission(it.userId()) }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasAdminPermission() }
         ) {
             dailyReportCommand()
 
@@ -108,10 +152,10 @@ suspend fun main() {
         }
 
         launch {
-            monthReport()
+            dailyReport()
         }
         launch {
-            dailyReport()
+            monthReport()
         }
     }.second.join()
 }

@@ -18,7 +18,7 @@ import io.ktor.server.routing.routing
 import io.ktor.utils.io.toByteArray
 
 
-fun Application.module() {
+fun Application.minioProxy() {
     val client = HttpClient(CIO)
 
     routing {

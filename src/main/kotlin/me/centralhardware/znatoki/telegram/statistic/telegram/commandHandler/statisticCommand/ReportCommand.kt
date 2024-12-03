@@ -9,11 +9,13 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onComman
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.IdChatIdentifier
 import dev.inmo.tgbotapi.types.chat.PreviewChat
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
+import me.centralhardware.znatoki.telegram.statistic.service.ReportService.getReportsCurrent
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
+import me.centralhardware.znatoki.telegram.statistic.user
 import java.io.File
 
 private suspend fun BehaviourContext.createReport(
@@ -25,7 +27,7 @@ private suspend fun BehaviourContext.createReport(
         return
     }
 
-    if (UserMapper.hasAdminPermission(userId)) {
+    if (data.user.hasAdminPermission()) {
         ServiceMapper.getIds().forEach { getTime.invoke(it).forEach { send(chat.id, it) } }
         return
     }
@@ -46,7 +48,7 @@ suspend fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     sendActionTyping(it.chat)
     createReport(it.userId(), it.chat) { id ->
         sendActionUploadDocument(it.chat)
-        ReportService.getReportsCurrent(id)
+        getReportsCurrent(id)
     }
 }
 
