@@ -102,28 +102,28 @@ suspend fun main() {
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasClientPermission() }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasClientPermission() }
         ) {
             addClientCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasPaymentPermission() }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasPaymentPermission() }
         ) {
             addPaymentCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasTimePermission() }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasTimePermission() }
         ) {
             addTimeCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasReadRight() }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasReadRight() }
         ) {
             userInfoCommand()
             searchCommand()
@@ -140,7 +140,7 @@ suspend fun main() {
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId())!!.hasAdminPermission() }
+                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasAdminPermission() }
         ) {
             dailyReportCommand()
 
