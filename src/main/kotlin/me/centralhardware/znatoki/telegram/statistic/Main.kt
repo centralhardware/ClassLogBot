@@ -62,7 +62,9 @@ suspend fun main() {
     longPolling(
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->
-                UserMapper.findById(update.userId())?.let { user -> data.user = user }
+                runCatching {
+                    UserMapper.findById(update.userId())?.let { user -> data.user = user }
+                }
             }
         }
     ) {
