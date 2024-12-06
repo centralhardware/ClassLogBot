@@ -102,28 +102,44 @@ suspend fun main() {
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasClientPermission() }
+                allUpdatesFlow.filter {
+                    return@filter runCatching {
+                        UserMapper.findById(it.userId()).hasClientPermission()
+                    }.getOrDefault(false)
+                }
         ) {
             addClientCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasPaymentPermission() }
+                allUpdatesFlow.filter {
+                    return@filter runCatching {
+                        UserMapper.findById(it.userId()).hasPaymentPermission()
+                    }.getOrDefault(false)
+                }
         ) {
             addPaymentCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasTimePermission() }
+                allUpdatesFlow.filter {
+                    return@filter runCatching {
+                        UserMapper.findById(it.userId()).hasTimePermission()
+                    }.getOrDefault(false)
+                }
         ) {
             addTimeCommand()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasReadRight() }
+                allUpdatesFlow.filter {
+                    return@filter runCatching {
+                        UserMapper.findById(it.userId()).hasReadRight()
+                    }.getOrDefault(false)
+                }
         ) {
             userInfoCommand()
             searchCommand()
@@ -140,7 +156,11 @@ suspend fun main() {
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
-                allUpdatesFlow.filter { UserMapper.findById(it.userId()).hasAdminPermission() }
+                allUpdatesFlow.filter {
+                    return@filter runCatching {
+                        UserMapper.findById(it.userId()).hasAdminPermission()
+                    }.getOrDefault(false)
+                }
         ) {
             dailyReportCommand()
 
