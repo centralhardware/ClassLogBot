@@ -15,7 +15,7 @@ repositories {
 }
 
 var poiVersion = "5.3.0"
-var kstatemachineVersion = "0.32.0"
+var kstatemachineVersion = "0.33.0"
 var luceneVersion = "10.1.0"
 val ktorVersion = "3.0.3"
 
