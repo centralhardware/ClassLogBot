@@ -21,7 +21,7 @@ val ktorVersion = "3.0.3"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:2.0.0")
-    implementation("com.github.seratch:kotliquery:1.9.0")
+    implementation("com.github.seratch:kotliquery:1.9.1")
 
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
