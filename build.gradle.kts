@@ -17,7 +17,7 @@ repositories {
 var poiVersion = "5.4.0"
 var kstatemachineVersion = "0.33.0"
 var luceneVersion = "10.1.0"
-val ktorVersion = "3.0.3"
+val ktorVersion = "3.1.0"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:2.0.1")
