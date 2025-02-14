@@ -23,11 +23,9 @@ import java.util.*
 private suspend fun BehaviourContext.changeExtraHalfHour(id: UUID, extraHalfHour: Boolean, query: DataCallbackQuery) {
     val chatId = query.from.id.chatId.long
     val service = ServiceMapper.findById(id).first()
-    if (!data.user.hasAdminPermission()) {
-        if (service.chatId != chatId) {
-            answerCallbackQuery(query, "Доступ запрещен", showAlert = true)
-            return
-        }
+    if (!data.user.hasAdminPermission() && service.chatId != chatId) {
+        answerCallbackQuery(query, "Доступ запрещен", showAlert = true)
+        return
     }
     if (!service.dateTime.isInSameMonthAs(LocalDateTime.now())) {
         answerCallbackQuery(
