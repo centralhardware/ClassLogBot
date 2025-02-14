@@ -20,3 +20,6 @@ fun TelegramUser?.hasAdminPermission(): Boolean =
 
 fun TelegramUser?.hasForceGroup(): Boolean =
     this?.permissions?.contains(Permissions.FORCE_GROUP) == true
+
+fun TelegramUser?.hasExtraHalfHour(): Boolean =
+    this?.permissions?.contains(Permissions.EXTRA_HALF_HOUR) == true

@@ -7,4 +7,5 @@ enum class Permissions {
     ADD_CLIENT,
     ADMIN,
     FORCE_GROUP,
+    EXTRA_HALF_HOUR
 }

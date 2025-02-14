@@ -157,9 +157,10 @@ class MonthReport(
                     cell("ученик")
                     cell("Сумма")
                     cell("Принудительно групповое")
+                    cell("Полтора часа")
                     cell("Фото")
                 }
-                var total = 0
+                var total: Double = 0.0
                 times
                     .sortedByDescending { it.dateTime }
                     .groupBy { it.id }
@@ -181,6 +182,11 @@ class MonthReport(
                             cell(services.first().amount)
                             if (services.size == 1) {
                                 cell(services.first().forceGroup.print())
+                            } else {
+                                emptyCell()
+                            }
+                            if (services.first().extraHalfHour) {
+                                cell(services.first().extraHalfHour.print())
                             } else {
                                 emptyCell()
                             }

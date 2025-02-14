@@ -11,7 +11,7 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasExtraHalfHour
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasForceGroup
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
@@ -20,7 +20,7 @@ import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 import java.util.*
 
-private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup: Boolean, query: DataCallbackQuery) {
+private suspend fun BehaviourContext.changeExtraHalfHour(id: UUID, extraHalfHour: Boolean, query: DataCallbackQuery) {
     val chatId = query.from.id.chatId.long
     val service = ServiceMapper.findById(id).first()
     if (!data.user.hasAdminPermission()) {
@@ -38,12 +38,8 @@ private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup
         return
     }
 
-    ServiceMapper.setForceGroup(id, forceGroup)
+    ServiceMapper.setExtraHalfHour(id, extraHalfHour)
     val times = ServiceMapper.findById(id)
-    if (times.size > 1) {
-        answerCallbackQuery(query, "Занятие уже групповое", showAlert = true)
-        return
-    }
 
     val keyboard = inlineKeyboard {
         if (!query.isDm()) {
@@ -53,15 +49,17 @@ private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup
                 row { dataButton("Удалить", "timeDelete-$id") }
             }
         }
-        if (times.first().extraHalfHour && UserMapper.findById(chatId).hasExtraHalfHour()) {
+        if (extraHalfHour) {
             row { dataButton("Убрать полтора часа", "extraHalfHourRemove-${service.id}") }
         } else {
             row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id}") }
         }
-        if (forceGroup) {
-            row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }
-        } else {
-            row { dataButton("Сделать групповым занятием", "forceGroupAdd-$id") }
+        if (times.size == 1 && UserMapper.findById(chatId).hasForceGroup()) {
+            if (times.first().forceGroup) {
+                row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }
+            } else {
+                row { dataButton("Сделать групповым занятием", "forceGroupAdd-$id") }
+            }
         }
     }
 
@@ -69,18 +67,18 @@ private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup
         ?.let { edit(it.message, replyMarkup = keyboard) }
 }
 
-suspend fun BehaviourContext.forceGroupRemove() =
-    onDataCallbackQuery(Regex("forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-        val id = UUID.fromString(it.data.replace("forceGroupRemove-", ""))
-        Trace.save("forceGroupRemove", mapOf("id" to id.toString()))
-        changeForceGroupStatus(id, false, it)
+suspend fun BehaviourContext.extraHalfHourRemove() =
+    onDataCallbackQuery(Regex("extraHalfHourRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+        val id = UUID.fromString(it.data.replace("extraHalfHourRemove-", ""))
+        Trace.save("extraHalfHourRemove", mapOf("id" to id.toString()))
+        changeExtraHalfHour(id, false, it)
 
-}
+    }
 
-suspend fun BehaviourContext.forceGroupAdd() =
-    onDataCallbackQuery(Regex("forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-        val id = UUID.fromString(it.data.replace("forceGroupAdd-", ""))
-        Trace.save("forceGroupAdd", mapOf("id" to id.toString()))
-        changeForceGroupStatus(id, true, it)
+suspend fun BehaviourContext.extraHalfHourAdd() =
+    onDataCallbackQuery(Regex("extraHalfHourAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+        val id = UUID.fromString(it.data.replace("extraHalfHourAdd-", ""))
+        Trace.save("extraHalfHourAdd", mapOf("id" to id.toString()))
+        changeExtraHalfHour(id, true, it)
 
     }

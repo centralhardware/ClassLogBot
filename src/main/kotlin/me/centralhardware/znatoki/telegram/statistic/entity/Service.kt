@@ -14,11 +14,15 @@ class Service(
     val chatId: Long,
     val serviceId: Long,
     val clientId: Int,
-    val amount: Int,
+    private val _amount: Int,
     val forceGroup: Boolean = false,
+    val extraHalfHour: Boolean = false,
     val properties: List<Property>,
     val deleted: Boolean = false,
-)
+) {
+    val amount: Double
+        get() = if (extraHalfHour) _amount * 1.5 else _amount * 1.0
+}
 
 fun Row.parseTime() =
     Service(
@@ -30,6 +34,7 @@ fun Row.parseTime() =
         int("pupil_id"),
         int("amount"),
         boolean("force_group"),
+        boolean("extra_half_hour"),
         string("properties").toProperties(),
         boolean("is_deleted"),
     )
@@ -52,7 +57,7 @@ class ServiceBuilder : Builder {
                 chatId = chatId!!,
                 serviceId = serviceId!!,
                 clientId = it,
-                amount = amount!!,
+                _amount = amount!!,
                 properties = propertiesBuilder!!.properties.toList(),
             )
         }

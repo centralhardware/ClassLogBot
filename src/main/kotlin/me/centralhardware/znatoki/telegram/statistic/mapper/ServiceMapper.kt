@@ -69,6 +69,7 @@ object ServiceMapper {
                    amount,
                    properties,
                    force_group,
+                   extra_half_hour,
                    is_deleted
             FROM service
             WHERE chat_id = :userId
@@ -99,6 +100,7 @@ object ServiceMapper {
                    amount,
                    properties,
                    force_group,
+                   extra_half_hour,
                    is_deleted
             FROM service
             WHERE chat_id = :userId
@@ -124,6 +126,7 @@ object ServiceMapper {
                    amount,
                    properties,
                    force_group,
+                   extra_half_hour,
                    is_deleted
             FROM service
             WHERE id = :id
@@ -213,4 +216,23 @@ object ServiceMapper {
                 )
                 .asUpdate
         )
+
+    fun setExtraHalfHour(id: UUID, forceGroup: Boolean) =
+        session.run(
+            queryOf(
+                """
+        UPDATE service 
+        SET extra_half_hour = :extra_half_hour,
+            update_time = :update_time
+        WHERE id = :id
+    """,
+                mapOf(
+                    "id" to id,
+                    "extra_half_hour" to forceGroup,
+                    "update_time" to LocalDateTime.now(),
+                ),
+            )
+                .asUpdate
+        )
+
 }

@@ -22,6 +22,11 @@ private suspend fun BehaviourContext.changeTimeStatus(id: UUID, deleted: Boolean
         } else {
             row { dataButton("Удалить", "timeDelete-$id") }
         }
+        if (times.first().extraHalfHour) {
+            row { dataButton("Убрать полтора часа", "extraHalfHourRemove-${times.first().id}") }
+        } else {
+            row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${times.first().id}") }
+        }
         if (times.size == 1) {
             if (times.first().forceGroup) {
                 row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }

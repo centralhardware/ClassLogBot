@@ -29,6 +29,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasExtraHalfHour
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasForceGroup
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.extensions.print
@@ -232,17 +233,29 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
                 services.forEach { ServiceMapper.insert(it) }
 
                 sendLog(services, message.userId())
-                if (UserMapper.findById(message.userId())!!.hasForceGroup() && services.size == 1) {
+                if ((UserMapper.findById(message.userId())!!.hasForceGroup() && services.size == 1) ||
+                    UserMapper.findById(message.userId()).hasExtraHalfHour()
+                ) {
                     bot.sendTextMessage(
                         message.chat,
                         "Сохранено",
                         replyMarkup =
                             inlineKeyboard {
-                                row {
-                                    dataButton(
-                                        "Сделать групповым занятием",
-                                        "forceGroupAdd-${builder.id}",
-                                    )
+                                if (UserMapper.findById(message.userId()).hasForceGroup()) {
+                                    row {
+                                        dataButton(
+                                            "Сделать групповым занятием",
+                                            "forceGroupAdd-${builder.id}",
+                                        )
+                                    }
+                                }
+                                if (UserMapper.findById(message.userId()).hasExtraHalfHour()) {
+                                    row {
+                                        dataButton(
+                                            "Сделать полтора часа",
+                                            "addExtraHalfHour-${builder.id}",
+                                        )
+                                    }
                                 }
                             },
                     )
@@ -278,6 +291,7 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
         val service = services.first()
         val keyboard = inlineKeyboard {
             row { dataButton("Удалить", "timeDelete-${service.id}") }
+            row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id}") }
             if (services.size == 1) {
                 row { dataButton("Сделать групповым занятием", "forceGroupAdd-${service.id}") }
             }

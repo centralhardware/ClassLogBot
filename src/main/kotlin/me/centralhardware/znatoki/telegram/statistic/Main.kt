@@ -152,6 +152,9 @@ suspend fun main() {
 
             forceGroupAdd()
             forceGroupRemove()
+
+            extraHalfHourAdd()
+            extraHalfHourRemove()
         }
 
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
