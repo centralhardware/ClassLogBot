@@ -26,12 +26,11 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
 
-
     implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
-    implementation("dev.inmo:tgbotapi:23.1.2")
-    implementation("com.github.centralhardware:telegram-bot-commons:ce1d013134")
+    implementation("dev.inmo:tgbotapi:23.2.0")
+    implementation("com.github.centralhardware:ktgbotapi-commons:f0db12f60b")
 
     implementation("io.minio:minio:8.5.17")
 
