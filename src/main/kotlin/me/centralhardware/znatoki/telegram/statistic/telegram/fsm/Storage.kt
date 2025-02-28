@@ -1,5 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import dev.inmo.micro_utils.fsm.common.State
+import dev.inmo.tgbotapi.extensions.behaviour_builder.DefaultBehaviourContextWithFSM
+import dev.inmo.tgbotapi.extensions.behaviour_builder.stop
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.znatoki.telegram.statistic.entity.Builder
@@ -7,16 +10,16 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 
 object Storage {
 
-    private val fsms: MutableMap<Long, Fsm<Builder>> = mutableMapOf()
+    private val fsms: MutableMap<Long, DefaultBehaviourContextWithFSM<*>> = mutableMapOf()
 
-    fun <B : Builder> create(chatId: Long, fsm: Fsm<B>) {
-        fsms[chatId] = fsm as Fsm<Builder>
+    fun <B : State> create(chatId: Long, fsm: DefaultBehaviourContextWithFSM<B>) {
+        fsms[chatId] = fsm
     }
 
-    suspend fun process(message: CommonMessage<MessageContent>) =
-        fsms[message.userId()]?.processEvent(message)
-
-    fun remove(chatId: Long) = fsms.remove(chatId)
+    fun remove(chatId: Long) {
+        fsms[chatId]?.stop()
+        fsms.remove(chatId)
+    }
 
     fun contain(chatId: Long): Boolean = fsms.containsKey(chatId)
 }

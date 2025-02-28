@@ -1,17 +1,27 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import dev.inmo.micro_utils.fsm.common.State
 import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextWithFSM
+import dev.inmo.tgbotapi.extensions.behaviour_builder.DefaultBehaviourContextWithFSM
+import dev.inmo.tgbotapi.extensions.behaviour_builder.buildBehaviourWithFSM
+import dev.inmo.tgbotapi.extensions.behaviour_builder.expectations.waitAnyContentMessage
 import dev.inmo.tgbotapi.extensions.utils.asTextContent
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.types.toChatId
+import dev.inmo.tgbotapi.types.update.abstracts.Update
 import dev.inmo.tgbotapi.utils.row
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
 import me.centralhardware.znatoki.telegram.statistic.eav.Property
@@ -19,58 +29,57 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Client
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
 import me.centralhardware.znatoki.telegram.statistic.extensions.process
-import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
-import ru.nsk.kstatemachine.state.*
-import ru.nsk.kstatemachine.statemachine.StateMachine
-import ru.nsk.kstatemachine.statemachine.buildCreationArguments
-import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 
-sealed class ClientState : DefaultState() {
-    object Initial : ClientState()
+sealed interface ClientState : State
+data class ClientInitial(override val context: Long) : ClientState
+data class ClientFio(override val context: ClientBuilder, val userId: Long) : ClientState
+data class ClientProperties(override val context: ClientBuilder, val userId: Long) : ClientState
+data class ClientFinish(override val context: ClientBuilder, val userId: Long, val p: List<Property>) : ClientState
 
-    object Fio : ClientState()
 
-    object Properties : ClientState()
-
-    object Finish : ClientState(), FinalState
+suspend fun BehaviourContext.buildClientFsm(
+    flow: Flow<Update>,
+    chatId: Long
+): DefaultBehaviourContextWithFSM<ClientState> {
+    val hx = buildBehaviourWithFSM(
+        flow,
+        onStateHandlingErrorHandler = { state, e ->
+            e.printStackTrace()
+            state
+        }) {
+        clientInitial()
+        clientFio()
+        clientProperty()
+        clientFinish()
+    }
+    hx.startChain(ClientInitial(chatId))
+    hx.start()
+    return hx
 }
 
-class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(builder, bot) {
-    override fun createFSM(): StateMachine =
-        createStdLibStateMachine(
-            "client",
-            creationArguments = buildCreationArguments { isUndoEnabled = true },
-        ) {
-            logger = fsmLog
-            addInitialState(ClientState.Initial) {
-                transition<UpdateEvent> { targetState = ClientState.Fio }
-            }
-            addState(ClientState.Fio) {
-                transition<UpdateEvent> { targetState = ClientState.Properties }
-                onEntry { processState(it, this, ::fio) }
-            }
-            addState(ClientState.Properties) {
-                transition<UpdateEvent> { targetState = ClientState.Finish }
-                onEntry { processState(it, this, ::property) }
-            }
-            addState(ClientState.Finish)
-            onFinished { removeFromStorage(it) }
-        }
+private fun DefaultBehaviourContextWithFSM<ClientState>.clientInitial() {
+    strictlyOn<ClientInitial> {
+        sendTextMessage(it.context.toChatId(), "Введите ФИО. В формате: имя фамилия отчество.")
+        ClientFio(ClientBuilder(), it.context)
+    }
+}
 
-    private suspend fun fio(
-        message: CommonMessage<MessageContent>,
-        builder: ClientBuilder,
-    ): Boolean {
-        val words = message.content.asTextContent()!!.text.split(" ")
+private fun DefaultBehaviourContextWithFSM<ClientState>.clientFio() {
+    strictlyOn<ClientFio> {
+        val contentMessage = waitAnyContentMessage().filter { message ->
+            true
+        }.first()
+
+        val words = contentMessage.content.asTextContent()!!.text.split(" ")
         if (words.size !in 2..3) {
             bot.sendTextMessage(
-                message.chat,
+                it.userId.toChatId(),
                 "Фио требуется ввести в формате: фамилия имя отчество",
             )
-            return false
+            it
         }
-        builder.let {
+        it.context.let {
             when (words.size) {
                 3 -> {
                     it.secondName = words[0]
@@ -85,55 +94,63 @@ class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(b
             }
         }
         if (
-            ClientMapper.findAllByFio(builder.name!!, builder.secondName!!, builder.lastName!!)
+            ClientMapper.findAllByFio(it.context.name!!, it.context.secondName!!, it.context.lastName!!)
                 .isNotEmpty()
         ) {
-            bot.sendTextMessage(message.chat, "Данной ФИО уже содержится в базе данных")
-            return false
+            bot.sendTextMessage(it.userId.toChatId(), "Данной ФИО уже содержится в базе данных")
+            it
         }
 
         if (ConfigMapper.clientProperties().isEmpty()) {
-            finish(listOf(), message, builder)
+            ClientFinish(it.context, it.userId)
         } else {
-            builder.propertiesBuilder =
+            it.context.propertiesBuilder =
                 PropertiesBuilder(ConfigMapper.clientProperties().propertyDefs.toMutableList())
-            val next = builder.nextProperty()!!
+            val next = it.context.nextProperty()!!
             if (next.second.isNotEmpty()) {
-                bot.send(
-                    message.chat,
+                send(
+                    it.userId.toChatId(),
                     text = next.first,
                     replyMarkup = replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
                 )
             } else {
-                bot.sendTextMessage(message.chat, next.first)
+                sendTextMessage(it.userId.toChatId(), next.first)
             }
         }
-        return true
+        ClientProperties(it.context, it.userId)
     }
+}
 
-    suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
-        if (ConfigMapper.clientProperties().isEmpty()) return true
+private fun DefaultBehaviourContextWithFSM<ClientState>.clientProperty() {
+    strictlyOn<ClientProperties> {
+        if (ConfigMapper.clientProperties().isEmpty()) ClientFio(ClientBuilder(), it.userId)
 
-        return builder.propertiesBuilder!!.process(message, bot) {
-            runBlocking { finish(it, message, builder) }
-        }
-    }
+        val contentMessage = waitAnyContentMessage().filter { message ->
+            true
+        }.first()
 
-    private suspend fun finish(
-        p: List<Property>,
-        message: CommonMessage<MessageContent>,
-        builder: ClientBuilder,
-    ) {
-        builder.apply {
-            createdBy = message.userId()
-            properties = p
+        if (it.context.propertiesBuilder!!.process(contentMessage, bot) {}) {
+            ClientFinish(it.context, it.userId)
+        } else {
+            it
         }
 
-        val client = builder.build()
+    }
+}
+
+
+private fun DefaultBehaviourContextWithFSM<ClientState>.clientFinish() {
+    strictlyOn<ClientFinish> {
+        it.context.apply {
+            createdBy = it.userId
+            properties = it.p
+        }
+
+        val client = it.context.build()
         client.id = ClientMapper.save(client)
 
-        bot.sendTextMessage(
-            message.chat,
+        sendTextMessage(
+            it.userId.toChatId(),
             client.getInfo(
                 ServiceMapper.getServicesForClient(client.id!!).mapNotNull {
                     ServicesMapper.getNameById(it)
@@ -141,29 +158,25 @@ class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(b
             ),
         )
         sendLog(client)
-        bot.sendTextMessage(message.chat, "Создание ученика закончено")
+        bot.sendTextMessage(it.userId.toChatId(), "Создание ученика закончено")
         Trace.save("commitClient", mapOf("id" to client.id.toString()))
-    }
-
-    private suspend fun sendLog(client: Client) {
-        bot.send(
-            ConfigMapper.logChat(),
-            text =
-                """
-                #${ConfigMapper.clientName()}   
-                ${
-            client.getInfo(
-                ServiceMapper.getServicesForClient(client.id!!)
-                    .mapNotNull { ServicesMapper.getNameById(it) })
-        }
-                """
-                    .trimIndent(),
-            parseMode = MarkdownParseMode,
-        )
+        null
     }
 }
 
-suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageContent>): ClientBuilder {
-    sendTextMessage(message.chat, "Введите ФИО. В формате: имя фамилия отчество.")
-    return ClientBuilder()
+private suspend fun BehaviourContextWithFSM<in ClientState>.sendLog(client: Client) {
+    send(
+        ConfigMapper.logChat(),
+        text =
+            """
+                #${ConfigMapper.clientName()}   
+                ${
+                client.getInfo(
+                    ServiceMapper.getServicesForClient(client.id!!)
+                        .mapNotNull { ServicesMapper.getNameById(it) })
+            }
+                """
+                .trimIndent(),
+        parseMode = MarkdownParseMode,
+    )
 }

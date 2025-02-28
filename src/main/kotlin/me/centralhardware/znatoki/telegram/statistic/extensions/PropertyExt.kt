@@ -30,10 +30,8 @@ fun List<Property>.print(): String {
 
 suspend fun PropertiesBuilder.process(
     message: CommonMessage<MessageContent>,
-    bot: TelegramBot,
-    onFinish: (List<Property>) -> Unit,
-): Boolean {
-    var isFinished = false
+    bot: TelegramBot
+): Result<List<Property>> {
     validate(message)
         .mapLeft { error -> bot.sendTextMessage(message.chat, error) }
         .map {

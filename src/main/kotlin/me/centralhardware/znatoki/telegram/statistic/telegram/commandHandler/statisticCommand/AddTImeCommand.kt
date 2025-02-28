@@ -4,10 +4,10 @@ import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
+import dev.inmo.tgbotapi.extensions.utils.updates.retrieving.longPollingFlow
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startTimeFsm
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.buildTimeFsm
 
 suspend fun BehaviourContext.addTimeCommand() = onCommand(Regex("addTime|addtime")) {
     if (Storage.contain(it.userId())) {
@@ -16,10 +16,5 @@ suspend fun BehaviourContext.addTimeCommand() = onCommand(Regex("addTime|addtime
     }
 
     Trace.save("addTime", mapOf())
-    val builder = startTimeFsm(it)
-    val fsm = TimeFsm(builder, this)
-    Storage.create(it.userId(), fsm)
-    if (builder.serviceId != null) {
-        Storage.process(it)
-    }
+    Storage.create(it.userId(), buildTimeFsm(longPollingFlow(), it.userId()))
 }
