@@ -1,11 +1,15 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import dev.inmo.micro_utils.fsm.common.State
 import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.behaviour_builder.DefaultBehaviourContextWithFSM
+import dev.inmo.tgbotapi.extensions.behaviour_builder.buildBehaviourWithFSM
+import dev.inmo.tgbotapi.extensions.behaviour_builder.expectations.waitAnyContentMessage
 import dev.inmo.tgbotapi.extensions.utils.asTextedInput
 import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
@@ -16,7 +20,12 @@ import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
+import dev.inmo.tgbotapi.types.toChatId
+import dev.inmo.tgbotapi.types.update.abstracts.Update
 import dev.inmo.tgbotapi.utils.row
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
@@ -33,72 +42,66 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.extensions.yesNoKeyboard
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
-import ru.nsk.kstatemachine.state.*
-import ru.nsk.kstatemachine.statemachine.StateMachine
-import ru.nsk.kstatemachine.statemachine.buildCreationArguments
-import ru.nsk.kstatemachine.statemachine.createStdLibStateMachine
 
-sealed class PaymentStates : DefaultState() {
-    object Initial : PaymentStates()
+sealed interface PaymentState : State
+data class PaymentInitial(override val context: Long) : PaymentState
+data class PaymentPupil(override val context: PaymentBuilder, val userId: Long) : PaymentState
+data class PaymentService(override val context: PaymentBuilder, val userId: Long) : PaymentState
+data class PaymentAmount(override val context: PaymentBuilder, val userId: Long) : PaymentState
+data class PaymentProperty(override val context: PaymentBuilder, val userId: Long) : PaymentState
+data class PaymentConfirm(override val context: PaymentBuilder, val userId: Long) : PaymentState
 
-    object Pupil : PaymentStates()
-
-    object Service : PaymentStates()
-
-    object Amount : PaymentStates()
-
-    object Property : PaymentStates()
-
-    object Confirm : PaymentStates(), FinalState
+suspend fun BehaviourContext.buildPaymentFsm(
+    flow: Flow<Update>,
+    chatId: Long
+): DefaultBehaviourContextWithFSM<PaymentState> {
+    val hx = buildBehaviourWithFSM(
+        flow,
+        onStateHandlingErrorHandler = { state, e ->
+            e.printStackTrace()
+            state
+        }) {
+        paymentInitial()
+        paymentPupil()
+        paymentService()
+        paymentAmount()
+        paymentProperty()
+        paymentConfirm()
+    }
+    hx.startChain(PaymentInitial(chatId))
+    hx.start()
+    return hx
 }
 
-class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder>(builder, bot) {
-    override fun createFSM(): StateMachine =
-        createStdLibStateMachine(
-            "payment",
-            creationArguments = buildCreationArguments { isUndoEnabled = true },
-        ) {
-            logger = fsmLog
-            addInitialState(PaymentStates.Initial) {
-                transition<UpdateEvent> { targetState = PaymentStates.Pupil }
-            }
-            addState(PaymentStates.Pupil) {
-                transition<UpdateEvent> { targetState = PaymentStates.Service }
-                onEntry { processState(it, this, ::pupil) }
-            }
-            addState(PaymentStates.Service) {
-                transition<UpdateEvent> { targetState = PaymentStates.Amount }
-                onEntry { processState(it, this, ::service) }
-            }
-            addState(PaymentStates.Amount) {
-                transition<UpdateEvent> { targetState = PaymentStates.Property }
-                onEntry { processState(it, this, ::amount) }
-            }
-            addState(PaymentStates.Property) {
-                transition<UpdateEvent> { targetState = PaymentStates.Confirm }
-                onEntry { processState(it, this, ::property) }
-            }
-            addState(PaymentStates.Confirm) {
-                transition<UpdateEvent> { targetState = PaymentStates.Property }
-                onEntry { process(it, ::confirm) }
-            }
-            onFinished { removeFromStorage(it) }
-        }
+private fun DefaultBehaviourContextWithFSM<PaymentState>.paymentInitial() {
+    strictlyOn<PaymentInitial> {
+        val builder = PaymentBuilder()
+        builder.chatId = it.context
+        sendTextMessage(
+            it.context.toChatId(),
+            "Введите фио. \nнажмите для поиска фио",
+            replyMarkup = switchToInlineKeyboard,
+        )
+        PaymentPupil(builder, it.context)
+    }
+}
 
-    private suspend fun pupil(
-        message: CommonMessage<MessageContent>,
-        builder: PaymentBuilder,
-    ): Boolean {
-        val userId = message.userId()
-        return validateFio(message.content.asTextedInput()!!.text!!)
-            .mapLeft(mapError(message))
+private fun DefaultBehaviourContextWithFSM<PaymentState>.paymentPupil() {
+    strictlyOn<PaymentPupil> {
+        val contentMessage = waitAnyContentMessage().filter { message ->
+            true
+        }.first()
+
+        val userId = contentMessage.userId()
+        validateFio(contentMessage.content.asTextedInput()!!.text!!)
+            .mapLeft(mapError(contentMessage))
             .map { fio ->
                 val id = fio.split(" ")[0].toInt()
 
-                builder.clientId = id
+                it.context.clientId = id
                 UserMapper.findById(userId)?.services?.let { services ->
                     bot.sendTextMessage(
-                        message.chat,
+                        contentMessage.chat,
                         "Выберите предмет",
                         replyMarkup =
                             replyKeyboard {
@@ -113,36 +116,45 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
                     )
                 }
             }
-            .isRight()
+        PaymentService(it.context, it.userId)
     }
+}
 
-    suspend fun service(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
-        return validateService(message.content.asTextedInput()!!.text!!)
-            .mapLeft(mapError(message))
+private fun DefaultBehaviourContextWithFSM<PaymentState>.paymentService() {
+    strictlyOn<PaymentService> {
+        val contentMessage = waitAnyContentMessage().filter { message ->
+            true
+        }.first()
+
+        validateService(contentMessage.content.asTextedInput()!!.text!!)
+            .mapLeft(mapError(contentMessage))
             .map { service ->
-                builder.serviceId = ServicesMapper.getServiceId(service)!!
+                it.context.serviceId = ServicesMapper.getServiceId(service)!!
 
                 bot.sendTextMessage(
-                    message.chat,
+                    contentMessage.chat,
                     "Введите сумму оплаты",
                     replyMarkup = ReplyKeyboardRemove(),
                 )
             }
-            .isRight()
+        PaymentAmount(it.context, it.userId)
     }
+}
 
-    private suspend fun amount(
-        message: CommonMessage<MessageContent>,
-        builder: PaymentBuilder,
-    ): Boolean {
-        return validateAmount(message.content.asTextedInput()!!.text!!)
-            .mapLeft(mapError(message))
+private fun DefaultBehaviourContextWithFSM<PaymentState>.paymentAmount() {
+    strictlyOn<PaymentAmount> {
+        val contentMessage = waitAnyContentMessage().filter { message ->
+            true
+        }.first()
+
+        validateAmount(contentMessage.content.asTextedInput()!!.text!!)
+            .mapLeft(mapError(contentMessage))
             .map { amount ->
-                builder.amount = amount
+                it.context.amount = amount
                 if (ConfigMapper.paymentProperties().isEmpty()) {
                     bot.sendTextMessage(
-                        message.chat,
-                        builder.let {
+                        contentMessage.chat,
+                        it.context.let {
                             """
                                         ФИО: ${
                             ClientMapper.findById(it.clientId!!)?.fio()
@@ -152,131 +164,146 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
                         },
                         replyMarkup = yesNoKeyboard,
                     )
+                    PaymentConfirm(it.context, it.userId)
                 } else {
-                    builder.propertiesBuilder =
+                    it.context.propertiesBuilder =
                         PropertiesBuilder(
                             ConfigMapper.paymentProperties().propertyDefs.toMutableList()
                         )
-                    val next = builder.nextProperty()!!
+                    val next = it.context.nextProperty()!!
                     if (next.second.isNotEmpty()) {
                         bot.sendTextMessage(
-                            message.chat,
+                            contentMessage.chat,
                             next.first,
                             replyMarkup =
                                 replyKeyboard { next.second.forEach { row { simpleButton(it) } } },
                         )
                     } else {
-                        bot.sendTextMessage(message.chat, next.first)
+                        bot.sendTextMessage(contentMessage.chat, next.first)
                     }
+                    PaymentProperty(it.context, it.userId)
                 }
             }
-            .isRight()
+        it
     }
+}
 
-    suspend fun property(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
-        if (ConfigMapper.paymentProperties().isEmpty()) return true
+private fun DefaultBehaviourContextWithFSM<PaymentState>.paymentProperty() {
+    strictlyOn<PaymentProperty> {
+        if (ConfigMapper.paymentProperties().isEmpty()) return@strictlyOn PaymentConfirm(it.context, it.userId)
 
-        return builder.propertiesBuilder!!.process(message, bot) { properties ->
-            builder.properties = properties
-            runBlocking {
-                bot.sendTextMessage(
-                    message.chat,
-                    """
+        val contentMessage = waitAnyContentMessage().filter { message ->
+            true
+        }.first()
+
+        if (it.context.propertiesBuilder!!.process(contentMessage, bot) { properties ->
+                it.context.properties = properties
+                runBlocking {
+                    bot.sendTextMessage(
+                        contentMessage.chat,
+                        """
                                         ФИО: ${
-                    ClientMapper.findById(builder.clientId!!)?.fio()
-                }
-                                        Оплата: ${builder.amount}
+                            ClientMapper.findById(it.context.clientId!!)?.fio()
+                        }
+                                        Оплата: ${it.context.amount}
                                         """,
-                    replyMarkup = yesNoKeyboard,
-                )
-            }
+                        replyMarkup = yesNoKeyboard,
+                    )
+                }
+            }) {
+            PaymentConfirm(it.context, it.userId)
+        } else {
+            it
         }
     }
+}
 
-    private suspend fun confirm(
-        message: CommonMessage<MessageContent>,
-        builder: PaymentBuilder,
-    ): Boolean {
-        val userId = message.userId()
-        when (message.text!!) {
+private fun DefaultBehaviourContextWithFSM<PaymentState>.paymentConfirm() {
+    strictlyOn<PaymentConfirm> {
+        val contentMessage = waitAnyContentMessage().filter { message ->
+            true
+        }.first()
+
+        val userId = contentMessage.userId()
+        when (contentMessage.text!!) {
             "да" -> {
-                builder.chatId = userId
-                val payment = builder.build()
+                it.context.chatId = userId
+                val payment = it.context.build()
                 val paymentId = PaymentMapper.insert(payment)
                 sendLog(payment, paymentId, userId)
-                bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
+                bot.sendTextMessage(contentMessage.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
                 Trace.save("commitPayment", mapOf("id" to paymentId.toString()))
+                Storage.remove(userId)
+                null
             }
             "нет" -> {
-                builder.properties!!
+                it.context.properties!!
                     .stream()
                     .filter { it.type is Photo }
                     .forEach { photo ->
                         MinioService.delete(photo.value!!).onFailure {
                             runBlocking {
-                                bot.sendTextMessage(message.chat, "Ошибка при удаление фотографии")
+                                bot.sendTextMessage(contentMessage.chat, "Ошибка при удаление фотографии")
                             }
                         }
                     }
-                bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
+                bot.sendTextMessage(contentMessage.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
                 Trace.save("rollbackPayment", mapOf())
+                Storage.remove(userId)
+                null
             }
-        }
-        return true
-    }
 
-    private suspend fun sendLog(payment: Payment, paymentId: Int, userId: Long) {
-        val keyboard = inlineKeyboard {
-            row { dataButton("Удалить", "paymentDelete-${paymentId}") }
+            else -> it
         }
-        val text =
-            """
-                #оплата
-                Время: ${payment.dateTime.formatDateTime()}
-                Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
-                Предмет: ${ServicesMapper.getNameById(payment.serviceId)}
-                Оплата: ${payment.amount}
-                Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
-                ${payment.properties.print()}
-            """
-                .trimIndent()
-        val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
-        if (hasPhoto == 1L) {
-            bot.sendActionUploadPhoto(ConfigMapper.logChat())
-            payment.properties
-                .filter { it.type is Photo }
-                .forEach { photo ->
-                    bot.sendActionUploadPhoto(ConfigMapper.logChat())
-                    bot.sendPhoto(
-                        ConfigMapper.logChat(),
-                        InputFile.fromInput("") {
-                            MinioService.get(photo.value!!)
-                                .onFailure {
-                                    runBlocking {
-                                        bot.sendTextMessage(
-                                            ConfigMapper.logChat(),
-                                            "Ошибка во время отправки лога",
-                                        )
-                                    }
+    }
+}
+
+private suspend fun DefaultBehaviourContextWithFSM<PaymentState>.sendLog(
+    payment: Payment,
+    paymentId: Int,
+    userId: Long
+) {
+    val keyboard = inlineKeyboard {
+        row { dataButton("Удалить", "paymentDelete-${paymentId}") }
+    }
+    val text =
+        """
+            #оплата
+            Время: ${payment.dateTime.formatDateTime()}
+            Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
+            Предмет: ${ServicesMapper.getNameById(payment.serviceId)}
+            Оплата: ${payment.amount}
+            Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
+            ${payment.properties.print()}
+        """
+            .trimIndent()
+    val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
+    if (hasPhoto == 1L) {
+        sendActionUploadPhoto(ConfigMapper.logChat())
+        payment.properties
+            .filter { it.type is Photo }
+            .forEach { photo ->
+                sendActionUploadPhoto(ConfigMapper.logChat())
+                sendPhoto(
+                    ConfigMapper.logChat(),
+                    InputFile.fromInput("") {
+                        MinioService.get(photo.value!!)
+                            .onFailure {
+                                runBlocking {
+                                    sendTextMessage(
+                                        ConfigMapper.logChat(),
+                                        "Ошибка во время отправки лога",
+                                    )
                                 }
-                                .getOrThrow()
-                        },
-                        replyMarkup = keyboard,
-                        text = text,
-                    )
-                }
-        } else {
-            bot.sendTextMessage(ConfigMapper.logChat(), text, replyMarkup = keyboard)
-        }
+                            }
+                            .getOrThrow()
+                    },
+                    replyMarkup = keyboard,
+                    text = text,
+                )
+            }
+    } else {
+        sendTextMessage(ConfigMapper.logChat(), text, replyMarkup = keyboard)
     }
 }
 
-suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageContent>): PaymentBuilder {
-    sendTextMessage(
-        message.chat,
-        "Введите фио. \nнажмите для поиска фио",
-        replyMarkup = switchToInlineKeyboard,
-    )
-    val builder = PaymentBuilder()
-    return builder
-}

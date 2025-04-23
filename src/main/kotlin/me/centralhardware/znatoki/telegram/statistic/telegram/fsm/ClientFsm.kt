@@ -102,7 +102,7 @@ private fun DefaultBehaviourContextWithFSM<ClientState>.clientFio() {
         }
 
         if (ConfigMapper.clientProperties().isEmpty()) {
-            ClientFinish(it.context, it.userId)
+            ClientFinish(it.context, it.userId, emptyList())
         } else {
             it.context.propertiesBuilder =
                 PropertiesBuilder(ConfigMapper.clientProperties().propertyDefs.toMutableList())
@@ -129,8 +129,10 @@ private fun DefaultBehaviourContextWithFSM<ClientState>.clientProperty() {
             true
         }.first()
 
-        if (it.context.propertiesBuilder!!.process(contentMessage, bot) {}) {
-            ClientFinish(it.context, it.userId)
+        if (it.context.propertiesBuilder!!.process(contentMessage, bot) { properties ->
+                ClientFinish(it.context, it.userId, properties)
+            }) {
+            null
         } else {
             it
         }

@@ -98,8 +98,6 @@ suspend fun main() {
         startCommand()
         resetCommand()
 
-        onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
-
         createSubContextAndDoAsynchronouslyWithUpdatesFilter(
             updatesUpstreamFlow =
                 allUpdatesFlow.filter {
