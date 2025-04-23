@@ -1,14 +1,14 @@
-FROM gradle:jdk22 as gradle
+FROM gradle:jdk24 as gradle
 
 COPY ./ ./
 
-RUN gradle shadowJar
+RUN gradle installDist
 
-FROM openjdk:22-slim
+FROM openjdk:24-slim
 
 WORKDIR /znatokiBot
 
-COPY --from=gradle /home/gradle/build/libs/shadow-1.0-SNAPSHOT-all.jar .
+COPY --from=gradle /home/gradle/build/install/znatokiStatistic/ ./
 
 RUN apt-get update
 RUN apt-get update && apt-get install -y tzdata curl fontconfig libfreetype6 && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -18,4 +18,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 ENV TZ Asia/Novosibirsk
 
-CMD ["java","--add-modules", "jdk.incubator.vector",  "-jar", "shadow-1.0-SNAPSHOT-all.jar"]
+CMD ["./bin/znatokiStatistic", "--add-modules", "jdk.incubator.vector"]

@@ -7,6 +7,10 @@ plugins {
 group = "me.centralhardware.znatoki.telegram.statistic"
 version = "1.0-SNAPSHOT"
 
+application {
+    mainClass.set("me.centralhardware.znatoki.telegram.statistic.MainKt")
+}
+
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
