@@ -17,7 +17,7 @@ repositories {
 }
 
 var poiVersion = "5.4.1"
-var luceneVersion = "10.2.0"
+var luceneVersion = "10.2.1"
 val ktorVersion = "3.1.3"
 
 dependencies {
