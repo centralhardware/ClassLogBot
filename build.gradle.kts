@@ -21,7 +21,7 @@ var luceneVersion = "10.2.0"
 val ktorVersion = "3.1.3"
 
 dependencies {
-    implementation("io.arrow-kt:arrow-core:2.1.0")
+    implementation("io.arrow-kt:arrow-core:2.1.2")
     implementation("com.github.seratch:kotliquery:1.9.1")
 
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
