@@ -27,7 +27,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
 
-    implementation("dev.inmo:tgbotapi:24.0.2")
+    implementation("dev.inmo:tgbotapi:25.0.0")
     implementation("com.github.centralhardware:ktgbotapi-commons:6ef1dde4fe")
 
     implementation("io.minio:minio:8.5.17")
