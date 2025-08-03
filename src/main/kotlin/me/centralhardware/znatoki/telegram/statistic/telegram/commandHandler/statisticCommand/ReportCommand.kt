@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
 import dev.inmo.tgbotapi.extensions.api.send.sendActionTyping
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
@@ -44,7 +43,6 @@ suspend fun BehaviourContext.send(id: IdChatIdentifier, file: File) {
 }
 
 suspend fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
-    Trace.save("report", mapOf())
     sendActionTyping(it.chat)
     createReport(it.userId(), it.chat) { id ->
         sendActionUploadDocument(it.chat)
@@ -53,7 +51,6 @@ suspend fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
 }
 
 suspend fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
-    Trace.save("reportPrevious", mapOf())
     sendActionTyping(it.chat)
     createReport(it.userId(), it.chat) { id ->
         sendActionUploadDocument(it.chat)

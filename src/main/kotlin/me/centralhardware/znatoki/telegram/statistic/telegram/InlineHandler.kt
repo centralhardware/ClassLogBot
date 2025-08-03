@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.answers.answerInlineQuery
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onBaseInlineQuery
@@ -20,7 +19,6 @@ suspend fun BehaviourContext.processInline() = onBaseInlineQuery {
     val text = it.query
     if (StringUtils.isBlank(text)) return@onBaseInlineQuery
 
-    Trace.save("searchUserInline", mapOf("query" to text))
 
     val i = AtomicInteger()
     val clients = ClientService.search(text)
@@ -45,16 +43,6 @@ suspend fun BehaviourContext.processInline() = onBaseInlineQuery {
     }
 
     answerInlineQuery(it, results = articles, isPersonal = true, cachedTime = 0)
-    coroutineScope {
-        launch {
-            clients.forEach { client ->
-                Trace.save(
-                    "searchUserInlineResult",
-                    mapOf("query" to text, "userId" to client.id.toString()),
-                )
-            }
-        }
-    }
 }
 
 private fun getFio(client: Client): String = "${client.id} ${client.fio()}"

@@ -3,7 +3,6 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.serialization") version "2.2.0"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
@@ -30,7 +29,7 @@ dependencies {
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
     implementation("dev.inmo:tgbotapi:27.1.0")
-    implementation("com.github.centralhardware:ktgbotapi-commons:6ef1dde4fe")
+    implementation("com.github.centralhardware:ktgbotapi-commons:beafbfc9a8")
 
     implementation("io.minio:minio:8.5.17")
 

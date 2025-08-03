@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -68,7 +67,6 @@ private suspend fun BehaviourContext.changeExtraHalfHour(id: UUID, extraHalfHour
 suspend fun BehaviourContext.extraHalfHourRemove() =
     onDataCallbackQuery(Regex("extraHalfHourRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("extraHalfHourRemove-", ""))
-        Trace.save("extraHalfHourRemove", mapOf("id" to id.toString()))
         changeExtraHalfHour(id, false, it)
 
     }
@@ -76,7 +74,6 @@ suspend fun BehaviourContext.extraHalfHourRemove() =
 suspend fun BehaviourContext.extraHalfHourAdd() =
     onDataCallbackQuery(Regex("extraHalfHourAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("extraHalfHourAdd-", ""))
-        Trace.save("extraHalfHourAdd", mapOf("id" to id.toString()))
         changeExtraHalfHour(id, true, it)
 
     }

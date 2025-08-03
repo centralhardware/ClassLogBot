@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommandWithArgs
@@ -11,7 +10,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
 suspend fun BehaviourContext.userInfoCommand() = onCommandWithArgs("i") { message, args ->
     ClientMapper.findById(args.first().toInt())?.let { client ->
-        Trace.save("userInfoCommand", mapOf("id" to client.id.toString()))
         sendMessage(
             message.chat,
             client.getInfo(

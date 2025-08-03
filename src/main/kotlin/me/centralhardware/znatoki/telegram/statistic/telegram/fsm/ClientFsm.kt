@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
@@ -142,7 +141,6 @@ class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(b
         )
         sendLog(client)
         bot.sendTextMessage(message.chat, "Создание ученика закончено")
-        Trace.save("commitClient", mapOf("id" to client.id.toString()))
     }
 
     private suspend fun sendLog(client: Client) {

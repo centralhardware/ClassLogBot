@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -70,7 +69,6 @@ private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup
 suspend fun BehaviourContext.forceGroupRemove() =
     onDataCallbackQuery(Regex("forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("forceGroupRemove-", ""))
-        Trace.save("forceGroupRemove", mapOf("id" to id.toString()))
         changeForceGroupStatus(id, false, it)
 
 }
@@ -78,7 +76,6 @@ suspend fun BehaviourContext.forceGroupRemove() =
 suspend fun BehaviourContext.forceGroupAdd() =
     onDataCallbackQuery(Regex("forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("forceGroupAdd-", ""))
-        Trace.save("forceGroupAdd", mapOf("id" to id.toString()))
         changeForceGroupStatus(id, true, it)
 
     }

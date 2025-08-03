@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
@@ -15,7 +14,6 @@ suspend fun BehaviourContext.addTimeCommand() = onCommand(Regex("addTime|addtime
         return@onCommand
     }
 
-    Trace.save("addTime", mapOf())
     val builder = startTimeFsm(it)
     val fsm = TimeFsm(builder, this)
     Storage.create(it.userId(), fsm)

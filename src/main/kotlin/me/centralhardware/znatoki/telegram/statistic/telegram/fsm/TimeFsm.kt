@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.deleteMessage
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
@@ -265,7 +264,6 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
                 } else {
                     bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
                 }
-                Trace.save("commitTime", mapOf("id" to builder.id.toString()))
             }
 
             "нет" -> {
@@ -281,7 +279,6 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
                         }
                     }
                 bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
-                Trace.save("rollbackTime", mapOf())
             }
         }
         return true

@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
@@ -15,6 +14,5 @@ suspend fun BehaviourContext.addPaymentCommand() = onCommand(Regex("addPayment|a
         return@onCommand
     }
 
-    Trace.save("addPayment", mapOf())
     Storage.create(it.userId(), PaymentFsm(startPaymentFsm(it), this))
 }

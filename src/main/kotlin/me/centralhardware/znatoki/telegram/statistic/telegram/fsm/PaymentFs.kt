@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
@@ -205,7 +204,6 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
                 val paymentId = PaymentMapper.insert(payment)
                 sendLog(payment, paymentId, userId)
                 bot.sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
-                Trace.save("commitPayment", mapOf("id" to paymentId.toString()))
             }
             "нет" -> {
                 builder.properties!!
@@ -219,7 +217,6 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
                         }
                     }
                 bot.sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())
-                Trace.save("rollbackPayment", mapOf())
             }
         }
         return true

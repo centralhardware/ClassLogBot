@@ -4,7 +4,6 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import dev.inmo.krontab.buildSchedule
 import dev.inmo.krontab.utils.asTzFlowWithDelays
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.toChatId
@@ -27,7 +26,6 @@ suspend fun BehaviourContext.getReport(id: Long, sendTo: Long = id) {
     val times = ServiceMapper.getTodayTimes(id)
     if (times.isEmpty()) return
 
-    Trace.save("checkTimes", mapOf("id" to id.toString()))
     sendTextMessage(sendTo.toChatId(), "Занятия проведенные за сегодня")
 
     val id2times: Multimap<UUID, Service> = ArrayListMultimap.create()

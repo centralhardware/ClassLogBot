@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
-import dev.inmo.tgbotapi.Trace
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCallbackQuery
@@ -42,7 +41,6 @@ private suspend fun BehaviourContext.changeTimeStatus(id: UUID, deleted: Boolean
 suspend fun BehaviourContext.timeRestoreCallback() =
     onDataCallbackQuery(Regex("timeRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("timeRestore-", ""))
-        Trace.save("restoreTime", mapOf("id" to id.toString()))
         changeTimeStatus(id, false, it)
     }
 
@@ -50,6 +48,5 @@ suspend fun BehaviourContext.timeRestoreCallback() =
 suspend fun BehaviourContext.timeDeleteCallback() =
     onDataCallbackQuery(Regex("timeDelete-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("timeDelete-", ""))
-        Trace.save("deleteTime", mapOf("id" to id.toString()))
         changeTimeStatus(id, true, it)
     }
