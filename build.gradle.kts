@@ -1,8 +1,11 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.serialization") version "2.2.0"
+    application
+}
+
+application {
+    mainClass.set("me.centralhardware.znatoki.telegram.statistic.MainKt")
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
@@ -45,12 +48,3 @@ dependencies {
     implementation("dev.inmo:krontab:2.7.2")
 }
 
-tasks {
-    named<ShadowJar>("shadowJar") {
-        archiveBaseName.set("shadow")
-        mergeServiceFiles()
-        manifest {
-            attributes(mapOf("Main-Class" to "me.centralhardware.znatoki.telegram.statistic.MainKt"))
-        }
-    }
-}
