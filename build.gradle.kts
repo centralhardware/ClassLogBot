@@ -6,7 +6,7 @@ plugins {
 
 application {
     mainClass.set("me.centralhardware.znatoki.telegram.statistic.MainKt")
-    applicationDefaultJvmArgs = listof("--add-modules jdk.incubator.vector")
+    applicationDefaultJvmArgs = listOf("--add-modules jdk.incubator.vector")
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
@@ -48,4 +48,3 @@ dependencies {
 
     implementation("dev.inmo:krontab:2.7.2")
 }
-
