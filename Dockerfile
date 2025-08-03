@@ -2,7 +2,6 @@ FROM gradle:jdk24 as gradle
 
 COPY ./ ./
 
-ENV DEFAULT_JVM_OPTS='"--add-modules jdk.incubator.vector"'
 RUN gradle installDist
 
 FROM openjdk:24-slim
