@@ -1,10 +1,11 @@
-FROM gradle:jdk24 as gradle
+FROM gradle:jdk21 as gradle
 
 COPY ./ ./
 
+ENV DEFAULT_JVM_OPTS='"--add-modules jdk.incubator.vector"'
 RUN gradle installDist
 
-FROM openjdk:24-slim
+FROM openjdk:21-slim
 
 WORKDIR /znatokiBot
 
