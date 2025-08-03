@@ -6,6 +6,7 @@ plugins {
 
 application {
     mainClass.set("me.centralhardware.znatoki.telegram.statistic.MainKt")
+    applicationDefaultJvmArgs = ['--add-modules jdk.incubator.vector']
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"

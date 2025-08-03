@@ -14,4 +14,4 @@ RUN apt-get update && apt-get install -y tzdata fontconfig libfreetype6 && apt-g
 
 ENV TZ Asia/Novosibirsk
 
-CMD ["bin/znatokiStatistic", "--add-modules", "jdk.incubator.vector"]
+CMD ["bin/znatokiStatistic"]
