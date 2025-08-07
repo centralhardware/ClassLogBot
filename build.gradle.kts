@@ -16,6 +16,8 @@ repositories {
     maven("https://jitpack.io")
 }
 
+
+val ktgbotapiVersion = "27.1.2"
 var poiVersion = "5.4.1"
 var kstatemachineVersion = "0.33.0"
 var luceneVersion = "10.2.2"
@@ -31,8 +33,8 @@ dependencies {
     implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
-    implementation("dev.inmo:tgbotapi:27.1.2")
-    implementation("com.github.centralhardware:ktgbotapi-commons:beafbfc9a8")
+    implementation("dev.inmo:tgbotapi:$ktgbotapiVersion")
+    implementation("com.github.centralhardware:ktgbotapi-commons:$ktgbotapiVersion-1")
 
     implementation("io.minio:minio:8.5.17")
 
