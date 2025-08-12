@@ -34,7 +34,7 @@ dependencies {
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 
     implementation("dev.inmo:tgbotapi:$ktgbotapiVersion")
-    implementation("com.github.centralhardware:ktgbotapi-commons:$ktgbotapiVersion-1")
+    implementation("com.github.centralhardware:ktgbotapi-commons:$ktgbotapiVersion")
 
     implementation("io.minio:minio:8.5.17")
 
