@@ -19,7 +19,7 @@ repositories {
 
 val ktgbotapiVersion = "27.1.2"
 var poiVersion = "5.4.1"
-var kstatemachineVersion = "0.33.0"
+var kstatemachineVersion = "0.34.1"
 var luceneVersion = "10.2.2"
 val ktorVersion = "3.2.3"
 
