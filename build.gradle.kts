@@ -62,6 +62,5 @@ jib {
             } ?: ""),
             "org.opencontainers.image.revision" to (System.getenv("GITHUB_SHA") ?: "")
         )
-        user = "10001"
     }
 }
