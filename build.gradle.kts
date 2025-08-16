@@ -12,7 +12,6 @@ repositories {
     maven("https://jitpack.io")
 }
 
-
 val ktgbotapiVersion = "28.0.0"
 var poiVersion = "5.4.1"
 var kstatemachineVersion = "0.34.2"
