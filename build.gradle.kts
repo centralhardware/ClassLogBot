@@ -55,8 +55,6 @@ jib {
     container {
         mainClass = "me.centralhardware.znatoki.telegram.statistic.MainKt"
         jvmFlags = listOf(
-            "-XX:+UseContainerSupport",
-            "-XX:MaxRAMPercentage=75.0",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-modules=jdk.incubator.vector"
         )
