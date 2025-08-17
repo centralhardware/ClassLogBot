@@ -54,7 +54,7 @@ jib {
     }
     container {
         mainClass = "me.centralhardware.znatoki.telegram.statistic.MainKt"
-        jvmFlags = listOf("-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0")
+        jvmFlags = listOf("-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "--add-opens=java.base/java.lang=ALL-UNNAMED")
         creationTime = "USE_CURRENT_TIMESTAMP"
         labels = mapOf(
             "org.opencontainers.image.source" to (System.getenv("GITHUB_SERVER_URL")?.let { server ->
