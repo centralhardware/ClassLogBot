@@ -13,6 +13,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import me.centralhardware.telegram.ktgbotapi.access.middleware.restrictAccess
 import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasClientPermission
@@ -24,6 +25,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
+import me.centralhardware.znatoki.telegram.statistic.telegram.UserExistChecker
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.deleteUserCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.userInfoCallback
@@ -66,6 +68,9 @@ suspend fun main() {
                     UserMapper.findById(update.userId())?.let { user -> data.user = user }
                 }
             }
+        },
+        middlewares = {
+            addMiddleware { restrictAccess(UserExistChecker()) }
         }
     ) {
         UserMapper.getAll().forEach { user ->
