@@ -70,7 +70,7 @@ suspend fun main() {
             }
         },
         middlewares = {
-            addMiddleware { restrictAccess(UserExistChecker()) }
+//            addMiddleware { restrictAccess(UserExistChecker()) }
         }
     ) {
         UserMapper.getAll().forEach { user ->
