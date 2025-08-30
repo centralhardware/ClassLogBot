@@ -44,13 +44,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
-val defaultCommands = listOf(
-    BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
-    BotCommand("report", "Отчет за текущий месяц"),
-    BotCommand("reportprevious", "Отчет за предыдущий месяц"),
-    BotCommand("reset", "Сбросить состояние")
-)
-
 var BehaviourContextData.user: TelegramUser
     get() = get("user") as TelegramUser
     set(value) = set("user", value)
@@ -76,8 +69,14 @@ suspend fun main() {
         }
     ) {
         UserMapper.getAll().forEach { user ->
-            val userCommands = defaultCommands.toMutableList()
+            val userCommands = mutableListOf<BotCommand>()
             when {
+                user.hasTimePermission() -> {
+                    userCommands.apply {
+                        add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
+                    }
+                }
+
                 user.hasPaymentPermission() -> {
                     userCommands.apply {
                         add(BotCommand("addpayment", "Ведомость оплаты"))
@@ -97,11 +96,16 @@ suspend fun main() {
                     }
                 }
 
-                else -> defaultCommands
+                user.hasReadRight() -> {
+                    userCommands.apply {
+                        add(BotCommand("report", "Отчет за текущий месяц"))
+                        add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
+                        add(BotCommand("reset", "Сбросить состояние"))
+                    }
+                }
             }
             setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
         }
-        setMyCommands(defaultCommands)
 
         startCommand()
         resetCommand()
