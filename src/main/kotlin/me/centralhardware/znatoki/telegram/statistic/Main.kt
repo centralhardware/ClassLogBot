@@ -70,38 +70,32 @@ suspend fun main() {
     ) {
         UserMapper.getAll().forEach { user ->
             val userCommands = mutableListOf<BotCommand>()
-            when {
-                user.hasTimePermission() -> {
-                    userCommands.apply {
-                        add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
-                    }
+            if (user.hasTimePermission()) {
+                userCommands.apply {
+                    add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
                 }
-
-                user.hasPaymentPermission() -> {
-                    userCommands.apply {
-                        add(BotCommand("addpayment", "Ведомость оплаты"))
-                    }
+            }
+            if (user.hasPaymentPermission()) {
+                userCommands.apply {
+                    add(BotCommand("addpayment", "Ведомость оплаты"))
                 }
-
-                user.hasClientPermission() -> {
-                    userCommands.apply {
-                        add(BotCommand("addpupil", "Добавить ученика"))
-                    }
+            }
+            if (user.hasClientPermission()) {
+                userCommands.apply {
+                    add(BotCommand("addpupil", "Добавить ученика"))
                 }
-
-                user.hasAdminPermission() -> {
-                    userCommands.apply {
-                        add(BotCommand("addpayment", "Ведомость оплаты"))
-                        add(BotCommand("addpupil", "Добавить ученика"))
-                    }
+            }
+            if (user.hasAdminPermission()) {
+                userCommands.apply {
+                    add(BotCommand("addpayment", "Ведомость оплаты"))
+                    add(BotCommand("addpupil", "Добавить ученика"))
                 }
-
-                user.hasReadRight() -> {
-                    userCommands.apply {
-                        add(BotCommand("report", "Отчет за текущий месяц"))
-                        add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
-                        add(BotCommand("reset", "Сбросить состояние"))
-                    }
+            }
+            if (user.hasReadRight()) {
+                userCommands.apply {
+                    add(BotCommand("report", "Отчет за текущий месяц"))
+                    add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
+                    add(BotCommand("reset", "Сбросить состояние"))
                 }
             }
             setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
