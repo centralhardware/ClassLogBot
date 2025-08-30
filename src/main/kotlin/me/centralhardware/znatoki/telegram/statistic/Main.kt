@@ -9,6 +9,8 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsync
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
 import dev.inmo.tgbotapi.longPolling
 import dev.inmo.tgbotapi.types.BotCommand
+import dev.inmo.tgbotapi.types.commands.BotCommandScopeChat
+import dev.inmo.tgbotapi.types.toChatId
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.flow.filter
@@ -42,7 +44,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 
-val defaultCommands = mutableListOf(
+val defaultCommands = listOf(
     BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"),
     BotCommand("report", "Отчет за текущий месяц"),
     BotCommand("reportprevious", "Отчет за предыдущий месяц"),
@@ -74,31 +76,32 @@ suspend fun main() {
         }
     ) {
         UserMapper.getAll().forEach { user ->
-            setMyCommands(
-                when {
-                    user.hasPaymentPermission() -> {
-                        defaultCommands.apply {
-                            add(BotCommand("addpayment", "Ведомость оплаты"))
-                        }
+            val userCommands = defaultCommands.toMutableList()
+            when {
+                user.hasPaymentPermission() -> {
+                    userCommands.apply {
+                        add(BotCommand("addpayment", "Ведомость оплаты"))
                     }
-
-                    user.hasClientPermission() -> {
-                        defaultCommands.apply {
-                            add(BotCommand("addpupil", "Добавить ученика"))
-                        }
-                    }
-
-                    user.hasAdminPermission() -> {
-                        defaultCommands.apply {
-                            add(BotCommand("addpayment", "Ведомость оплаты"))
-                            add(BotCommand("addpupil", "Добавить ученика"))
-                        }
-                    }
-
-                    else -> defaultCommands
                 }
-            )
+
+                user.hasClientPermission() -> {
+                    userCommands.apply {
+                        add(BotCommand("addpupil", "Добавить ученика"))
+                    }
+                }
+
+                user.hasAdminPermission() -> {
+                    userCommands.apply {
+                        add(BotCommand("addpayment", "Ведомость оплаты"))
+                        add(BotCommand("addpupil", "Добавить ученика"))
+                    }
+                }
+
+                else -> defaultCommands
+            }
+            setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
         }
+        setMyCommands(defaultCommands)
 
         startCommand()
         resetCommand()
