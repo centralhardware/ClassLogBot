@@ -16,7 +16,7 @@ val ktgbotapiVersion = "28.0.0"
 var poiVersion = "5.4.1"
 var kstatemachineVersion = "0.34.2"
 var luceneVersion = "10.2.2"
-val ktorVersion = "3.2.3"
+val ktorVersion = "3.3.0"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:2.1.2")
