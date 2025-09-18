@@ -23,7 +23,6 @@ object UpdateEvent : Event
 abstract class Fsm<B : Builder>(private val builder: B, val bot: TelegramBot) {
 
     private val stateMachine: StateMachine
-    private var userId: Long? = null
 
     init {
         stateMachine = createFSM()
@@ -31,10 +30,7 @@ abstract class Fsm<B : Builder>(private val builder: B, val bot: TelegramBot) {
 
     abstract fun createFSM(): StateMachine
 
-    suspend fun processEvent(message: CommonMessage<MessageContent>) {
-            userId = message.userId()
-            stateMachine.processEvent(UpdateEvent, message)
-    }
+    suspend fun processEvent(message: CommonMessage<MessageContent>) = stateMachine.processEvent(UpdateEvent, message)
 
     suspend fun processState(
         t: TransitionParams<*>,
@@ -67,11 +63,8 @@ abstract class Fsm<B : Builder>(private val builder: B, val bot: TelegramBot) {
     fun mapError(message: CommonMessage<MessageContent>): (String) -> Unit = { error ->
         runBlocking { bot.sendTextMessage(message.chat, error) }
     }
-
-    val fsmLog = StateMachine.Logger { lazyMessage ->
-        KSLog.info("userId=$userId ${'$'}{lazyMessage()}")
-    }
-
 }
+
+val fsmLog = StateMachine.Logger { lazyMessage -> KSLog.info(lazyMessage()) }
 
 fun TransitionParams<*>.arg() = this.argument as CommonMessage<MessageContent>
