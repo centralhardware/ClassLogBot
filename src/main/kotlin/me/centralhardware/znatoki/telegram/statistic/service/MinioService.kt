@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
 import com.google.common.io.Files
+import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.error
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
 import io.ktor.utils.io.core.*
 import io.minio.GetObjectArgs
@@ -71,6 +73,4 @@ object MinioService {
                 .expiry(expire.seconds.toInt(), TimeUnit.SECONDS)
                 .build()
         )
-    }
-
-}
+    }.onFailure { KSLog.error(it) } }
