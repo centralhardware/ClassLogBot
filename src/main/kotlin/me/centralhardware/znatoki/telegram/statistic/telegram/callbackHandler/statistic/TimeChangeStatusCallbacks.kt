@@ -38,14 +38,14 @@ private suspend fun BehaviourContext.changeTimeStatus(id: UUID, deleted: Boolean
     query.messageDataCallbackQueryOrNull()?.message?.let { edit(it, replyMarkup = keyboard) }
 }
 
-suspend fun BehaviourContext.timeRestoreCallback() =
+fun BehaviourContext.timeRestoreCallback() =
     onDataCallbackQuery(Regex("timeRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("timeRestore-", ""))
         changeTimeStatus(id, false, it)
     }
 
 
-suspend fun BehaviourContext.timeDeleteCallback() =
+fun BehaviourContext.timeDeleteCallback() =
     onDataCallbackQuery(Regex("timeDelete-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("timeDelete-", ""))
         changeTimeStatus(id, true, it)

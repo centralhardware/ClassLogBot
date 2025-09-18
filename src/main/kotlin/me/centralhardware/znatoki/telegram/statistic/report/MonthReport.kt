@@ -91,7 +91,7 @@ class MonthReport(
 
                 fioToTimes
                     .asMap()
-                    .toSortedMap<Client, Collection<Service>>(comparator)
+                    .toSortedMap(comparator)
                     .forEach { (client, fioTimes) ->
                         val individual = fioTimes.count { id2times[it.id].isIndividual() }
                         val group = fioTimes.count { id2times[it.id].isGroup() }
@@ -160,7 +160,7 @@ class MonthReport(
                     cell("Полтора часа")
                     cell("Фото")
                 }
-                var total: Double = 0.0
+                var total = 0.0
                 times
                     .sortedByDescending { it.dateTime }
                     .groupBy { it.id }

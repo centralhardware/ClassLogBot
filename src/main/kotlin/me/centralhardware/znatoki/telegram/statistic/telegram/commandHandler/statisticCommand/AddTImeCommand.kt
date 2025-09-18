@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.TimeFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startTimeFsm
 
-suspend fun BehaviourContext.addTimeCommand() = onCommand(Regex("addTime|addtime")) {
+fun BehaviourContext.addTimeCommand() = onCommand(Regex("addTime|addtime")) {
     if (Storage.contain(it.userId())) {
         bot.sendMessage(it.chat, "Сначала сохраните текущую запись")
         return@onCommand

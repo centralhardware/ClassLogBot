@@ -5,6 +5,6 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onComman
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.report.getReport
 
-suspend fun BehaviourContext.dailyReportCommand() = onCommandWithArgs("dailyReport") { message, args ->
+fun BehaviourContext.dailyReportCommand() = onCommandWithArgs("dailyReport") { message, args ->
     getReport(args.first().toLong(), message.userId())
 }

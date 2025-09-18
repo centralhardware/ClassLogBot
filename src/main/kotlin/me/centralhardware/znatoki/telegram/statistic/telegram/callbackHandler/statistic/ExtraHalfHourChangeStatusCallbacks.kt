@@ -64,14 +64,14 @@ private suspend fun BehaviourContext.changeExtraHalfHour(id: UUID, extraHalfHour
         ?.let { edit(it.message, replyMarkup = keyboard) }
 }
 
-suspend fun BehaviourContext.extraHalfHourRemove() =
+fun BehaviourContext.extraHalfHourRemove() =
     onDataCallbackQuery(Regex("extraHalfHourRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("extraHalfHourRemove-", ""))
         changeExtraHalfHour(id, false, it)
 
     }
 
-suspend fun BehaviourContext.extraHalfHourAdd() =
+fun BehaviourContext.extraHalfHourAdd() =
     onDataCallbackQuery(Regex("extraHalfHourAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("extraHalfHourAdd-", ""))
         changeExtraHalfHour(id, true, it)

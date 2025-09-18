@@ -42,7 +42,7 @@ suspend fun BehaviourContext.send(id: IdChatIdentifier, file: File) {
     file.delete()
 }
 
-suspend fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
+fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     sendActionTyping(it.chat)
     createReport(it.userId(), it.chat) { id ->
         sendActionUploadDocument(it.chat)
@@ -50,7 +50,7 @@ suspend fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     }
 }
 
-suspend fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
+fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
     sendActionTyping(it.chat)
     createReport(it.userId(), it.chat) { id ->
         sendActionUploadDocument(it.chat)

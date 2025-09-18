@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startPaymentFsm
 
-suspend fun BehaviourContext.addPaymentCommand() = onCommand(Regex("addPayment|addpayment")) {
+fun BehaviourContext.addPaymentCommand() = onCommand(Regex("addPayment|addpayment")) {
     if (Storage.contain(it.userId())) {
         bot.sendMessage(it.chat, "Сначала сохраните текущую запись")
         return@onCommand

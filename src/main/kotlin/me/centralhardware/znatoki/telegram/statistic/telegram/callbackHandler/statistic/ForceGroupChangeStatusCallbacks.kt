@@ -66,14 +66,14 @@ private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup
         ?.let { edit(it.message, replyMarkup = keyboard) }
 }
 
-suspend fun BehaviourContext.forceGroupRemove() =
+fun BehaviourContext.forceGroupRemove() =
     onDataCallbackQuery(Regex("forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("forceGroupRemove-", ""))
         changeForceGroupStatus(id, false, it)
 
 }
 
-suspend fun BehaviourContext.forceGroupAdd() =
+fun BehaviourContext.forceGroupAdd() =
     onDataCallbackQuery(Regex("forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         val id = UUID.fromString(it.data.replace("forceGroupAdd-", ""))
         changeForceGroupStatus(id, true, it)

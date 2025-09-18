@@ -30,12 +30,12 @@ private suspend fun BehaviourContext.changePaymentStatus(id: Int, delete: Boolea
     }
 }
 
-suspend fun BehaviourContext.paymentDeleteCallback() = onDataCallbackQuery(Regex("paymentDelete-\\d+\$")) {
+fun BehaviourContext.paymentDeleteCallback() = onDataCallbackQuery(Regex($$"paymentDelete-\\d+$")) {
     val id = it.data.replace("paymentDelete-", "").toInt()
     changePaymentStatus(id, true, it)
 }
 
-suspend fun BehaviourContext.paymentRestoreCallback() = onDataCallbackQuery(Regex("paymentRestore-\\d+\$")) {
+fun BehaviourContext.paymentRestoreCallback() = onDataCallbackQuery(Regex($$"paymentRestore-\\d+$")) {
     val id = it.data.replace("paymentRestore-", "").toInt()
     changePaymentStatus(id, false, it)
 }

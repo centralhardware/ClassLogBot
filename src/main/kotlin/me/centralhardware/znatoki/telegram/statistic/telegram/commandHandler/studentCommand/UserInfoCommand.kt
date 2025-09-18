@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
-suspend fun BehaviourContext.userInfoCommand() = onCommandWithArgs("i") { message, args ->
+fun BehaviourContext.userInfoCommand() = onCommandWithArgs("i") { message, args ->
     ClientMapper.findById(args.first().toInt())?.let { client ->
         sendMessage(
             message.chat,
