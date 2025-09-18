@@ -12,8 +12,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermissi
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
-import me.centralhardware.znatoki.telegram.statistic.service.ReportService.getReportsCurrent
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.io.File
 
@@ -22,7 +21,7 @@ private suspend fun BehaviourContext.createReport(
     chat: PreviewChat,
     getTime: suspend (Long) -> List<File>
 ) {
-    if (Storage.contain(userId)) {
+    if (!ensureNoActiveFsm(userId, chat)) {
         return
     }
 
@@ -46,7 +45,7 @@ fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     sendActionTyping(it.chat)
     createReport(it.userId(), it.chat) { id ->
         sendActionUploadDocument(it.chat)
-        getReportsCurrent(id)
+        ReportService.getReportsCurrent(id)
     }
 }
 

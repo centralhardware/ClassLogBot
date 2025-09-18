@@ -7,10 +7,10 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ClientFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startClientFsm
+import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
 
 fun BehaviourContext.addClientCommand() = onCommand(Regex("addPupil|addpupil")) {
-    if (Storage.contain(it.userId())) {
-        bot.sendMessage(it.chat, "Сначала сохраните текущую запись")
+    if (!ensureNoActiveFsm(it)) {
         return@onCommand
     }
     Storage.create(it.userId(), ClientFsm(startClientFsm(it), this))
