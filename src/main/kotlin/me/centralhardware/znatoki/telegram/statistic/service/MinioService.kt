@@ -48,13 +48,13 @@ object MinioService {
 
         fileNew.toFile().delete()
         fileNew.toFile().absolutePath
-    }
+    }.onFailure { KSLog.error(it) }
 
     fun delete(file: String): Result<Unit> = runCatching {
         minioClient.removeObject(
             RemoveObjectArgs.builder().bucket(Config.Minio.bucket).`object`(file).build()
         )
-    }
+    }.onFailure { KSLog.error(it) }
 
     fun get(file: String): Result<Input> = runCatching {
         minioClient
@@ -62,7 +62,7 @@ object MinioService {
             .readAllBytes()
             .asMultipartFile("Отчет")
             .input
-    }
+    }.onFailure { KSLog.error(it) }
 
     fun getLink(file: String, expire: Duration): Result<String> = runCatching {
         minioClient.getPresignedObjectUrl(
@@ -73,4 +73,5 @@ object MinioService {
                 .expiry(expire.seconds.toInt(), TimeUnit.SECONDS)
                 .build()
         )
-    }.onFailure { KSLog.error(it) } }
+    }.onFailure { KSLog.error(it) }
+}
