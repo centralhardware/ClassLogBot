@@ -192,7 +192,7 @@ class MonthReport(
                             }
                             MinioService.getLink(services.first().properties.find("фото отчетности").value!!, 7.days)
                                 .onSuccess {
-                                    cellHyperlink(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl), "отчет")
+                                    cellHyperlink(it, "отчет")
                                 }
                         }
                     }
@@ -223,7 +223,7 @@ class MonthReport(
                         cell(getClient(payment.clientId).fio(), HorizontalAlignment.LEFT)
                         cell(payment.amount)
                         MinioService.getLink(payment.properties.find("фото отчетности").value!!, 3.hours).onSuccess {
-                            cellHyperlink(it.replace("http://10.168.0.34:9000", Config.Minio.proxyUrl), "отчет")
+                            cellHyperlink(it,"отчет")
                         }
                     }
                 }
