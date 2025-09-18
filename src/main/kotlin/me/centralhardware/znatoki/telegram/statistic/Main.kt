@@ -51,9 +51,6 @@ var BehaviourContextData.user: TelegramUser
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
 suspend fun main() {
-    embeddedServer(Netty, port = 999) {
-        minioProxy()
-    }.start(wait = false)
     AppConfig.init("ZnatokiStatistic")
     ClientService.init()
     longPolling(
