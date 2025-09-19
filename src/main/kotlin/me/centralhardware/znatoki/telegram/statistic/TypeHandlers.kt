@@ -9,10 +9,10 @@ fun String.parseStringList() = split(":")
 
 fun String.parseLongList() = split(":").map { it.toLong() }
 
-fun String.toCustomProperties(): PropertyDefs = Json.decodeFromString(this)
+fun String.toCustomProperties(): PropertyDefs = Json.decodeFromString(this.replace("\\", ""))
 
 val json = Json { isLenient = true }
 
-fun String.toProperties(): List<Property> = json.decodeFromString(this)
+fun String.toProperties(): List<Property> = json.decodeFromString(this.replace("\\", ""))
 
 fun List<Property>.toJson() = json.encodeToString(ListSerializer(Property.serializer()), this)
