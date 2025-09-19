@@ -14,7 +14,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.print
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
@@ -75,11 +74,11 @@ class MonthReport(
                 )
                 row {
                     cell("№")
-                    cell("ФИО ${ConfigMapper.clientName()}")
+                    cell("ФИО ученика")
                     getClient(times.first().clientId).let {
                         it.properties
                             .map { it.name }
-                            .filter { ConfigMapper.includeInReport().contains(it) }
+                            .filter { Config.includeInReport().contains(it) }
                             .forEach { cell(it) }
                     }
                     cell("посетил индивидуально")
@@ -114,7 +113,7 @@ class MonthReport(
                             cell(i.getAndIncrement())
                             cell(client.fio(), HorizontalAlignment.LEFT)
                             client.properties
-                                .filter { ConfigMapper.includeInReport().contains(it.name) }
+                                .filter { Config.includeInReport().contains(it.name) }
                                 .map { cell(it.value ?: "") }
                             cell(individual)
                             cell(group)
@@ -241,7 +240,7 @@ class MonthReport(
     }
 
     private fun getComparator(client: Client): Comparator<Client> {
-        val props = client.properties.filter { ConfigMapper.includeInReport().contains(it.name) }
+        val props = client.properties.filter { Config.includeInReport().contains(it.name) }
 
         var comparator: Comparator<Client> = createComparatorFunction(props.first())
 

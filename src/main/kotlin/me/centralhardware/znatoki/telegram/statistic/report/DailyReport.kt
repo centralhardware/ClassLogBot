@@ -7,11 +7,11 @@ import dev.inmo.krontab.utils.asTzFlowWithDelays
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.toChatId
+import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatTime
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ConfigMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 import java.util.*
@@ -41,7 +41,7 @@ suspend fun BehaviourContext.getReport(id: Long, sendTo: Long = id) {
                 """
                         Время: ${it.first().dateTime.formatTime()}
                         Предмет: ${ServicesMapper.getNameById(it.first().serviceId)}
-                        ${ConfigMapper.clientName()}: ${
+                        ученик: ${
                     it.toClientIds().joinToString(", ") { clientId -> ClientMapper.getFioById(clientId) }
                 }
                         Стоимость: ${it.first().amount}

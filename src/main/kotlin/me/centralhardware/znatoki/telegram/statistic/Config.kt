@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic
 
+import dev.inmo.tgbotapi.types.toChatId
+
 object Config {
 
     object Minio {
@@ -15,4 +17,17 @@ object Config {
         val username: String = System.getenv("DATASOURCE_USERNAME")
         val password: String = System.getenv("DATASOURCE_PASSWORD")
     }
+
+    fun logChat() = System.getenv("LOG_CHAT").toLong().toChatId()
+
+    fun paymentProperties() = System.getenv("PAYMENT_PROPERTIES").toCustomProperties()
+
+    fun clientProperties() = System.getenv("CLIENT_PROPERTIES").toCustomProperties()
+
+    fun serviceProperties() = System.getenv("SERVICE_PROPERTIES").toCustomProperties()
+
+    fun includeInInline() = System.getenv("INCLUDE_IN_INLINE").parseStringList()
+
+    fun includeInReport() = System.getenv("INCLUDE_IN_REPORT").parseStringList()
+
 }

@@ -19,6 +19,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
 import me.centralhardware.znatoki.telegram.statistic.extensions.process
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
+import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
@@ -91,11 +92,11 @@ class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(b
             return false
         }
 
-        if (ConfigMapper.clientProperties().isEmpty()) {
+        if (Config.clientProperties().isEmpty()) {
             finish(listOf(), message, builder)
         } else {
             builder.propertiesBuilder =
-                PropertiesBuilder(ConfigMapper.clientProperties().propertyDefs.toMutableList())
+                PropertiesBuilder(Config.clientProperties().propertyDefs.toMutableList())
             val next = builder.nextProperty()!!
             if (next.second.isNotEmpty()) {
                 bot.send(
@@ -111,7 +112,7 @@ class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(b
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ClientBuilder): Boolean {
-        if (ConfigMapper.clientProperties().isEmpty()) return true
+        if (Config.clientProperties().isEmpty()) return true
 
         return builder.propertiesBuilder!!.process(message, bot) {
             runBlocking { finish(it, message, builder) }
@@ -145,10 +146,10 @@ class ClientFsm(builder: ClientBuilder, bot: TelegramBot) : Fsm<ClientBuilder>(b
 
     private suspend fun sendLog(client: Client) {
         bot.send(
-            ConfigMapper.logChat(),
+            Config.logChat(),
             text =
                 """
-                #${ConfigMapper.clientName()}   
+                #ученик
                 ${
             client.getInfo(
                 ServiceMapper.getServicesForClient(client.id!!)

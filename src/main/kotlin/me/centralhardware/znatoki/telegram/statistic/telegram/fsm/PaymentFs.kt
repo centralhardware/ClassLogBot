@@ -30,7 +30,10 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.process
 import me.centralhardware.znatoki.telegram.statistic.extensions.switchToInlineKeyboard
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.extensions.yesNoKeyboard
-import me.centralhardware.znatoki.telegram.statistic.mapper.*
+import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
@@ -138,7 +141,7 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
             .mapLeft(mapError(message))
             .map { amount ->
                 builder.amount = amount
-                if (ConfigMapper.paymentProperties().isEmpty()) {
+                if (Config.paymentProperties().isEmpty()) {
                     bot.sendTextMessage(
                         message.chat,
                         builder.let {
@@ -154,7 +157,7 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
                 } else {
                     builder.propertiesBuilder =
                         PropertiesBuilder(
-                            ConfigMapper.paymentProperties().propertyDefs.toMutableList()
+                            Config.paymentProperties().propertyDefs.toMutableList()
                         )
                     val next = builder.nextProperty()!!
                     if (next.second.isNotEmpty()) {
@@ -173,7 +176,7 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: PaymentBuilder): Boolean {
-        if (ConfigMapper.paymentProperties().isEmpty()) return true
+        if (Config.paymentProperties().isEmpty()) return true
 
         return builder.propertiesBuilder!!.process(message, bot) { properties ->
             builder.properties = properties
@@ -239,19 +242,19 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
                 .trimIndent()
         val hasPhoto = payment.properties.stream().filter { it.type is Photo }.count()
         if (hasPhoto == 1L) {
-            bot.sendActionUploadPhoto(ConfigMapper.logChat())
+            bot.sendActionUploadPhoto(Config.logChat())
             payment.properties
                 .filter { it.type is Photo }
                 .forEach { photo ->
-                    bot.sendActionUploadPhoto(ConfigMapper.logChat())
+                    bot.sendActionUploadPhoto(Config.logChat())
                     bot.sendPhoto(
-                        ConfigMapper.logChat(),
+                        Config.logChat(),
                         InputFile.fromInput("") {
                             MinioService.get(photo.value!!)
                                 .onFailure {
                                     runBlocking {
                                         bot.sendTextMessage(
-                                            ConfigMapper.logChat(),
+                                            Config.logChat(),
                                             "Ошибка во время отправки лога",
                                         )
                                     }
@@ -263,7 +266,7 @@ class PaymentFsm(builder: PaymentBuilder, bot: TelegramBot) : Fsm<PaymentBuilder
                     )
                 }
         } else {
-            bot.sendTextMessage(ConfigMapper.logChat(), text, replyMarkup = keyboard)
+            bot.sendTextMessage(Config.logChat(), text, replyMarkup = keyboard)
         }
     }
 }

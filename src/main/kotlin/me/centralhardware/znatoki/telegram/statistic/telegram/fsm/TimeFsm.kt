@@ -35,6 +35,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.process
 import me.centralhardware.znatoki.telegram.statistic.extensions.switchToInlineKeyboard
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.extensions.yesNoKeyboard
+import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import ru.nsk.kstatemachine.state.*
@@ -165,12 +166,12 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
             .map { amount ->
                 builder.amount = amount
 
-                if (ConfigMapper.serviceProperties().isEmpty()) {
+                if (Config.serviceProperties().isEmpty()) {
                     confirmMessage(message, builder)
                 } else {
                     builder.propertiesBuilder =
                         PropertiesBuilder(
-                            ConfigMapper.serviceProperties().propertyDefs.toMutableList()
+                            Config.serviceProperties().propertyDefs.toMutableList()
                         )
 
                     val next = builder.nextProperty()!!
@@ -191,7 +192,7 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
     }
 
     suspend fun property(message: CommonMessage<MessageContent>, builder: ServiceBuilder): Boolean {
-        if (ConfigMapper.serviceProperties().isEmpty()) return true
+        if (Config.serviceProperties().isEmpty()) return true
 
         return builder.propertiesBuilder!!.process(message, bot) { properties ->
             builder.properties = properties
@@ -298,7 +299,7 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
                     #занятие
                     Время: ${service.dateTime.formatDateTime()}
                     Предмет: ${ServicesMapper.getNameById(service.serviceId).hashtag()}
-                    ${ConfigMapper.clientName()}: ${
+                    ученик: ${
                 services.toClientIds().joinToString(", ") {
                     "#${ClientMapper.getFioById(it).replace(" ", "_")}"
                 }
@@ -312,18 +313,18 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
         val hasPhoto = service.properties.count { it.type is Photo }
 
         if (hasPhoto == 1) {
-            bot.sendActionUploadPhoto(ConfigMapper.logChat())
+            bot.sendActionUploadPhoto(Config.logChat())
             service.properties
                 .filter { it.type is Photo }
                 .forEach { photo ->
                     bot.sendPhoto(
-                        ConfigMapper.logChat(),
+                        Config.logChat(),
                         InputFile.fromInput("Отчет") {
                             MinioService.get(photo.value!!)
                                 .onFailure {
                                     runBlocking {
                                         bot.sendTextMessage(
-                                            ConfigMapper.logChat(),
+                                            Config.logChat(),
                                             "Ошибка во время отправки лога",
                                         )
                                     }
@@ -335,7 +336,7 @@ class TimeFsm(builder: ServiceBuilder, bot: TelegramBot) : Fsm<ServiceBuilder>(b
                     )
                 }
         } else {
-            bot.sendTextMessage(ConfigMapper.logChat(), log, replyMarkup = keyboard)
+            bot.sendTextMessage(Config.logChat(), log, replyMarkup = keyboard)
         }
     }
 }
