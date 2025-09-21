@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startPaymentFs
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
 
 fun BehaviourContext.addPaymentCommand() = onCommand(Regex("addPayment|addpayment")) {
-    if (!ensureNoActiveFsm(it)) {
+    if (!ensureNoActiveFsm(it.userId())) {
         return@onCommand
     }
 

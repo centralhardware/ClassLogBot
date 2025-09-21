@@ -6,8 +6,7 @@ import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
-import dev.inmo.tgbotapi.types.IdChatIdentifier
-import dev.inmo.tgbotapi.types.chat.PreviewChat
+import dev.inmo.tgbotapi.types.toChatId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
@@ -18,32 +17,31 @@ import java.io.File
 
 private suspend fun BehaviourContext.createReport(
     userId: Long,
-    chat: PreviewChat,
     getTime: suspend (Long) -> List<File>
 ) {
-    if (!ensureNoActiveFsm(userId, chat)) {
+    if (!ensureNoActiveFsm(userId)) {
         return
     }
 
     if (data.user.hasAdminPermission()) {
-        ServiceMapper.getIds().forEach { getTime.invoke(it).forEach { send(chat.id, it) } }
+        ServiceMapper.getIds().forEach { getTime.invoke(it).forEach { send(userId, it) } }
         return
     }
 
     getTime.invoke(userId).forEach {
-        send(chat.id, it)
+        send(userId, it)
         it.delete()
     }
 }
 
-suspend fun BehaviourContext.send(id: IdChatIdentifier, file: File) {
-    sendDocument(id, InputFile(file))
+suspend fun BehaviourContext.send(userId: Long, file: File) {
+    sendDocument(userId.toChatId(), InputFile(file))
     file.delete()
 }
 
 fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     sendActionTyping(it.chat)
-    createReport(it.userId(), it.chat) { id ->
+    createReport(it.userId()) { id ->
         sendActionUploadDocument(it.chat)
         ReportService.getReportsCurrent(id)
     }
@@ -51,7 +49,7 @@ fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
 
 fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
     sendActionTyping(it.chat)
-    createReport(it.userId(), it.chat) { id ->
+    createReport(it.userId()) { id ->
         sendActionUploadDocument(it.chat)
         ReportService.getReportPrevious(id)
     }

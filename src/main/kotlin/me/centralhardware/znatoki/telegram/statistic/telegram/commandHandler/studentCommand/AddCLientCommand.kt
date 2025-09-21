@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startClientFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
 
 fun BehaviourContext.addClientCommand() = onCommand(Regex("addPupil|addpupil")) {
-    if (!ensureNoActiveFsm(it)) {
+    if (!ensureNoActiveFsm(it.userId())) {
         return@onCommand
     }
     Storage.create(it.userId(), startClientFsm(it))
