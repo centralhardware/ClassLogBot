@@ -50,7 +50,7 @@ private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup
                 row { dataButton("Удалить", "timeDelete-$id") }
             }
         }
-        if (times.first().extraHalfHour && UserMapper.findById(chatId).hasExtraHalfHour()) {
+        if (times.first().extraHalfHour && data.user.hasExtraHalfHour()) {
             row { dataButton("Убрать полтора часа", "extraHalfHourRemove-${service.id}") }
         } else {
             row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id}") }

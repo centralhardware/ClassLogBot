@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic
 
 import dev.inmo.micro_utils.common.Warning
 import dev.inmo.tgbotapi.AppConfig
+import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextData
 import dev.inmo.tgbotapi.extensions.behaviour_builder.buildSubcontextInitialAction
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
@@ -36,6 +37,14 @@ import restrictAccess
 var BehaviourContextData.user: TelegramUser
     get() = get("user") as TelegramUser
     set(value) = set("user", value)
+
+suspend fun BehaviourContext.initContext(filter: (TelegramUser?) -> Boolean, block: BehaviourContext.() -> Unit) = createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+    updatesUpstreamFlow = allUpdatesFlow.filter {
+        runCatching {
+            filter.invoke(UserMapper.findById(it.userId()))
+        }.getOrDefault(false)
+    }
+) { block() }
 
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
@@ -92,47 +101,19 @@ suspend fun main() {
 
         onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
 
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow =
-                allUpdatesFlow.filter {
-                    return@filter runCatching {
-                        UserMapper.findById(it.userId()).hasClientPermission()
-                    }.getOrDefault(false)
-                }
-        ) {
+        initContext({it.hasClientPermission()}) {
             addClientCommand()
         }
 
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow =
-                allUpdatesFlow.filter {
-                    return@filter runCatching {
-                        UserMapper.findById(it.userId()).hasPaymentPermission()
-                    }.getOrDefault(false)
-                }
-        ) {
+        initContext({it.hasPaymentPermission()}) {
             addPaymentCommand()
         }
 
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow =
-                allUpdatesFlow.filter {
-                    return@filter runCatching {
-                        UserMapper.findById(it.userId()).hasTimePermission()
-                    }.getOrDefault(false)
-                }
-        ) {
+        initContext({it.hasTimePermission()}) {
             addTimeCommand()
         }
 
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow =
-                allUpdatesFlow.filter {
-                    return@filter runCatching {
-                        UserMapper.findById(it.userId()).hasReadRight()
-                    }.getOrDefault(false)
-                }
-        ) {
+        initContext({it.hasReadRight()}) {
             userInfoCommand()
             searchCommand()
             reportCommand()
@@ -149,14 +130,7 @@ suspend fun main() {
             extraHalfHourRemove()
         }
 
-        createSubContextAndDoAsynchronouslyWithUpdatesFilter(
-            updatesUpstreamFlow =
-                allUpdatesFlow.filter {
-                    return@filter runCatching {
-                        UserMapper.findById(it.userId()).hasAdminPermission()
-                    }.getOrDefault(false)
-                }
-        ) {
+        initContext({it.hasAdminPermission()}) {
             dailyReportCommand()
 
             deleteUserCallback()

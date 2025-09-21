@@ -51,7 +51,7 @@ private suspend fun BehaviourContext.changeExtraHalfHour(id: UUID, extraHalfHour
         } else {
             row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id}") }
         }
-        if (times.size == 1 && UserMapper.findById(chatId).hasForceGroup()) {
+        if (times.size == 1 && data.user.hasForceGroup()) {
             if (times.first().forceGroup) {
                 row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }
             } else {

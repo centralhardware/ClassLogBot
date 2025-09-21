@@ -22,8 +22,8 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
+import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 
@@ -38,7 +38,7 @@ private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: Int, u
                 Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
                 Предмет: ${ServicesMapper.getNameById(payment.serviceId)}
                 Оплата: ${payment.amount}
-                Оплатил: ${UserMapper.findById(userId)!!.name.hashtag()}
+                Оплатил: ${data.user.name.hashtag()}
             """
             .trimIndent()
     sendActionUploadPhoto(Config.logChat())
@@ -78,7 +78,7 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
 
         enum(
             "Выберите предмет",
-            UserMapper.findById(message.userId())!!.services.map { ServicesMapper.getNameById(it)!! }
+            data.user.services.map { ServicesMapper.getNameById(it)!! }
         ) { builder, value ->
             builder.serviceId = ServicesMapper.getServiceId(value)!!
         }

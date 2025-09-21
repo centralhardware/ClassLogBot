@@ -21,8 +21,8 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.*
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
+import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 import ru.nsk.kstatemachine.statemachine.StateMachine
@@ -30,11 +30,10 @@ import java.util.*
 
 suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>): StateMachine {
     val userId = message.userId()
-    val user = UserMapper.findById(userId) ?: error("User not found: $userId")
 
     val builder = ServiceBuilder().apply {
         chatId = userId
-        if (user.services.size == 1) serviceId = user.services.first()
+        if (data.user.services.size == 1) serviceId = data.user.services.first()
     }
 
     return startTelegramFsm(
@@ -42,8 +41,8 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
         ctx = builder,
         msg = message
     ) {
-        if (user.services.size != 1) {
-            val options = user.services.mapNotNull { ServicesMapper.getNameById(it) }
+        if (data.user.services.size != 1) {
+            val options = data.user.services.mapNotNull { ServicesMapper.getNameById(it) }
             enum(
                 prompt = "Выберите предмет",
                 options = options
@@ -100,8 +99,8 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
                 services.forEach { ServiceMapper.insert(it) }
                 sendLog(services, userId)
 
-                val allowForceGroup = UserMapper.findById(userId)!!.hasForceGroup()
-                val allowExtraHalf = UserMapper.findById(userId).hasExtraHalfHour()
+                val allowForceGroup = data.user.hasForceGroup()
+                val allowExtraHalf = data.user.hasExtraHalfHour()
                 if ((allowForceGroup && services.size == 1) || allowExtraHalf) {
                     runBlocking {
                         sendTextMessage(
@@ -168,7 +167,7 @@ suspend fun BehaviourContext.sendLog(services: List<Service>, userId: Long) {
             "ученик: " + services.toClientIds()
                 .joinToString(", ") { "#${ClientMapper.getFioById(it).replace(" ", "_")}" })
         appendLine("Стоимость: ${service.amount}")
-        appendLine("Преподаватель: ${UserMapper.findById(userId)?.name.hashtag()}")
+        appendLine("Преподаватель: ${data.user.name.hashtag()}")
     }.trimIndent()
 
     sendPhoto(
