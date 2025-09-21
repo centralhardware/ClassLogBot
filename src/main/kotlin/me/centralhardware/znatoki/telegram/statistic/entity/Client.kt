@@ -81,7 +81,7 @@ fun Row.parseClient(): Client =
         boolean("deleted"),
     )
 
-class ClientBuilder : Builder {
+class ClientBuilder {
     var name: String? = null
     var secondName: String? = null
     var lastName: String? = null

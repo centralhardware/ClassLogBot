@@ -9,44 +9,62 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import java.util.*
+import java.util.UUID
 
-private suspend fun BehaviourContext.changeTimeStatus(id: UUID, deleted: Boolean, query: DataCallbackQuery) {
+private const val ACTION_DELETE = "timeDelete"
+private const val ACTION_RESTORE = "timeRestore"
+private const val UUID_REGEX =
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+private val timeToggleRegex = Regex("($ACTION_DELETE|$ACTION_RESTORE)-($UUID_REGEX)")
+
+fun BehaviourContext.registerTimeToggleCallback() = onDataCallbackQuery(timeToggleRegex) { query ->
+    val (action, idStr) = timeToggleRegex.matchEntire(query.data)!!.destructured
+    val id = UUID.fromString(idStr)
+    val deleted = action == ACTION_DELETE
+    changeTimeStatus(id, deleted, query)
+}
+
+private suspend fun BehaviourContext.changeTimeStatus(
+    id: UUID,
+    deleted: Boolean,
+    query: DataCallbackQuery
+) {
     ServiceMapper.setDeleted(id, deleted)
     val times = ServiceMapper.findById(id)
+    val current = times.firstOrNull() ?: return
 
-    val keyboard = inlineKeyboard {
+    query.messageDataCallbackQueryOrNull()?.message?.let {
+        edit(it, replyMarkup = buildTimeKeyboard(
+            id = id,
+            deleted = deleted,
+            extraHalfHour = current.extraHalfHour,
+            forceGroup = current.forceGroup,
+            isSingle = times.size == 1))
+    }
+}
+
+private fun buildTimeKeyboard(id: UUID, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {
+    row {
         if (deleted) {
-            row { dataButton("Восстановить", "timeRestore-$id") }
+            dataButton("Восстановить", "$ACTION_RESTORE-$id")
         } else {
-            row { dataButton("Удалить", "timeDelete-$id") }
+            dataButton("Удалить", "$ACTION_DELETE-$id")
         }
-        if (times.first().extraHalfHour) {
-            row { dataButton("Убрать полтора часа", "extraHalfHourRemove-${times.first().id}") }
+    }
+    row {
+        if (extraHalfHour) {
+            dataButton("Убрать полтора часа", "extraHalfHourRemove-$id")
         } else {
-            row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${times.first().id}") }
+            dataButton("Сделать полтора часа", "extraHalfHourAdd-$id")
         }
-        if (times.size == 1) {
-            if (times.first().forceGroup) {
-                row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }
+    }
+    if (isSingle) {
+        row {
+            if (forceGroup) {
+                dataButton("Сделать одиночным занятием", "forceGroupRemove-$id")
             } else {
-                row { dataButton("Сделать групповым занятием", "forceGroupAdd-$id") }
+                dataButton("Сделать групповым занятием", "forceGroupAdd-$id")
             }
         }
     }
-
-    query.messageDataCallbackQueryOrNull()?.message?.let { edit(it, replyMarkup = keyboard) }
 }
-
-fun BehaviourContext.timeRestoreCallback() =
-    onDataCallbackQuery(Regex("timeRestore-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-        val id = UUID.fromString(it.data.replace("timeRestore-", ""))
-        changeTimeStatus(id, false, it)
-    }
-
-
-fun BehaviourContext.timeDeleteCallback() =
-    onDataCallbackQuery(Regex("timeDelete-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-        val id = UUID.fromString(it.data.replace("timeDelete-", ""))
-        changeTimeStatus(id, true, it)
-    }

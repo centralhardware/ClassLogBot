@@ -123,11 +123,9 @@ suspend fun main() {
 
             processInline()
 
-            forceGroupAdd()
-            forceGroupRemove()
+            registerForceGroupHandlers()
 
-            extraHalfHourAdd()
-            extraHalfHourRemove()
+            registerExtraHalfHourHandlers()
         }
 
         initContext({it.hasAdminPermission()}) {
@@ -135,11 +133,9 @@ suspend fun main() {
 
             deleteUserCallback()
 
-            timeRestoreCallback()
-            timeDeleteCallback()
+            registerTimeToggleCallback()
 
-            paymentRestoreCallback()
-            paymentDeleteCallback()
+            registerPaymentToggleCallback()
         }
 
         launch {

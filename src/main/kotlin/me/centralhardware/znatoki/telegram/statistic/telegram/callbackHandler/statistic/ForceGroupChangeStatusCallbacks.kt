@@ -14,68 +14,100 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.hasExtraHalfHour
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
-private suspend fun BehaviourContext.changeForceGroupStatus(id: UUID, forceGroup: Boolean, query: DataCallbackQuery) {
+private const val ACTION_ADD = "forceGroupAdd"
+private const val ACTION_REMOVE = "forceGroupRemove"
+private const val UUID_REGEX =
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+private val toggleRegex = Regex("($ACTION_ADD|$ACTION_REMOVE)-($UUID_REGEX)")
+
+fun BehaviourContext.registerForceGroupHandlers() = onDataCallbackQuery(toggleRegex) { query ->
+    val (action, idStr) = toggleRegex.matchEntire(query.data)!!.destructured
+    val id = UUID.fromString(idStr)
+    val enable = action == ACTION_ADD
+    changeForceGroupStatus(id, enable, query)
+}
+
+private suspend fun BehaviourContext.changeForceGroupStatus(
+    id: UUID,
+    forceGroup: Boolean,
+    query: DataCallbackQuery
+) {
     val chatId = query.from.id.chatId.long
-    val service = ServiceMapper.findById(id).first()
+    val before = ServiceMapper.findById(id)
+    val service = before.firstOrNull()
+        ?: run {
+            answerCallbackQuery(query, "Запись не найдена", showAlert = true)
+            return
+        }
+
     if (!data.user.hasAdminPermission() && service.chatId != chatId) {
-        answerCallbackQuery(query, "Доступ запрещен", showAlert = true)
+        answerCallbackQuery(query, "Доступ запрещён", showAlert = true)
         return
     }
     if (!service.dateTime.isInSameMonthAs(LocalDateTime.now())) {
-        answerCallbackQuery(
-            query,
-            "Нельзя модифицировать запись после окончания месяца",
-            showAlert = true,
-        )
+        answerCallbackQuery(query, "Нельзя модифицировать запись после окончания месяца", showAlert = true)
         return
     }
 
-    ServiceMapper.setForceGroup(id, forceGroup)
-    val times = ServiceMapper.findById(id)
-    if (times.size > 1) {
+    if (before.size > 1) {
         answerCallbackQuery(query, "Занятие уже групповое", showAlert = true)
         return
     }
 
-    val keyboard = inlineKeyboard {
-        if (!query.isDm()) {
-            if (times.first().deleted) {
-                row { dataButton("Восстановить", "timeRestore-$id") }
-            } else {
-                row { dataButton("Удалить", "timeDelete-$id") }
-            }
-        }
-        if (times.first().extraHalfHour && data.user.hasExtraHalfHour()) {
-            row { dataButton("Убрать полтора часа", "extraHalfHourRemove-${service.id}") }
-        } else {
-            row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id}") }
-        }
-        if (forceGroup) {
-            row { dataButton("Сделать одиночным занятием", "forceGroupRemove-$id") }
-        } else {
-            row { dataButton("Сделать групповым занятием", "forceGroupAdd-$id") }
-        }
-    }
+    ServiceMapper.setForceGroup(id, forceGroup)
+
+    val after = ServiceMapper.findById(id)
+    val current = after.firstOrNull() ?: service
+
+    val keyboard = buildServiceKeyboard(
+        id = id,
+        isDm = query.isDm(),
+        canToggleExtraHalfHour = data.user.hasExtraHalfHour(),
+        deleted = current.deleted,
+        extraHalfHour = current.extraHalfHour,
+        // Показывать переключатель групповой/одиночной — только если по-прежнему единственная запись
+        showForceGroupSwitcher = after.size == 1,
+        forceGroup = current.forceGroup
+    )
 
     query.messageDataCallbackQueryOrNull()
         ?.let { edit(it.message, replyMarkup = keyboard) }
 }
 
-fun BehaviourContext.forceGroupRemove() =
-    onDataCallbackQuery(Regex("forceGroupRemove-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-        val id = UUID.fromString(it.data.replace("forceGroupRemove-", ""))
-        changeForceGroupStatus(id, false, it)
-
-}
-
-fun BehaviourContext.forceGroupAdd() =
-    onDataCallbackQuery(Regex("forceGroupAdd-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
-        val id = UUID.fromString(it.data.replace("forceGroupAdd-", ""))
-        changeForceGroupStatus(id, true, it)
-
+private fun buildServiceKeyboard(
+    id: UUID,
+    isDm: Boolean,
+    canToggleExtraHalfHour: Boolean,
+    deleted: Boolean,
+    extraHalfHour: Boolean,
+    showForceGroupSwitcher: Boolean,
+    forceGroup: Boolean
+) = inlineKeyboard {
+    if (!isDm) {
+        if (deleted) {
+            row { dataButton("Восстановить", "timeRestore-$id") }
+        } else {
+            row { dataButton("Удалить", "timeDelete-$id") }
+        }
     }
+
+    if (canToggleExtraHalfHour) {
+        if (extraHalfHour) {
+            row { dataButton("Убрать полтора часа", "extraHalfHourRemove-$id") }
+        } else {
+            row { dataButton("Сделать полтора часа", "extraHalfHourAdd-$id") }
+        }
+    }
+
+    if (showForceGroupSwitcher) {
+        if (forceGroup) {
+            row { dataButton("Сделать одиночным занятием", "$ACTION_REMOVE-$id") }
+        } else {
+            row { dataButton("Сделать групповым занятием", "$ACTION_ADD-$id") }
+        }
+    }
+}

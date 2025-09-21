@@ -25,7 +25,7 @@ fun Row.parsePayment() = Payment(
     stringOrNull("photo_report")
 )
 
-class PaymentBuilder : Builder {
+class PaymentBuilder {
     var chatId: Long? = null
     var clientId: Int? = null
     var amount: Int? = null

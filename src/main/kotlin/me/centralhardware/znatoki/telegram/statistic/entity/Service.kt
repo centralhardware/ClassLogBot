@@ -36,7 +36,7 @@ fun Row.parseTime() =
         boolean("is_deleted"),
     )
 
-class ServiceBuilder : Builder {
+class ServiceBuilder {
     var id: UUID = UUID.randomUUID()
     var chatId: Long? = null
     var serviceId: Long? = null
