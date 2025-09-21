@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.service
 import com.google.common.io.Files
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
+import dev.inmo.kslog.common.info
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
 import io.ktor.utils.io.core.*
 import io.minio.GetObjectArgs
@@ -29,6 +30,8 @@ object MinioService {
             .build()
 
     fun upload(file: File, dateTime: LocalDateTime): Result<String> = runCatching {
+        KSLog.info { "Uploading file=${file.name}, size=${file.length()} to MinIO at $dateTime" }
+
         val fileNew =
             Paths.get(
                 "${Config.Minio.basePath}/${dateTime.year}/${dateTime.month}/${dateTime.dayOfMonth}/${dateTime.hour}:${dateTime.minute}=${UUID.randomUUID()}.jpg"
@@ -47,24 +50,31 @@ object MinioService {
         )
 
         fileNew.toFile().delete()
+
+        KSLog.info { "Successfully uploaded file to MinIO: ${fileNew.toFile().absolutePath}" }
         fileNew.toFile().absolutePath
     }.onFailure { KSLog.error(it) }
 
     fun delete(file: String): Result<Unit> = runCatching {
+        KSLog.info { "Deleting file from MinIO: $file" }
         minioClient.removeObject(
             RemoveObjectArgs.builder().bucket(Config.Minio.bucket).`object`(file).build()
         )
     }.onFailure { KSLog.error(it) }
 
     fun get(file: String): Result<Input> = runCatching {
-        minioClient
+        KSLog.info { "Getting file from MinIO: $file" }
+        val input = minioClient
             .getObject(GetObjectArgs.builder().bucket(Config.Minio.bucket).`object`(file).build())
             .readAllBytes()
             .asMultipartFile("Отчет")
             .input
+        KSLog.info { "Successfully fetched file from MinIO: $file" }
+        input
     }.onFailure { KSLog.error(it) }
 
     fun getLink(file: String, expire: Duration): Result<String> = runCatching {
+        KSLog.info { "Generating presigned link for file=$file, expire=${expire.inWholeSeconds}s" }
         minioClient.getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
                 .method(Method.GET)

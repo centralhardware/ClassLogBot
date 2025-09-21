@@ -3,7 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 import java.time.LocalDateTime
 import java.util.*
 import kotliquery.queryOf
-import me.centralhardware.znatoki.telegram.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
@@ -26,7 +25,7 @@ object ServiceMapper {
                 service_id,
                 amount,
                 pupil_id,
-                properties
+                photo_report
             ) VALUES (
                 :dateTime,
                 :updateTime,
@@ -35,7 +34,7 @@ object ServiceMapper {
                 :serviceId,
                 :amount,
                 :clientId,
-                :properties::JSONB
+                :photo_report
             )
             """,
                 mapOf(
@@ -46,7 +45,7 @@ object ServiceMapper {
                     "serviceId" to service.serviceId,
                     "amount" to service.amount,
                     "clientId" to service.clientId,
-                    "properties" to service.properties.toJson(),
+                    "photo_report" to service.photoReport,
                 ),
             )
         )
@@ -59,23 +58,23 @@ object ServiceMapper {
     ): List<Service> =
         session.run(
             queryOf(
-                    """
-            SELECT id,
-                   date_time,
-                   update_time,
-                   chat_id,
-                   service_id,
-                   pupil_id,
-                   amount,
-                   properties,
-                   force_group,
-                   extra_half_hour,
-                   is_deleted
-            FROM service
-            WHERE chat_id = :userId
-                AND service_id = :serviceId
-                AND date_time between :startDate and :endDate
-                AND is_deleted=false
+                """
+            SELECT s.id,
+                   s.date_time,
+                   s.update_time,
+                   s.chat_id,
+                   s.service_id,
+                   s.pupil_id,
+                   s.amount,
+                   s.force_group,
+                   s.extra_half_hour,
+                   s.photo_report,
+                   s.is_deleted
+            FROM service s
+            WHERE s.chat_id = :userId
+                AND s.service_id = :serviceId
+                AND s.date_time between :startDate and :endDate
+                AND s.is_deleted=false
             """,
                     mapOf("userId" to userId,"serviceId" to serviceId, "startDate" to startDate, "endDate" to endDate),
                 )
@@ -91,21 +90,21 @@ object ServiceMapper {
         session.run(
             queryOf(
                 """
-            SELECT id,
-                   date_time,
-                   update_time,
-                   chat_id,
-                   service_id,
-                   pupil_id,
-                   amount,
-                   properties,
-                   force_group,
-                   extra_half_hour,
-                   is_deleted
-            FROM service
-            WHERE chat_id = :userId
-                AND date_time between :startDate and :endDate
-                AND is_deleted=false
+            SELECT s.id,
+                   s.date_time,
+                   s.update_time,
+                   s.chat_id,
+                   s.service_id,
+                   s.pupil_id,
+                   s.amount,
+                   s.force_group,
+                   s.extra_half_hour,
+                   s.photo_report,
+                   s.is_deleted
+            FROM service s
+            WHERE s.chat_id = :userId
+                AND s.date_time between :startDate and :endDate
+                AND s.is_deleted=false
             """,
                 mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate),
             )
@@ -116,7 +115,7 @@ object ServiceMapper {
     fun findById(id: UUID): List<Service> =
         session.run(
             queryOf(
-                    """
+                """
             SELECT id,
                    date_time,
                    update_time,
@@ -124,7 +123,7 @@ object ServiceMapper {
                    service_id,
                    pupil_id,
                    amount,
-                   properties,
+                   photo_report,
                    force_group,
                    extra_half_hour,
                    is_deleted
@@ -157,7 +156,7 @@ object ServiceMapper {
     fun getIds(): List<Long> =
         session.run(
             queryOf(
-                    """
+                """
             SELECT DISTINCT chat_id
             FROM service
             WHERE is_deleted = false
@@ -170,7 +169,7 @@ object ServiceMapper {
     fun setDeleted(timeId: UUID, isDeleted: Boolean) =
         session.run(
             queryOf(
-                    """
+                """
             UPDATE service
             SET is_deleted = :is_deleted,
                 update_time = :update_time
@@ -188,7 +187,7 @@ object ServiceMapper {
     fun getServicesForClient(id: Int): List<Long> =
         session.run(
             queryOf(
-                    """
+                """
             SELECT DISTINCT service_id
             FROM service
             WHERE pupil_id = :id ANd is_deleted=false
@@ -202,7 +201,7 @@ object ServiceMapper {
     fun setForceGroup(id: UUID, forceGroup: Boolean) =
         session.run(
             queryOf(
-                    """
+                """
         UPDATE service 
         SET force_group = :force_group,
             update_time = :update_time

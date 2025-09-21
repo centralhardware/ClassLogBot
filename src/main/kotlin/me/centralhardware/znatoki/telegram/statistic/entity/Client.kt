@@ -1,20 +1,23 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
-import java.time.LocalDateTime
 import kotliquery.Row
-import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
-import me.centralhardware.znatoki.telegram.statistic.eav.Property
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.makeBold
-import me.centralhardware.znatoki.telegram.statistic.extensions.print
-import me.centralhardware.znatoki.telegram.statistic.toProperties
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 class Client(
     var id: Int? = null,
     val name: String,
     val secondName: String,
     val lastName: String,
-    val properties: List<Property>,
+    val klass: Int? = null,
+    val recordDate: LocalDate? = null,
+    val birthDate: LocalDate? = null,
+    val source: String? = null,
+    val phone: String? = null,
+    val responsiblePhone: String? = null,
+    val motherFio: String? = null,
     val createDate: LocalDateTime = LocalDateTime.now(),
     val modifyDate: LocalDateTime = LocalDateTime.now(),
     val createdBy: Long,
@@ -41,7 +44,13 @@ fun Client.getInfo(services: List<String>) =
         фамилия=${secondName.makeBold()}
         имя=${name.makeBold()}
         отчество=${lastName.makeBold()}
-        ${properties.print()}
+        класс=${klass?.toString()?.makeBold() ?: ""}
+        дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
+        дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
+        как узнал=${source?.makeBold() ?: ""}
+        телефон=${phone?.makeBold() ?: ""}
+        телефон ответственного=${responsiblePhone?.makeBold() ?: ""}
+        ФИО матери=${motherFio?.makeBold() ?: ""}
         Предметы=${services.joinToString(",").makeBold()}
         дата создания=${createDate.formatDate().makeBold()}
         дата изменения=${modifyDate.formatDate().makeBold()}
@@ -58,7 +67,13 @@ fun Row.parseClient(): Client =
         string("name"),
         string("second_name"),
         string("last_name"),
-        string("properties").toProperties(),
+        intOrNull("klass"),
+        localDateOrNull("record_date"),
+        localDateOrNull("birth_date"),
+        stringOrNull("source"),
+        stringOrNull("phone"),
+        stringOrNull("responsible_phone"),
+        stringOrNull("mother_fio"),
         localDateTime("create_date"),
         localDateTime("modify_date"),
         long("created_by"),
@@ -70,18 +85,28 @@ class ClientBuilder : Builder {
     var name: String? = null
     var secondName: String? = null
     var lastName: String? = null
-    var properties: List<Property>? = null
     var createdBy: Long? = null
-    var propertiesBuilder: PropertiesBuilder? = null
 
-    fun nextProperty() = propertiesBuilder!!.next()
+    var klass: Int? = null
+    var recordDate: LocalDate? = null
+    var birthDate: LocalDate? = null
+    var source: String? = null
+    var phone: String? = null
+    var responsiblePhone: String? = null
+    var motherFio: String? = null
 
     fun build(): Client =
         Client(
             name = name!!,
             secondName = secondName!!,
             lastName = lastName!!,
-            properties = properties!!,
+            klass = klass,
+            recordDate = recordDate,
+            birthDate = birthDate,
+            source = source,
+            phone = phone,
+            responsiblePhone = responsiblePhone,
+            motherFio = motherFio,
             createdBy = createdBy!!,
             updateBy = createdBy,
         )

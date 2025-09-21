@@ -2,19 +2,19 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
-import me.centralhardware.znatoki.telegram.statistic.entity.Builder
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
+import ru.nsk.kstatemachine.statemachine.StateMachine
 
 object Storage {
 
-    private val fsms: MutableMap<Long, Fsm<Builder>> = mutableMapOf()
+    private val fsms: MutableMap<Long, StateMachine> = mutableMapOf()
 
-    fun <B : Builder> create(chatId: Long, fsm: Fsm<B>) {
-        fsms[chatId] = fsm as Fsm<Builder>
+    fun create(chatId: Long, fsm: StateMachine) {
+        fsms[chatId] = fsm
     }
 
     suspend fun process(message: CommonMessage<MessageContent>) =
-        fsms[message.userId()]?.processEvent(message)
+        fsms[message.userId()]?.processEvent(TelegramEvent(message))
 
     fun remove(chatId: Long) = fsms.remove(chatId)
 

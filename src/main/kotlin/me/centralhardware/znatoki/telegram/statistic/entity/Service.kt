@@ -3,9 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic.entity
 import java.time.LocalDateTime
 import java.util.*
 import kotliquery.Row
-import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
-import me.centralhardware.znatoki.telegram.statistic.eav.Property
-import me.centralhardware.znatoki.telegram.statistic.toProperties
 
 class Service(
     val id: UUID,
@@ -17,7 +14,7 @@ class Service(
     private val _amount: Int,
     val forceGroup: Boolean = false,
     val extraHalfHour: Boolean = false,
-    val properties: List<Property>,
+    val photoReport: String? = null,
     val deleted: Boolean = false,
 ) {
     val amount: Double
@@ -35,7 +32,7 @@ fun Row.parseTime() =
         int("amount"),
         boolean("force_group"),
         boolean("extra_half_hour"),
-        string("properties").toProperties(),
+        stringOrNull("photo_report"),
         boolean("is_deleted"),
     )
 
@@ -44,11 +41,8 @@ class ServiceBuilder : Builder {
     var chatId: Long? = null
     var serviceId: Long? = null
     var amount: Int? = null
-    var properties: List<Property>? = null
-    var propertiesBuilder: PropertiesBuilder? = null
-    var clientIds: MutableSet<Int> = mutableSetOf()
-
-    fun nextProperty() = propertiesBuilder!!.next()
+    var clientIds: Set<Int> = mutableSetOf()
+    var photoReport: String? = null
 
     fun build(): List<Service> =
         clientIds.map {
@@ -58,7 +52,7 @@ class ServiceBuilder : Builder {
                 serviceId = serviceId!!,
                 clientId = it,
                 _amount = amount!!,
-                properties = propertiesBuilder!!.properties.toList(),
+                photoReport = photoReport,
             )
         }
 }

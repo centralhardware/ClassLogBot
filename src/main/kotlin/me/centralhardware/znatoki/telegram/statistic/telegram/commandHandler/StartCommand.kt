@@ -5,7 +5,7 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
 
 fun BehaviourContext.startCommand() = onCommand("start") {
-    bot.sendMessage(
+    sendMessage(
         it.chat,
         """
                          Бот предназначенный для анализа вашего бизнеса.

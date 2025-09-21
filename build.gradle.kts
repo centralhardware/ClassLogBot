@@ -12,18 +12,14 @@ repositories {
     maven("https://jitpack.io")
 }
 
-val ktgbotapiVersion = "28.0.0"
+val ktgbotapiVersion = "28.0.2"
 var poiVersion = "5.4.1"
 var kstatemachineVersion = "0.34.2"
 var luceneVersion = "10.3.0"
-val ktorVersion = "3.3.0"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:2.1.2")
     implementation("com.github.seratch:kotliquery:1.9.1")
-
-    implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
 
     implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
     implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")

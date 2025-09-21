@@ -9,7 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
-fun BehaviourContext.userInfoCallback() = onDataCallbackQuery(Regex($$"user_info\\d+$")) {
+fun BehaviourContext.userInfoCallback() = onDataCallbackQuery(Regex("user_info\\d+$")) {
     ClientMapper.findById(it.data.replace("user_info", "").toInt())?.let { client ->
         val info =
             client.getInfo(

@@ -5,11 +5,7 @@ import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import korlibs.time.days
 import korlibs.time.hours
-import me.centralhardware.znatoki.telegram.statistic.Config
-import me.centralhardware.znatoki.telegram.statistic.eav.Property
-import me.centralhardware.znatoki.telegram.statistic.eav.types.NumberType
 import me.centralhardware.znatoki.telegram.statistic.entity.*
-import me.centralhardware.znatoki.telegram.statistic.extensions.find
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.print
@@ -62,7 +58,7 @@ class MonthReport(
 
         val i = AtomicInteger(1)
         val comparator: Comparator<Client> =
-            getComparator(clients.values.first())
+            getComparator()
 
         return excel {
             sheet("отчет") {
@@ -75,12 +71,7 @@ class MonthReport(
                 row {
                     cell("№")
                     cell("ФИО ученика")
-                    getClient(times.first().clientId).let {
-                        it.properties
-                            .map { it.name }
-                            .filter { Config.includeInReport().contains(it) }
-                            .forEach { cell(it) }
-                    }
+                    cell("Класс")
                     cell("посетил индивидуально")
                     cell("посетил групповые")
                     cell("оплата")
@@ -112,9 +103,7 @@ class MonthReport(
                         row {
                             cell(i.getAndIncrement())
                             cell(client.fio(), HorizontalAlignment.LEFT)
-                            client.properties
-                                .filter { Config.includeInReport().contains(it.name) }
-                                .map { cell(it.value ?: "") }
+                            cell(client.klass ?: "")
                             cell(individual)
                             cell(group)
                             cell(
@@ -184,12 +173,8 @@ class MonthReport(
                             } else {
                                 emptyCell()
                             }
-                            if (services.first().extraHalfHour) {
-                                cell(services.first().extraHalfHour.print())
-                            } else {
-                                emptyCell()
-                            }
-                            MinioService.getLink(services.first().properties.find("фото отчетности").value!!, 7.days)
+                            cell(services.first().extraHalfHour.print())
+                            MinioService.getLink(services.first().photoReport!!, 7.days)
                                 .onSuccess {
                                     cellHyperlink(it, "отчет")
                                 }
@@ -221,7 +206,7 @@ class MonthReport(
                         cell(payment.dateTime.formatDateTime())
                         cell(getClient(payment.clientId).fio(), HorizontalAlignment.LEFT)
                         cell(payment.amount)
-                        MinioService.getLink(payment.properties.find("фото отчетности").value!!, 3.hours).onSuccess {
+                        MinioService.getLink(payment.photoReport!!, 3.hours).onSuccess {
                             cellHyperlink(it,"отчет")
                         }
                     }
@@ -239,32 +224,10 @@ class MonthReport(
             .build("$fio - $serviceName ${dateTime.format(DateTimeFormatter.ofPattern("MMMM"))} ${dateTime.year}.xlsx")
     }
 
-    private fun getComparator(client: Client): Comparator<Client> {
-        val props = client.properties.filter { Config.includeInReport().contains(it.name) }
-
-        var comparator: Comparator<Client> = createComparatorFunction(props.first())
-
-        props.drop(1).forEach { property ->
-            comparator = comparator.thenComparing(createComparatorFunction(property))
-        }
-
+    private fun getComparator(): Comparator<Client> {
+        val comparator: Comparator<Client> = compareBy { it.klass }
         return comparator.thenComparing { it.fio() }
     }
 
-    private fun createComparatorFunction(property: Property): Comparator<Client> {
-        return if (property.type is NumberType) {
-            Comparator.comparing<Client, Int?>(
-                { client -> getProperty(client, property.name)?.value?.toIntOrNull() },
-                nullsLast()
-            )
-        } else {
-            Comparator.comparing<Client, String?>(
-                { client -> getProperty(client, property.name)?.value },
-                nullsLast()
-            )
-        }
-    }
 
-    private fun getProperty(client: Client, name: String): Property? =
-        client.properties.firstOrNull { it.name == name }
 }

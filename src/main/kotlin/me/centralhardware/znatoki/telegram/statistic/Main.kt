@@ -2,27 +2,15 @@ package me.centralhardware.znatoki.telegram.statistic
 
 import dev.inmo.micro_utils.common.Warning
 import dev.inmo.tgbotapi.AppConfig
-import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextData
 import dev.inmo.tgbotapi.extensions.behaviour_builder.buildSubcontextInitialAction
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
 import dev.inmo.tgbotapi.longPolling
-import dev.inmo.tgbotapi.types.BotCommand
-import dev.inmo.tgbotapi.types.commands.BotCommandScopeChat
-import dev.inmo.tgbotapi.types.toChatId
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import me.centralhardware.telegram.ktgbotapi.access.middleware.restrictAccess
 import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasClientPermission
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasPaymentPermission
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasReadRight
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasTimePermission
-import me.centralhardware.znatoki.telegram.statistic.extensions.userId
+import me.centralhardware.znatoki.telegram.statistic.extensions.*
 import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
@@ -43,6 +31,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.userInfoCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
+import restrictAccess
 
 var BehaviourContextData.user: TelegramUser
     get() = get("user") as TelegramUser
@@ -65,38 +54,38 @@ suspend fun main() {
             addMiddleware { restrictAccess(UserExistChecker()) }
         }
     ) {
-        UserMapper.getAll().forEach { user ->
-            val userCommands = mutableListOf<BotCommand>()
-            if (user.hasTimePermission()) {
-                userCommands.apply {
-                    add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
-                }
-            }
-            if (user.hasPaymentPermission()) {
-                userCommands.apply {
-                    add(BotCommand("addpayment", "Ведомость оплаты"))
-                }
-            }
-            if (user.hasClientPermission()) {
-                userCommands.apply {
-                    add(BotCommand("addpupil", "Добавить ученика"))
-                }
-            }
-            if (user.hasAdminPermission()) {
-                userCommands.apply {
-                    add(BotCommand("addpayment", "Ведомость оплаты"))
-                    add(BotCommand("addpupil", "Добавить ученика"))
-                }
-            }
-            if (user.hasReadRight()) {
-                userCommands.apply {
-                    add(BotCommand("report", "Отчет за текущий месяц"))
-                    add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
-                    add(BotCommand("reset", "Сбросить состояние"))
-                }
-            }
-            setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
-        }
+//        UserMapper.getAll().forEach { user ->
+//            val userCommands = mutableListOf<BotCommand>()
+//            if (user.hasTimePermission()) {
+//                userCommands.apply {
+//                    add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
+//                }
+//            }
+//            if (user.hasPaymentPermission()) {
+//                userCommands.apply {
+//                    add(BotCommand("addpayment", "Ведомость оплаты"))
+//                }
+//            }
+//            if (user.hasClientPermission()) {
+//                userCommands.apply {
+//                    add(BotCommand("addpupil", "Добавить ученика"))
+//                }
+//            }
+//            if (user.hasAdminPermission()) {
+//                userCommands.apply {
+//                    add(BotCommand("addpayment", "Ведомость оплаты"))
+//                    add(BotCommand("addpupil", "Добавить ученика"))
+//                }
+//            }
+//            if (user.hasReadRight()) {
+//                userCommands.apply {
+//                    add(BotCommand("report", "Отчет за текущий месяц"))
+//                    add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
+//                    add(BotCommand("reset", "Сбросить состояние"))
+//                }
+//            }
+//            setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
+//        }
 
         startCommand()
         resetCommand()

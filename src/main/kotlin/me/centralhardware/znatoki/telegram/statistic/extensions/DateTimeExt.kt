@@ -20,6 +20,9 @@ fun LocalDateTime.formatDateTime(): String = format(DateTimeFormatter.ofPattern(
 
 fun LocalDateTime.formatDate(): String = format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
+
+fun LocalDate.formatDate(): String = format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+
 fun LocalDateTime.formatTime(): String = format(DateTimeFormatter.ofPattern("HH:mm"))
 
 fun String?.parseDateTime(): Result<LocalDateTime> = runCatching {

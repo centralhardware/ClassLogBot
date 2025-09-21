@@ -2,12 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic.entity
 
 import kotliquery.Row
 import java.time.LocalDateTime
-import java.util.*
-import me.centralhardware.znatoki.telegram.statistic.eav.PropertiesBuilder
-import me.centralhardware.znatoki.telegram.statistic.eav.Property
-import me.centralhardware.znatoki.telegram.statistic.toProperties
 
-data class Payment(
+ data class Payment(
     val id: Int? = null,
     val dateTime: LocalDateTime = LocalDateTime.now(),
     val chatId: Long,
@@ -15,7 +11,7 @@ data class Payment(
     val amount: Int,
     val serviceId: Long,
     val deleted: Boolean = false,
-    val properties: List<Property> = ArrayList(),
+    val photoReport: String? = null,
 )
 
 fun Row.parsePayment() = Payment(
@@ -26,7 +22,7 @@ fun Row.parsePayment() = Payment(
     int("amount"),
     long("services"),
     boolean("is_deleted"),
-    string("properties").toProperties()
+    stringOrNull("photo_report")
 )
 
 class PaymentBuilder : Builder {
@@ -34,10 +30,7 @@ class PaymentBuilder : Builder {
     var clientId: Int? = null
     var amount: Int? = null
     var serviceId: Long? = null
-    var properties: List<Property>? = null
-    var propertiesBuilder: PropertiesBuilder? = null
-
-    fun nextProperty() = propertiesBuilder!!.next()
+    var photoReport: String? = null
 
     fun build(): Payment =
         Payment(
@@ -45,6 +38,6 @@ class PaymentBuilder : Builder {
             clientId = clientId!!,
             amount = amount!!,
             serviceId = serviceId!!,
-            properties = propertiesBuilder!!.properties,
+            photoReport = photoReport,
         )
 }

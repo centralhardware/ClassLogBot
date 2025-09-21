@@ -7,7 +7,6 @@ import dev.inmo.krontab.utils.asTzFlowWithDelays
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.toChatId
-import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.Service
 import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatTime

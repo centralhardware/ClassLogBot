@@ -4,32 +4,24 @@ import arrow.core.Either
 import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
 
-fun validateFio(value: String): Either<String, String> =
+fun validateFio(value: String): Either<String, Int> =
     if (ClientMapper.existsByFio(value)) {
-        Either.Right(value)
+        Either.Right(value.split(" ")[0].toInt())
     } else {
         Either.Left("ФИО не найдено")
     }
 
-fun validateAmount(value: String): Either<String, Int> {
-    val parsedValue = value.toIntOrNull()
+fun validateAmount(value: Int?): Either<String, Unit> {
     return when {
-        parsedValue == null -> {
+        value == null -> {
             Either.Left("Введенное значение должно быть числом")
         }
-        parsedValue <= 0 -> {
+        value <= 0 -> {
             Either.Left("Введенное значение должно быть больше нуля")
         }
         else -> {
-            Either.Right(parsedValue)
+            Either.Right(Unit)
         }
     }
 }
 
-fun validateService(serviceName: String): Either<String, String> {
-    return if (ServicesMapper.exists(serviceName)) {
-        Either.Right(serviceName)
-    } else {
-        Either.Left("Выберите услугу из списка")
-    }
-}

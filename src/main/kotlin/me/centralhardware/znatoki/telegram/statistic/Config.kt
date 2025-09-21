@@ -20,14 +20,4 @@ object Config {
 
     fun logChat() = System.getenv("LOG_CHAT").toLong().toChatId()
 
-    fun paymentProperties() = System.getenv("PAYMENT_PROPERTIES").toCustomProperties()
-
-    fun clientProperties() = System.getenv("CLIENT_PROPERTIES").toCustomProperties()
-
-    fun serviceProperties() = System.getenv("SERVICE_PROPERTIES").toCustomProperties()
-
-    fun includeInInline() = System.getenv("INCLUDE_IN_INLINE").parseStringList()
-
-    fun includeInReport() = System.getenv("INCLUDE_IN_REPORT").parseStringList()
-
 }

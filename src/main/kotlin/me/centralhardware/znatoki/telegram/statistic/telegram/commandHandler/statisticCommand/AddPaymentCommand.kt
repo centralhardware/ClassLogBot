@@ -3,7 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.st
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.PaymentFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startPaymentFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
@@ -13,5 +12,5 @@ fun BehaviourContext.addPaymentCommand() = onCommand(Regex("addPayment|addpaymen
         return@onCommand
     }
 
-    Storage.create(it.userId(), PaymentFsm(startPaymentFsm(it), this))
+    Storage.create(it.userId(), startPaymentFsm(it))
 }

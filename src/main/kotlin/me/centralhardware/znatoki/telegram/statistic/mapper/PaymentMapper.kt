@@ -8,7 +8,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.parsePayment
 import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
-import me.centralhardware.znatoki.telegram.statistic.toJson
 
 object PaymentMapper {
 
@@ -21,15 +20,15 @@ object PaymentMapper {
                 chat_id,
                 pupil_id,
                 amount,
-                properties,
-                services
+                services,
+                photo_report
             ) VALUES (
                 :dateTime,
                 :chatId,
                 :clientId,
                 :amount,
-                :properties::JSONB,
-                :serviceId
+                :serviceId,
+                :photo_report
             ) RETURNING id
             """,
                 mapOf(
@@ -37,8 +36,8 @@ object PaymentMapper {
                     "chatId" to payment.chatId,
                     "clientId" to payment.clientId,
                     "amount" to payment.amount,
-                    "properties" to payment.properties.toJson(),
                     "serviceId" to payment.serviceId,
+                    "photo_report" to payment.photoReport,
                 ),
             )
                 .map { row -> row.int("id") }
@@ -73,7 +72,7 @@ object PaymentMapper {
                 AND services = :service_id
                 AND pupil_id = :client_id
                 AND date_time between :startDate and :endDate
-                AND jsonb_array_length(properties) > 0
+                AND photo_report IS NOT NULL
                 AND is_deleted = false
             """,
                 mapOf(
@@ -118,12 +117,19 @@ object PaymentMapper {
     ) = session.run(
         queryOf(
         """
-        SELECT *
-        FROM payment
-        WHERE chat_id = :chat_id
-            AND services = :service_id
-            AND date_time between :start_date and :end_date
-            AND is_deleted=false
+        SELECT p.id,
+               p.date_time,
+               p.chat_id,
+               p.pupil_id,
+               p.amount,
+               p.services,
+               p.is_deleted,
+               p.photo_report
+        FROM payment p
+        WHERE p.chat_id = :chat_id
+            AND p.services = :service_id
+            AND p.date_time between :start_date and :end_date
+            AND p.is_deleted=false
     """, mapOf(
                 "chat_id" to chatId,
                 "service_id" to serviceId,
