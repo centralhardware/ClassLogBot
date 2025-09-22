@@ -74,7 +74,7 @@ object StudentMapper {
                 "source" to student.source?.name,
                 "phone" to student.phone?.value,
                 "responsible_phone" to student.responsiblePhone?.value,
-                "mother_fio" to student.motherFio?.fio,
+                "mother_fio" to student.motherFio,
             )
         )
     ) {

@@ -44,19 +44,6 @@ value class PhoneNumber (val value: String) {
 
 }
 
-@JvmInline
-value class Fio(val fio: String) {
-    init {
-        require(fio.split(" ").size in 1..3) {
-            "Invalid fio: $fio"
-        }
-    }
-
-    companion object {
-        fun from(value: FioValue) = Fio("${value.name} ${value.secondName} ${value.lastName}")
-    }
-}
-
 class Student(
     var id: StudentId? = null,
     val name: String,
@@ -68,7 +55,7 @@ class Student(
     val source: SourceOption? = null,
     val phone: PhoneNumber? = null,
     val responsiblePhone: PhoneNumber? = null,
-    val motherFio: Fio? = null,
+    val motherFio: String? = null,
     val createDate: LocalDateTime = LocalDateTime.now(),
     val modifyDate: LocalDateTime = LocalDateTime.now(),
     val createdBy: TutorId,
@@ -99,9 +86,9 @@ fun Student.getInfo(services: List<String>) =
         дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
         дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
         как узнал=${source?.name.makeBold() ?: ""}
-        телефон=${phone?.value.formatTelephone().makeBold() ?: ""}
-        телефон ответственного=${responsiblePhone?.value.formatTelephone().makeBold() ?: ""}
-        ФИО матери=${motherFio?.fio.makeBold() ?: ""}
+        телефон=${phone?.value.formatTelephone().makeBold()}
+        телефон ответственного=${responsiblePhone?.value.formatTelephone().makeBold()}
+        ФИО матери=${motherFio?.makeBold() ?: ""}
         Предметы=${services.joinToString(",").makeBold()}
         дата создания=${createDate.formatDate().makeBold()}
         дата изменения=${modifyDate.formatDate().makeBold()}
@@ -124,7 +111,7 @@ fun Row.parseClient(): Student =
         stringOrNull("source")?.let { SourceOption.fromTitle(it) },
         stringOrNull("phone")?.let { PhoneNumber(it) },
         stringOrNull("responsible_phone")?.let { PhoneNumber(it) },
-        stringOrNull("mother_fio")?.let { Fio(it) },
+        stringOrNull("mother_fio"),
         localDateTime("create_date"),
         localDateTime("modify_date"),
         TutorId(long("created_by")),
@@ -144,7 +131,7 @@ class ClientBuilder {
     var source: SourceOption? = null
     var phone: PhoneNumber? = null
     var responsiblePhone: PhoneNumber? = null
-    var motherFio: Fio? = null
+    var motherFio: String? = null
 
     fun build(): Student =
         Student(

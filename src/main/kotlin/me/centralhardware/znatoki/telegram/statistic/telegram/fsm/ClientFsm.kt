@@ -10,7 +10,6 @@ import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
-import me.centralhardware.znatoki.telegram.statistic.entity.Fio
 import me.centralhardware.znatoki.telegram.statistic.entity.PhoneNumber
 import me.centralhardware.znatoki.telegram.statistic.entity.SchoolClass
 import me.centralhardware.znatoki.telegram.statistic.entity.SourceOption
@@ -87,11 +86,11 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
             b.responsiblePhone = PhoneNumber(value)
         }
 
-        fio(
+        text(
             prompt = "Введите ФИО матери /skip для пропуска.",
             optionalSkip = true
         ) { b, value ->
-            b.motherFio = Fio.from(value)
+            b.motherFio = value
         }
 
         onFinish { message, b ->
