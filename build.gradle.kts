@@ -44,7 +44,7 @@ dependencies {
 
 jib {
     from {
-        image = System.getenv("JIB_FROM_IMAGE") ?: "eclipse-temurin:24-jre"
+        image = System.getenv("JIB_FROM_IMAGE") ?: "eclipse-temurin:25-jre"
     }
     to {
     }
