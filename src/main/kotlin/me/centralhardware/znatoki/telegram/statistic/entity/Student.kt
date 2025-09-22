@@ -117,7 +117,7 @@ fun Row.parseClient(): Student =
         intOrNull("klass")?.let { SchoolClass(it) },
         localDateOrNull("record_date"),
         localDateOrNull("birth_date"),
-        stringOrNull("source")?.let { SourceOption.valueOf(it) },
+        stringOrNull("source")?.let { SourceOption.fromTitle(it) },
         stringOrNull("phone")?.let { PhoneNumber(it) },
         stringOrNull("responsible_phone")?.let { PhoneNumber(it) },
         stringOrNull("mother_fio")?.let { Fio(it) },
