@@ -35,7 +35,7 @@ object ClientService {
                     document.add(
                         TextField("secondName", client.secondName.lowercase(), Field.Store.YES)
                     )
-                    document.add(TextField("id", client.id.toString(), Field.Store.YES))
+                    document.add(TextField("id", client.id?.id.toString(), Field.Store.YES))
                     writer.addDocument(document)
                 } catch (e: IOException) {
                     throw java.lang.RuntimeException(e)
