@@ -205,7 +205,7 @@ class MonthReport(
                     row {
                         cell(payment.dateTime.formatDateTime())
                         cell(getStudent(payment.studentId).fio(), HorizontalAlignment.LEFT)
-                        cell(payment.amount)
+                        cell(payment.amount.amount)
                         MinioService.getLink(payment.photoReport!!, 3.hours).onSuccess {
                             cellHyperlink(it,"отчет")
                         }
