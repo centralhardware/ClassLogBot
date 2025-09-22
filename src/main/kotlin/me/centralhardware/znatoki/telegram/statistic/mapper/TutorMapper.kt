@@ -4,11 +4,21 @@ import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
-import me.centralhardware.znatoki.telegram.statistic.entity.parseUser
+import me.centralhardware.znatoki.telegram.statistic.entity.parseTutor
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 
 object TutorMapper {
+
+    fun getAll(): List<Tutor> =
+        session.runList(
+            queryOf(
+                """
+                   SELECT *
+                   FROM telegram_users
+                """
+            )
+        ) { it -> it.parseTutor() }
 
     fun getAdminsId(): List<Long> =
         session.runList(
@@ -29,7 +39,7 @@ object TutorMapper {
             FROM telegram_users
             WHERE id = :id
             """,
-                    mapOf("id" to id),
+                    mapOf("id" to id.id),
                 )
-        ) { it.parseUser() }
+        ) { it.parseTutor() }
 }

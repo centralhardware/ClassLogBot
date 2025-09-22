@@ -1,13 +1,18 @@
 package me.centralhardware.znatoki.telegram.statistic
 
+import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.warning
 import dev.inmo.micro_utils.common.Warning
 import dev.inmo.tgbotapi.AppConfig
+import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextData
 import dev.inmo.tgbotapi.extensions.behaviour_builder.buildSubcontextInitialAction
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
 import dev.inmo.tgbotapi.longPolling
+import dev.inmo.tgbotapi.types.BotCommand
+import dev.inmo.tgbotapi.types.commands.BotCommandScopeChat
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
@@ -63,38 +68,40 @@ suspend fun main() {
             addMiddleware { restrictAccess(UserExistChecker()) }
         }
     ) {
-//        UserMapper.getAll().forEach { user ->
-//            val userCommands = mutableListOf<BotCommand>()
-//            if (user.hasTimePermission()) {
-//                userCommands.apply {
-//                    add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
-//                }
-//            }
-//            if (user.hasPaymentPermission()) {
-//                userCommands.apply {
-//                    add(BotCommand("addpayment", "Ведомость оплаты"))
-//                }
-//            }
-//            if (user.hasClientPermission()) {
-//                userCommands.apply {
-//                    add(BotCommand("addpupil", "Добавить ученика"))
-//                }
-//            }
-//            if (user.hasAdminPermission()) {
-//                userCommands.apply {
-//                    add(BotCommand("addpayment", "Ведомость оплаты"))
-//                    add(BotCommand("addpupil", "Добавить ученика"))
-//                }
-//            }
-//            if (user.hasReadRight()) {
-//                userCommands.apply {
-//                    add(BotCommand("report", "Отчет за текущий месяц"))
-//                    add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
-//                    add(BotCommand("reset", "Сбросить состояние"))
-//                }
-//            }
-//            setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
-//        }
+        TutorMapper.getAll().forEach { user ->
+            val userCommands = mutableListOf<BotCommand>()
+            if (user.hasTimePermission()) {
+                userCommands.apply {
+                    add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
+                }
+            }
+            if (user.hasPaymentPermission()) {
+                userCommands.apply {
+                    add(BotCommand("addpayment", "Ведомость оплаты"))
+                }
+            }
+            if (user.hasClientPermission()) {
+                userCommands.apply {
+                    add(BotCommand("addpupil", "Добавить ученика"))
+                }
+            }
+            if (user.hasAdminPermission()) {
+                userCommands.apply {
+                    add(BotCommand("addpayment", "Ведомость оплаты"))
+                    add(BotCommand("addpupil", "Добавить ученика"))
+                }
+            }
+            if (user.hasReadRight()) {
+                userCommands.apply {
+                    add(BotCommand("report", "Отчет за текущий месяц"))
+                    add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
+                    add(BotCommand("reset", "Сбросить состояние"))
+                }
+            }
+            runCatching {
+                setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
+            }.onFailure { KSLog.warning(it) }
+        }
 
         startCommand()
         resetCommand()

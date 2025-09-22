@@ -46,11 +46,11 @@ object LessonMapper {
                 mapOf(
                     "dateTime" to lesson.dateTime,
                     "updateTime" to lesson.updateTime,
-                    "id" to lesson.id,
-                    "chatId" to lesson.tutorId,
-                    "serviceId" to lesson.subjectId,
+                    "id" to lesson.id.id,
+                    "chatId" to lesson.tutorId.id,
+                    "serviceId" to lesson.subjectId.id,
                     "amount" to lesson.amount,
-                    "clientId" to lesson.studentId,
+                    "clientId" to lesson.studentId.id,
                     "photo_report" to lesson.photoReport,
                 ),
             )
@@ -82,7 +82,7 @@ object LessonMapper {
                 AND s.date_time between :startDate and :endDate
                 AND s.is_deleted=false
             """,
-                    mapOf("userId" to tutorId,"serviceId" to subjectId, "startDate" to startDate, "endDate" to endDate),
+                    mapOf("userId" to tutorId.id,"serviceId" to subjectId.id, "startDate" to startDate, "endDate" to endDate),
                 )
         ) { it.parseTime() }
 
@@ -110,7 +110,7 @@ object LessonMapper {
                 AND s.date_time between :startDate and :endDate
                 AND s.is_deleted=false
             """,
-                mapOf("userId" to tutorId, "startDate" to startDate, "endDate" to endDate),
+                mapOf("userId" to tutorId.id, "startDate" to startDate, "endDate" to endDate),
             )
         ) { it.parseTime() }
 
@@ -176,7 +176,7 @@ object LessonMapper {
             WHERE id = :id
             """,
                     mapOf(
-                        "id" to lessonId,
+                        "id" to lessonId.id,
                         "is_deleted" to isDeleted,
                         "update_time" to LocalDateTime.now(),
                     ),
@@ -191,7 +191,7 @@ object LessonMapper {
             FROM service
             WHERE pupil_id = :id ANd is_deleted=false
             """,
-                    mapOf("id" to id),
+                    mapOf("id" to id.id),
                 )
         ) {
             row -> row.long("service_id").toSubjectId()
@@ -207,7 +207,7 @@ object LessonMapper {
         WHERE id = :id
     """,
                     mapOf(
-                        "id" to id,
+                        "id" to id.id,
                         "force_group" to forceGroup,
                         "update_time" to LocalDateTime.now(),
                     ),
@@ -224,7 +224,7 @@ object LessonMapper {
         WHERE id = :id
     """,
                 mapOf(
-                    "id" to id,
+                    "id" to id.id,
                     "extra_half_hour" to forceGroup,
                     "update_time" to LocalDateTime.now(),
                 ),

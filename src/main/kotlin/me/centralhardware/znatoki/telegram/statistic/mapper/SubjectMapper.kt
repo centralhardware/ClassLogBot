@@ -30,7 +30,7 @@ object SubjectMapper {
             FROM  services
             WHERE id = :id
             """,
-                mapOf("id" to id),
+                mapOf("id" to id.id),
             )
         ) {
             row -> row.string("name")
@@ -43,7 +43,7 @@ object SubjectMapper {
             FROM services
             WHERE id = :id
             """,
-            mapOf("id" to id),
+            mapOf("id" to id.id),
         )
     ) {
         row -> row.boolean("allow_multiply_clients")

@@ -21,7 +21,7 @@ class Tutor(
     val name: String,
 )
 
-fun Row.parseUser() =
+fun Row.parseTutor() =
     Tutor(
         TutorId(long("id")),
         array<String>("permissions").map { Permissions.valueOf(it) },

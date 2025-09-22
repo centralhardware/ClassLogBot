@@ -5,6 +5,7 @@ import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentId
+import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parsePayment
@@ -38,10 +39,10 @@ object PaymentMapper {
             """,
                 mapOf(
                     "dateTime" to payment.dateTime,
-                    "chatId" to payment.tutorId,
-                    "clientId" to payment.studentId,
+                    "chatId" to payment.tutorId.id,
+                    "clientId" to payment.studentId.id,
                     "amount" to payment.amount,
-                    "serviceId" to payment.subjectId,
+                    "serviceId" to payment.subjectId.id,
                     "photo_report" to payment.photoReport,
                 ),
             )
@@ -64,7 +65,7 @@ object PaymentMapper {
     fun getPaymentsSumForStudent(
         tutorId: TutorId,
         subjectId: SubjectId,
-        clientId: Int,
+        studentId: StudentId,
         date: LocalDateTime,
     ): Long =
         session.runSingle(
@@ -80,9 +81,9 @@ object PaymentMapper {
                 AND is_deleted = false
             """,
                 mapOf(
-                    "chat_id" to tutorId,
-                    "service_id" to subjectId,
-                    "client_id" to clientId,
+                    "chat_id" to tutorId.id,
+                    "service_id" to subjectId.id,
+                    "client_id" to studentId.id,
                     "startDate" to date.startOfMonth(),
                     "endDate" to date.endOfMonth(),
                 ),
@@ -101,8 +102,8 @@ object PaymentMapper {
                 AND is_deleted = false
             """,
                 mapOf(
-                    "chat_id" to tutorId,
-                    "service_id" to subjectId,
+                    "chat_id" to tutorId.id,
+                    "service_id" to subjectId.id,
                     "startDate" to date.startOfMonth(),
                     "endDate" to date.endOfMonth(),
                 ),
@@ -131,8 +132,8 @@ object PaymentMapper {
             AND p.date_time between :start_date and :end_date
             AND p.is_deleted=false
     """, mapOf(
-                "chat_id" to tutorId,
-                "service_id" to subjectId,
+                "chat_id" to tutorId.id,
+                "service_id" to subjectId.id,
                 "start_date" to startDate,
                 "end_date" to endDate)
     )) { it.parsePayment() }

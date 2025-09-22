@@ -68,13 +68,13 @@ object StudentMapper {
                 "second_name" to student.secondName,
                 "created_by" to student.createdBy,
                 "deleted" to student.deleted,
-                "klass" to student.schoolClass,
+                "klass" to student.schoolClass?.value,
                 "record_date" to student.recordDate,
                 "birth_date" to student.birthDate,
-                "source" to student.source,
-                "phone" to student.phone,
-                "responsible_phone" to student.responsiblePhone,
-                "mother_fio" to student.motherFio,
+                "source" to student.source?.name,
+                "phone" to student.phone?.value,
+                "responsible_phone" to student.responsiblePhone?.value,
+                "mother_fio" to student.motherFio?.fio,
             )
         )
     ) {
@@ -87,7 +87,7 @@ object StudentMapper {
                SET deleted = true
                WHERE id = :id
             """,
-        mapOf("id" to id),
+        mapOf("id" to id.id),
     ))
 
     fun findById(id: StudentId): Student =
@@ -98,7 +98,7 @@ object StudentMapper {
                 FROM client c
                 WHERE id = :id
             """,
-                mapOf("id" to id),
+                mapOf("id" to id.id),
             )
         ) { it.parseClient() } ?: throw IllegalArgumentException("No client with id $id found")
 
@@ -133,7 +133,7 @@ object StudentMapper {
             from client
             WHERE id = :id
         """,
-                mapOf("id" to id),
+                mapOf("id" to id.id),
             )
         ) { row -> row.string("fio") } ?: ""
 }
