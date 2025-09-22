@@ -47,7 +47,7 @@ value class PhoneNumber (val value: String) {
 @JvmInline
 value class Fio(val fio: String) {
     init {
-        require(fio.split(" ").size in 2..3) {
+        require(fio.split(" ").size in 1..3) {
             "Invalid fio: $fio"
         }
     }
