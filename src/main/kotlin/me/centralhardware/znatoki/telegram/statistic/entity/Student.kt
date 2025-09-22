@@ -17,7 +17,9 @@ fun Int.toStudentId() = StudentId(this)
 @JvmInline
 value class SchoolClass(val value: Int) {
     init {
-        require(validate(value))
+        require(validate(value)) {
+            "Invalid school class: $value"
+        }
     }
 
     companion object {
@@ -30,7 +32,7 @@ value class SchoolClass(val value: Int) {
 value class PhoneNumber (val value: String) {
     init {
         require(validate(value)) {
-            "Некорректный номер телефона: $value"
+            "Invalid phone number: $value"
         }
     }
 
@@ -45,7 +47,9 @@ value class PhoneNumber (val value: String) {
 @JvmInline
 value class Fio(val fio: String) {
     init {
-        require(fio.split(" ").size in 2..3)
+        require(fio.split(" ").size in 2..3) {
+            "Invalid fio: $fio"
+        }
     }
 
     companion object {

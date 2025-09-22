@@ -3,7 +3,9 @@ package me.centralhardware.znatoki.telegram.statistic.entity
 @JvmInline
 value class Amount(val amount: Int) {
     init {
-        require(validate(amount))
+        require(validate(amount)) {
+            "Amount must be greater than 0"
+        }
     }
 
     companion object {
