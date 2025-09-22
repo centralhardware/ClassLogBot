@@ -110,7 +110,7 @@ class MonthReport(
                                 PaymentMapper.getPaymentsSumForStudent(
                                     tutorId,
                                     fioTimes.first().subjectId,
-                                    client.id?.id!!,
+                                    client.id!!,
                                     dateTime,
                                 )
                             )
