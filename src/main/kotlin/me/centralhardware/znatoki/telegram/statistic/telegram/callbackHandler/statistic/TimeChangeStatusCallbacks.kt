@@ -8,7 +8,7 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import java.util.UUID
 
 private const val ACTION_DELETE = "timeDelete"
@@ -29,8 +29,8 @@ private suspend fun BehaviourContext.changeTimeStatus(
     deleted: Boolean,
     query: DataCallbackQuery
 ) {
-    ServiceMapper.setDeleted(id, deleted)
-    val times = ServiceMapper.findById(id)
+    LessonMapper.setDeleted(id, deleted)
+    val times = LessonMapper.findById(id)
     val current = times.firstOrNull() ?: return
 
     query.messageDataCallbackQueryOrNull()?.message?.let {

@@ -13,7 +13,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermissi
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasExtraHalfHour
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 import java.util.UUID
@@ -37,14 +37,14 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
     query: DataCallbackQuery
 ) {
     val chatId = query.from.id.chatId.long
-    val before = ServiceMapper.findById(id)
+    val before = LessonMapper.findById(id)
     val service = before.firstOrNull()
         ?: run {
             answerCallbackQuery(query, "Запись не найдена", showAlert = true)
             return
         }
 
-    if (!data.user.hasAdminPermission() && service.chatId != chatId) {
+    if (!data.user.hasAdminPermission() && service.tutorId.id != chatId) {
         answerCallbackQuery(query, "Доступ запрещён", showAlert = true)
         return
     }
@@ -58,9 +58,9 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
         return
     }
 
-    ServiceMapper.setForceGroup(id, forceGroup)
+    LessonMapper.setForceGroup(id, forceGroup)
 
-    val after = ServiceMapper.findById(id)
+    val after = LessonMapper.findById(id)
     val current = after.firstOrNull() ?: service
 
     val keyboard = buildServiceKeyboard(

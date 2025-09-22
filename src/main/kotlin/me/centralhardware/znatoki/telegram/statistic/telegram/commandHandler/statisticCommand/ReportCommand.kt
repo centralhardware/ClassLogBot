@@ -9,7 +9,7 @@ import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.toChatId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
 import me.centralhardware.znatoki.telegram.statistic.user
@@ -24,7 +24,7 @@ private suspend fun BehaviourContext.createReport(
     }
 
     if (data.user.hasAdminPermission()) {
-        ServiceMapper.getIds().forEach { getTime.invoke(it).forEach { send(userId, it) } }
+        LessonMapper.getTutorIds().forEach { getTime.invoke(it).forEach { send(userId, it) } }
         return
     }
 

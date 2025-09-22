@@ -4,16 +4,21 @@ import java.time.LocalDateTime
 import java.util.*
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
-import me.centralhardware.znatoki.telegram.statistic.entity.Service
+import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
+import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
+import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
+import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfDay
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 
-object ServiceMapper {
+object LessonMapper {
 
-    fun insert(service: Service) =
+    fun insert(lesson: Lesson) =
         session.execute(
             queryOf(
                 """
@@ -38,25 +43,25 @@ object ServiceMapper {
             )
             """,
                 mapOf(
-                    "dateTime" to service.dateTime,
-                    "updateTime" to service.updateTime,
-                    "id" to service.id,
-                    "chatId" to service.chatId,
-                    "serviceId" to service.serviceId,
-                    "amount" to service.amount,
-                    "clientId" to service.clientId,
-                    "photo_report" to service.photoReport,
+                    "dateTime" to lesson.dateTime,
+                    "updateTime" to lesson.updateTime,
+                    "id" to lesson.id,
+                    "chatId" to lesson.tutorId,
+                    "serviceId" to lesson.subjectId,
+                    "amount" to lesson.amount,
+                    "clientId" to lesson.studentId,
+                    "photo_report" to lesson.photoReport,
                 ),
             )
         )
 
-    private fun findAllByUserId(
-        userId: Long,
-        serviceId: Long,
+    private fun findAllByTutorId(
+        tutorId: TutorId,
+        subjectId: SubjectId,
         startDate: LocalDateTime,
         endDate: LocalDateTime,
-    ): List<Service> =
-        session.run(
+    ): List<Lesson> =
+        session.runList(
             queryOf(
                 """
             SELECT s.id,
@@ -76,18 +81,16 @@ object ServiceMapper {
                 AND s.date_time between :startDate and :endDate
                 AND s.is_deleted=false
             """,
-                    mapOf("userId" to userId,"serviceId" to serviceId, "startDate" to startDate, "endDate" to endDate),
+                    mapOf("userId" to tutorId,"serviceId" to subjectId, "startDate" to startDate, "endDate" to endDate),
                 )
-                .map { it.parseTime() }
-                .asList
-        )
+        ) { it.parseTime() }
 
-    private fun findAllByUserId(
-        userId: Long,
+    private fun findAllByTutorId(
+        tutorId: TutorId,
         startDate: LocalDateTime,
         endDate: LocalDateTime,
-    ): List<Service> =
-        session.run(
+    ): List<Lesson> =
+        session.runList(
             queryOf(
                 """
             SELECT s.id,
@@ -106,14 +109,12 @@ object ServiceMapper {
                 AND s.date_time between :startDate and :endDate
                 AND s.is_deleted=false
             """,
-                mapOf("userId" to userId, "startDate" to startDate, "endDate" to endDate),
+                mapOf("userId" to tutorId, "startDate" to startDate, "endDate" to endDate),
             )
-                .map { it.parseTime() }
-                .asList
-        )
+        ) { it.parseTime() }
 
-    fun findById(id: UUID): List<Service> =
-        session.run(
+    fun findById(id: LessonId): List<Lesson> =
+        session.runList(
             queryOf(
                 """
             SELECT id,
@@ -132,29 +133,27 @@ object ServiceMapper {
             """,
                     mapOf("id" to id),
                 )
-                .map { it.parseTime() }
-                .asList
-        )
+        ) { it.parseTime() }
 
-    fun getTodayTimes(chatId: Long): List<Service> =
-        findAllByUserId(chatId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
+    fun getTodayTimes(tutorId: TutorId): List<Lesson> =
+        findAllByTutorId(tutorId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
 
-    fun getCurrentMontTimes(chatId: Long, serviceId: Long): List<Service> = findAllByUserId(
-        chatId,
-        serviceId,
+    fun getCurrentMontTimes(tutorId: TutorId, subjectId: SubjectId): List<Lesson> = findAllByTutorId(
+        tutorId,
+        subjectId,
         LocalDateTime.now().startOfMonth(),
         LocalDateTime.now().endOfMonth(),
     )
 
-    fun getPrevMonthTimes(chatId: Long, serviceId: Long): List<Service> = findAllByUserId(
-        chatId,
-        serviceId,
+    fun getPrevMonthTimes(tutorId: TutorId, subjectId: SubjectId): List<Lesson> = findAllByTutorId(
+        tutorId,
+        subjectId,
         LocalDateTime.now().prevMonth().startOfMonth(),
         LocalDateTime.now().prevMonth().endOfMonth(),
     )
 
-    fun getIds(): List<Long> =
-        session.run(
+    fun getTutorIds(): List<TutorId> =
+        session.runList(
             queryOf(
                 """
             SELECT DISTINCT chat_id
@@ -162,12 +161,12 @@ object ServiceMapper {
             WHERE is_deleted = false
             """
                 )
-                .map { row -> row.long("chat_id") }
-                .asList
-        )
+        ) {
+            row -> TutorId(row.long("chat_id"))
+        }
 
-    fun setDeleted(timeId: UUID, isDeleted: Boolean) =
-        session.run(
+    fun setDeleted(lessonId: LessonId, isDeleted: Boolean) =
+        session.update(
             queryOf(
                 """
             UPDATE service
@@ -176,16 +175,15 @@ object ServiceMapper {
             WHERE id = :id
             """,
                     mapOf(
-                        "id" to timeId,
+                        "id" to lessonId,
                         "is_deleted" to isDeleted,
                         "update_time" to LocalDateTime.now(),
                     ),
                 )
-                .asUpdate
         )
 
-    fun getServicesForClient(id: Int): List<Long> =
-        session.run(
+    fun getSubjectIdsForStudent(id: StudentId): List<SubjectId> =
+        session.runList(
             queryOf(
                 """
             SELECT DISTINCT service_id
@@ -194,12 +192,12 @@ object ServiceMapper {
             """,
                     mapOf("id" to id),
                 )
-                .map { row -> row.long("service_id") }
-                .asList
-        )
+        ) {
+            row -> SubjectId(row.long("service_id"))
+        }
 
-    fun setForceGroup(id: UUID, forceGroup: Boolean) =
-        session.run(
+    fun setForceGroup(id: LessonId, forceGroup: Boolean) =
+        session.update(
             queryOf(
                 """
         UPDATE service 
@@ -213,11 +211,10 @@ object ServiceMapper {
                         "update_time" to LocalDateTime.now(),
                     ),
                 )
-                .asUpdate
         )
 
-    fun setExtraHalfHour(id: UUID, forceGroup: Boolean) =
-        session.run(
+    fun setExtraHalfHour(id: LessonId, forceGroup: Boolean) =
+        session.update(
             queryOf(
                 """
         UPDATE service 
@@ -231,7 +228,6 @@ object ServiceMapper {
                     "update_time" to LocalDateTime.now(),
                 ),
             )
-                .asUpdate
         )
 
 }

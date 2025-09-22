@@ -9,9 +9,9 @@ import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.print
-import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import org.apache.poi.ss.usermodel.HorizontalAlignment
 import java.io.File
@@ -21,19 +21,19 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class MonthReport(
     private val fio: String,
-    private val service: Long,
+    private val service: SubjectId,
     private val userId: Long,
 ) {
 
-    val clients = mutableMapOf<Int, Client>()
-    fun getClient(id: Int): Client {
-        if (!clients.contains(id)) clients[id] = ClientMapper.findById(id)!!
+    val clients = mutableMapOf<Int, Student>()
+    fun getClient(id: Int): Student {
+        if (!clients.contains(id)) clients[id] = StudentMapper.findById(id)!!
 
         return clients[id]!!
     }
 
-    fun generate(times: List<Service>, payments: List<Payment>): File? {
-        val serviceName = ServicesMapper.getNameById(service)!!
+    fun generate(times: List<Lesson>, payments: List<Payment>): File? {
+        val serviceName = SubjectMapper.getNameById(service)!!
 
         if (times.isEmpty() && payments.isEmpty()) {
             return null
@@ -41,14 +41,14 @@ class MonthReport(
 
         val dateTime = times.first().dateTime
 
-        val id2times: Multimap<UUID, Service> =
+        val id2times: Multimap<LessonId, Lesson> =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
-        times.forEach { service -> id2times.put(service.id, service) }
+        times.forEach { lesson -> id2times.put(lesson.id, lesson) }
 
-        val fioToTimes: Multimap<Client, Service> =
+        val fioToTimes: Multimap<Student, Lesson> =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         times.forEach { service ->
-            getClient(service.clientId).let { client ->
+            getClient(service.studentId).let { client ->
                 fioToTimes.put(client, service)
             }
         }
@@ -57,7 +57,7 @@ class MonthReport(
         val totalGroup = AtomicInteger()
 
         val i = AtomicInteger(1)
-        val comparator: Comparator<Client> =
+        val comparator: Comparator<Student> =
             getComparator()
 
         return excel {
@@ -103,14 +103,14 @@ class MonthReport(
                         row {
                             cell(i.getAndIncrement())
                             cell(client.fio(), HorizontalAlignment.LEFT)
-                            cell(client.klass ?: "")
+                            cell(client.schoolClass ?: "")
                             cell(individual)
                             cell(group)
                             cell(
-                                PaymentMapper.getPaymentsSumByClient(
+                                PaymentMapper.getPaymentsSumForStudent(
                                     userId,
-                                    fioTimes.first().serviceId,
-                                    client.id!!,
+                                    fioTimes.first().subjectId,
+                                    client.id?.id!!,
                                     dateTime,
                                 )
                             )
@@ -127,7 +127,7 @@ class MonthReport(
                     cell(
                         PaymentMapper.getPaymentsSum(
                             userId,
-                            times.first().serviceId,
+                            times.first().subjectId,
                             dateTime,
                         )
                     )
@@ -156,11 +156,11 @@ class MonthReport(
                         val fios =
                             if (services.size == 1) {
                                 "      " +
-                                        getClient(services.first().clientId).fio()
+                                        getClient(services.first().studentId).fio()
                             } else {
                                 val i = AtomicInteger(1)
                                 services.joinToString("\n") {
-                                    "${i.getAndAdd(1)} - ${getClient(it.clientId).fio()}"
+                                    "${i.getAndAdd(1)} - ${getClient(it.studentId).fio()}"
                                 }
                             }
                         total = total + services.first().amount
@@ -201,10 +201,10 @@ class MonthReport(
                 }
                 var total = 0
                 payments.forEach { payment ->
-                    total = total + payment.amount
+                    total = total + payment.amount.amount
                     row {
                         cell(payment.dateTime.formatDateTime())
-                        cell(getClient(payment.clientId).fio(), HorizontalAlignment.LEFT)
+                        cell(getClient(payment.studentId).fio(), HorizontalAlignment.LEFT)
                         cell(payment.amount)
                         MinioService.getLink(payment.photoReport!!, 3.hours).onSuccess {
                             cellHyperlink(it,"отчет")
@@ -224,8 +224,8 @@ class MonthReport(
             .build("$fio - $serviceName ${dateTime.format(DateTimeFormatter.ofPattern("MMMM"))} ${dateTime.year}.xlsx")
     }
 
-    private fun getComparator(): Comparator<Client> {
-        val comparator: Comparator<Client> = compareBy { it.klass }
+    private fun getComparator(): Comparator<Student> {
+        val comparator: Comparator<Student> = compareBy { it.schoolClass?.value }
         return comparator.thenComparing { it.fio() }
     }
 

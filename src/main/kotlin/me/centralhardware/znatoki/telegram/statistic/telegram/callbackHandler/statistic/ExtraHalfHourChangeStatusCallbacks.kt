@@ -13,7 +13,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermissi
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasForceGroup
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 import java.util.UUID
@@ -41,14 +41,14 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
     query: DataCallbackQuery
 ) {
     val chatId = query.from.id.chatId.long
-    val historyBefore = ServiceMapper.findById(id)
+    val historyBefore = LessonMapper.findById(id)
     val service = historyBefore.firstOrNull()
         ?: run {
             answerCallbackQuery(query, "Запись не найдена", showAlert = true)
             return
         }
 
-    if (!data.user.hasAdminPermission() && service.chatId != chatId) {
+    if (!data.user.hasAdminPermission() && service.tutorId.id != chatId) {
         answerCallbackQuery(query, "Доступ запрещён", showAlert = true)
         return
     }
@@ -57,9 +57,9 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
         return
     }
 
-    ServiceMapper.setExtraHalfHour(id, extraHalfHour)
+    LessonMapper.setExtraHalfHour(id, extraHalfHour)
 
-    val historyAfter = ServiceMapper.findById(id)
+    val historyAfter = LessonMapper.findById(id)
     val updated = historyAfter.firstOrNull() ?: service
 
     val keyboard = buildServiceKeyboard(

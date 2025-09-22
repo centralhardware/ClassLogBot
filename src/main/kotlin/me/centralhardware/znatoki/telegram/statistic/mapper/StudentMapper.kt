@@ -2,15 +2,17 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
-import me.centralhardware.znatoki.telegram.statistic.entity.Client
+import me.centralhardware.znatoki.telegram.statistic.entity.Student
+import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseClient
+import me.centralhardware.znatoki.telegram.statistic.extensions.runList
+import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 
-object ClientMapper {
+object StudentMapper {
 
-    fun existsByFio(fio: String): Boolean =
-        session.run(
-            queryOf(
-                """
+    fun existsByFio(fio: String): Boolean = session.runSingle(
+        queryOf(
+            """
             SELECT EXISTS(
             SELECT *
             FROM client
@@ -18,16 +20,13 @@ object ClientMapper {
             ORDER BY create_date DESC
             ) as e
         """,
-                mapOf("fio" to fio),
+            mapOf("fio" to fio)
             )
-                .map { row -> row.boolean("e") }
-                .asSingle
-        ) ?: false
+    ) { row -> row.boolean("e") } ?: false
 
-    fun save(client: Client): Int =
-        session.run(
-            queryOf(
-                """
+    fun save(student: Student): StudentId = session.runSingle(
+        queryOf(
+            """
                INSERT INTO client (
                         create_date,
                         last_name,
@@ -60,41 +59,38 @@ object ClientMapper {
                     :mother_fio
                ) RETURNING id
             """,
-                mapOf(
-                    "create_date" to client.createDate,
-                    "last_name" to client.lastName,
-                    "modify_date" to client.modifyDate,
-                    "name" to client.name,
-                    "second_name" to client.secondName,
-                    "created_by" to client.createdBy,
-                    "deleted" to client.deleted,
-                    "klass" to client.klass,
-                    "record_date" to client.recordDate,
-                    "birth_date" to client.birthDate,
-                    "source" to client.source,
-                    "phone" to client.phone,
-                    "responsible_phone" to client.responsiblePhone,
-                    "mother_fio" to client.motherFio,
-                ),
+            mapOf(
+                "create_date" to student.createDate,
+                "last_name" to student.lastName,
+                "modify_date" to student.modifyDate,
+                "name" to student.name,
+                "second_name" to student.secondName,
+                "created_by" to student.createdBy,
+                "deleted" to student.deleted,
+                "klass" to student.schoolClass,
+                "record_date" to student.recordDate,
+                "birth_date" to student.birthDate,
+                "source" to student.source,
+                "phone" to student.phone,
+                "responsible_phone" to student.responsiblePhone,
+                "mother_fio" to student.motherFio,
             )
-                .map { it.int("id") }
-                .asSingle
-        )!!
+        )
+    ) {
+        StudentId(it.int("id"))
+        }!!
 
-    fun delete(id: Int) =
-        session.update(
-            queryOf(
-                """
+    fun delete(id: StudentId) = session.update(queryOf(
+        """
                UPDATE client 
                SET deleted = true
                WHERE id = :id
             """,
-                mapOf("id" to id),
-            )
-        )
+        mapOf("id" to id),
+    ))
 
-    fun findById(id: Int): Client? =
-        session.run(
+    fun findById(id: StudentId): Student =
+        session.runSingle(
             queryOf(
                 """
                 SELECT c.*
@@ -103,12 +99,10 @@ object ClientMapper {
             """,
                 mapOf("id" to id),
             )
-                .map { it.parseClient() }
-                .asSingle
-        )
+        ) { it.parseClient() } ?: throw IllegalArgumentException("No client with id $id found")
 
-    fun findAll(): List<Client> =
-        session.run(
+    fun findAll(): List<Student> =
+        session.runList(
             queryOf(
                 """
                 SELECT c.*
@@ -116,12 +110,10 @@ object ClientMapper {
                 WHERE deleted = false
             """
             )
-                .map { it.parseClient() }
-                .asList
-        )
+        ) { it.parseClient() }
 
-    fun findAllByFio(name: String, secondName: String, lastName: String): List<Client> =
-        session.run(
+    fun findAllByFio(name: String, secondName: String, lastName: String): List<Student> =
+        session.runList(
             queryOf(
                 """
                 SELECT c.*
@@ -130,12 +122,10 @@ object ClientMapper {
             """,
                 mapOf("name" to name, "second_name" to secondName, "last_name" to lastName),
             )
-                .map { it.parseClient() }
-                .asList
-        )
+        ) { it.parseClient() }
 
-    fun getFioById(id: Int): String =
-        session.run(
+    fun getFioById(id: StudentId): String =
+        session.runSingle(
             queryOf(
                 """
             SELECT concat(name, ' ', last_name, ' ', second_name) as fio
@@ -144,7 +134,5 @@ object ClientMapper {
         """,
                 mapOf("id" to id),
             )
-                .map { row -> row.string("fio") }
-                .asSingle
-        ) ?: ""
+        ) { row -> row.string("fio") } ?: ""
 }

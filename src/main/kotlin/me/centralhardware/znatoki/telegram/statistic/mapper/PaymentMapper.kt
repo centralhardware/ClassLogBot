@@ -4,9 +4,14 @@ import java.time.LocalDateTime
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
+import me.centralhardware.znatoki.telegram.statistic.entity.PaymentId
+import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parsePayment
 import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.runList
+import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 
 object PaymentMapper {
@@ -33,10 +38,10 @@ object PaymentMapper {
             """,
                 mapOf(
                     "dateTime" to payment.dateTime,
-                    "chatId" to payment.chatId,
-                    "clientId" to payment.clientId,
+                    "chatId" to payment.tutorId,
+                    "clientId" to payment.studentId,
                     "amount" to payment.amount,
-                    "serviceId" to payment.serviceId,
+                    "serviceId" to payment.subjectId,
                     "photo_report" to payment.photoReport,
                 ),
             )
@@ -44,8 +49,8 @@ object PaymentMapper {
                 .asSingle
         )!!
 
-    fun setDelete(id: Int, isDelete: Boolean) =
-        session.run(
+    fun setDelete(id: PaymentId, isDelete: Boolean) =
+        session.update(
             queryOf(
                 """
             UPDATE payment
@@ -54,16 +59,15 @@ object PaymentMapper {
             """,
                 mapOf("id" to id, "is_delete" to isDelete),
             )
-                .asUpdate
         )
 
-    fun getPaymentsSumByClient(
-        chatId: Long,
-        serviceId: Long,
+    fun getPaymentsSumForStudent(
+        tutorId: TutorId,
+        subjectId: SubjectId,
         clientId: Int,
         date: LocalDateTime,
     ): Long =
-        session.run(
+        session.runSingle(
             queryOf(
                 """
             SELECT sum(amount) as sum
@@ -76,19 +80,17 @@ object PaymentMapper {
                 AND is_deleted = false
             """,
                 mapOf(
-                    "chat_id" to chatId,
-                    "service_id" to serviceId,
+                    "chat_id" to tutorId,
+                    "service_id" to subjectId,
                     "client_id" to clientId,
                     "startDate" to date.startOfMonth(),
                     "endDate" to date.endOfMonth(),
                 ),
             )
-                .map { row -> row.longOrNull("sum") }
-                .asSingle
-        ) ?: 0
+        ) { row -> row.longOrNull("sum") }?: 0
 
-    fun getPaymentsSum(chatId: Long, serviceId: Long, date: LocalDateTime): Long =
-        session.run(
+    fun getPaymentsSum(tutorId: TutorId, subjectId: SubjectId, date: LocalDateTime): Long =
+        session.runSingle(
             queryOf(
                 """
             SELECT sum(amount) as sum
@@ -99,22 +101,20 @@ object PaymentMapper {
                 AND is_deleted = false
             """,
                 mapOf(
-                    "chat_id" to chatId,
-                    "service_id" to serviceId,
+                    "chat_id" to tutorId,
+                    "service_id" to subjectId,
                     "startDate" to date.startOfMonth(),
                     "endDate" to date.endOfMonth(),
                 ),
             )
-                .map { row -> row.longOrNull("sum") }
-                .asSingle
-        ) ?: 0
+        ) { row -> row.longOrNull("sum") }?: 0
 
     private fun getPayments(
-        chatId: Long,
-        serviceId: Long,
+        tutorId: TutorId,
+        subjectId: SubjectId,
         startDate: LocalDateTime,
         endDate: LocalDateTime
-    ) = session.run(
+    ) = session.runList(
         queryOf(
         """
         SELECT p.id,
@@ -131,22 +131,22 @@ object PaymentMapper {
             AND p.date_time between :start_date and :end_date
             AND p.is_deleted=false
     """, mapOf(
-                "chat_id" to chatId,
-                "service_id" to serviceId,
+                "chat_id" to tutorId,
+                "service_id" to subjectId,
                 "start_date" to startDate,
                 "end_date" to endDate)
-    ).map { it.parsePayment() }.asList)
+    )) { it.parsePayment() }
 
-    fun getCurrentMonthPayments(chatId: Long, serviceId: Long) = getPayments(
-        chatId,
-        serviceId,
+    fun getCurrentMonthPayments(tutorId: TutorId, subjectId: SubjectId) = getPayments(
+        tutorId,
+        subjectId,
         LocalDateTime.now().startOfMonth(),
         LocalDateTime.now().endOfMonth(),
     )
 
-    fun getPrevMonthPayments(chatId: Long, serviceId: Long) = getPayments(
-        chatId,
-        serviceId,
+    fun getPrevMonthPayments(tutorId: TutorId, subjectId: SubjectId) = getPayments(
+        tutorId,
+        subjectId,
         LocalDateTime.now().prevMonth().startOfMonth(),
         LocalDateTime.now().prevMonth().endOfMonth(),
     )

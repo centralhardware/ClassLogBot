@@ -3,41 +3,44 @@ package me.centralhardware.znatoki.telegram.statistic.entity
 import kotliquery.Row
 import java.time.LocalDateTime
 
- data class Payment(
-    val id: Int? = null,
+@JvmInline
+value class PaymentId(val id: Int)
+
+data class Payment(
+    val id: PaymentId? = null,
     val dateTime: LocalDateTime = LocalDateTime.now(),
-    val chatId: Long,
-    val clientId: Int,
-    val amount: Int,
-    val serviceId: Long,
+    val tutorId: TutorId,
+    val studentId: Int,
+    val amount: Amount,
+    val subjectId: SubjectId,
     val deleted: Boolean = false,
     val photoReport: String? = null,
 )
 
 fun Row.parsePayment() = Payment(
-    int("id"),
+    PaymentId(int("id")),
     localDateTime("date_time"),
-    long("chat_id"),
+    TutorId(long("chat_id")),
     int("pupil_id"),
-    int("amount"),
-    long("services"),
+    Amount(int("amount")),
+    SubjectId(long("services")),
     boolean("is_deleted"),
     stringOrNull("photo_report")
 )
 
 class PaymentBuilder {
-    var chatId: Long? = null
-    var clientId: Int? = null
-    var amount: Int? = null
-    var serviceId: Long? = null
+    var tutorId: TutorId? = null
+    var studentId: Int? = null
+    var amount: Amount? = null
+    var subjectId: SubjectId? = null
     var photoReport: String? = null
 
     fun build(): Payment =
         Payment(
-            chatId = chatId!!,
-            clientId = clientId!!,
+            tutorId = tutorId!!,
+            studentId = studentId!!,
             amount = amount!!,
-            serviceId = serviceId!!,
+            subjectId = subjectId!!,
             photoReport = photoReport,
         )
 }

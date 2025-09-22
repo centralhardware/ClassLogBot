@@ -10,9 +10,9 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onConten
 import dev.inmo.tgbotapi.longPolling
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser
+import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
-import me.centralhardware.znatoki.telegram.statistic.mapper.UserMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
@@ -34,14 +34,14 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 import restrictAccess
 
-var BehaviourContextData.user: TelegramUser
-    get() = get("user") as TelegramUser
+var BehaviourContextData.user: Tutor
+    get() = get("user") as Tutor
     set(value) = set("user", value)
 
-suspend fun BehaviourContext.initContext(filter: (TelegramUser?) -> Boolean, block: BehaviourContext.() -> Unit) = createSubContextAndDoAsynchronouslyWithUpdatesFilter(
+suspend fun BehaviourContext.initContext(filter: (Tutor?) -> Boolean, block: BehaviourContext.() -> Unit) = createSubContextAndDoAsynchronouslyWithUpdatesFilter(
     updatesUpstreamFlow = allUpdatesFlow.filter {
         runCatching {
-            filter.invoke(UserMapper.findById(it.userId()))
+            filter.invoke(TutorMapper.findByIdOrNull(it.userId()))
         }.getOrDefault(false)
     }
 ) { block() }
@@ -55,7 +55,7 @@ suspend fun main() {
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->
                 runCatching {
-                    UserMapper.findById(update.userId())?.let { user -> data.user = user }
+                    TutorMapper.findByIdOrNull(update.userId())?.let { user -> data.user = user }
                 }
             }
         },

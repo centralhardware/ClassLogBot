@@ -2,25 +2,15 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.configuration.session
-import me.centralhardware.znatoki.telegram.statistic.entity.TelegramUser
+import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.entity.parseUser
+import me.centralhardware.znatoki.telegram.statistic.extensions.runList
+import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 
-object UserMapper {
-
-    fun getAll(): List<TelegramUser> =
-        session.run(
-            queryOf(
-                """
-                   SELECT *
-                   FROM telegram_users
-                """
-            )
-                .map { it -> it.parseUser() }
-                .asList
-        )
+object TutorMapper {
 
     fun getAdminsId(): List<Long> =
-        session.run(
+        session.runList(
             queryOf(
                     """
                SELECT id
@@ -28,12 +18,10 @@ object UserMapper {
                WHERE 'ADMIN' = ANY(permissions)           
             """
                 )
-                .map { it.long("id") }
-                .asList
-        )
+        ) { it.long("id") }
 
-    fun findById(id: Long): TelegramUser? =
-        session.run(
+    fun findByIdOrNull(id: Long): Tutor? =
+        session.runSingle(
             queryOf(
                     """
             SELECT *
@@ -42,7 +30,5 @@ object UserMapper {
             """,
                     mapOf("id" to id),
                 )
-                .map { it.parseUser() }
-                .asSingle
-        )
+        ) { it.parseUser() }
 }

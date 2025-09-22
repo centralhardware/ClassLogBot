@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import arrow.core.left
+import arrow.core.right
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -8,26 +10,15 @@ import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
+import me.centralhardware.znatoki.telegram.statistic.entity.Fio
+import me.centralhardware.znatoki.telegram.statistic.entity.PhoneNumber
+import me.centralhardware.znatoki.telegram.statistic.entity.SchoolClass
+import me.centralhardware.znatoki.telegram.statistic.entity.SourceOption
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
-import me.centralhardware.znatoki.telegram.statistic.extensions.userId
-import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
-
-
-private val sourceOptions = listOf(
-    "Вывеска",
-    "С прошлых лет",
-    "От знакомых",
-    "2gis",
-    "Реклама на подъезде",
-    "Ходили старшие",
-    "Интернет",
-    "Листовка",
-    "Аудио Реклама в магазине",
-    "Реклама на ТВ",
-    "инстаграм"
-)
+import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
 suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageContent>) =
     startTelegramFsm(
@@ -40,7 +31,7 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
             "Введите ФИО. В формате: имя фамилия отчество.",
             false,
             {
-                ClientMapper.findAllByFio(it.name, it.secondName, it.lastName)
+                StudentMapper.findAllByFio(it.name, it.secondName, it.lastName)
                     .isEmpty()
             }
         ) { builder, fio ->
@@ -50,9 +41,16 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
         }
 
         int(
-            "Введите класс /skip для пропуска."
-        ) { builder, klass ->
-            builder.klass = klass
+            "Введите класс /skip для пропуска.",
+            validator = {
+                if (SchoolClass.validate(it)) {
+                    Unit.right()
+                } else {
+                    "Введите класс".left()
+                }
+            }
+        ) { builder, schoolClass ->
+            builder.schoolClass = SchoolClass(schoolClass)
         }
 
         date(
@@ -69,44 +67,44 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
 
         enum(
             prompt = "Введите как узнал",
-            options = sourceOptions,
+            options = SourceOption.options(),
             true
         ) { b, value ->
-            b.source = value
+            b.source = SourceOption.fromTitle(value)
         }
 
         phone(
             prompt = "Введите телефон /skip для пропуска.",
             optionalSkip = true
         ) { b, value ->
-            b.phone = value
+            b.phone = PhoneNumber(value)
         }
 
         phone(
             prompt = "Введите телефон ответственного /skip для пропуска.",
             optionalSkip = true
         ) { b, value ->
-            b.responsiblePhone = value
+            b.responsiblePhone = PhoneNumber(value)
         }
 
         fio(
             prompt = "Введите ФИО матери /skip для пропуска.",
             optionalSkip = true
         ) { b, value ->
-            b.motherFio = "${value.name} ${value.secondName} ${value.lastName}"
+            b.motherFio = Fio.from(value)
         }
 
         onFinish { message, b ->
-            b.createdBy = message.userId()
+            b.createdBy = message.tutorId()
 
             val client = b.build()
-            client.id = ClientMapper.save(client)
+            client.id = StudentMapper.save(client)
 
             sendTextMessage(
                 message.chat,
                 client.getInfo(
-                    ServiceMapper.getServicesForClient(client.id!!).mapNotNull {
-                        ServicesMapper.getNameById(it)
+                    LessonMapper.getSubjectIdsForStudent(client.id!!).mapNotNull {
+                        SubjectMapper.getNameById(it)
                     }
                 ),
             )
@@ -118,8 +116,8 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                     #ученик
                     ${
                     client.getInfo(
-                        ServiceMapper.getServicesForClient(client.id!!)
-                            .mapNotNull { ServicesMapper.getNameById(it) }
+                        LessonMapper.getSubjectIdsForStudent(client.id!!)
+                            .mapNotNull { SubjectMapper.getNameById(it) }
                     )
                 }
                 """.trimIndent(),

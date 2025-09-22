@@ -7,28 +7,28 @@ import dev.inmo.krontab.utils.asTzFlowWithDelays
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.toChatId
-import me.centralhardware.znatoki.telegram.statistic.entity.Service
-import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
+import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
+import me.centralhardware.znatoki.telegram.statistic.entity.toStudentIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatTime
-import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import java.util.*
 
 suspend fun BehaviourContext.dailyReport() {
     buildSchedule("0 0 22 * * *").asTzFlowWithDelays().collect {
-        ServiceMapper.getIds().forEach { getReport(it) }
+        LessonMapper.getTutorIds().forEach { getReport(it) }
     }
 }
 
 suspend fun BehaviourContext.getReport(id: Long, sendTo: Long = id) {
-    val times = ServiceMapper.getTodayTimes(id)
+    val times = LessonMapper.getTodayTimes(id)
     if (times.isEmpty()) return
 
     sendTextMessage(sendTo.toChatId(), "Занятия проведенные за сегодня")
 
-    val id2times: Multimap<UUID, Service> = ArrayListMultimap.create()
-    times.forEach { service: Service -> id2times.put(service.id, service) }
+    val id2times: Multimap<UUID, Lesson> = ArrayListMultimap.create()
+    times.forEach { lesson: Lesson -> id2times.put(lesson.id.id, lesson) }
 
     id2times
         .asMap()
@@ -39,9 +39,9 @@ suspend fun BehaviourContext.getReport(id: Long, sendTo: Long = id) {
                 sendTo.toChatId(),
                 """
                         Время: ${it.first().dateTime.formatTime()}
-                        Предмет: ${ServicesMapper.getNameById(it.first().serviceId)}
+                        Предмет: ${SubjectMapper.getNameById(it.first().subjectId)}
                         ученик: ${
-                    it.toClientIds().joinToString(", ") { clientId -> ClientMapper.getFioById(clientId) }
+                    it.toStudentIds().joinToString(", ") { clientId -> StudentMapper.getFioById(clientId) }
                 }
                         Стоимость: ${it.first().amount}
                     """

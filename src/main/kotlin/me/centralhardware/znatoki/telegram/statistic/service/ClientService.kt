@@ -2,8 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic.service
 
 import java.io.IOException
 import kotlin.concurrent.fixedRateTimer
-import me.centralhardware.znatoki.telegram.statistic.entity.Client
-import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
+import me.centralhardware.znatoki.telegram.statistic.entity.Student
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
@@ -23,7 +23,7 @@ object ClientService {
             val indexWriterConfig = IndexWriterConfig(analyzer)
             val writer = IndexWriter(index, indexWriterConfig)
 
-            ClientMapper.findAll().forEach { client ->
+            StudentMapper.findAll().forEach { client ->
                 try {
                     val document = Document()
                     document.add(TextField("name", client.name.lowercase(), Field.Store.YES))
@@ -44,7 +44,7 @@ object ClientService {
         }
     }
 
-    fun search(fio: String): List<Client> {
+    fun search(fio: String): List<Student> {
         // Создаем поисковые запросы для каждого слова по каждому полю (имя, фамилия и отчество)
         val queries =
             fio.split(" ").flatMap { word ->
@@ -66,7 +66,7 @@ object ClientService {
             .sortedBy { it.score }
             .reversed()
             .map { searcher.storedFields().document(it.doc) }
-            .mapNotNull { it: Document -> ClientMapper.findById(it["id"].toInt()) }
+            .mapNotNull { it: Document -> StudentMapper.findById(it["id"].toInt()) }
             .toList()
     }
 }

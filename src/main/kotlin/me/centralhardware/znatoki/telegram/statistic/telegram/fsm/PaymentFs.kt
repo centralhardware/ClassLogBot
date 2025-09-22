@@ -13,15 +13,17 @@ import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
+import me.centralhardware.znatoki.telegram.statistic.entity.Amount
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
+import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
-import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
@@ -35,8 +37,8 @@ private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: Int, u
         """
                 #оплата
                 Время: ${payment.dateTime.formatDateTime()}
-                Клиент: ${ClientMapper.findById(payment.clientId)?.fio().hashtag()}
-                Предмет: ${ServicesMapper.getNameById(payment.serviceId)}
+                Клиент: ${StudentMapper.findById(payment.studentId)?.fio().hashtag()}
+                Предмет: ${SubjectMapper.getNameById(payment.subjectId)}
                 Оплата: ${payment.amount}
                 Оплатил: ${data.user.name.hashtag()}
             """
@@ -71,26 +73,24 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
             "Введите фио. \nнажмите для поиска фио",
             inline = true,
             optionalSkip = false,
-            validator = { validateFio(it) }
+            validator = ::validateFio
         ) { builder, value ->
-            builder.clientId = value.split(" ")[0].toInt()
+            builder.studentId = value.split(" ")[0].toInt()
         }
 
         enum(
             "Выберите предмет",
-            data.user.services.map { ServicesMapper.getNameById(it)!! }
+            data.user.subjects.map { SubjectMapper.getNameById(it) }
         ) { builder, value ->
-            builder.serviceId = ServicesMapper.getServiceId(value)!!
+            builder.subjectId = SubjectMapper.getIdByName(value)
         }
 
         int(
             "Введите сумму оплаты",
             false,
-            {
-                validateAmount(it)
-            }
+            ::validateAmount
         ) { builder, value ->
-            builder.amount = value
+            builder.amount = Amount(value)
         }
 
         photo(
@@ -100,12 +100,12 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
         confirm(
             {
                 """
-                                        ФИО: ${ClientMapper.findById(it.clientId!!)?.fio()}
+                                        ФИО: ${StudentMapper.findById(it.studentId!!)?.fio()}
                                         Оплата: ${it.amount}
                                         """
             },
             {
-                it.chatId = message.userId()
+                it.tutorId = message.tutorId()
                 val payment = it.build()
                 val paymentId = PaymentMapper.insert(payment)
                 sendLog(payment, paymentId, message.userId())

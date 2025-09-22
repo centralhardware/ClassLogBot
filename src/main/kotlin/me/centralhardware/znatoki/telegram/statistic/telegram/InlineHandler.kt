@@ -6,7 +6,7 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onBaseIn
 import dev.inmo.tgbotapi.types.InlineQueries.InlineQueryResult.InlineQueryResultArticle
 import dev.inmo.tgbotapi.types.InlineQueries.InputMessageContent.InputTextMessageContent
 import dev.inmo.tgbotapi.types.InlineQueryId
-import me.centralhardware.znatoki.telegram.statistic.entity.Client
+import me.centralhardware.znatoki.telegram.statistic.entity.Student
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.service.ClientService
 import org.apache.commons.lang3.StringUtils
@@ -42,6 +42,6 @@ fun BehaviourContext.processInline() = onBaseInlineQuery {
     answerInlineQuery(it, results = articles, isPersonal = true, cachedTime = 0)
 }
 
-private fun getFio(client: Client): String = "${client.id} ${client.fio()}"
+private fun getFio(student: Student): String = "${student.id} ${student.fio()}"
 
-private fun getBio(client: Client): String = "${client.klass} класс"
+private fun getBio(student: Student): String = "${student.schoolClass} класс"

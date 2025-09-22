@@ -14,26 +14,25 @@ import dev.inmo.tgbotapi.types.toChatId
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
-import me.centralhardware.znatoki.telegram.statistic.entity.Service
+import me.centralhardware.znatoki.telegram.statistic.entity.Amount
+import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
+import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
-import me.centralhardware.znatoki.telegram.statistic.entity.toClientIds
+import me.centralhardware.znatoki.telegram.statistic.entity.toStudentIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
-import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 import ru.nsk.kstatemachine.statemachine.StateMachine
-import java.util.*
 
 suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>): StateMachine {
-    val userId = message.userId()
-
     val builder = ServiceBuilder().apply {
-        chatId = userId
-        if (data.user.services.size == 1) serviceId = data.user.services.first()
+        tutorId = message.tutorId()
+        if (data.user.subjects.size == 1) subjectId = data.user.subjects.first()
     }
 
     return startTelegramFsm(
@@ -41,15 +40,15 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
         ctx = builder,
         msg = message
     ) {
-        if (data.user.services.size != 1) {
-            val options = data.user.services.mapNotNull { ServicesMapper.getNameById(it) }
+        if (data.user.subjects.size != 1) {
+            val options = data.user.subjects.mapNotNull { SubjectMapper.getNameById(it) }
             enum(
                 prompt = "Выберите предмет",
                 options = options
-            ) { ctx, chosenName -> ctx.serviceId = ServicesMapper.getServiceId(chosenName) }
+            ) { ctx, chosenName -> ctx.subjectId = SubjectMapper.getIdByName(chosenName) }
         }
 
-        val groupAllowed = builder.serviceId?.let { ServicesMapper.isAllowMultiplyClients(it) } ?: false
+        val groupAllowed = builder.subjectId?.let { SubjectMapper.isAllowGroup(it) } ?: false
 
         multi(
             prompt = if (groupAllowed) {
@@ -61,7 +60,7 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
             maxCount = if (groupAllowed) Int.MAX_VALUE else 1,
             parse = { validateFio(it) }
         ) { builder, value ->
-            builder.clientIds = value
+            builder.studentIds = value
         }
 
         int(
@@ -70,10 +69,10 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
                 validateAmount(it)
             }
         ) { ctx, value ->
-            ctx.amount = value
+            ctx.amount = Amount(value)
             runBlocking {
                 sendTextMessage(
-                    ctx.chatId!!.toChatId(),
+                    ctx.tutorId!!.id.toChatId(),
                     "Пришлите фото отчётности",
                     replyMarkup = ReplyKeyboardRemove()
                 )
@@ -87,24 +86,24 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
         confirm(
             prompt = { ctx ->
                 """
-                услуга: ${ServicesMapper.getNameById(ctx.serviceId!!)}
-                ФИО: ${ctx.clientIds.joinToString(";") { ClientMapper.getFioById(it) }}
+                услуга: ${SubjectMapper.getNameById(ctx.subjectId!!)}
+                ФИО: ${ctx.studentIds.joinToString(";") { StudentMapper.getFioById(it) }}
                 стоимость: ${ctx.amount}
                 Сохранить?
                 """.trimIndent()
             },
             onSave = { ctx ->
-                ctx.id = UUID.randomUUID()
+                ctx.id = LessonId.random()
                 val services = ctx.build()
-                services.forEach { ServiceMapper.insert(it) }
-                sendLog(services, userId)
+                services.forEach { LessonMapper.insert(it) }
+                sendLog(services, message.userId())
 
                 val allowForceGroup = data.user.hasForceGroup()
                 val allowExtraHalf = data.user.hasExtraHalfHour()
                 if ((allowForceGroup && services.size == 1) || allowExtraHalf) {
                     runBlocking {
                         sendTextMessage(
-                            ctx.chatId!!.toChatId(),
+                            ctx.tutorId!!.toChatId(),
                             "Сохранено",
                             replyMarkup = inlineKeyboard {
                                 if (allowForceGroup) row {
@@ -122,13 +121,13 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
                             }
                         )
                         val tmp =
-                            sendTextMessage(ctx.chatId!!.toChatId(), "temp", replyMarkup = ReplyKeyboardRemove())
+                            sendTextMessage(ctx.tutorId!!.toChatId(), "temp", replyMarkup = ReplyKeyboardRemove())
                         deleteMessage(tmp.chat, tmp.messageId)
                     }
                 } else {
                     runBlocking {
                         sendTextMessage(
-                            ctx.chatId!!.toChatId(),
+                            ctx.tutorId!!.toChatId(),
                             "Сохранено",
                             replyMarkup = ReplyKeyboardRemove()
                         )
@@ -138,11 +137,11 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
             onCancel = { ctx ->
                 ctx.photoReport?.let { key ->
                     MinioService.delete(key).onFailure {
-                        runBlocking { sendTextMessage(ctx.chatId!!.toChatId(), "Ошибка при удалении фотографии") }
+                        runBlocking { sendTextMessage(ctx.tutorId!!.toChatId(), "Ошибка при удалении фотографии") }
                     }
                 }
                 sendTextMessage(
-                    ctx.chatId!!.toChatId(),
+                    ctx.tutorId!!.toChatId(),
                     "Отменено",
                     replyMarkup = ReplyKeyboardRemove()
                 )
@@ -151,21 +150,21 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
     }
 }
 
-suspend fun BehaviourContext.sendLog(services: List<Service>, userId: Long) {
-    val service = services.first()
+suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long) {
+    val service = lessons.first()
     val keyboard = inlineKeyboard {
         row { dataButton("Удалить", "timeDelete-${service.id}") }
         row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id}") }
-        if (services.size == 1) row { dataButton("Сделать групповым занятием", "forceGroupAdd-${service.id}") }
+        if (lessons.size == 1) row { dataButton("Сделать групповым занятием", "forceGroupAdd-${service.id}") }
     }
 
     val log = buildString {
         appendLine("#занятие")
         appendLine("Время: ${service.dateTime.formatDateTime()}")
-        appendLine("Предмет: ${ServicesMapper.getNameById(service.serviceId).hashtag()}")
+        appendLine("Предмет: ${SubjectMapper.getNameById(service.subjectId).hashtag()}")
         appendLine(
-            "ученик: " + services.toClientIds()
-                .joinToString(", ") { "#${ClientMapper.getFioById(it).replace(" ", "_")}" })
+            "ученик: " + lessons.toStudentIds()
+                .joinToString(", ") { "#${StudentMapper.getFioById(it).replace(" ", "_")}" })
         appendLine("Стоимость: ${service.amount}")
         appendLine("Преподаватель: ${data.user.name.hashtag()}")
     }.trimIndent()

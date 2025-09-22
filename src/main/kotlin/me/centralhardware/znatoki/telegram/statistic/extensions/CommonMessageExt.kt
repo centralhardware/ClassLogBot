@@ -11,6 +11,8 @@ import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.types.message.content.PhotoContent
 import dev.inmo.tgbotapi.types.message.content.TextContent
+import me.centralhardware.znatoki.telegram.statistic.entity.PhoneNumber
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import org.apache.commons.lang3.StringUtils
 import java.nio.file.Files
@@ -19,6 +21,7 @@ import java.time.LocalDateTime
 import kotlin.io.path.writeBytes
 
 fun CommonMessage<MessageContent>.userId(): Long = chat.id.chatId.long
+fun CommonMessage<MessageContent>.tutorId(): TutorId = TutorId(this.userId())
 
 fun CommonMessage<MessageContent>.validateText(): Either<String, String> =
     if (this.content is TextContent && StringUtils.isNotBlank(this.text)) {
@@ -28,7 +31,7 @@ fun CommonMessage<MessageContent>.validateText(): Either<String, String> =
     }
 
 fun CommonMessage<MessageContent>.validateTelephone(): Either<String, String> =
-    if (this.text!!.validateTelephone()) {
+    if (PhoneNumber.validate(this.text!!)) {
         Either.Right(this.text!!)
     } else {
         Either.Left("Введите номер телефона")

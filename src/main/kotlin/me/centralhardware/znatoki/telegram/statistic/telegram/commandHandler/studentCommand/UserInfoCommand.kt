@@ -4,17 +4,17 @@ import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommandWithArgs
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
-import me.centralhardware.znatoki.telegram.statistic.mapper.ClientMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServiceMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.ServicesMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
 fun BehaviourContext.userInfoCommand() = onCommandWithArgs("i") { message, args ->
-    ClientMapper.findById(args.first().toInt())?.let { client ->
+    StudentMapper.findById(args.first().toInt())?.let { client ->
         sendMessage(
             message.chat,
             client.getInfo(
-                ServiceMapper.getServicesForClient(client.id!!)
-                    .mapNotNull { ServicesMapper.getNameById(it) }
+                LessonMapper.getSubjectIdsForStudent(client.id!!)
+                    .mapNotNull { SubjectMapper.getNameById(it) }
                     .toList()
             ),
         )
