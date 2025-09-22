@@ -25,9 +25,6 @@ fun LocalDate.formatDate(): String = format(DateTimeFormatter.ofPattern("dd.MM.y
 
 fun LocalDateTime.formatTime(): String = format(DateTimeFormatter.ofPattern("HH:mm"))
 
-fun String?.parseDateTime(): Result<LocalDateTime> = runCatching {
-    LocalDateTime.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy HH;mm"))
-}
 
 fun String?.parseDate(): Result<LocalDate> = runCatching {
     LocalDate.parse(this, DateTimeFormatter.ofPattern("dd MM yyyy"))

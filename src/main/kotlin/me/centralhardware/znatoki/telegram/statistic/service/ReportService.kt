@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
@@ -13,15 +14,15 @@ import java.io.File
 
 object ReportService {
 
-    fun getReportsCurrent(id: Long): List<File> {
+    fun getReportsCurrent(id: TutorId): List<File> {
         return getReport(LessonMapper::getCurrentMontTimes, PaymentMapper::getCurrentMonthPayments, id)
     }
 
-    fun getReportPrevious(id: Long): List<File> {
+    fun getReportPrevious(id: TutorId): List<File> {
         return getReport(LessonMapper::getPrevMonthTimes, PaymentMapper::getPrevMonthPayments, id)
     }
 
-    private fun getReport(getTime: (Long, SubjectId) -> List<Lesson>, getPayments: (Long, SubjectId) -> List<Payment>, id: Long): List<File> {
+    private fun getReport(getTime: (TutorId, SubjectId) -> List<Lesson>, getPayments: (TutorId, SubjectId) -> List<Payment>, id: TutorId): List<File> {
         val user =
             TutorMapper.findByIdOrNull(id)?.let { user ->
                 user.subjects.mapNotNull { subjectId ->

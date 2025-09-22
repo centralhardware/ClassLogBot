@@ -7,6 +7,8 @@ import me.centralhardware.znatoki.telegram.statistic.parseLongList
 @JvmInline
 value class SubjectId(val id: Long)
 
+fun Long.toSubjectId() = SubjectId(this)
+
 @JvmInline
 value class TutorId(val id: Long) {
     fun toChatId() = id.toChatId()
@@ -23,6 +25,6 @@ fun Row.parseUser() =
     Tutor(
         TutorId(long("id")),
         array<String>("permissions").map { Permissions.valueOf(it) },
-        string("services").parseLongList().map { SubjectId(it) },
+        string("services").parseLongList().map { it.toSubjectId() },
         string("name"),
     )

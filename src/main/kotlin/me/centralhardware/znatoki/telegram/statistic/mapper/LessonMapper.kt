@@ -10,6 +10,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
+import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
 import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
@@ -193,7 +194,7 @@ object LessonMapper {
                     mapOf("id" to id),
                 )
         ) {
-            row -> SubjectId(row.long("service_id"))
+            row -> row.long("service_id").toSubjectId()
         }
 
     fun setForceGroup(id: LessonId, forceGroup: Boolean) =

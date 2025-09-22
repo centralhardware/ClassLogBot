@@ -21,19 +21,19 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class MonthReport(
     private val fio: String,
-    private val service: SubjectId,
-    private val userId: Long,
+    private val subjectId: SubjectId,
+    private val tutorId: TutorId,
 ) {
 
-    val clients = mutableMapOf<Int, Student>()
-    fun getClient(id: Int): Student {
-        if (!clients.contains(id)) clients[id] = StudentMapper.findById(id)!!
+    val clients = mutableMapOf<StudentId, Student>()
+    fun getStudent(id: StudentId): Student {
+        if (!clients.contains(id)) clients[id] = StudentMapper.findById(id)
 
         return clients[id]!!
     }
 
     fun generate(times: List<Lesson>, payments: List<Payment>): File? {
-        val serviceName = SubjectMapper.getNameById(service)!!
+        val serviceName = SubjectMapper.getNameById(subjectId)!!
 
         if (times.isEmpty() && payments.isEmpty()) {
             return null
@@ -48,7 +48,7 @@ class MonthReport(
         val fioToTimes: Multimap<Student, Lesson> =
             Multimaps.synchronizedListMultimap(ArrayListMultimap.create())
         times.forEach { service ->
-            getClient(service.studentId).let { client ->
+            getStudent(service.studentId).let { client ->
                 fioToTimes.put(client, service)
             }
         }
@@ -108,7 +108,7 @@ class MonthReport(
                             cell(group)
                             cell(
                                 PaymentMapper.getPaymentsSumForStudent(
-                                    userId,
+                                    tutorId,
                                     fioTimes.first().subjectId,
                                     client.id?.id!!,
                                     dateTime,
@@ -126,7 +126,7 @@ class MonthReport(
                     cell(totalGroup)
                     cell(
                         PaymentMapper.getPaymentsSum(
-                            userId,
+                            tutorId,
                             times.first().subjectId,
                             dateTime,
                         )
@@ -156,11 +156,11 @@ class MonthReport(
                         val fios =
                             if (services.size == 1) {
                                 "      " +
-                                        getClient(services.first().studentId).fio()
+                                        getStudent(services.first().studentId).fio()
                             } else {
                                 val i = AtomicInteger(1)
                                 services.joinToString("\n") {
-                                    "${i.getAndAdd(1)} - ${getClient(it.studentId).fio()}"
+                                    "${i.getAndAdd(1)} - ${getStudent(it.studentId).fio()}"
                                 }
                             }
                         total = total + services.first().amount
@@ -204,7 +204,7 @@ class MonthReport(
                     total = total + payment.amount.amount
                     row {
                         cell(payment.dateTime.formatDateTime())
-                        cell(getClient(payment.studentId).fio(), HorizontalAlignment.LEFT)
+                        cell(getStudent(payment.studentId).fio(), HorizontalAlignment.LEFT)
                         cell(payment.amount)
                         MinioService.getLink(payment.photoReport!!, 3.hours).onSuccess {
                             cellHyperlink(it,"отчет")

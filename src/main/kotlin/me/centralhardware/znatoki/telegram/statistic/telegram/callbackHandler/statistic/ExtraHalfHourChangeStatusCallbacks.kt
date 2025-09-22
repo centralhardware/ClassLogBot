@@ -9,6 +9,8 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
+import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
+import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasForceGroup
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
@@ -16,7 +18,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
-import java.util.UUID
 
 private const val ACTION_ADD = "extraHalfHourAdd"
 private const val ACTION_REMOVE = "extraHalfHourRemove"
@@ -30,13 +31,15 @@ private val toggleRegex = Regex("($ACTION_ADD|$ACTION_REMOVE)-($UUID_REGEX)")
  */
 fun BehaviourContext.registerExtraHalfHourHandlers() = onDataCallbackQuery(toggleRegex) { query ->
     val (action, idStr) = toggleRegex.matchEntire(query.data)!!.destructured
-    val id = UUID.fromString(idStr)
-    val enable = action == ACTION_ADD
-    changeExtraHalfHour(id, enable, query)
+    changeExtraHalfHour(
+        idStr.toLessonId(),
+        action == ACTION_ADD,
+        query
+    )
 }
 
 private suspend fun BehaviourContext.changeExtraHalfHour(
-    id: UUID,
+    id: LessonId,
     extraHalfHour: Boolean,
     query: DataCallbackQuery
 ) {
@@ -77,7 +80,7 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
 }
 
 private fun buildServiceKeyboard(
-    id: UUID,
+    id: LessonId,
     isDm: Boolean,
     canForceGroup: Boolean,
     deleted: Boolean,

@@ -3,6 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic.service
 import java.io.IOException
 import kotlin.concurrent.fixedRateTimer
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
+import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
+import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
@@ -66,7 +68,7 @@ object ClientService {
             .sortedBy { it.score }
             .reversed()
             .map { searcher.storedFields().document(it.doc) }
-            .mapNotNull { it: Document -> StudentMapper.findById(it["id"].toInt()) }
+            .mapNotNull { it: Document -> StudentMapper.findById(it["id"].toInt().toStudentId()) }
             .toList()
     }
 }

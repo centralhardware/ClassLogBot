@@ -16,7 +16,10 @@ import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.Amount
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
+import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
+import me.centralhardware.znatoki.telegram.statistic.entity.toAmount
+import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
@@ -75,7 +78,7 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
             optionalSkip = false,
             validator = ::validateFio
         ) { builder, value ->
-            builder.studentId = value.split(" ")[0].toInt()
+            builder.studentId = value.split(" ")[0].toInt().toStudentId()
         }
 
         enum(
@@ -90,7 +93,7 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
             false,
             ::validateAmount
         ) { builder, value ->
-            builder.amount = Amount(value)
+            builder.amount = value.toAmount()
         }
 
         photo(

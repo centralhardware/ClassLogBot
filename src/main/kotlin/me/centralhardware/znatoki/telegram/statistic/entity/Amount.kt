@@ -11,3 +11,5 @@ value class Amount(val amount: Int) {
     }
 
 }
+
+fun Int.toAmount() = Amount(this)

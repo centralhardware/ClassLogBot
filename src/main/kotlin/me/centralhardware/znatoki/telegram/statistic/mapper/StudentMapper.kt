@@ -5,6 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.configuration.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseClient
+import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 
@@ -77,7 +78,7 @@ object StudentMapper {
             )
         )
     ) {
-        StudentId(it.int("id"))
+        it.int("id").toStudentId()
         }!!
 
     fun delete(id: StudentId) = session.update(queryOf(

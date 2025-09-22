@@ -18,6 +18,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Amount
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
+import me.centralhardware.znatoki.telegram.statistic.entity.toAmount
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
@@ -69,7 +70,7 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
                 validateAmount(it)
             }
         ) { ctx, value ->
-            ctx.amount = Amount(value)
+            ctx.amount = value.toAmount()
             runBlocking {
                 sendTextMessage(
                     ctx.tutorId!!.id.toChatId(),

@@ -12,6 +12,8 @@ import java.util.regex.Pattern
 @JvmInline
 value class StudentId(val id: Int)
 
+fun Int.toStudentId() = StudentId(this)
+
 @JvmInline
 value class SchoolClass(val value: Int) {
     init {
@@ -108,7 +110,7 @@ fun Student.fio(): String = "$name $secondName $lastName".replace("\\s{2,}".toRe
 
 fun Row.parseClient(): Student =
     Student(
-        StudentId(int("id")),
+        int("id").toStudentId(),
         string("name"),
         string("second_name"),
         string("last_name"),

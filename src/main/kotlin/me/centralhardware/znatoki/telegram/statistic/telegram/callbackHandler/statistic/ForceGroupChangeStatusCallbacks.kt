@@ -9,10 +9,13 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
+import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
+import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasExtraHalfHour
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
@@ -26,17 +29,17 @@ private val toggleRegex = Regex("($ACTION_ADD|$ACTION_REMOVE)-($UUID_REGEX)")
 
 fun BehaviourContext.registerForceGroupHandlers() = onDataCallbackQuery(toggleRegex) { query ->
     val (action, idStr) = toggleRegex.matchEntire(query.data)!!.destructured
-    val id = UUID.fromString(idStr)
-    val enable = action == ACTION_ADD
-    changeForceGroupStatus(id, enable, query)
+    changeForceGroupStatus(
+        idStr.toLessonId(),
+        action == ACTION_ADD,
+        query)
 }
 
 private suspend fun BehaviourContext.changeForceGroupStatus(
-    id: UUID,
+    id: LessonId,
     forceGroup: Boolean,
     query: DataCallbackQuery
 ) {
-    val chatId = query.from.id.chatId.long
     val before = LessonMapper.findById(id)
     val service = before.firstOrNull()
         ?: run {
@@ -44,7 +47,7 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
             return
         }
 
-    if (!data.user.hasAdminPermission() && service.tutorId.id != chatId) {
+    if (!data.user.hasAdminPermission() && service.tutorId.id != query.userId()) {
         answerCallbackQuery(query, "Доступ запрещён", showAlert = true)
         return
     }
@@ -69,7 +72,6 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
         canToggleExtraHalfHour = data.user.hasExtraHalfHour(),
         deleted = current.deleted,
         extraHalfHour = current.extraHalfHour,
-        // Показывать переключатель групповой/одиночной — только если по-прежнему единственная запись
         showForceGroupSwitcher = after.size == 1,
         forceGroup = current.forceGroup
     )
@@ -79,7 +81,7 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
 }
 
 private fun buildServiceKeyboard(
-    id: UUID,
+    id: LessonId,
     isDm: Boolean,
     canToggleExtraHalfHour: Boolean,
     deleted: Boolean,

@@ -8,6 +8,8 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
+import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
+import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import java.util.UUID
 
@@ -19,13 +21,14 @@ private val timeToggleRegex = Regex("($ACTION_DELETE|$ACTION_RESTORE)-($UUID_REG
 
 fun BehaviourContext.registerTimeToggleCallback() = onDataCallbackQuery(timeToggleRegex) { query ->
     val (action, idStr) = timeToggleRegex.matchEntire(query.data)!!.destructured
-    val id = UUID.fromString(idStr)
-    val deleted = action == ACTION_DELETE
-    changeTimeStatus(id, deleted, query)
+    changeTimeStatus(
+        idStr.toLessonId(),
+        action == ACTION_DELETE,
+        query)
 }
 
 private suspend fun BehaviourContext.changeTimeStatus(
-    id: UUID,
+    id: LessonId,
     deleted: Boolean,
     query: DataCallbackQuery
 ) {
@@ -43,7 +46,7 @@ private suspend fun BehaviourContext.changeTimeStatus(
     }
 }
 
-private fun buildTimeKeyboard(id: UUID, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {
+private fun buildTimeKeyboard(id: LessonId, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {
     row {
         if (deleted) {
             dataButton("Восстановить", "$ACTION_RESTORE-$id")

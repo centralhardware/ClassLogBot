@@ -10,7 +10,7 @@ data class Payment(
     val id: PaymentId? = null,
     val dateTime: LocalDateTime = LocalDateTime.now(),
     val tutorId: TutorId,
-    val studentId: Int,
+    val studentId: StudentId,
     val amount: Amount,
     val subjectId: SubjectId,
     val deleted: Boolean = false,
@@ -21,16 +21,16 @@ fun Row.parsePayment() = Payment(
     PaymentId(int("id")),
     localDateTime("date_time"),
     TutorId(long("chat_id")),
-    int("pupil_id"),
-    Amount(int("amount")),
-    SubjectId(long("services")),
+    int("pupil_id").toStudentId(),
+    int("amount").toAmount(),
+    long("services").toSubjectId(),
     boolean("is_deleted"),
     stringOrNull("photo_report")
 )
 
 class PaymentBuilder {
     var tutorId: TutorId? = null
-    var studentId: Int? = null
+    var studentId: StudentId? = null
     var amount: Amount? = null
     var subjectId: SubjectId? = null
     var photoReport: String? = null

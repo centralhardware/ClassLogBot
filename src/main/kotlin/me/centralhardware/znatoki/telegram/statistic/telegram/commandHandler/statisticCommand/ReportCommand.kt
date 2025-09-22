@@ -7,6 +7,7 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommand
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.toChatId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
@@ -17,7 +18,7 @@ import java.io.File
 
 private suspend fun BehaviourContext.createReport(
     userId: Long,
-    getTime: suspend (Long) -> List<File>
+    getTime: suspend (TutorId) -> List<File>
 ) {
     if (!ensureNoActiveFsm(userId)) {
         return
@@ -28,7 +29,7 @@ private suspend fun BehaviourContext.createReport(
         return
     }
 
-    getTime.invoke(userId).forEach {
+    getTime.invoke(TutorId(userId)).forEach {
         send(userId, it)
         it.delete()
     }

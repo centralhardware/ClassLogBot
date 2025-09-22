@@ -41,7 +41,7 @@ var BehaviourContextData.user: Tutor
 suspend fun BehaviourContext.initContext(filter: (Tutor?) -> Boolean, block: BehaviourContext.() -> Unit) = createSubContextAndDoAsynchronouslyWithUpdatesFilter(
     updatesUpstreamFlow = allUpdatesFlow.filter {
         runCatching {
-            filter.invoke(TutorMapper.findByIdOrNull(it.userId()))
+            filter.invoke(TutorMapper.findByIdOrNull(it.tutorId()))
         }.getOrDefault(false)
     }
 ) { block() }
@@ -55,7 +55,7 @@ suspend fun main() {
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->
                 runCatching {
-                    TutorMapper.findByIdOrNull(update.userId())?.let { user -> data.user = user }
+                    TutorMapper.findByIdOrNull(update.tutorId())?.let { user -> data.user = user }
                 }
             }
         },

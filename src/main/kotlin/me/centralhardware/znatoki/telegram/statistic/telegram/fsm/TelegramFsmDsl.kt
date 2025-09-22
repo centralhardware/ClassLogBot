@@ -7,6 +7,8 @@ import dev.inmo.kslog.common.info
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineQueryInCurrentChatButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.replyKeyboard
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.simpleButton
 import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
@@ -29,6 +31,14 @@ import java.time.LocalDate
 
 const val SKIP = "/skip"
 const val COMPLETE = "/complete"
+
+val yesNoKeyboard = replyKeyboard {
+    row { simpleButton("да") }
+    row { simpleButton("нет") }
+}
+
+val switchToInlineKeyboard = inlineKeyboard { row { inlineQueryInCurrentChatButton("inline", "") } }
+
 
 class TelegramEvent(val message: CommonMessage<*>) : Event
 class Initial() : Event
