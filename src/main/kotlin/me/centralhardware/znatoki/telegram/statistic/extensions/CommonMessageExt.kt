@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.extensions
 
 import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import dev.inmo.tgbotapi.AppConfig
 import dev.inmo.tgbotapi.extensions.api.files.downloadFile
 import dev.inmo.tgbotapi.extensions.api.telegramBot
@@ -52,8 +54,8 @@ fun CommonMessage<MessageContent>.validateDate(): Either<String, LocalDate> =
         )
 
 fun CommonMessage<MessageContent>.validateInt(): Either<String, Int> =
-    if (StringUtils.isNumeric(this.text)) Either.Right(this.text!!.toInt())
-    else Either.Left("Введите число")
+    this.text?.toIntOrNull()?.right() ?: "Введите число".left()
+
 
 fun CommonMessage<MessageContent>.validatePhoto(): Either<String, Unit> =
     if (this.content is PhotoContent) {
