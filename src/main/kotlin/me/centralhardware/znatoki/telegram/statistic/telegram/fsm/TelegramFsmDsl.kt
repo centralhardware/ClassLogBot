@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import arrow.core.Either
 import arrow.core.combine
+import arrow.core.flatMap
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
 import dev.inmo.tgbotapi.extensions.api.send.send
@@ -366,7 +367,9 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                 memo = null; true
                             } else {
                                 message.validateInt()
-                                    .combine(step.validator.invoke(text?.toIntOrNull()), {f,s -> s}, {f,_ -> f})
+                                    .flatMap { validInt ->
+                                        step.validator.invoke(text?.toIntOrNull())
+                                    }
                                     .mapLeft { reply(it) }
                                     .map { memo = it }
                                     .isRight()
