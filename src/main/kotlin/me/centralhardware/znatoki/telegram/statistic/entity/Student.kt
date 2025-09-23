@@ -74,24 +74,24 @@ class Student(
     }
 }
 
-fun Student.getInfo(services: List<String>) =
+fun Student.getInfo(subjects: List<String>) =
     """
         id=${id?.id.makeBold()}
         фамилия=${secondName.makeBold()}
         имя=${name.makeBold()}
         отчество=${lastName.makeBold()}
-        класс=${schoolClass?.toString()?.makeBold() ?: ""}
+        класс=${schoolClass?.value.makeBold() ?: ""}
         дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
         дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
-        как узнал=${source?.name.makeBold() ?: ""}
+        как узнал=${source?.title.makeBold()}
         телефон=${phone?.value.formatTelephone().makeBold()}
         телефон ответственного=${responsiblePhone?.value.formatTelephone().makeBold()}
         ФИО матери=${motherFio?.makeBold() ?: ""}
-        Предметы=${services.joinToString(",").makeBold()}
+        Предметы=${subjects.joinToString(",").makeBold()}
         дата создания=${createDate.formatDate().makeBold()}
         дата изменения=${modifyDate.formatDate().makeBold()}
-        создано=$createdBy
-        редактировано=${updateBy}
+        создано=${createdBy.id}
+        редактировано=${updateBy?.id}
         """
         .trimIndent()
 
