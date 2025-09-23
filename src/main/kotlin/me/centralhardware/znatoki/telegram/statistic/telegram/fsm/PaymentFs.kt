@@ -33,9 +33,9 @@ private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: Paymen
         """
                 #оплата
                 Время: ${payment.dateTime.formatDateTime()}
-                Клиент: ${StudentMapper.findById(payment.studentId)?.fio().hashtag()}
+                Клиент: ${StudentMapper.findById(payment.studentId).fio().hashtag()}
                 Предмет: ${SubjectMapper.getNameById(payment.subjectId)}
-                Оплата: ${payment.amount}
+                Оплата: ${payment.amount.amount}
                 Оплатил: ${data.user.name.hashtag()}
             """
             .trimIndent()
