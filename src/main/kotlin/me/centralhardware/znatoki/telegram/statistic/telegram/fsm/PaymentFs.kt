@@ -13,28 +13,21 @@ import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
-import me.centralhardware.znatoki.telegram.statistic.entity.Amount
-import me.centralhardware.znatoki.telegram.statistic.entity.Payment
-import me.centralhardware.znatoki.telegram.statistic.entity.PaymentBuilder
-import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
-import me.centralhardware.znatoki.telegram.statistic.entity.fio
-import me.centralhardware.znatoki.telegram.statistic.entity.toAmount
-import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
+import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
-import me.centralhardware.znatoki.telegram.statistic.extensions.userId
-import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 
-private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: Int, userId: Long) {
+private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: PaymentId) {
     val keyboard = inlineKeyboard {
-        row { dataButton("Удалить", "paymentDelete-${paymentId}") }
+        row { dataButton("Удалить", "paymentDelete-${paymentId.id}") }
     }
     val text =
         """
@@ -110,8 +103,7 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
             {
                 it.tutorId = message.tutorId()
                 val payment = it.build()
-                val paymentId = PaymentMapper.insert(payment)
-                sendLog(payment, paymentId, message.userId())
+                sendLog(payment, PaymentMapper.insert(payment))
                 sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
             },
             {

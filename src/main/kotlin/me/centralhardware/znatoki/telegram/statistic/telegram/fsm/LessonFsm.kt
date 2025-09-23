@@ -102,13 +102,13 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
                                 if (allowForceGroup) row {
                                     dataButton(
                                         "Сделать групповым занятием",
-                                        "forceGroupAdd-${ctx.id}"
+                                        "forceGroupAdd-${ctx.id.id}"
                                     )
                                 }
                                 if (allowExtraHalf) row {
                                     dataButton(
                                         "Сделать полтора часа",
-                                        "addExtraHalfHour-${ctx.id}"
+                                        "addExtraHalfHour-${ctx.id.id}"
                                     )
                                 }
                             }

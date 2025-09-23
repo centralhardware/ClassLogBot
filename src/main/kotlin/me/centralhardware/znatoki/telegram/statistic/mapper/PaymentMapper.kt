@@ -17,7 +17,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 
 object PaymentMapper {
 
-    fun insert(payment: Payment): Int =
+    fun insert(payment: Payment): PaymentId =
         session.run(
             queryOf(
                 """
@@ -46,7 +46,7 @@ object PaymentMapper {
                     "photo_report" to payment.photoReport,
                 ),
             )
-                .map { row -> row.int("id") }
+                .map { row -> PaymentId(row.int("id")) }
                 .asSingle
         )!!
 

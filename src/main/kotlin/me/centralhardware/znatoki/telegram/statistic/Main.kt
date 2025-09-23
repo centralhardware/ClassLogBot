@@ -100,7 +100,7 @@ suspend fun main() {
             }
             runCatching {
                 setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
-            }.onFailure { KSLog.warning(it) }
+            }.onFailure { KSLog.warning("Failed to set my commands: ${it.message}") }
         }
 
         startCommand()
