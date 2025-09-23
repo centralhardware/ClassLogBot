@@ -77,9 +77,7 @@ class Student(
 fun Student.getInfo(subjects: List<String>) =
     """
         id=${id?.id.makeBold()}
-        фамилия=${secondName.makeBold()}
-        имя=${name.makeBold()}
-        отчество=${lastName.makeBold()}
+        ФИО: ${fio().makeBold()}
         класс=${schoolClass?.value.makeBold()}
         дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
         дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
