@@ -29,28 +29,27 @@ object StudentMapper {
         queryOf(
             """
                INSERT INTO client (
-                        create_date,
-                        last_name,
-                        modify_date,
                         name,
+                        last_name,
                         second_name,
-                        created_by,
-                        deleted,
+               
                         klass,
                         record_date,
                         birth_date,
                         source,
                         phone,
                         responsible_phone,
-                        mother_fio
+                        mother_fio,
+                
+                        created_by,
+                        create_date,
+                        modify_date,
+                        deleted,
                ) VALUES (
-                    :create_date,
-                    :last_name,
-                    :modify_date,
                     :name,
+                    :last_name,
                     :second_name,
-                    :created_by,
-                    :deleted,
+                    
                     :klass,
                     :record_date,
                     :birth_date,
@@ -58,16 +57,18 @@ object StudentMapper {
                     :phone,
                     :responsible_phone,
                     :mother_fio
+                    
+                    :created_by,
+                    :create_date,
+                    :modify_date,
+                    false,
                ) RETURNING id
             """,
             mapOf(
-                "create_date" to student.createDate,
-                "last_name" to student.lastName,
-                "modify_date" to student.modifyDate,
                 "name" to student.name,
+                "last_name" to student.lastName,
                 "second_name" to student.secondName,
-                "created_by" to student.createdBy,
-                "deleted" to student.deleted,
+
                 "klass" to student.schoolClass?.value,
                 "record_date" to student.recordDate,
                 "birth_date" to student.birthDate,
@@ -75,6 +76,10 @@ object StudentMapper {
                 "phone" to student.phone?.value,
                 "responsible_phone" to student.responsiblePhone?.value,
                 "mother_fio" to student.motherFio,
+
+                "created_by" to student.createdBy.id,
+                "create_date" to student.createDate,
+                "modify_date" to student.modifyDate,
             )
         )
     ) {

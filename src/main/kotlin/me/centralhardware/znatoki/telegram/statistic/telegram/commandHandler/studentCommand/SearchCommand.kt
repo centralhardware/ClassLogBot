@@ -27,9 +27,9 @@ fun BehaviourContext.searchCommand() = onCommandWithArgs("s") { message, args ->
             "${client.name} ${client.secondName} ${client.lastName}",
             replyMarkup =
                 inlineKeyboard {
-                    row { dataButton("информация", "user_info${client.id}") }
+                    row { dataButton("информация", "user_info${client.id?.id}") }
                     if (data.user.hasAdminPermission()) {
-                        row { dataButton("удалить", "delete_user${client.id}") }
+                        row { dataButton("удалить", "delete_user${client.id?.id}") }
                     }
                 },
         )

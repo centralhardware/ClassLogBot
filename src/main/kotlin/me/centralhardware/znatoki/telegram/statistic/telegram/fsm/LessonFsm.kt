@@ -70,13 +70,6 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
             }
         ) { ctx, value ->
             ctx.amount = value.toAmount()
-            runBlocking {
-                sendTextMessage(
-                    ctx.tutorId!!.id.toChatId(),
-                    "Пришлите фото отчётности",
-                    replyMarkup = ReplyKeyboardRemove()
-                )
-            }
         }
 
         photo(
@@ -153,9 +146,9 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
 suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long) {
     val service = lessons.first()
     val keyboard = inlineKeyboard {
-        row { dataButton("Удалить", "timeDelete-${service.id}") }
-        row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id}") }
-        if (lessons.size == 1) row { dataButton("Сделать групповым занятием", "forceGroupAdd-${service.id}") }
+        row { dataButton("Удалить", "timeDelete-${service.id.id}") }
+        row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id.id}") }
+        if (lessons.size == 1) row { dataButton("Сделать групповым занятием", "forceGroupAdd-${service.id.id}") }
     }
 
     val log = buildString {

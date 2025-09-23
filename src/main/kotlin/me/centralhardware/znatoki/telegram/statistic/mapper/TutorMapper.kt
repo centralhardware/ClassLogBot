@@ -20,7 +20,7 @@ object TutorMapper {
             )
         ) { it -> it.parseTutor() }
 
-    fun getAdminsId(): List<Long> =
+    fun getAdminsId(): List<TutorId> =
         session.runList(
             queryOf(
                     """
@@ -29,7 +29,7 @@ object TutorMapper {
                WHERE 'ADMIN' = ANY(permissions)           
             """
                 )
-        ) { it.long("id") }
+        ) { TutorId(it.long("id")) }
 
     fun findByIdOrNull(id: TutorId): Tutor? =
         session.runSingle(

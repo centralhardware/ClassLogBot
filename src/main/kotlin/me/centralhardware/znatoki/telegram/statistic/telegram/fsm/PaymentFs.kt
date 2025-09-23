@@ -104,7 +104,7 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
             {
                 """
                                         ФИО: ${StudentMapper.findById(it.studentId!!)?.fio()}
-                                        Оплата: ${it.amount}
+                                        Оплата: ${it.amount?.amount}
                                         """
             },
             {

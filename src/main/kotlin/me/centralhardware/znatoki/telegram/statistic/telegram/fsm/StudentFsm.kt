@@ -53,13 +53,13 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
         }
 
         date(
-            prompt = "Введите дату записи"
+            prompt = "Введите дату записи дд ММ гггг"
         ) { builder, date ->
             builder.recordDate = date
         }
 
         date(
-            prompt = "Введите дату рождения"
+            prompt = "Введите дату рождения дд ММ гггг"
         ) { b, date ->
             b.birthDate = date
         }

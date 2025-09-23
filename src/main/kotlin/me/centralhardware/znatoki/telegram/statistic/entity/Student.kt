@@ -59,8 +59,7 @@ class Student(
     val createDate: LocalDateTime = LocalDateTime.now(),
     val modifyDate: LocalDateTime = LocalDateTime.now(),
     val createdBy: TutorId,
-    val updateBy: TutorId?,
-    var deleted: Boolean = false,
+    val updateBy: TutorId?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -116,7 +115,6 @@ fun Row.parseClient(): Student =
         localDateTime("modify_date"),
         TutorId(long("created_by")),
         longOrNull("update_by")?.let { TutorId(it) },
-        boolean("deleted"),
     )
 
 class ClientBuilder {

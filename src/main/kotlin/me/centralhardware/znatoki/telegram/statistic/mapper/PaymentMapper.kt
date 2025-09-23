@@ -41,7 +41,7 @@ object PaymentMapper {
                     "dateTime" to payment.dateTime,
                     "chatId" to payment.tutorId.id,
                     "clientId" to payment.studentId.id,
-                    "amount" to payment.amount,
+                    "amount" to payment.amount.amount,
                     "serviceId" to payment.subjectId.id,
                     "photo_report" to payment.photoReport,
                 ),

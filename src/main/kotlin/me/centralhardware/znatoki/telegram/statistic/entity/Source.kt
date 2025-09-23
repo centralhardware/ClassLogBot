@@ -14,7 +14,7 @@ enum class SourceOption(val title: String) {
     INSTAGRAM("инстаграм");
 
     companion object {
-        fun options() = entries.map { it.name }.toList()
+        fun options() = entries.map { it.title }.toList()
 
         fun fromTitle(title: String): SourceOption? =
             entries.find { it.title.equals(title, ignoreCase = true) }
