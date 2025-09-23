@@ -106,12 +106,13 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                         SubjectMapper.getNameById(it)
                     }
                 ),
+                parseMode = MarkdownParseMode,
             )
 
             // лог
-            send(
+            sendTextMessage(
                 Config.logChat(),
-                text = """
+                """
                     #ученик
                     ${
                     client.getInfo(

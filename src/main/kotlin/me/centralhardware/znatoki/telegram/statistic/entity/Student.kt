@@ -80,7 +80,7 @@ fun Student.getInfo(subjects: List<String>) =
         фамилия=${secondName.makeBold()}
         имя=${name.makeBold()}
         отчество=${lastName.makeBold()}
-        класс=${schoolClass?.value.makeBold() ?: ""}
+        класс=${schoolClass?.value.makeBold()}
         дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
         дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
         как узнал=${source?.title.makeBold()}
@@ -91,7 +91,7 @@ fun Student.getInfo(subjects: List<String>) =
         дата создания=${createDate.formatDate().makeBold()}
         дата изменения=${modifyDate.formatDate().makeBold()}
         создано=${createdBy.id}
-        редактировано=${updateBy?.id}
+        редактировано=${updateBy?.id?:""}
         """
         .trimIndent()
 
