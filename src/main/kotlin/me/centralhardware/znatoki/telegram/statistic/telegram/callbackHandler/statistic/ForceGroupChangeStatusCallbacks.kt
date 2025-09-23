@@ -19,7 +19,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
-import java.util.UUID
 
 private const val ACTION_ADD = "forceGroupAdd"
 private const val ACTION_REMOVE = "forceGroupRemove"

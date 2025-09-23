@@ -7,13 +7,13 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
-import me.centralhardware.znatoki.telegram.statistic.service.ClientService
+import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import me.centralhardware.znatoki.telegram.statistic.user
 import org.apache.commons.collections4.CollectionUtils
 
 fun BehaviourContext.searchCommand() = onCommandWithArgs("s") { message, args ->
     val searchText = args.joinToString(separator = " ")
-    val searchResult = ClientService.search(searchText)
+    val searchResult = StudentService.search(searchText)
 
     if (CollectionUtils.isEmpty(searchResult)) {
         sendMessage(message.chat, "Ничего не найдено")

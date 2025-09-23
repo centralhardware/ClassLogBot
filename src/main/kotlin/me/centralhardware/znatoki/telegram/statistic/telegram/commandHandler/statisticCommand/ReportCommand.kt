@@ -18,20 +18,20 @@ import java.io.File
 
 private suspend fun BehaviourContext.createReport(
     userId: Long,
-    getTime: suspend (TutorId) -> List<File>
+    genReport: suspend (TutorId) -> List<File>
 ) {
     if (!ensureNoActiveFsm(userId)) {
         return
     }
 
     if (data.user.hasAdminPermission()) {
-        LessonMapper.getTutorIds().forEach { getTime.invoke(it).forEach { send(userId, it) } }
+        LessonMapper.getTutorIds().forEach { tutorId -> genReport.invoke(tutorId).forEach { report ->  send(userId, report) } }
         return
     }
 
-    getTime.invoke(TutorId(userId)).forEach {
-        send(userId, it)
-        it.delete()
+    genReport.invoke(TutorId(userId)).forEach { report ->
+        send(userId, report)
+        report.delete()
     }
 }
 
@@ -42,16 +42,16 @@ suspend fun BehaviourContext.send(userId: Long, file: File) {
 
 fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     sendActionTyping(it.chat)
-    createReport(it.userId()) { id ->
+    createReport(it.userId()) { tutorId ->
         sendActionUploadDocument(it.chat)
-        ReportService.getReportsCurrent(id)
+        ReportService.getReportsCurrent(tutorId)
     }
 }
 
 fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
     sendActionTyping(it.chat)
-    createReport(it.userId()) { id ->
+    createReport(it.userId()) { tutorId ->
         sendActionUploadDocument(it.chat)
-        ReportService.getReportPrevious(id)
+        ReportService.getReportPrevious(tutorId)
     }
 }

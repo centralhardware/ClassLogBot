@@ -10,7 +10,6 @@ import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
-import dev.inmo.tgbotapi.types.toChatId
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
@@ -41,7 +40,7 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
         msg = message
     ) {
         if (data.user.subjects.size != 1) {
-            val options = data.user.subjects.mapNotNull { SubjectMapper.getNameById(it) }
+            val options = data.user.subjects.map { SubjectMapper.getNameById(it) }
             enum(
                 prompt = "Выберите предмет",
                 options = options

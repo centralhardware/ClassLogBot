@@ -4,7 +4,6 @@ import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommandWithArgs
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
-import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
@@ -17,7 +16,7 @@ fun BehaviourContext.userInfoCommand() = onCommandWithArgs("i") { message, args 
             message.chat,
             client.getInfo(
                 LessonMapper.getSubjectIdsForStudent(client.id!!)
-                    .mapNotNull { SubjectMapper.getNameById(it) }
+                    .map { SubjectMapper.getNameById(it) }
                     .toList()
             ),
         )

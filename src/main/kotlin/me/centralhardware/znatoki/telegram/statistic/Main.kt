@@ -20,7 +20,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.*
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
-import me.centralhardware.znatoki.telegram.statistic.service.ClientService
+import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import me.centralhardware.znatoki.telegram.statistic.telegram.UserExistChecker
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.*
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.deleteUserCallback
@@ -55,7 +55,7 @@ suspend fun BehaviourContext.initContext(filter: (Tutor?) -> Boolean, block: Beh
 @Suppress("DeferredResultUnused")
 suspend fun main() {
     AppConfig.init("ZnatokiStatistic")
-    ClientService.init()
+    StudentService.init()
     longPolling(
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->

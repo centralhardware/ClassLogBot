@@ -3,8 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.s
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCallbackQuery
-import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
-import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 

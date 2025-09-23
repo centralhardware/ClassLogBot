@@ -3,7 +3,6 @@ package me.centralhardware.znatoki.telegram.statistic.service
 import java.io.IOException
 import kotlin.concurrent.fixedRateTimer
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
-import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -14,7 +13,7 @@ import org.apache.lucene.index.*
 import org.apache.lucene.search.*
 import org.apache.lucene.store.ByteBuffersDirectory
 
-object ClientService {
+object StudentService {
 
     private var directory: ByteBuffersDirectory? = null
 
@@ -47,7 +46,6 @@ object ClientService {
     }
 
     fun search(fio: String): List<Student> {
-        // Создаем поисковые запросы для каждого слова по каждому полю (имя, фамилия и отчество)
         val queries =
             fio.split(" ").flatMap { word ->
                 listOf(

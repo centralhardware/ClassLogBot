@@ -11,7 +11,6 @@ import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
-import java.util.UUID
 
 private const val ACTION_DELETE = "timeDelete"
 private const val ACTION_RESTORE = "timeRestore"

@@ -4,7 +4,6 @@ import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatTelephone
 import me.centralhardware.znatoki.telegram.statistic.extensions.makeBold
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.FioValue
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.regex.Pattern

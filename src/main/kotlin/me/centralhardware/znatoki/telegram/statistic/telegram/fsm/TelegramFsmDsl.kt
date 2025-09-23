@@ -426,7 +426,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                         FioValue(secondName = words[0], name = words[1], lastName = "")
                                     }
                                     if (step.duplicateCheck != null) {
-                                        val unique = runBlocking { step.duplicateCheck.invoke(fio) }
+                                        val unique = step.duplicateCheck.invoke(fio)
                                         if (!unique) {
                                             reply(step.duplicateError)
                                             false

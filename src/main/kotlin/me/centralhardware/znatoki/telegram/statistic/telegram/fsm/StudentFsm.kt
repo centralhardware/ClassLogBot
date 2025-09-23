@@ -102,7 +102,7 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
             sendTextMessage(
                 message.chat,
                 client.getInfo(
-                    LessonMapper.getSubjectIdsForStudent(client.id!!).mapNotNull {
+                    LessonMapper.getSubjectIdsForStudent(client.id!!).map {
                         SubjectMapper.getNameById(it)
                     }
                 ),
@@ -116,7 +116,7 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                     ${
                     client.getInfo(
                         LessonMapper.getSubjectIdsForStudent(client.id!!)
-                            .mapNotNull { SubjectMapper.getNameById(it) }
+                            .map { SubjectMapper.getNameById(it) }
                     )
                 }
                 """.trimIndent(),

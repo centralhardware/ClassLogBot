@@ -8,35 +8,34 @@ import dev.inmo.tgbotapi.types.InlineQueries.InputMessageContent.InputTextMessag
 import dev.inmo.tgbotapi.types.InlineQueryId
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
-import me.centralhardware.znatoki.telegram.statistic.service.ClientService
+import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import org.apache.commons.lang3.StringUtils
-import java.util.concurrent.atomic.AtomicInteger
+
+val noResultsArticle =
+    InlineQueryResultArticle(
+        InlineQueryId("1"),
+        "/complete",
+        InputTextMessageContent("Закончить ввод"),
+    )
 
 fun BehaviourContext.processInline() = onBaseInlineQuery {
     val text = it.query
-    if (StringUtils.isBlank(text)) return@onBaseInlineQuery
-
-
-    val i = AtomicInteger()
-    val clients = ClientService.search(text)
-    val articles = clients.map {
-        InlineQueryResultArticle(
-            InlineQueryId(i.getAndIncrement().toString()),
-            getFio(it),
-            InputTextMessageContent(getFio(it)),
-            description = getBio(it),
-        )
-    }
-        .toMutableList()
-
-    if (articles.isEmpty()) {
-        val noResultsArticle =
-            InlineQueryResultArticle(
-                InlineQueryId(i.getAndIncrement().toString()),
-                "/complete",
-                InputTextMessageContent("Закончить ввод"),
-            )
+    val articles: MutableList<InlineQueryResultArticle> = mutableListOf()
+    if (StringUtils.isBlank(text)) {
         articles.add(noResultsArticle)
+    } else {
+        StudentService.search(text)
+            .forEachIndexed { i, student ->
+                articles.add(InlineQueryResultArticle(
+                    InlineQueryId(i.toString()),
+                    getFio(student),
+                    InputTextMessageContent(getFio(student)),
+                    description = getBio(student),
+                ))
+            }
+        if (articles.isEmpty()) {
+            articles.add(noResultsArticle)
+        }
     }
 
     answerInlineQuery(it, results = articles, isPersonal = true, cachedTime = 0)
