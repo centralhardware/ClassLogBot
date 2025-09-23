@@ -57,16 +57,14 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
             },
             true,
             maxCount = if (groupAllowed) Int.MAX_VALUE else 1,
-            parse = { validateFio(it) }
+            parse = { it.validateFio() }
         ) { builder, value ->
             builder.studentIds = value
         }
 
         int(
             prompt = "Введите стоимость занятия",
-            validator = {
-                validateAmount(it)
-            }
+            validator = { it.validateAmount() }
         ) { ctx, value ->
             ctx.amount = value.toAmount()
         }

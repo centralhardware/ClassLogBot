@@ -30,13 +30,13 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
             "Ведите ФИО в формате: фамилия имя [отчество].",
             false,
             {
-                StudentMapper.findAllByFio(it.name, it.secondName, it.lastName)
+                StudentMapper.findAllByFio(it.first, it.second, it.third)
                     .isEmpty()
             }
         ) { builder, fio ->
-            builder.name = fio.name
-            builder.secondName = fio.secondName
-            builder.lastName = fio.lastName
+            builder.name = fio.first
+            builder.secondName = fio.second
+            builder.lastName = fio.third
         }
 
         int(

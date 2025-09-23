@@ -69,7 +69,7 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
             "Введите фио. \nнажмите для поиска фио",
             inline = true,
             optionalSkip = false,
-            validator = ::validateFio
+            validator = { it.validateFio() }
         ) { builder, value ->
             builder.studentId = value.split(" ")[0].toInt().toStudentId()
         }
@@ -84,7 +84,7 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
         int(
             "Введите сумму оплаты",
             false,
-            ::validateAmount
+            { it.validateAmount() }
         ) { builder, value ->
             builder.amount = value.toAmount()
         }

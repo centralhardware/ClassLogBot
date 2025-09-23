@@ -21,6 +21,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
+import me.centralhardware.znatoki.telegram.statistic.validateDate
+import me.centralhardware.znatoki.telegram.statistic.validateEnum
+import me.centralhardware.znatoki.telegram.statistic.validateInt
+import me.centralhardware.znatoki.telegram.statistic.validatePhoto
+import me.centralhardware.znatoki.telegram.statistic.validateTelephone
+import me.centralhardware.znatoki.telegram.statistic.validateText
 import ru.nsk.kstatemachine.event.Event
 import ru.nsk.kstatemachine.state.*
 import ru.nsk.kstatemachine.statemachine.StateMachine
@@ -43,18 +49,7 @@ val switchToInlineKeyboard = inlineKeyboard { row { inlineQueryInCurrentChatButt
 
 class TelegramEvent(val message: CommonMessage<*>) : Event
 class Initial() : Event
-
-data class FioValue(
-    val secondName: String,  // фамилия
-    val name: String,        // имя
-    val lastName: String
-
-
-) {
-    override fun toString(): String {
-        return "$name $secondName $lastName"
-    }
-}
+typealias FioValue = Triple<String, String, String>
 
 /* ===== Логгер FSM ===== */
 val fsmLog = StateMachine.Logger { lazyMessage -> KSLog.info(lazyMessage()) }
@@ -81,7 +76,7 @@ class FsmBuilder<CTX : Any>(
         validator: ((String) -> Either<String, Any>) = { _ -> Either.Right(Unit) },
         apply: (ctx: CTX, value: String) -> Unit
     ) {
-        steps += Step.Text(prompt,steps.size,inline, optionalSkip, validator, apply)
+        steps += Step.TextStep(prompt,steps.size,inline, optionalSkip, validator, apply)
     }
 
     fun int(
@@ -124,7 +119,7 @@ class FsmBuilder<CTX : Any>(
         duplicateCheck: (suspend (FioValue) -> Boolean)? = null,
         apply: (ctx: CTX, value: FioValue) -> Unit
     ) {
-        steps += Step.Fio(
+        steps += Step.FioStep(
             prompt = prompt,
             steps.size,
             skip = optionalSkip,
@@ -138,7 +133,7 @@ class FsmBuilder<CTX : Any>(
         optionalSkip: Boolean = false,
         apply: (ctx: CTX, value: String) -> Unit
     ) {
-        steps += Step.Photo(
+        steps += Step.PhotoStep(
             prompt = prompt,
             steps.size,
             skip = optionalSkip,
@@ -151,7 +146,7 @@ class FsmBuilder<CTX : Any>(
         onSave: suspend (CTX) -> Unit,
         onCancel: suspend (CTX) -> Unit
     ) {
-        steps += Step.Confirm(
+        steps += Step.ConfirmStep(
             promptFormatter = prompt,
             steps.size,
             onSave = onSave,
@@ -165,7 +160,7 @@ class FsmBuilder<CTX : Any>(
         parse: (String) -> Either<String, T>,
         apply: (ctx: CTX, value: Set<T>) -> Unit
     ) {
-        steps += Step.Multi(
+        steps += Step.MultiStep(
             prompt = prompt,
             inline,
             steps.size,
@@ -191,7 +186,7 @@ sealed class Step<CTX : Any, T>(
     open val apply: (CTX, T) -> Unit
 ) : DefaultState() {
 
-    data class Text<CTX : Any>(
+    data class TextStep<CTX : Any>(
         override val prompt: String,
         override val index: Int,
         val inline: Boolean,
@@ -230,7 +225,7 @@ sealed class Step<CTX : Any, T>(
         override val apply: (CTX, String) -> Unit
     ) : Step<CTX, String>(prompt, index, apply)
 
-    data class Fio<CTX : Any>(
+    data class FioStep<CTX : Any>(
         override val prompt: String,
         override val index: Int,
         val skip: Boolean = false,
@@ -238,21 +233,21 @@ sealed class Step<CTX : Any, T>(
         override val apply: (CTX, FioValue) -> Unit
     ) : Step<CTX, FioValue>(prompt, index, apply)
 
-    data class Photo<CTX : Any>(
+    data class PhotoStep<CTX : Any>(
         override val prompt: String,
         override val index: Int,
         val skip: Boolean = false,
         override val apply: (CTX, String) -> Unit
     ) : Step<CTX, String>(prompt, index, apply)
 
-    data class Confirm<CTX : Any>(
+    data class ConfirmStep<CTX : Any>(
         val promptFormatter: (CTX) -> String,
         override val index: Int,
         val onSave: suspend (CTX) -> Unit,
         val onCancel: suspend (CTX) -> Unit
     ) : Step<CTX, Unit>("", index, {_,_ -> })
 
-    data class Multi<CTX : Any, T>(
+    data class MultiStep<CTX : Any, T>(
         override val prompt: String,
         val inline: Boolean,
         override val index: Int,
@@ -301,14 +296,14 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
 
             state.onEntry { params ->
                 when (step) {
-                    is Step.Text -> {
+                    is Step.TextStep -> {
                         if (step.inline) {
                             sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = switchToInlineKeyboard)
                         } else {
                             sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = ReplyKeyboardRemove())
                         }
                     }
-                    is Step.Multi<*, *> -> {
+                    is Step.MultiStep<*, *> -> {
                         if (step.inline) {
                             sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = switchToInlineKeyboard)
                         } else {
@@ -322,7 +317,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                             step.options.forEach { row { simpleButton(it) } }
                         }
                     )
-                    is Step.Confirm -> sendTextMessage(
+                    is Step.ConfirmStep -> sendTextMessage(
                         userId.toChatId(),
                         step.promptFormatter.invoke(ctx),
                         replyMarkup = yesNoKeyboard
@@ -344,7 +339,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
 
                     when (step) {
 
-                        is Step.Text -> {
+                        is Step.TextStep -> {
                             if (step.skip && text == SKIP) {
                                 memo = null; true
                             } else {
@@ -403,7 +398,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                             }
                         }
 
-                        is Step.Fio -> {
+                        is Step.FioStep -> {
                             if (step.skip && text == SKIP) {
                                 memo = null; true
                             } else {
@@ -415,9 +410,9 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                     false
                                 } else {
                                     val fio = if (words.size == 3) {
-                                        FioValue(secondName = words[0], name = words[1], lastName = words[2])
+                                        Triple(words[0], words[1], words[2])
                                     } else {
-                                        FioValue(secondName = words[0], name = words[1], lastName = "")
+                                        Triple(words[0], words[1], "")
                                     }
                                     if (step.duplicateCheck != null) {
                                         val unique = step.duplicateCheck.invoke(fio)
@@ -434,7 +429,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                             }
                         }
 
-                        is Step.Photo -> {
+                        is Step.PhotoStep -> {
                             if (step.skip && text == SKIP) {
                                 memo = null; true
                             } else {
@@ -445,7 +440,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                             }
                         }
 
-                        is Step.Confirm -> {
+                        is Step.ConfirmStep -> {
                             if (text == "да") {
                                 step.onSave.invoke(built.ctx)
                             } else {
@@ -455,18 +450,18 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
 
                         }
 
-                        is Step.Multi<CTX, *> -> {
+                        is Step.MultiStep<CTX, *> -> {
                             if (memo == null) {
                                 memo = mutableSetOf<Any>()
                                 true
                             }
 
-                            val multi = step as Step.Multi<CTX, Any>
+                            val multiStep = step as Step.MultiStep<CTX, Any>
                             val raw = text?.trim().orEmpty()
                             if (raw == COMPLETE) {
                                 true
                             } else {
-                                val parsed = multi.parse.invoke(raw)
+                                val parsed = multiStep.parse.invoke(raw)
                                 if (parsed.isLeft()) {
                                     reply(parsed.leftOrNull() ?: "Неверный ввод")
                                     false
@@ -476,7 +471,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                     if (data.contains(value)) {
                                         reply("Уже добавлено")
                                         false
-                                    } else if ( data.size >= multi.maxCount) {
+                                    } else if ( data.size >= multiStep.maxCount) {
                                         true
                                     } else {
                                         data.add(value)
@@ -491,18 +486,18 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
 
                 onTriggered { _ ->
                     when (step) {
-                        is Step.Text        -> step.apply(built.ctx, memo as String)
-                        is Step.IntStep     -> step.apply(built.ctx, memo as Int)
-                        is Step.DateStep    -> step.apply(built.ctx, memo as LocalDate)
-                        is Step.PhoneStep   -> step.apply(built.ctx, memo as String)
-                        is Step.EnumStep    -> step.apply(built.ctx, memo as String)
-                        is Step.Fio         -> step.apply(built.ctx, memo as FioValue)
-                        is Step.Photo       -> step.apply(built.ctx, memo as String)
-                        is Step.Confirm     -> {}
-                        is Step.Multi<*, *> ->  if (memo is Set<*>) {
+                        is Step.TextStep        -> step.apply(built.ctx, memo as String)
+                        is Step.IntStep         -> step.apply(built.ctx, memo as Int)
+                        is Step.DateStep        -> step.apply(built.ctx, memo as LocalDate)
+                        is Step.PhoneStep       -> step.apply(built.ctx, memo as String)
+                        is Step.EnumStep        -> step.apply(built.ctx, memo as String)
+                        is Step.FioStep         -> step.apply(built.ctx, memo as FioValue)
+                        is Step.PhotoStep       -> step.apply(built.ctx, memo as String)
+                        is Step.ConfirmStep     -> {}
+                        is Step.MultiStep<*, *> ->  if (memo is Set<*>) {
                             val setAny = memo as Set<Any>
-                            val multi = step as Step.Multi<CTX, Any>
-                            multi.apply(built.ctx, setAny)
+                            val multiStep = step as Step.MultiStep<CTX, Any>
+                            multiStep.apply(built.ctx, setAny)
                         }
                     }
                 }
