@@ -50,7 +50,7 @@ fun CommonMessage<MessageContent>.validateDate(): Either<String, LocalDate> =
     this.text.parseDate()
         .fold(
             { Either.Right(it) },
-            { Either.Left("Ошибка обработки даты необходимо ввести в формате: dd MM yyyy") },
+            { Either.Left("Ошибка обработки даты необходимо ввести в формате: дд ММ гггг") },
         )
 
 fun CommonMessage<MessageContent>.validateInt(): Either<String, Int> =

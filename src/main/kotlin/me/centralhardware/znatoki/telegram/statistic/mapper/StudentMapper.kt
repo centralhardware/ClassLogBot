@@ -44,7 +44,7 @@ object StudentMapper {
                         created_by,
                         create_date,
                         modify_date,
-                        deleted,
+                        deleted
                ) VALUES (
                     :name,
                     :last_name,
