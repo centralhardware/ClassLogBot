@@ -56,7 +56,7 @@ object StudentMapper {
                     :source,
                     :phone,
                     :responsible_phone,
-                    :mother_fio
+                    :mother_fio,
                     
                     :created_by,
                     :create_date,
