@@ -39,7 +39,10 @@ value class PhoneNumber (val value: String) {
         private val VALID_PHONE_NR: Pattern = Pattern.compile("^[78]\\d{10}$")
 
         fun validate(value: String) = VALID_PHONE_NR.matcher(value).matches()
+
     }
+
+    fun format() = value.formatTelephone()
 
 }
 
@@ -82,8 +85,8 @@ fun Student.getInfo(subjects: List<String>) =
         дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
         дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
         как узнал=${source?.title.makeBold()}
-        телефон=${phone?.value.formatTelephone().makeBold()}
-        телефон ответственного=${responsiblePhone?.value.formatTelephone().makeBold()}
+        телефон=${phone?.format().makeBold()}
+        телефон ответственного=${responsiblePhone?.format().makeBold()}
         ФИО матери=${motherFio?.makeBold() ?: ""}
         Предметы=${subjects.joinToString(",").makeBold()}
         дата создания=${createDate.formatDate().makeBold()}

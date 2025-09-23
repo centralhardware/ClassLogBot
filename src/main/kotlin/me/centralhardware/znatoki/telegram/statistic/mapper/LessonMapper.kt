@@ -2,7 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import java.time.LocalDateTime
 import kotliquery.queryOf
-import me.centralhardware.znatoki.telegram.statistic.configuration.session
+import me.centralhardware.znatoki.telegram.statistic.session
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId

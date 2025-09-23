@@ -1,7 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import kotliquery.queryOf
-import me.centralhardware.znatoki.telegram.statistic.configuration.session
+import me.centralhardware.znatoki.telegram.statistic.session
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
