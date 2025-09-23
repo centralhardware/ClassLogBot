@@ -122,8 +122,6 @@ class FsmBuilder<CTX : Any>(
         prompt: String,
         optionalSkip: Boolean = false,
         duplicateCheck: (suspend (FioValue) -> Boolean)? = null,
-        duplicateError: String = "Данное ФИО уже содержится в базе данных",
-        formatError: String = "ФИО требуется ввести в формате: фамилия имя [отчество]",
         apply: (ctx: CTX, value: FioValue) -> Unit
     ) {
         steps += Step.Fio(
@@ -131,8 +129,6 @@ class FsmBuilder<CTX : Any>(
             steps.size,
             skip = optionalSkip,
             duplicateCheck = duplicateCheck,
-            duplicateError = duplicateError,
-            formatError = formatError,
             apply = apply
         )
     }
@@ -239,8 +235,6 @@ sealed class Step<CTX : Any, T>(
         override val index: Int,
         val skip: Boolean = false,
         val duplicateCheck: (suspend (FioValue) -> Boolean)?,
-        val duplicateError: String,
-        val formatError: String,
         override val apply: (CTX, FioValue) -> Unit
     ) : Step<CTX, FioValue>(prompt, index, apply)
 
@@ -417,7 +411,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                 val words = raw.split(Regex("\\s+")).filter { it.isNotBlank() }
                                 val okFormat = words.size in 2..3
                                 if (!okFormat) {
-                                    reply(step.formatError)
+                                    reply("ФИО требуется ввести в формате: фамилия имя [отчество]")
                                     false
                                 } else {
                                     val fio = if (words.size == 3) {
@@ -428,7 +422,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                     if (step.duplicateCheck != null) {
                                         val unique = step.duplicateCheck.invoke(fio)
                                         if (!unique) {
-                                            reply(step.duplicateError)
+                                            reply("Данное ФИО уже содержится в базе данных")
                                             false
                                         } else {
                                             memo = fio; true

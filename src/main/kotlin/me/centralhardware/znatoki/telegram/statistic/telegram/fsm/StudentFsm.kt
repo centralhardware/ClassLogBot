@@ -27,7 +27,7 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
     ) {
 
         fio(
-            "Введите ФИО. В формате: имя фамилия отчество.",
+            "ФИО требуется ввести в формате: фамилия имя [отчество].",
             false,
             {
                 StudentMapper.findAllByFio(it.name, it.secondName, it.lastName)
