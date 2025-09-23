@@ -132,7 +132,7 @@ object LessonMapper {
             FROM service
             WHERE id = :id
             """,
-                    mapOf("id" to id),
+                    mapOf("id" to id.id),
                 )
         ) { it.parseTime() }
 

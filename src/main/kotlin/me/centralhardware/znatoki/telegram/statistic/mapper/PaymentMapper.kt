@@ -58,7 +58,7 @@ object PaymentMapper {
             SET is_deleted = :is_delete
             WHERE id = :id
             """,
-                mapOf("id" to id, "is_delete" to isDelete),
+                mapOf("id" to id.id, "is_delete" to isDelete),
             )
         )
 
