@@ -87,9 +87,9 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
         confirm(
             prompt = { ctx ->
                 """
-                услуга: ${SubjectMapper.getNameById(ctx.subjectId!!)}
+                предмет: ${SubjectMapper.getNameById(ctx.subjectId!!)}
                 ФИО: ${ctx.studentIds.joinToString(";") { StudentMapper.getFioById(it) }}
-                стоимость: ${ctx.amount}
+                стоимость: ${ctx.amount?.amount}
                 Сохранить?
                 """.trimIndent()
             },
