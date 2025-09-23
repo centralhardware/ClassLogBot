@@ -61,7 +61,7 @@ object StudentMapper {
                     :created_by,
                     :create_date,
                     :modify_date,
-                    false,
+                    false
                ) RETURNING id
             """,
             mapOf(
