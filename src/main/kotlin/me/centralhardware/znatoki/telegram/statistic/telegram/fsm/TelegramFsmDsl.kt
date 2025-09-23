@@ -371,7 +371,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                         step.validator.invoke(text?.toIntOrNull())
                                     }
                                     .mapLeft { reply(it) }
-                                    .map { memo = it }
+                                    .map { memo = text!!.toInt() }
                                     .isRight()
                             }
                         }
