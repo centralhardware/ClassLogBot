@@ -72,7 +72,7 @@ object StudentMapper {
                 "klass" to student.schoolClass?.value,
                 "record_date" to student.recordDate,
                 "birth_date" to student.birthDate,
-                "source" to student.source?.name,
+                "source" to student.source?.title,
                 "phone" to student.phone?.value,
                 "responsible_phone" to student.responsiblePhone?.value,
                 "mother_fio" to student.motherFio,
