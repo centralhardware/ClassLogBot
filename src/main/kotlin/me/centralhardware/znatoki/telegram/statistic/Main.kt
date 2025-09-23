@@ -29,10 +29,10 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.deb
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.resetCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.startCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addTimeCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addSubjectCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addClientCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.searchCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.userInfoCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
@@ -109,7 +109,7 @@ suspend fun main() {
         onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
 
         initContext({it.hasClientPermission()}) {
-            addClientCommand()
+            addStudentCommand()
         }
 
         initContext({it.hasPaymentPermission()}) {
@@ -117,7 +117,7 @@ suspend fun main() {
         }
 
         initContext({it.hasTimePermission()}) {
-            addTimeCommand()
+            addSubjectCommand()
         }
 
         initContext({it.hasReadRight()}) {

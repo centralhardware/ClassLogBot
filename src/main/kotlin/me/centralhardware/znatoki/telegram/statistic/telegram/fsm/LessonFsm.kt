@@ -14,7 +14,6 @@ import dev.inmo.tgbotapi.types.toChatId
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
-import me.centralhardware.znatoki.telegram.statistic.entity.Amount
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
