@@ -91,25 +91,25 @@ private fun buildServiceKeyboard(
 ) = inlineKeyboard {
     if (!isDm) {
         if (deleted) {
-            row { dataButton("Восстановить", "timeRestore-$id") }
+            row { dataButton("Восстановить", "timeRestore-${id.id}") }
         } else {
-            row { dataButton("Удалить", "timeDelete-$id") }
+            row { dataButton("Удалить", "timeDelete-${id.id}") }
         }
     }
 
     if (canToggleExtraHalfHour) {
         if (extraHalfHour) {
-            row { dataButton("Убрать полтора часа", "extraHalfHourRemove-$id") }
+            row { dataButton("Убрать полтора часа", "extraHalfHourRemove-${id.id}") }
         } else {
-            row { dataButton("Сделать полтора часа", "extraHalfHourAdd-$id") }
+            row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${id.id}") }
         }
     }
 
     if (showForceGroupSwitcher) {
         if (forceGroup) {
-            row { dataButton("Сделать одиночным занятием", "$ACTION_REMOVE-$id") }
+            row { dataButton("Сделать одиночным занятием", "$ACTION_REMOVE-${id.id}") }
         } else {
-            row { dataButton("Сделать групповым занятием", "$ACTION_ADD-$id") }
+            row { dataButton("Сделать групповым занятием", "$ACTION_ADD-${id.id}") }
         }
     }
 }

@@ -49,24 +49,24 @@ private suspend fun BehaviourContext.changeTimeStatus(
 private fun buildTimeKeyboard(id: LessonId, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {
     row {
         if (deleted) {
-            dataButton("Восстановить", "$ACTION_RESTORE-$id")
+            dataButton("Восстановить", "$ACTION_RESTORE-${id.id}")
         } else {
-            dataButton("Удалить", "$ACTION_DELETE-$id")
+            dataButton("Удалить", "$ACTION_DELETE-${id.id}")
         }
     }
     row {
         if (extraHalfHour) {
-            dataButton("Убрать полтора часа", "extraHalfHourRemove-$id")
+            dataButton("Убрать полтора часа", "extraHalfHourRemove-${id.id}")
         } else {
-            dataButton("Сделать полтора часа", "extraHalfHourAdd-$id")
+            dataButton("Сделать полтора часа", "extraHalfHourAdd-${id.id}")
         }
     }
     if (isSingle) {
         row {
             if (forceGroup) {
-                dataButton("Сделать одиночным занятием", "forceGroupRemove-$id")
+                dataButton("Сделать одиночным занятием", "forceGroupRemove-${id.id}")
             } else {
-                dataButton("Сделать групповым занятием", "forceGroupAdd-$id")
+                dataButton("Сделать групповым занятием", "forceGroupAdd-${id.id}")
             }
         }
     }

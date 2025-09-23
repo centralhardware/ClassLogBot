@@ -41,9 +41,9 @@ private suspend fun BehaviourContext.changePaymentStatus(
 private fun paymentKeyboard(id: PaymentId, deleted: Boolean) = inlineKeyboard {
     row {
         if (deleted) {
-            dataButton("Восстановить", "$ACTION_RESTORE-$id")
+            dataButton("Восстановить", "$ACTION_RESTORE-${id.id}")
         } else {
-            dataButton("Удалить", "$ACTION_DELETE-$id")
+            dataButton("Удалить", "$ACTION_DELETE-${id.id}")
         }
     }
 }
