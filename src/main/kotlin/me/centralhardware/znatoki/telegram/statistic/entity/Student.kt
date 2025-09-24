@@ -73,7 +73,7 @@ class Student(
     }
 
     override fun hashCode(): Int {
-        return id?.id ?: 0
+        return id?.hashCode() ?: 0
     }
 }
 
@@ -96,7 +96,16 @@ fun Student.getInfo(subjects: List<String>) =
         """
         .trimIndent()
 
-fun Student.fio(): String = "$name $secondName $lastName".replace("\\s{2,}".toRegex(), " ")
+fun Student.fio(): String {
+    val parts = listOf(name, secondName, lastName)
+        .filter { it.isNotBlank() }
+
+    return if (parts.isNotEmpty()) {
+        parts.joinToString(" ")
+    } else {
+        "Неизвестно"
+    }
+}
 
 fun Row.parseClient(): Student =
     Student(

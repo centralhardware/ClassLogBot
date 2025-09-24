@@ -9,6 +9,3 @@ inline fun <T> Session.runSingle(q: Query, crossinline map: (Row) -> T): T? =
 
 inline fun <T> Session.runList(q: Query, crossinline map: (Row) -> T): List<T> =
     this.run(q.map { map(it) }.asList)
-
-inline fun Session.update(q: Query) =
-    this.update(q)

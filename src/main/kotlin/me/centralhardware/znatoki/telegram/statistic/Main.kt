@@ -75,19 +75,13 @@ suspend fun main() {
                     add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
                 }
             }
-            if (user.hasPaymentPermission()) {
+            if (user.hasPaymentPermission() || user.hasAdminPermission()) {
                 userCommands.apply {
                     add(BotCommand("addpayment", "Ведомость оплаты"))
                 }
             }
-            if (user.hasClientPermission()) {
+            if (user.hasClientPermission() || user.hasAdminPermission()) {
                 userCommands.apply {
-                    add(BotCommand("addpupil", "Добавить ученика"))
-                }
-            }
-            if (user.hasAdminPermission()) {
-                userCommands.apply {
-                    add(BotCommand("addpayment", "Ведомость оплаты"))
                     add(BotCommand("addpupil", "Добавить ученика"))
                 }
             }

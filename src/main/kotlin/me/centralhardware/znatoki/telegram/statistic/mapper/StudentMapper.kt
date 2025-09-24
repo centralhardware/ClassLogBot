@@ -126,7 +126,7 @@ object StudentMapper {
                 FROM client c
                 WHERE name = :name AND second_name = :secondName AND last_name = :lastName
             """,
-                mapOf("name" to name, "second_name" to secondName, "last_name" to lastName),
+                mapOf("name" to name, "secondName" to secondName, "lastName" to lastName),
             )
         ) { it.parseClient() }
 

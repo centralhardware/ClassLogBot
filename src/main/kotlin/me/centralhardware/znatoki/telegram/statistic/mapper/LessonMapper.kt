@@ -188,7 +188,7 @@ object LessonMapper {
                 """
             SELECT DISTINCT service_id
             FROM service
-            WHERE pupil_id = :id ANd is_deleted=false
+            WHERE pupil_id = :id AND is_deleted=false
             """,
                     mapOf("id" to id.id),
                 )
@@ -213,7 +213,7 @@ object LessonMapper {
                 )
         )
 
-    fun setExtraHalfHour(id: LessonId, forceGroup: Boolean) =
+    fun setExtraHalfHour(id: LessonId, extraHalfHour: Boolean) =
         session.update(
             queryOf(
                 """
@@ -224,7 +224,7 @@ object LessonMapper {
     """,
                 mapOf(
                     "id" to id.id,
-                    "extra_half_hour" to forceGroup,
+                    "extra_half_hour" to extraHalfHour,
                     "update_time" to LocalDateTime.now(),
                 ),
             )

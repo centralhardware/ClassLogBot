@@ -13,9 +13,9 @@ repositories {
 }
 
 val ktgbotapiVersion = "28.0.2"
-var poiVersion = "5.4.1"
-var kstatemachineVersion = "0.34.2"
-var luceneVersion = "10.3.0"
+val poiVersion = "5.4.1"
+val kstatemachineVersion = "0.34.2"
+val luceneVersion = "10.3.0"
 
 dependencies {
     implementation("io.arrow-kt:arrow-core:2.1.2")
@@ -34,6 +34,7 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:$poiVersion")
 
     implementation("org.postgresql:postgresql:42.7.8")
+    implementation("com.zaxxer:HikariCP:5.1.0")
 
     implementation("org.apache.lucene:lucene-core:$luceneVersion")
     implementation("org.apache.lucene:lucene-queryparser:$luceneVersion")

@@ -4,20 +4,27 @@ import dev.inmo.tgbotapi.types.toChatId
 
 object Config {
 
+    private fun getEnvOrThrow(name: String): String =
+        System.getenv(name) ?: throw IllegalStateException("Environment variable '$name' is required but not set")
+
     object Minio {
-        val url: String = System.getenv("MINIO_URL")
-        val bucket: String = System.getenv("MINIO_BUCKET")
-        val accessKey: String = System.getenv("MINIO_ACCESS_KEY")
-        val secretKey: String = System.getenv("MINIO_SECRET_KEY")
-        val basePath: String = System.getenv("BASE_PATH")
+        val url: String         by lazy { getEnvOrThrow("MINIO_URL") }
+        val bucket: String      by lazy { getEnvOrThrow("MINIO_BUCKET") }
+        val accessKey: String   by lazy { getEnvOrThrow("MINIO_ACCESS_KEY") }
+        val secretKey: String   by lazy { getEnvOrThrow("MINIO_SECRET_KEY") }
+        val basePath: String    by lazy { getEnvOrThrow("BASE_PATH") }
     }
 
     object Datasource {
-        val url: String = System.getenv("DATASOURCE_URL")
-        val username: String = System.getenv("DATASOURCE_USERNAME")
-        val password: String = System.getenv("DATASOURCE_PASSWORD")
+        val url: String         by lazy { getEnvOrThrow("DATASOURCE_URL") }
+        val username: String    by lazy { getEnvOrThrow("DATASOURCE_USERNAME") }
+        val password: String    by lazy { getEnvOrThrow("DATASOURCE_PASSWORD") }
     }
 
-    fun logChat() = System.getenv("LOG_CHAT").toLong().toChatId()
+    fun logChat() = try {
+        getEnvOrThrow("LOG_CHAT").toLong().toChatId()
+    } catch (e: NumberFormatException) {
+        throw IllegalStateException("Environment variable 'LOG_CHAT' must be a valid number, got: '${System.getenv("LOG_CHAT")}'", e)
+    }
 
 }

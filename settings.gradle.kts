@@ -1,1 +1,1 @@
-rootProject.name = "znatokiStatistic"
+rootProject.name = "classlogbot"
