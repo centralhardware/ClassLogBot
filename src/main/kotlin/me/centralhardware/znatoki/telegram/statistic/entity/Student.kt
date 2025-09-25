@@ -9,9 +9,18 @@ import java.time.LocalDateTime
 import java.util.regex.Pattern
 
 @JvmInline
-value class StudentId(val id: Int)
+value class StudentId private constructor(private val _id: Int?) {
+    companion object {
+        val None = StudentId(null)
 
-fun Int.toStudentId() = StudentId(this)
+        fun of(id: Int): StudentId = StudentId(id)
+    }
+
+    val id: Int get() = _id ?: error("StudentId.None has no value")
+
+}
+
+fun Int.toStudentId() = StudentId.of(this)
 
 @JvmInline
 value class SchoolClass(val value: Int) {
@@ -142,7 +151,7 @@ class ClientBuilder {
 
     fun build(): Student =
         Student(
-            id = StudentId(0),
+            id = StudentId.None,
             name = name!!,
             secondName = secondName!!,
             lastName = lastName!!,

@@ -2,6 +2,8 @@ package me.centralhardware.znatoki.telegram.statistic
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.info
 import kotliquery.sessionOf
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
@@ -53,9 +55,9 @@ fun runMigrations(): MigrateResult {
             .baselineDescription("Initial schema from existing database")
             .load()
 
-        println("Starting database migrations...")
+        KSLog.info("Starting database migrations...")
         val result = flyway.migrate()
-        println("Database migrations completed successfully. Applied ${result.migrationsExecuted} migrations.")
+        KSLog.info("Database migrations completed successfully. Applied ${result.migrationsExecuted} migrations.")
         result
     } catch (e: Exception) {
         throw RuntimeException("Failed to run database migrations", e)
