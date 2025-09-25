@@ -47,7 +47,7 @@ value class PhoneNumber (val value: String) {
 }
 
 class Student(
-    var id: StudentId? = null,
+    var id: StudentId,
     val name: String,
     val secondName: String,
     val lastName: String,
@@ -73,13 +73,13 @@ class Student(
     }
 
     override fun hashCode(): Int {
-        return id?.hashCode() ?: 0
+        return id.hashCode()
     }
 }
 
 fun Student.getInfo(subjects: List<String>) =
     """
-        id=${id?.id.makeBold()}
+        id=${id.id.makeBold()}
         ФИО: ${fio().makeBold()}
         класс=${schoolClass?.value.makeBold()}
         дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
@@ -142,6 +142,7 @@ class ClientBuilder {
 
     fun build(): Student =
         Student(
+            id = StudentId(0),
             name = name!!,
             secondName = secondName!!,
             lastName = lastName!!,

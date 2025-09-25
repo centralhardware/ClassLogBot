@@ -2,7 +2,6 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
 import arrow.core.left
 import arrow.core.right
-import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
