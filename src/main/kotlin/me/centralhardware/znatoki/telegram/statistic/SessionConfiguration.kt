@@ -3,6 +3,8 @@ package me.centralhardware.znatoki.telegram.statistic
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotliquery.sessionOf
+import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.output.MigrateResult
 import javax.sql.DataSource
 
 private fun createDataSource(): DataSource {
@@ -39,3 +41,23 @@ private val dataSource: DataSource by lazy {
 }
 
 val session get() = sessionOf(dataSource)
+
+fun runMigrations(): MigrateResult {
+    return try {
+        val flyway = Flyway.configure()
+            .dataSource(dataSource)
+            .locations("classpath:migrations")
+            .cleanDisabled(true)
+            .baselineOnMigrate(true)  // Automatically baseline for existing databases
+            .baselineVersion("000")   // Set baseline to V000
+            .baselineDescription("Initial schema from existing database")
+            .load()
+
+        println("Starting database migrations...")
+        val result = flyway.migrate()
+        println("Database migrations completed successfully. Applied ${result.migrationsExecuted} migrations.")
+        result
+    } catch (e: Exception) {
+        throw RuntimeException("Failed to run database migrations", e)
+    }
+}

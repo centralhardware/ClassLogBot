@@ -55,6 +55,9 @@ suspend fun BehaviourContext.initContext(filter: (Tutor?) -> Boolean, block: Beh
 @Suppress("DeferredResultUnused")
 suspend fun main() {
     AppConfig.init("ZnatokiStatistic")
+
+    runMigrations()
+
     StudentService.init()
     longPolling(
         subcontextInitialAction = buildSubcontextInitialAction {

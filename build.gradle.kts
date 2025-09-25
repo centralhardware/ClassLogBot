@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "2.2.20"
     kotlin("plugin.serialization") version "2.2.20"
     id("com.google.cloud.tools.jib") version "3.4.5"
+    id("org.flywaydb.flyway") version "10.20.1"
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
@@ -35,6 +36,8 @@ dependencies {
 
     implementation("org.postgresql:postgresql:42.7.8")
     implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("org.flywaydb:flyway-core:10.20.1")
+    implementation("org.flywaydb:flyway-database-postgresql:10.20.1")
 
     implementation("org.apache.lucene:lucene-core:$luceneVersion")
     implementation("org.apache.lucene:lucene-queryparser:$luceneVersion")
