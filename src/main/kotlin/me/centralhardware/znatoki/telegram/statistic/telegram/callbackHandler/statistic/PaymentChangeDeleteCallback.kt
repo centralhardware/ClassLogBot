@@ -15,18 +15,18 @@ private const val ACTION_DELETE = "paymentDelete"
 private const val ACTION_RESTORE = "paymentRestore"
 private val paymentRegex = Regex("($ACTION_DELETE|$ACTION_RESTORE)-(\\d+)")
 
-fun BehaviourContext.registerPaymentToggleCallback() = onDataCallbackQuery(paymentRegex) { query ->
+fun BehaviourContext.registerPaymentChangeDeleteCallback() = onDataCallbackQuery(paymentRegex) { query ->
     val match = paymentRegex.matchEntire(query.data) ?: return@onDataCallbackQuery
     val (action, idStr) = match.destructured
     val id = idStr.toIntOrNull()?.let { PaymentId(it) } ?: return@onDataCallbackQuery
 
-    changePaymentStatus(
+    changePaymentDelete(
         id,
         action == ACTION_DELETE,
         query)
 }
 
-private suspend fun BehaviourContext.changePaymentStatus(
+private suspend fun BehaviourContext.changePaymentDelete(
     id: PaymentId,
     delete: Boolean,
     query: DataCallbackQuery

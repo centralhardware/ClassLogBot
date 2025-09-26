@@ -11,7 +11,7 @@ import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import me.centralhardware.znatoki.telegram.statistic.user
 import org.apache.commons.collections4.CollectionUtils
 
-fun BehaviourContext.searchCommand() = onCommandWithArgs("s") { message, args ->
+fun BehaviourContext.searchStudentCommand() = onCommandWithArgs("s") { message, args ->
     val searchText = args.joinToString(separator = " ")
     val searchResult = StudentService.search(searchText)
 

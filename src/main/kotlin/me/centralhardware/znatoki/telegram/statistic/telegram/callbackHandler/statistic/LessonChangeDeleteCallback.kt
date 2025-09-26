@@ -18,34 +18,34 @@ private const val UUID_REGEX =
     "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 private val timeToggleRegex = Regex("($ACTION_DELETE|$ACTION_RESTORE)-($UUID_REGEX)")
 
-fun BehaviourContext.registerTimeToggleCallback() = onDataCallbackQuery(timeToggleRegex) { query ->
+fun BehaviourContext.registerLessonChangeDeleteCallback() = onDataCallbackQuery(timeToggleRegex) { query ->
     val (action, idStr) = timeToggleRegex.matchEntire(query.data)!!.destructured
-    changeTimeStatus(
+    changeLessonDelete(
         idStr.toLessonId(),
         action == ACTION_DELETE,
         query)
 }
 
-private suspend fun BehaviourContext.changeTimeStatus(
+private suspend fun BehaviourContext.changeLessonDelete(
     id: LessonId,
     deleted: Boolean,
     query: DataCallbackQuery
 ) {
     LessonMapper.setDeleted(id, deleted)
-    val times = LessonMapper.findById(id)
-    val current = times.firstOrNull() ?: return
+    val lessons = LessonMapper.findById(id)
+    val lesson = lessons.firstOrNull() ?: return
 
     query.messageDataCallbackQueryOrNull()?.message?.let {
-        edit(it, replyMarkup = buildTimeKeyboard(
+        edit(it, replyMarkup = buildLessonKeyboard(
             id = id,
             deleted = deleted,
-            extraHalfHour = current.extraHalfHour,
-            forceGroup = current.forceGroup,
-            isSingle = times.size == 1))
+            extraHalfHour = lesson.extraHalfHour,
+            forceGroup = lesson.forceGroup,
+            isSingle = lessons.size == 1))
     }
 }
 
-private fun buildTimeKeyboard(id: LessonId, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {
+private fun buildLessonKeyboard(id: LessonId, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {
     row {
         if (deleted) {
             dataButton("Восстановить", "$ACTION_RESTORE-${id.id}")

@@ -8,9 +8,9 @@ fun BehaviourContext.startCommand() = onCommand("start") {
     sendMessage(
         it.chat,
         """
-                         Бот предназначенный для анализа вашего бизнеса.
-                         Автор: @centralhardware
-                         """
+            Бот для управления учениками, занятиями и оплатами.
+            Автор: @centralhardware
+            """
             .trimIndent(),
     )
 }

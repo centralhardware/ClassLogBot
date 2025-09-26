@@ -6,7 +6,7 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCa
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 
-fun BehaviourContext.deleteUserCallback() = onDataCallbackQuery(Regex("delete_user\\d+$")) {
+fun BehaviourContext.deleteStudentCallback() = onDataCallbackQuery(Regex("delete_user\\d+$")) {
     val id = it.data.replace("delete_user", "").toInt().toStudentId()
     StudentMapper.delete(id)
     sendMessage(it.from, "Ученик удален")

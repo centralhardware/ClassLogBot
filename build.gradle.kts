@@ -2,7 +2,6 @@ plugins {
     kotlin("jvm") version "2.2.20"
     kotlin("plugin.serialization") version "2.2.20"
     id("com.google.cloud.tools.jib") version "3.4.5"
-    id("org.flywaydb.flyway") version "10.20.1"
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"

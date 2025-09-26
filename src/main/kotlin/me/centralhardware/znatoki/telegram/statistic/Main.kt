@@ -23,8 +23,8 @@ import me.centralhardware.znatoki.telegram.statistic.report.monthReport
 import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import me.centralhardware.znatoki.telegram.statistic.telegram.UserExistChecker
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.*
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.deleteUserCallback
-import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.userInfoCallback
+import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.deleteStudentCallback
+import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student.studentInfoCallback
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.debug.dailyReportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.resetCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.startCommand
@@ -33,8 +33,8 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.sta
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.searchCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.userInfoCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.searchStudentCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.studentInfoCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 import restrictAccess
@@ -101,7 +101,6 @@ suspend fun main() {
         }
 
         startCommand()
-        resetCommand()
 
         onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
 
@@ -118,12 +117,13 @@ suspend fun main() {
         }
 
         initContext({it.hasReadRight()}) {
-            userInfoCommand()
-            searchCommand()
+            studentInfoCommand()
+            searchStudentCommand()
             reportCommand()
             reportPreviousCommand()
+            resetCommand()
 
-            userInfoCallback()
+            studentInfoCallback()
 
             processInline()
 
@@ -135,11 +135,11 @@ suspend fun main() {
         initContext({it.hasAdminPermission()}) {
             dailyReportCommand()
 
-            deleteUserCallback()
+            deleteStudentCallback()
 
-            registerTimeToggleCallback()
+            registerLessonChangeDeleteCallback()
 
-            registerPaymentToggleCallback()
+            registerPaymentChangeDeleteCallback()
         }
 
         launch {
