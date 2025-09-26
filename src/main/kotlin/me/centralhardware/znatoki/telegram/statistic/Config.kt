@@ -5,7 +5,7 @@ import dev.inmo.tgbotapi.types.toChatId
 object Config {
 
     private fun getEnvOrThrow(name: String): String =
-        System.getenv(name) ?: throw IllegalStateException("Environment variable '$name' is required but not set")
+        System.getenv(name) ?: System.getProperty(name) ?: throw IllegalStateException("Environment variable '$name' is required but not set")
 
     object Minio {
         val url: String         by lazy { getEnvOrThrow("MINIO_URL") }
