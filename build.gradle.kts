@@ -12,7 +12,7 @@ repositories {
     maven("https://jitpack.io")
 }
 
-val ktgbotapiVersion = "28.0.0"
+val ktgbotapiVersion = "29.0.0"
 var poiVersion = "5.4.1"
 var kstatemachineVersion = "0.34.2"
 var luceneVersion = "10.3.0"
