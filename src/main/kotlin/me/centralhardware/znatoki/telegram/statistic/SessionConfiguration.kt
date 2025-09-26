@@ -4,7 +4,6 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
-import kotliquery.sessionOf
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
 import javax.sql.DataSource
@@ -34,15 +33,13 @@ private fun createDataSource(): DataSource {
     return HikariDataSource(config)
 }
 
-private val dataSource: DataSource by lazy {
+val dataSource: DataSource by lazy {
     try {
         createDataSource()
     } catch (e: Exception) {
         throw RuntimeException("Failed to initialize database connection pool", e)
     }
 }
-
-val session get() = sessionOf(dataSource)
 
 fun runMigrations(): MigrateResult {
     return try {

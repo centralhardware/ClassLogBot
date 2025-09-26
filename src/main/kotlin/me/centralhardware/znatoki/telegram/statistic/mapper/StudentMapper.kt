@@ -1,17 +1,17 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import kotliquery.queryOf
-import me.centralhardware.znatoki.telegram.statistic.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseClient
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
+import me.centralhardware.znatoki.telegram.statistic.extensions.update
 
 object StudentMapper {
 
-    fun existsByFio(fio: String): Boolean = session.runSingle(
+    fun existsByFio(fio: String): Boolean = runSingle(
         queryOf(
             """
             SELECT EXISTS(
@@ -25,14 +25,14 @@ object StudentMapper {
             )
     ) { row -> row.boolean("e") } ?: false
 
-    fun save(student: Student): StudentId = session.runSingle(
+    fun save(student: Student): StudentId = runSingle(
         queryOf(
             """
                INSERT INTO client (
                         name,
                         last_name,
                         second_name,
-               
+
                         klass,
                         record_date,
                         birth_date,
@@ -40,7 +40,7 @@ object StudentMapper {
                         phone,
                         responsible_phone,
                         mother_fio,
-                
+
                         created_by,
                         create_date,
                         modify_date,
@@ -49,7 +49,7 @@ object StudentMapper {
                     :name,
                     :last_name,
                     :second_name,
-                    
+
                     :klass,
                     :record_date,
                     :birth_date,
@@ -57,7 +57,7 @@ object StudentMapper {
                     :phone,
                     :responsible_phone,
                     :mother_fio,
-                    
+
                     :created_by,
                     :create_date,
                     :modify_date,
@@ -84,11 +84,11 @@ object StudentMapper {
         )
     ) {
         it.int("id").toStudentId()
-        }!!
+    }!!
 
-    fun delete(id: StudentId) = session.update(queryOf(
+    fun delete(id: StudentId) = update(queryOf(
         """
-               UPDATE client 
+               UPDATE client
                SET deleted = true
                WHERE id = :id
             """,
@@ -96,7 +96,7 @@ object StudentMapper {
     ))
 
     fun findById(id: StudentId): Student =
-        session.runSingle(
+        runSingle(
             queryOf(
                 """
                 SELECT c.*
@@ -108,7 +108,7 @@ object StudentMapper {
         ) { it.parseClient() } ?: throw IllegalArgumentException("No client with id $id found")
 
     fun findAll(): List<Student> =
-        session.runList(
+        runList(
             queryOf(
                 """
                 SELECT c.*
@@ -119,7 +119,7 @@ object StudentMapper {
         ) { it.parseClient() }
 
     fun findAllByFio(name: String, secondName: String, lastName: String): List<Student> =
-        session.runList(
+        runList(
             queryOf(
                 """
                 SELECT c.*
@@ -131,7 +131,7 @@ object StudentMapper {
         ) { it.parseClient() }
 
     fun getFioById(id: StudentId): String =
-        session.runSingle(
+        runSingle(
             queryOf(
                 """
             SELECT concat(name, ' ', last_name, ' ', second_name) as fio

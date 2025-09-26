@@ -2,7 +2,6 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import java.time.LocalDateTime
 import kotliquery.queryOf
-import me.centralhardware.znatoki.telegram.statistic.session
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
@@ -12,14 +11,16 @@ import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
 import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
 import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.execute
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
+import me.centralhardware.znatoki.telegram.statistic.extensions.update
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfDay
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 
 object LessonMapper {
 
     fun insert(lesson: Lesson) =
-        session.execute(
+        execute(
             queryOf(
                 """
             INSERT INTO service (
@@ -61,7 +62,7 @@ object LessonMapper {
         startDate: LocalDateTime,
         endDate: LocalDateTime,
     ): List<Lesson> =
-        session.runList(
+        runList(
             queryOf(
                 """
             SELECT s.id,
@@ -90,7 +91,7 @@ object LessonMapper {
         startDate: LocalDateTime,
         endDate: LocalDateTime,
     ): List<Lesson> =
-        session.runList(
+        runList(
             queryOf(
                 """
             SELECT s.id,
@@ -114,7 +115,7 @@ object LessonMapper {
         ) { it.parseTime() }
 
     fun findById(id: LessonId): List<Lesson> =
-        session.runList(
+        runList(
             queryOf(
                 """
             SELECT id,
@@ -153,7 +154,7 @@ object LessonMapper {
     )
 
     fun getTutorIds(): List<TutorId> =
-        session.runList(
+        runList(
             queryOf(
                 """
             SELECT DISTINCT chat_id
@@ -166,7 +167,7 @@ object LessonMapper {
         }
 
     fun setDeleted(lessonId: LessonId, isDeleted: Boolean) =
-        session.update(
+        update(
             queryOf(
                 """
             UPDATE service
@@ -183,7 +184,7 @@ object LessonMapper {
         )
 
     fun getSubjectIdsForStudent(id: StudentId): List<SubjectId> =
-        session.runList(
+        runList(
             queryOf(
                 """
             SELECT DISTINCT service_id
@@ -197,10 +198,10 @@ object LessonMapper {
         }
 
     fun setForceGroup(id: LessonId, forceGroup: Boolean) =
-        session.update(
+        update(
             queryOf(
                 """
-        UPDATE service 
+        UPDATE service
         SET force_group = :force_group,
             update_time = :update_time
         WHERE id = :id
@@ -214,10 +215,10 @@ object LessonMapper {
         )
 
     fun setExtraHalfHour(id: LessonId, extraHalfHour: Boolean) =
-        session.update(
+        update(
             queryOf(
                 """
-        UPDATE service 
+        UPDATE service
         SET extra_half_hour = :extra_half_hour,
             update_time = :update_time
         WHERE id = :id

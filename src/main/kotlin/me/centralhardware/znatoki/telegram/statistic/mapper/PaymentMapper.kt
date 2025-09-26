@@ -2,7 +2,6 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import java.time.LocalDateTime
 import kotliquery.queryOf
-import me.centralhardware.znatoki.telegram.statistic.session
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentId
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
@@ -13,12 +12,13 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
+import me.centralhardware.znatoki.telegram.statistic.extensions.update
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 
 object PaymentMapper {
 
     fun insert(payment: Payment): PaymentId =
-        session.run(
+        runSingle(
             queryOf(
                 """
             INSERT INTO payment(
@@ -46,12 +46,10 @@ object PaymentMapper {
                     "photo_report" to payment.photoReport,
                 ),
             )
-                .map { row -> PaymentId(row.int("id")) }
-                .asSingle
-        )!!
+        ) { row -> PaymentId(row.int("id")) }!!
 
     fun setDelete(id: PaymentId, isDelete: Boolean) =
-        session.update(
+        update(
             queryOf(
                 """
             UPDATE payment
@@ -68,7 +66,7 @@ object PaymentMapper {
         studentId: StudentId,
         date: LocalDateTime,
     ): Long =
-        session.runSingle(
+        runSingle(
             queryOf(
                 """
             SELECT sum(amount) as sum
@@ -91,7 +89,7 @@ object PaymentMapper {
         ) { row -> row.longOrNull("sum") }?: 0
 
     fun getPaymentsSum(tutorId: TutorId, subjectId: SubjectId, date: LocalDateTime): Long =
-        session.runSingle(
+        runSingle(
             queryOf(
                 """
             SELECT sum(amount) as sum
@@ -115,7 +113,7 @@ object PaymentMapper {
         subjectId: SubjectId,
         startDate: LocalDateTime,
         endDate: LocalDateTime
-    ) = session.runList(
+    ) = runList(
         queryOf(
         """
         SELECT p.id,

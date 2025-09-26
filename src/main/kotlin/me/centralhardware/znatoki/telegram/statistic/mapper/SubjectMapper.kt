@@ -1,7 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
 import kotliquery.queryOf
-import me.centralhardware.znatoki.telegram.statistic.session
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
@@ -9,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 object SubjectMapper {
 
     fun getIdByName(name: String): SubjectId =
-        session.runSingle(
+        runSingle(
             queryOf(
                 """
             SELECT id
@@ -23,7 +22,7 @@ object SubjectMapper {
         } ?: throw IllegalArgumentException("No subject with name $name found")
 
     fun getNameById(id: SubjectId): String =
-        session.runSingle(
+        runSingle(
             queryOf(
                 """
             SELECT name
@@ -36,7 +35,7 @@ object SubjectMapper {
             row -> row.string("name")
         } ?: throw IllegalArgumentException("No subject with id $id found")
 
-    fun isAllowGroup(id: SubjectId): Boolean = session.runSingle(
+    fun isAllowGroup(id: SubjectId): Boolean = runSingle(
         queryOf(
             """
             SELECT allow_multiply_clients
