@@ -10,9 +10,11 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextData
 import dev.inmo.tgbotapi.extensions.behaviour_builder.buildSubcontextInitialAction
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
+import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
 import dev.inmo.tgbotapi.longPolling
 import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.commands.BotCommandScopeChat
+import dev.inmo.tgbotapi.types.message.content.TextContent
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
@@ -102,7 +104,10 @@ suspend fun main() {
 
         startCommand()
 
-        onContentMessage({ Storage.contain(it.userId()) }) { Storage.process(it) }
+        onContentMessage({
+            Storage.contain(it.userId()) &&
+            !(it.content is TextContent && it.text == "/reset")
+        }) { Storage.process(it) }
 
         initContext({it.hasClientPermission()}) {
             addStudentCommand()
