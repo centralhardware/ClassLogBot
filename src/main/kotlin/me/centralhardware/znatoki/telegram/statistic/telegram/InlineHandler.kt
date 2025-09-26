@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram
 
+import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.info
 import dev.inmo.tgbotapi.extensions.api.answers.answerInlineQuery
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onBaseInlineQuery
@@ -14,8 +16,8 @@ import org.apache.commons.lang3.StringUtils
 val noResultsArticle =
     InlineQueryResultArticle(
         InlineQueryId("1"),
-        "/complete",
-        InputTextMessageContent("Закончить ввод"),
+        "Закончить ввод",
+        InputTextMessageContent("/complete"),
     )
 
 fun BehaviourContext.processInline() = onBaseInlineQuery {
@@ -24,15 +26,16 @@ fun BehaviourContext.processInline() = onBaseInlineQuery {
     if (StringUtils.isBlank(text)) {
         articles.add(noResultsArticle)
     } else {
-        StudentService.search(text)
-            .forEachIndexed { i, student ->
-                articles.add(InlineQueryResultArticle(
-                    InlineQueryId(i.toString()),
-                    getFio(student),
-                    InputTextMessageContent(getFio(student)),
-                    description = getBio(student),
-                ))
-            }
+        val searchResults = StudentService.search(text)
+        KSLog.info("Inline search for '$text': found ${searchResults.size} students")
+        searchResults.forEachIndexed { i, student ->
+            articles.add(InlineQueryResultArticle(
+                InlineQueryId(i.toString()),
+                getFio(student),
+                InputTextMessageContent(getFio(student)),
+                description = getBio(student),
+            ))
+        }
         if (articles.isEmpty()) {
             articles.add(noResultsArticle)
         }
