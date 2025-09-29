@@ -32,7 +32,7 @@ dependencies {
     implementation("com.github.centralhardware:ktgbotapi-commons:$ktgbotapiVersion")
     implementation("com.github.centralhardware.ktgbotapi-middlewars:ktgbotapi-restrict-access-middleware:$ktgbotapiVersion")
 
-    implementation("io.minio:minio:8.5.17")
+    implementation("io.minio:minio:8.6.0")
 
     implementation("org.apache.poi:poi:$poiVersion")
     implementation("org.apache.poi:poi-ooxml:$poiVersion")
