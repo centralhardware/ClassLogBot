@@ -150,7 +150,7 @@ class MonthReport(
                 }
                 var total = 0.0
                 times
-                    .sortedByDescending { it.dateTime }
+                    .sortedBy { it.dateTime }
                     .groupBy { it.id }
                     .forEach { id, services ->
                         val fios =
@@ -200,7 +200,7 @@ class MonthReport(
                     cell("фото")
                 }
                 var total = 0
-                payments.forEach { payment ->
+                payments.sortedBy { it.dateTime }.forEach { payment ->
                     total = total + payment.amount.amount
                     row {
                         cell(payment.dateTime.formatDateTime())
