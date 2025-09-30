@@ -122,7 +122,7 @@ fun Row.parseClient(): Student =
         string("name"),
         string("second_name"),
         string("last_name"),
-        intOrNull("klass")?.let { SchoolClass(it) },
+        intOrNull("school_class")?.let { SchoolClass(it) },
         localDateOrNull("record_date"),
         localDateOrNull("birth_date"),
         stringOrNull("source")?.let { SourceOption.fromTitle(it) },

@@ -16,7 +16,7 @@ object StudentMapper {
             """
             SELECT EXISTS(
             SELECT *
-            FROM client
+            FROM students
             WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = lower(:fio)
             ORDER BY create_date DESC
             ) as e
@@ -28,12 +28,12 @@ object StudentMapper {
     fun save(student: Student): StudentId = runSingle(
         queryOf(
             """
-               INSERT INTO client (
+               INSERT INTO students (
                         name,
                         last_name,
                         second_name,
 
-                        klass,
+                        school_class,
                         record_date,
                         birth_date,
                         source,
@@ -50,7 +50,7 @@ object StudentMapper {
                     :last_name,
                     :second_name,
 
-                    :klass,
+                    :school_class,
                     :record_date,
                     :birth_date,
                     :source,
@@ -69,7 +69,7 @@ object StudentMapper {
                 "last_name" to student.lastName,
                 "second_name" to student.secondName,
 
-                "klass" to student.schoolClass?.value,
+                "school_class" to student.schoolClass?.value,
                 "record_date" to student.recordDate,
                 "birth_date" to student.birthDate,
                 "source" to student.source?.title,
@@ -88,7 +88,7 @@ object StudentMapper {
 
     fun delete(id: StudentId) = update(queryOf(
         """
-               UPDATE client
+               UPDATE students
                SET deleted = true
                WHERE id = :id
             """,
@@ -99,8 +99,8 @@ object StudentMapper {
         runSingle(
             queryOf(
                 """
-                SELECT c.*
-                FROM client c
+                SELECT s.*
+                FROM students s
                 WHERE id = :id
             """,
                 mapOf("id" to id.id),
@@ -111,8 +111,8 @@ object StudentMapper {
         runList(
             queryOf(
                 """
-                SELECT c.*
-                FROM client c
+                SELECT s.*
+                FROM students s
                 WHERE deleted = false
             """
             )
@@ -122,8 +122,8 @@ object StudentMapper {
         runList(
             queryOf(
                 """
-                SELECT c.*
-                FROM client c
+                SELECT s.*
+                FROM students s
                 WHERE name = :name AND second_name = :secondName AND last_name = :lastName
             """,
                 mapOf("name" to name, "secondName" to secondName, "lastName" to lastName),
@@ -135,7 +135,7 @@ object StudentMapper {
             queryOf(
                 """
             SELECT concat(name, ' ', last_name, ' ', second_name) as fio
-            from client
+            from students
             WHERE id = :id
         """,
                 mapOf("id" to id.id),

@@ -23,23 +23,23 @@ object LessonMapper {
         execute(
             queryOf(
                 """
-            INSERT INTO service (
+            INSERT INTO lessons (
                 date_time,
                 update_time,
                 id,
-                chat_id,
-                service_id,
+                tutor_id,
+                subject_id,
                 amount,
-                pupil_id,
+                student_id,
                 photo_report
             ) VALUES (
                 :dateTime,
                 :updateTime,
                 :id,
-                :chatId,
-                :serviceId,
+                :tutorId,
+                :subjectId,
                 :amount,
-                :clientId,
+                :studentId,
                 :photo_report
             )
             """,
@@ -47,10 +47,10 @@ object LessonMapper {
                     "dateTime" to lesson.dateTime,
                     "updateTime" to lesson.updateTime,
                     "id" to lesson.id.id,
-                    "chatId" to lesson.tutorId.id,
-                    "serviceId" to lesson.subjectId.id,
+                    "tutorId" to lesson.tutorId.id,
+                    "subjectId" to lesson.subjectId.id,
                     "amount" to lesson.amount,
-                    "clientId" to lesson.studentId.id,
+                    "studentId" to lesson.studentId.id,
                     "photo_report" to lesson.photoReport,
                 ),
             )
@@ -65,24 +65,24 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT s.id,
-                   s.date_time,
-                   s.update_time,
-                   s.chat_id,
-                   s.service_id,
-                   s.pupil_id,
-                   s.amount,
-                   s.force_group,
-                   s.extra_half_hour,
-                   s.photo_report,
-                   s.is_deleted
-            FROM service s
-            WHERE s.chat_id = :userId
-                AND s.service_id = :serviceId
-                AND s.date_time between :startDate and :endDate
-                AND s.is_deleted=false
+            SELECT l.id,
+                   l.date_time,
+                   l.update_time,
+                   l.tutor_id,
+                   l.subject_id,
+                   l.student_id,
+                   l.amount,
+                   l.force_group,
+                   l.extra_half_hour,
+                   l.photo_report,
+                   l.is_deleted
+            FROM lessons l
+            WHERE l.tutor_id = :tutorId
+                AND l.subject_id = :subjectId
+                AND l.date_time between :startDate and :endDate
+                AND l.is_deleted=false
             """,
-                    mapOf("userId" to tutorId.id,"serviceId" to subjectId.id, "startDate" to startDate, "endDate" to endDate),
+                    mapOf("tutorId" to tutorId.id,"subjectId" to subjectId.id, "startDate" to startDate, "endDate" to endDate),
                 )
         ) { it.parseTime() }
 
@@ -94,23 +94,23 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT s.id,
-                   s.date_time,
-                   s.update_time,
-                   s.chat_id,
-                   s.service_id,
-                   s.pupil_id,
-                   s.amount,
-                   s.force_group,
-                   s.extra_half_hour,
-                   s.photo_report,
-                   s.is_deleted
-            FROM service s
-            WHERE s.chat_id = :userId
-                AND s.date_time between :startDate and :endDate
-                AND s.is_deleted=false
+            SELECT l.id,
+                   l.date_time,
+                   l.update_time,
+                   l.tutor_id,
+                   l.subject_id,
+                   l.student_id,
+                   l.amount,
+                   l.force_group,
+                   l.extra_half_hour,
+                   l.photo_report,
+                   l.is_deleted
+            FROM lessons l
+            WHERE l.tutor_id = :tutorId
+                AND l.date_time between :startDate and :endDate
+                AND l.is_deleted=false
             """,
-                mapOf("userId" to tutorId.id, "startDate" to startDate, "endDate" to endDate),
+                mapOf("tutorId" to tutorId.id, "startDate" to startDate, "endDate" to endDate),
             )
         ) { it.parseTime() }
 
@@ -121,15 +121,15 @@ object LessonMapper {
             SELECT id,
                    date_time,
                    update_time,
-                   chat_id,
-                   service_id,
-                   pupil_id,
+                   tutor_id,
+                   subject_id,
+                   student_id,
                    amount,
                    photo_report,
                    force_group,
                    extra_half_hour,
                    is_deleted
-            FROM service
+            FROM lessons
             WHERE id = :id
             """,
                     mapOf("id" to id.id),
@@ -157,20 +157,20 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT DISTINCT chat_id
-            FROM service
+            SELECT DISTINCT tutor_id
+            FROM lessons
             WHERE is_deleted = false
             """
                 )
         ) {
-            row -> TutorId(row.long("chat_id"))
+            row -> TutorId(row.long("tutor_id"))
         }
 
     fun setDeleted(lessonId: LessonId, isDeleted: Boolean) =
         update(
             queryOf(
                 """
-            UPDATE service
+            UPDATE lessons
             SET is_deleted = :is_deleted,
                 update_time = :update_time
             WHERE id = :id
@@ -187,21 +187,21 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT DISTINCT service_id
-            FROM service
-            WHERE pupil_id = :id AND is_deleted=false
+            SELECT DISTINCT subject_id
+            FROM lessons
+            WHERE student_id = :id AND is_deleted=false
             """,
                     mapOf("id" to id.id),
                 )
         ) {
-            row -> row.long("service_id").toSubjectId()
+            row -> row.long("subject_id").toSubjectId()
         }
 
     fun setForceGroup(id: LessonId, forceGroup: Boolean) =
         update(
             queryOf(
                 """
-        UPDATE service
+        UPDATE lessons
         SET force_group = :force_group,
             update_time = :update_time
         WHERE id = :id
@@ -218,7 +218,7 @@ object LessonMapper {
         update(
             queryOf(
                 """
-        UPDATE service
+        UPDATE lessons
         SET extra_half_hour = :extra_half_hour,
             update_time = :update_time
         WHERE id = :id

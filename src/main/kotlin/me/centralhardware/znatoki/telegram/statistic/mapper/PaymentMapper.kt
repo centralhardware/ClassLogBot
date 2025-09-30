@@ -23,26 +23,26 @@ object PaymentMapper {
                 """
             INSERT INTO payment(
                 date_time,
-                chat_id,
-                pupil_id,
+                tutor_id,
+                student_id,
                 amount,
-                services,
+                subject_id,
                 photo_report
             ) VALUES (
                 :dateTime,
-                :chatId,
-                :clientId,
+                :tutorId,
+                :studentId,
                 :amount,
-                :serviceId,
+                :subjectId,
                 :photo_report
             ) RETURNING id
             """,
                 mapOf(
                     "dateTime" to payment.dateTime,
-                    "chatId" to payment.tutorId.id,
-                    "clientId" to payment.studentId.id,
+                    "tutorId" to payment.tutorId.id,
+                    "studentId" to payment.studentId.id,
                     "amount" to payment.amount.amount,
-                    "serviceId" to payment.subjectId.id,
+                    "subjectId" to payment.subjectId.id,
                     "photo_report" to payment.photoReport,
                 ),
             )
@@ -71,17 +71,17 @@ object PaymentMapper {
                 """
             SELECT sum(amount) as sum
             FROM payment
-            WHERE chat_id = :chat_id
-                AND services = :service_id
-                AND pupil_id = :client_id
+            WHERE tutor_id = :tutor_id
+                AND subject_id = :subject_id
+                AND student_id = :student_id
                 AND date_time between :startDate and :endDate
                 AND photo_report IS NOT NULL
                 AND is_deleted = false
             """,
                 mapOf(
-                    "chat_id" to tutorId.id,
-                    "service_id" to subjectId.id,
-                    "client_id" to studentId.id,
+                    "tutor_id" to tutorId.id,
+                    "subject_id" to subjectId.id,
+                    "student_id" to studentId.id,
                     "startDate" to date.startOfMonth(),
                     "endDate" to date.endOfMonth(),
                 ),
@@ -94,14 +94,14 @@ object PaymentMapper {
                 """
             SELECT sum(amount) as sum
             FROM payment
-            WHERE chat_id = :chat_id
-                AND services = :service_id
+            WHERE tutor_id = :tutor_id
+                AND subject_id = :subject_id
                 AND date_time between :startDate and :endDate
                 AND is_deleted = false
             """,
                 mapOf(
-                    "chat_id" to tutorId.id,
-                    "service_id" to subjectId.id,
+                    "tutor_id" to tutorId.id,
+                    "subject_id" to subjectId.id,
                     "startDate" to date.startOfMonth(),
                     "endDate" to date.endOfMonth(),
                 ),
@@ -118,20 +118,20 @@ object PaymentMapper {
         """
         SELECT p.id,
                p.date_time,
-               p.chat_id,
-               p.pupil_id,
+               p.tutor_id,
+               p.student_id,
                p.amount,
-               p.services,
+               p.subject_id,
                p.is_deleted,
                p.photo_report
         FROM payment p
-        WHERE p.chat_id = :chat_id
-            AND p.services = :service_id
+        WHERE p.tutor_id = :tutor_id
+            AND p.subject_id = :subject_id
             AND p.date_time between :start_date and :end_date
             AND p.is_deleted=false
     """, mapOf(
-                "chat_id" to tutorId.id,
-                "service_id" to subjectId.id,
+                "tutor_id" to tutorId.id,
+                "subject_id" to subjectId.id,
                 "start_date" to startDate,
                 "end_date" to endDate)
     )) { it.parsePayment() }

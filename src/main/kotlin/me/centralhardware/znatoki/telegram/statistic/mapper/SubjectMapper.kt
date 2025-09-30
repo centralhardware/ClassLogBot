@@ -12,7 +12,7 @@ object SubjectMapper {
             queryOf(
                 """
             SELECT id
-            FROM services
+            FROM subjects
             WHERE name = :name
             """,
                 mapOf("name" to name),
@@ -26,7 +26,7 @@ object SubjectMapper {
             queryOf(
                 """
             SELECT name
-            FROM  services
+            FROM  subjects
             WHERE id = :id
             """,
                 mapOf("id" to id.id),
@@ -39,7 +39,7 @@ object SubjectMapper {
         queryOf(
             """
             SELECT allow_multiply_clients
-            FROM services
+            FROM subjects
             WHERE id = :id
             """,
             mapOf("id" to id.id),

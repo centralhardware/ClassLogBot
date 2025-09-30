@@ -24,6 +24,6 @@ fun Row.parseTutor() =
     Tutor(
         TutorId(long("id")),
         array<String>("permissions").map { Permissions.valueOf(it) },
-        string("services").split(":").map { SubjectId(it.toLong()) },
+        string("subjects").split(":").map { SubjectId(it.toLong()) },
         string("name"),
     )

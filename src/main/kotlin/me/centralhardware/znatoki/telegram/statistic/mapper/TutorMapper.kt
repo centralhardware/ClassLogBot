@@ -14,7 +14,7 @@ object TutorMapper {
             queryOf(
                 """
                    SELECT *
-                   FROM telegram_users
+                   FROM tutors
                 """
             )
         ) { it -> it.parseTutor() }
@@ -24,7 +24,7 @@ object TutorMapper {
             queryOf(
                     """
                SELECT id
-               FROM telegram_users
+               FROM tutors
                WHERE 'ADMIN' = ANY(permissions)
             """
                 )
@@ -35,7 +35,7 @@ object TutorMapper {
             queryOf(
                     """
             SELECT *
-            FROM telegram_users
+            FROM tutors
             WHERE id = :id
             """,
                     mapOf("id" to id.id),

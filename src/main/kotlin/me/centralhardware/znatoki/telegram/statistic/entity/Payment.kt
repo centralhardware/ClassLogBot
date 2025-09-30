@@ -20,10 +20,10 @@ data class Payment(
 fun Row.parsePayment() = Payment(
     PaymentId(int("id")),
     localDateTime("date_time"),
-    TutorId(long("chat_id")),
-    int("pupil_id").toStudentId(),
+    TutorId(long("tutor_id")),
+    int("student_id").toStudentId(),
     int("amount").toAmount(),
-    long("services").toSubjectId(),
+    long("subject_id").toSubjectId(),
     boolean("is_deleted"),
     stringOrNull("photo_report")
 )
