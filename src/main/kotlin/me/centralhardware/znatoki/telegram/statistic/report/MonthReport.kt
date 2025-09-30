@@ -103,7 +103,7 @@ class MonthReport(
                         row {
                             cell(i.getAndIncrement())
                             cell(client.fio(), HorizontalAlignment.LEFT)
-                            cell(client.schoolClass ?: "")
+                            cell(client.schoolClass?.value ?: "")
                             cell(individual)
                             cell(group)
                             cell(
