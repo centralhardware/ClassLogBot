@@ -150,9 +150,10 @@ class MonthReport(
                 }
                 var total = 0.0
                 times
-                    .sortedWith(compareBy({ it.dateTime }, { getStudent(it.studentId).fio() }))
                     .groupBy { it.id }
-                    .forEach { id, services ->
+                    .toList()
+                    .sortedWith(compareBy({ it.second.first().dateTime }, { it.second.minOf { lesson -> getStudent(lesson.studentId).fio() } }))
+                    .forEach { (id, services) ->
                         val fios =
                             if (services.size == 1) {
                                 "      " +
