@@ -201,11 +201,14 @@ class MonthReport(
                     cell("фото")
                 }
                 var total = 0
-                payments.sortedWith(compareBy({ it.dateTime }, { getStudent(it.studentId).fio() })).forEach { payment ->
+                payments
+                    .map { it to getStudent(it.studentId).fio() }
+                    .sortedWith(compareBy({ it.first.dateTime }, { it.second }))
+                    .forEach { (payment, fio) ->
                     total = total + payment.amount.amount
                     row {
                         cell(payment.dateTime.formatDateTime())
-                        cell(getStudent(payment.studentId).fio(), HorizontalAlignment.LEFT)
+                        cell(fio, HorizontalAlignment.LEFT)
                         cell(payment.amount.amount)
                         MinioService.getLink(payment.photoReport!!, 3.hours).onSuccess {
                             cellHyperlink(it,"отчет")
