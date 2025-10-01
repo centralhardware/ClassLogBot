@@ -37,7 +37,7 @@ private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: Paymen
                 Клиент: ${StudentMapper.findById(payment.studentId).fio().hashtag()}
                 Предмет: ${SubjectMapper.getNameById(payment.subjectId)}
                 Оплата: ${payment.amount.amount}
-                Оплатил: ${data.user.name.hashtag()}
+                Оплатил: ${TutorMapper.findByIdOrNull(payment.tutorId)?.name?.hashtag()}
             """
             .trimIndent()
     sendActionUploadPhoto(Config.logChat())
