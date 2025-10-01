@@ -25,7 +25,9 @@ private suspend fun BehaviourContext.createReport(
     }
 
     if (data.user.hasAdminPermission()) {
-        LessonMapper.getTutorIds().forEach { tutorId -> genReport.invoke(tutorId).forEach { report ->  send(userId, report) } }
+        LessonMapper.getTutorIds().forEach { tutorId ->
+            genReport.invoke(tutorId).forEach { report -> send(userId, report) }
+        }
         return
     }
 
@@ -36,6 +38,7 @@ private suspend fun BehaviourContext.createReport(
 }
 
 suspend fun BehaviourContext.send(userId: Long, file: File) {
+    sendActionUploadDocument(userId.toChatId())
     sendDocument(userId.toChatId(), InputFile(file))
     file.delete()
 }
@@ -43,7 +46,6 @@ suspend fun BehaviourContext.send(userId: Long, file: File) {
 fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
     sendActionTyping(it.chat)
     createReport(it.userId()) { tutorId ->
-        sendActionUploadDocument(it.chat)
         ReportService.getReportsCurrent(tutorId)
     }
 }
@@ -51,7 +53,6 @@ fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
 fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
     sendActionTyping(it.chat)
     createReport(it.userId()) { tutorId ->
-        sendActionUploadDocument(it.chat)
         ReportService.getReportPrevious(tutorId)
     }
 }
