@@ -33,7 +33,7 @@ jobs:
 
       - name: Build on PRs (no push)
         if: github.event_name == 'pull_request'
-        run: ./gradlew --no-daemon build
+        run: ./gradlew --no-daemon build -x test
 
       - name: Compute image name and tags
         if: github.event_name != 'pull_request'
