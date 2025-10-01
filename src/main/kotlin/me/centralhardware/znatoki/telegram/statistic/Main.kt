@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
+import me.centralhardware.znatoki.telegram.statistic.extensions.canAddPaymentForOthers
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
@@ -31,6 +32,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.deb
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.resetCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.startCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentForOtherCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addSubjectCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
@@ -80,12 +82,17 @@ suspend fun main() {
                     add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
                 }
             }
-            if (user.hasPaymentPermission() || user.hasAdminPermission()) {
+            if (user.hasPaymentPermission()) {
                 userCommands.apply {
                     add(BotCommand("addpayment", "Ведомость оплаты"))
                 }
             }
-            if (user.hasClientPermission() || user.hasAdminPermission()) {
+            if (user.canAddPaymentForOthers()) {
+                userCommands.apply {
+                    add(BotCommand("addpaymentforother", "Добавить оплату за другого репетитора"))
+                }
+            }
+            if (user.hasClientPermission()) {
                 userCommands.apply {
                     add(BotCommand("addpupil", "Добавить ученика"))
                 }
@@ -115,6 +122,10 @@ suspend fun main() {
 
         initContext({it.hasPaymentPermission()}) {
             addPaymentCommand()
+        }
+
+        initContext({it.canAddPaymentForOthers()}) {
+            addPaymentForOtherCommand()
         }
 
         initContext({it.hasTimePermission()}) {

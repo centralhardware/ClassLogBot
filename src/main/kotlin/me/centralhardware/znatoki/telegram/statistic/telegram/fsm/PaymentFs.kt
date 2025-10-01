@@ -20,6 +20,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
@@ -59,12 +60,34 @@ private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: Paymen
     )
 }
 
-suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageContent>) =
+suspend fun BehaviourContext.startPaymentFsm(
+    message: CommonMessage<MessageContent>,
+    canAddForOthers: Boolean = false
+) =
     startTelegramFsm(
         "paymentFsm",
         PaymentBuilder(),
         message
     ) {
+        if (canAddForOthers) {
+            text(
+                "Введите telegram ID репетитора",
+                inline = false,
+                optionalSkip = false,
+                validator = { text ->
+                    text.toLongOrNull()?.let {
+                        if (TutorMapper.findByIdOrNull(TutorId(it)) != null) {
+                            arrow.core.Either.Right(it)
+                        } else {
+                            arrow.core.Either.Left("Репетитор с таким ID не найден")
+                        }
+                    } ?: arrow.core.Either.Left("Неверный формат ID")
+                }
+            ) { builder, value ->
+                builder.tutorId = TutorId(value.toLong())
+            }
+        }
+
         text(
             "Введите фио. \nнажмите для поиска фио",
             inline = true,
@@ -101,7 +124,9 @@ suspend fun BehaviourContext.startPaymentFsm(message: CommonMessage<MessageConte
                                         """
             },
             {
-                it.tutorId = message.tutorId()
+                if (it.tutorId == null) {
+                    it.tutorId = message.tutorId()
+                }
                 val payment = it.build()
                 sendLog(payment, PaymentMapper.insert(payment))
                 sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())

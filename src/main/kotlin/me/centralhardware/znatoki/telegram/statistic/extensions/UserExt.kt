@@ -23,3 +23,6 @@ fun Tutor?.hasForceGroup(): Boolean =
 
 fun Tutor?.hasExtraHalfHour(): Boolean =
     this?.permissions?.contains(Permissions.EXTRA_HALF_HOUR) == true
+
+fun Tutor?.canAddPaymentForOthers(): Boolean =
+    this?.permissions?.containsAny(Permissions.ADD_PAYMENT_FOR_OTHERS, Permissions.ADMIN) == true
