@@ -21,22 +21,22 @@ object PaymentMapper {
         runSingle(
             queryOf(
                 """
-            INSERT INTO payment(
-                date_time,
-                tutor_id,
-                student_id,
-                amount,
-                subject_id,
-                photo_report
-            ) VALUES (
-                :dateTime,
-                :tutorId,
-                :studentId,
-                :amount,
-                :subjectId,
-                :photo_report
-            ) RETURNING id
-            """,
+                INSERT INTO payment(
+                    date_time,
+                    tutor_id,
+                    student_id,
+                    amount,
+                    subject_id,
+                    photo_report
+                ) VALUES (
+                    :dateTime,
+                    :tutorId,
+                    :studentId,
+                    :amount,
+                    :subjectId,
+                    :photo_report
+                ) RETURNING id
+                """,
                 mapOf(
                     "dateTime" to payment.dateTime,
                     "tutorId" to payment.tutorId.id,
@@ -52,10 +52,10 @@ object PaymentMapper {
         update(
             queryOf(
                 """
-            UPDATE payment
-            SET is_deleted = :is_delete
-            WHERE id = :id
-            """,
+                UPDATE payment
+                SET is_deleted = :is_delete
+                WHERE id = :id
+                """,
                 mapOf("id" to id.id, "is_delete" to isDelete),
             )
         )
@@ -69,15 +69,15 @@ object PaymentMapper {
         runSingle(
             queryOf(
                 """
-            SELECT sum(amount) as sum
-            FROM payment
-            WHERE tutor_id = :tutor_id
-                AND subject_id = :subject_id
-                AND student_id = :student_id
-                AND date_time between :startDate and :endDate
-                AND photo_report IS NOT NULL
-                AND is_deleted = false
-            """,
+                SELECT sum(amount) as sum
+                FROM payment
+                WHERE tutor_id = :tutor_id
+                    AND subject_id = :subject_id
+                    AND student_id = :student_id
+                    AND date_time between :startDate and :endDate
+                    AND photo_report IS NOT NULL
+                    AND is_deleted = false
+                """,
                 mapOf(
                     "tutor_id" to tutorId.id,
                     "subject_id" to subjectId.id,
@@ -92,13 +92,13 @@ object PaymentMapper {
         runSingle(
             queryOf(
                 """
-            SELECT sum(amount) as sum
-            FROM payment
-            WHERE tutor_id = :tutor_id
-                AND subject_id = :subject_id
-                AND date_time between :startDate and :endDate
-                AND is_deleted = false
-            """,
+                SELECT sum(amount) as sum
+                FROM payment
+                WHERE tutor_id = :tutor_id
+                    AND subject_id = :subject_id
+                    AND date_time between :startDate and :endDate
+                    AND is_deleted = false
+                """,
                 mapOf(
                     "tutor_id" to tutorId.id,
                     "subject_id" to subjectId.id,
@@ -115,21 +115,21 @@ object PaymentMapper {
         endDate: LocalDateTime
     ) = runList(
         queryOf(
-        """
-        SELECT p.id,
-               p.date_time,
-               p.tutor_id,
-               p.student_id,
-               p.amount,
-               p.subject_id,
-               p.is_deleted,
-               p.photo_report
-        FROM payment p
-        WHERE p.tutor_id = :tutor_id
-            AND p.subject_id = :subject_id
-            AND p.date_time between :start_date and :end_date
-            AND p.is_deleted=false
-    """, mapOf(
+            """
+            SELECT p.id,
+                   p.date_time,
+                   p.tutor_id,
+                   p.student_id,
+                   p.amount,
+                   p.subject_id,
+                   p.is_deleted,
+                   p.photo_report
+            FROM payment p
+            WHERE p.tutor_id = :tutor_id
+                AND p.subject_id = :subject_id
+                AND p.date_time between :start_date and :end_date
+                AND p.is_deleted=false
+            """, mapOf(
                 "tutor_id" to tutorId.id,
                 "subject_id" to subjectId.id,
                 "start_date" to startDate,

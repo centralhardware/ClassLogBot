@@ -38,14 +38,13 @@ suspend fun BehaviourContext.getReport(tutorId: TutorId, sendTo: TutorId = tutor
             sendTextMessage(
                 sendTo.toChatId(),
                 """
-                        Время: ${it.first().dateTime.formatTime()}
-                        Предмет: ${SubjectMapper.getNameById(it.first().subjectId)}
-                        ученик: ${
+                Время: ${it.first().dateTime.formatTime()}
+                Предмет: ${SubjectMapper.getNameById(it.first().subjectId)}
+                ученик: ${
                     it.toStudentIds().joinToString(", ") { studentId -> StudentMapper.getFioById(studentId) }
                 }
-                        Стоимость: ${it.first().amount}
-                    """
-                    .trimIndent(),
+                Стоимость: ${it.first().amount}
+                """.trimIndent(),
             )
         }
     sendTextMessage(sendTo.toChatId(), "Проверьте правильность внесенных данных")

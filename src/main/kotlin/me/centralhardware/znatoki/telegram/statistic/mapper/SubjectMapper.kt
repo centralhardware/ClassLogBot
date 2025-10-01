@@ -11,10 +11,10 @@ object SubjectMapper {
         runSingle(
             queryOf(
                 """
-            SELECT id
-            FROM subjects
-            WHERE name = :name
-            """,
+                SELECT id
+                FROM subjects
+                WHERE name = :name
+                """,
                 mapOf("name" to name),
             )
         ) {
@@ -25,10 +25,10 @@ object SubjectMapper {
         runSingle(
             queryOf(
                 """
-            SELECT name
-            FROM  subjects
-            WHERE id = :id
-            """,
+                SELECT name
+                FROM subjects
+                WHERE id = :id
+                """,
                 mapOf("id" to id.id),
             )
         ) {

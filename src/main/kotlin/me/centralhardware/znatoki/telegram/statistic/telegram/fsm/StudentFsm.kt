@@ -112,8 +112,8 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
             sendTextMessage(
                 Config.logChat(),
                 """
-                    #ученик
-                    ${
+                #ученик
+                ${
                     client.getInfo(
                         LessonMapper.getSubjectIdsForStudent(client.id!!)
                             .map { SubjectMapper.getNameById(it) }

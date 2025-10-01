@@ -78,14 +78,14 @@ abstract class TestDatabaseConfiguration {
                                (2, 'Физика', true),
                                (3, 'Химия', false)
                         ON CONFLICT (id) DO NOTHING
-                    """)
+                        """)
 
                     // Добавляем тестового пользователя
                     statement.execute("""
                         INSERT INTO telegram_users (id, name, services, permissions)
                         VALUES (12345, 'Test Tutor', '1:2', ARRAY['ADMIN'])
                         ON CONFLICT (id) DO NOTHING
-                    """)
+                        """)
                 }
             }
             schemaInitialized = true

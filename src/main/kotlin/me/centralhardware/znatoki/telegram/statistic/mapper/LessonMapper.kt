@@ -23,26 +23,26 @@ object LessonMapper {
         execute(
             queryOf(
                 """
-            INSERT INTO lessons (
-                date_time,
-                update_time,
-                id,
-                tutor_id,
-                subject_id,
-                amount,
-                student_id,
-                photo_report
-            ) VALUES (
-                :dateTime,
-                :updateTime,
-                :id,
-                :tutorId,
-                :subjectId,
-                :amount,
-                :studentId,
-                :photo_report
-            )
-            """,
+                INSERT INTO lessons (
+                    date_time,
+                    update_time,
+                    id,
+                    tutor_id,
+                    subject_id,
+                    amount,
+                    student_id,
+                    photo_report
+                ) VALUES (
+                    :dateTime,
+                    :updateTime,
+                    :id,
+                    :tutorId,
+                    :subjectId,
+                    :amount,
+                    :studentId,
+                    :photo_report
+                )
+                """,
                 mapOf(
                     "dateTime" to lesson.dateTime,
                     "updateTime" to lesson.updateTime,
@@ -65,23 +65,23 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT l.id,
-                   l.date_time,
-                   l.update_time,
-                   l.tutor_id,
-                   l.subject_id,
-                   l.student_id,
-                   l.amount,
-                   l.force_group,
-                   l.extra_half_hour,
-                   l.photo_report,
-                   l.is_deleted
-            FROM lessons l
-            WHERE l.tutor_id = :tutorId
-                AND l.subject_id = :subjectId
-                AND l.date_time between :startDate and :endDate
-                AND l.is_deleted=false
-            """,
+                SELECT l.id,
+                       l.date_time,
+                       l.update_time,
+                       l.tutor_id,
+                       l.subject_id,
+                       l.student_id,
+                       l.amount,
+                       l.force_group,
+                       l.extra_half_hour,
+                       l.photo_report,
+                       l.is_deleted
+                FROM lessons l
+                WHERE l.tutor_id = :tutorId
+                    AND l.subject_id = :subjectId
+                    AND l.date_time between :startDate and :endDate
+                    AND l.is_deleted=false
+                """,
                     mapOf("tutorId" to tutorId.id,"subjectId" to subjectId.id, "startDate" to startDate, "endDate" to endDate),
                 )
         ) { it.parseTime() }
@@ -94,22 +94,22 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT l.id,
-                   l.date_time,
-                   l.update_time,
-                   l.tutor_id,
-                   l.subject_id,
-                   l.student_id,
-                   l.amount,
-                   l.force_group,
-                   l.extra_half_hour,
-                   l.photo_report,
-                   l.is_deleted
-            FROM lessons l
-            WHERE l.tutor_id = :tutorId
-                AND l.date_time between :startDate and :endDate
-                AND l.is_deleted=false
-            """,
+                SELECT l.id,
+                       l.date_time,
+                       l.update_time,
+                       l.tutor_id,
+                       l.subject_id,
+                       l.student_id,
+                       l.amount,
+                       l.force_group,
+                       l.extra_half_hour,
+                       l.photo_report,
+                       l.is_deleted
+                FROM lessons l
+                WHERE l.tutor_id = :tutorId
+                    AND l.date_time between :startDate and :endDate
+                    AND l.is_deleted=false
+                """,
                 mapOf("tutorId" to tutorId.id, "startDate" to startDate, "endDate" to endDate),
             )
         ) { it.parseTime() }
@@ -118,20 +118,20 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT id,
-                   date_time,
-                   update_time,
-                   tutor_id,
-                   subject_id,
-                   student_id,
-                   amount,
-                   photo_report,
-                   force_group,
-                   extra_half_hour,
-                   is_deleted
-            FROM lessons
-            WHERE id = :id
-            """,
+                SELECT id,
+                       date_time,
+                       update_time,
+                       tutor_id,
+                       subject_id,
+                       student_id,
+                       amount,
+                       photo_report,
+                       force_group,
+                       extra_half_hour,
+                       is_deleted
+                FROM lessons
+                WHERE id = :id
+                """,
                     mapOf("id" to id.id),
                 )
         ) { it.parseTime() }
@@ -157,11 +157,11 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT DISTINCT tutor_id
-            FROM lessons
-            WHERE is_deleted = false
-            """
-                )
+                SELECT DISTINCT tutor_id
+                FROM lessons
+                WHERE is_deleted = false
+                """
+            )
         ) {
             row -> TutorId(row.long("tutor_id"))
         }
@@ -170,11 +170,11 @@ object LessonMapper {
         update(
             queryOf(
                 """
-            UPDATE lessons
-            SET is_deleted = :is_deleted,
-                update_time = :update_time
-            WHERE id = :id
-            """,
+                UPDATE lessons
+                SET is_deleted = :is_deleted,
+                    update_time = :update_time
+                WHERE id = :id
+                """,
                     mapOf(
                         "id" to lessonId.id,
                         "is_deleted" to isDeleted,
@@ -187,10 +187,10 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-            SELECT DISTINCT subject_id
-            FROM lessons
-            WHERE student_id = :id AND is_deleted=false
-            """,
+                SELECT DISTINCT subject_id
+                FROM lessons
+                WHERE student_id = :id AND is_deleted=false
+                """,
                     mapOf("id" to id.id),
                 )
         ) {
@@ -201,11 +201,11 @@ object LessonMapper {
         update(
             queryOf(
                 """
-        UPDATE lessons
-        SET force_group = :force_group,
-            update_time = :update_time
-        WHERE id = :id
-    """,
+                UPDATE lessons
+                SET force_group = :force_group,
+                    update_time = :update_time
+                WHERE id = :id
+                """,
                     mapOf(
                         "id" to id.id,
                         "force_group" to forceGroup,
@@ -218,11 +218,11 @@ object LessonMapper {
         update(
             queryOf(
                 """
-        UPDATE lessons
-        SET extra_half_hour = :extra_half_hour,
-            update_time = :update_time
-        WHERE id = :id
-    """,
+                UPDATE lessons
+                SET extra_half_hour = :extra_half_hour,
+                    update_time = :update_time
+                WHERE id = :id
+                """,
                 mapOf(
                     "id" to id.id,
                     "extra_half_hour" to extraHalfHour,

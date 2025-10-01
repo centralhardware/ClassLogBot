@@ -13,8 +13,8 @@ object TutorMapper {
         runList(
             queryOf(
                 """
-                   SELECT *
-                   FROM tutors
+                SELECT *
+                FROM tutors
                 """
             )
         ) { it -> it.parseTutor() }
@@ -22,22 +22,22 @@ object TutorMapper {
     fun getAdminsId(): List<TutorId> =
         runList(
             queryOf(
-                    """
-               SELECT id
-               FROM tutors
-               WHERE 'ADMIN' = ANY(permissions)
-            """
-                )
+                """
+                SELECT id
+                FROM tutors
+                WHERE 'ADMIN' = ANY(permissions)
+                """
+            )
         ) { TutorId(it.long("id")) }
 
     fun findByIdOrNull(id: TutorId): Tutor? =
         runSingle(
             queryOf(
-                    """
-            SELECT *
-            FROM tutors
-            WHERE id = :id
-            """,
+                """
+                SELECT *
+                FROM tutors
+                WHERE id = :id
+                """,
                     mapOf("id" to id.id),
                 )
         ) { it.parseTutor() }

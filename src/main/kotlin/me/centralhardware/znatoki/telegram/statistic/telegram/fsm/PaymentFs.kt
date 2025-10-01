@@ -32,14 +32,13 @@ private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: Paymen
     }
     val text =
         """
-                #оплата
-                Время: ${payment.dateTime.formatDateTime()}
-                Клиент: ${StudentMapper.findById(payment.studentId).fio().hashtag()}
-                Предмет: ${SubjectMapper.getNameById(payment.subjectId)}
-                Оплата: ${payment.amount.amount}
-                Оплатил: ${TutorMapper.findByIdOrNull(payment.tutorId)?.name?.hashtag()}
-            """
-            .trimIndent()
+        #оплата
+        Время: ${payment.dateTime.formatDateTime()}
+        Клиент: ${StudentMapper.findById(payment.studentId).fio().hashtag()}
+        Предмет: ${SubjectMapper.getNameById(payment.subjectId)}
+        Оплата: ${payment.amount.amount}
+        Оплатил: ${TutorMapper.findByIdOrNull(payment.tutorId)?.name?.hashtag()}
+        """.trimIndent()
     sendActionUploadPhoto(Config.logChat())
     sendPhoto(
         Config.logChat(),
@@ -119,9 +118,9 @@ suspend fun BehaviourContext.startPaymentFsm(
         confirm(
             {
                 """
-                                        ФИО: ${StudentMapper.findById(it.studentId!!)?.fio()}
-                                        Оплата: ${it.amount?.amount}
-                                        """
+                ФИО: ${StudentMapper.findById(it.studentId!!)?.fio()}
+                Оплата: ${it.amount?.amount}
+                """.trimIndent()
             },
             {
                 if (it.tutorId == null) {

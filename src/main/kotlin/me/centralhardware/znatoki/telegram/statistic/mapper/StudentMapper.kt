@@ -15,12 +15,12 @@ object StudentMapper {
         queryOf(
             """
             SELECT EXISTS(
-            SELECT *
-            FROM students
-            WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = lower(:fio)
-            ORDER BY create_date DESC
+                SELECT *
+                FROM students
+                WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = lower(:fio)
+                ORDER BY create_date DESC
             ) as e
-        """,
+            """,
             mapOf("fio" to fio)
             )
     ) { row -> row.boolean("e") } ?: false
@@ -28,41 +28,37 @@ object StudentMapper {
     fun save(student: Student): StudentId = runSingle(
         queryOf(
             """
-               INSERT INTO students (
-                        name,
-                        last_name,
-                        second_name,
-
-                        school_class,
-                        record_date,
-                        birth_date,
-                        source,
-                        phone,
-                        responsible_phone,
-                        mother_fio,
-
-                        created_by,
-                        create_date,
-                        modify_date,
-                        deleted
-               ) VALUES (
-                    :name,
-                    :last_name,
-                    :second_name,
-
-                    :school_class,
-                    :record_date,
-                    :birth_date,
-                    :source,
-                    :phone,
-                    :responsible_phone,
-                    :mother_fio,
-
-                    :created_by,
-                    :create_date,
-                    :modify_date,
-                    false
-               ) RETURNING id
+            INSERT INTO students (
+                name,
+                last_name,
+                second_name,
+                school_class,
+                record_date,
+                birth_date,
+                source,
+                phone,
+                responsible_phone,
+                mother_fio,
+                created_by,
+                create_date,
+                modify_date,
+                deleted
+            ) VALUES (
+                :name,
+                :last_name,
+                :second_name,
+                :school_class,
+                :record_date,
+                :birth_date,
+                :source,
+                :phone,
+                :responsible_phone,
+                :mother_fio,
+                :created_by,
+                :create_date,
+                :modify_date,
+                false
+            ) RETURNING id
             """,
             mapOf(
                 "name" to student.name,
@@ -88,10 +84,10 @@ object StudentMapper {
 
     fun delete(id: StudentId) = update(queryOf(
         """
-               UPDATE students
-               SET deleted = true
-               WHERE id = :id
-            """,
+        UPDATE students
+        SET deleted = true
+        WHERE id = :id
+        """,
         mapOf("id" to id.id),
     ))
 
@@ -102,7 +98,7 @@ object StudentMapper {
                 SELECT s.*
                 FROM students s
                 WHERE id = :id
-            """,
+                """,
                 mapOf("id" to id.id),
             )
         ) { it.parseClient() } ?: throw IllegalArgumentException("No client with id $id found")
@@ -114,7 +110,7 @@ object StudentMapper {
                 SELECT s.*
                 FROM students s
                 WHERE deleted = false
-            """
+                """
             )
         ) { it.parseClient() }
 
@@ -125,7 +121,7 @@ object StudentMapper {
                 SELECT s.*
                 FROM students s
                 WHERE name = :name AND second_name = :secondName AND last_name = :lastName
-            """,
+                """,
                 mapOf("name" to name, "secondName" to secondName, "lastName" to lastName),
             )
         ) { it.parseClient() }
@@ -134,10 +130,10 @@ object StudentMapper {
         runSingle(
             queryOf(
                 """
-            SELECT concat(name, ' ', last_name, ' ', second_name) as fio
-            from students
-            WHERE id = :id
-        """,
+                SELECT concat(name, ' ', last_name, ' ', second_name) as fio
+                FROM students
+                WHERE id = :id
+                """,
                 mapOf("id" to id.id),
             )
         ) { row -> row.string("fio") } ?: ""

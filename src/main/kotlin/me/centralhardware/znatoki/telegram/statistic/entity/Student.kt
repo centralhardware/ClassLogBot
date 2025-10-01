@@ -88,22 +88,21 @@ class Student(
 
 fun Student.getInfo(subjects: List<String>) =
     """
-        id=${id.id.makeBold()}
-        ФИО: ${fio().makeBold()}
-        класс=${schoolClass?.value.makeBold()}
-        дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
-        дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
-        как узнал=${source?.title.makeBold()}
-        телефон=${phone?.format().makeBold()}
-        телефон ответственного=${responsiblePhone?.format().makeBold()}
-        ФИО матери=${motherFio?.makeBold() ?: ""}
-        Предметы=${subjects.joinToString(",").makeBold()}
-        дата создания=${createDate.formatDate().makeBold()}
-        дата изменения=${modifyDate.formatDate().makeBold()}
-        создано=${createdBy.id}
-        редактировано=${updateBy?.id?:""}
-        """
-        .trimIndent()
+    id=${id.id.makeBold()}
+    ФИО: ${fio().makeBold()}
+    класс=${schoolClass?.value.makeBold()}
+    дата записи=${recordDate?.formatDate()?.makeBold() ?: ""}
+    дата рождения=${birthDate?.formatDate()?.makeBold() ?: ""}
+    как узнал=${source?.title.makeBold()}
+    телефон=${phone?.format().makeBold()}
+    телефон ответственного=${responsiblePhone?.format().makeBold()}
+    ФИО матери=${motherFio?.makeBold() ?: ""}
+    Предметы=${subjects.joinToString(",").makeBold()}
+    дата создания=${createDate.formatDate().makeBold()}
+    дата изменения=${modifyDate.formatDate().makeBold()}
+    создано=${createdBy.id}
+    редактировано=${updateBy?.id?:""}
+    """.trimIndent()
 
 fun Student.fio(): String {
     val parts = listOf(name, secondName, lastName)
