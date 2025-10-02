@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+import me.centralhardware.znatoki.telegram.statistic.telegram.InlineSearchType
 import arrow.core.Either
 import arrow.core.combine
 import arrow.core.flatMap
@@ -46,6 +47,10 @@ val yesNoKeyboard = replyKeyboard {
 
 val switchToInlineKeyboard = inlineKeyboard { row { inlineQueryInCurrentChatButton("inline", "") } }
 
+fun switchToInlineKeyboard(searchType: String) = inlineKeyboard {
+    row { inlineQueryInCurrentChatButton("Поиск", "$searchType ") }
+}
+
 
 class TelegramEvent(val message: CommonMessage<*>) : Event
 class Initial() : Event
@@ -72,11 +77,12 @@ class FsmBuilder<CTX : Any>(
     fun text(
         prompt: String,
         inline: Boolean = false,
+        inlineSearchType: InlineSearchType = InlineSearchType.STUDENT,
         optionalSkip: Boolean = false,
         validator: ((String) -> Either<String, Any>) = { _ -> Either.Right(Unit) },
         apply: (ctx: CTX, value: String) -> Unit
     ) {
-        steps += Step.TextStep(prompt,steps.size,inline, optionalSkip, validator, apply)
+        steps += Step.TextStep(prompt,steps.size,inline, inlineSearchType, optionalSkip, validator, apply)
     }
 
     fun int(
@@ -190,6 +196,7 @@ sealed class Step<CTX : Any, T>(
         override val prompt: String,
         override val index: Int,
         val inline: Boolean,
+        val inlineSearchType: InlineSearchType,
         val skip: Boolean,
         val validator: (String) -> Either<String, Any>,
         override val apply: (CTX, String) -> Unit
@@ -298,7 +305,11 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                 when (step) {
                     is Step.TextStep -> {
                         if (step.inline) {
-                            sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = switchToInlineKeyboard)
+                            val prefix = when (step.inlineSearchType) {
+                                InlineSearchType.TUTOR -> "t:"
+                                InlineSearchType.STUDENT -> "s:"
+                            }
+                            sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = switchToInlineKeyboard(prefix))
                         } else {
                             sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = ReplyKeyboardRemove())
                         }

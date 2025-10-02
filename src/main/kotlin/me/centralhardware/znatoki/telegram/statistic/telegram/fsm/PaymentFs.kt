@@ -22,6 +22,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
+import me.centralhardware.znatoki.telegram.statistic.telegram.InlineSearchType
 import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
@@ -70,20 +71,21 @@ suspend fun BehaviourContext.startPaymentFsm(
     ) {
         if (canAddForOthers) {
             text(
-                "Введите telegram ID репетитора",
-                inline = false,
+                "Выберите репетитора",
+                inline = true,
+                inlineSearchType = InlineSearchType.TUTOR,
                 optionalSkip = false,
                 validator = { text ->
-                    text.toLongOrNull()?.let {
+                    text.split(" ").firstOrNull()?.toLongOrNull()?.let {
                         if (TutorMapper.findByIdOrNull(TutorId(it)) != null) {
-                            arrow.core.Either.Right(it)
+                            arrow.core.Either.Right(text)
                         } else {
                             arrow.core.Either.Left("Репетитор с таким ID не найден")
                         }
-                    } ?: arrow.core.Either.Left("Неверный формат ID")
+                    } ?: arrow.core.Either.Left("Неверный формат.")
                 }
             ) { builder, value ->
-                builder.tutorId = TutorId(value.toLong())
+                builder.tutorId = TutorId(value.split(" ")[0].toLong())
             }
         }
 

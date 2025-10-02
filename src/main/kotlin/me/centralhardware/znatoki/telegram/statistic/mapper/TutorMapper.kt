@@ -41,4 +41,17 @@ object TutorMapper {
                     mapOf("id" to id.id),
                 )
         ) { it.parseTutor() }
+
+    fun search(query: String): List<Tutor> =
+        runList(
+            queryOf(
+                """
+                SELECT *
+                FROM tutors
+                WHERE LOWER(name) LIKE LOWER(:query)
+                LIMIT 10
+                """,
+                mapOf("query" to "%$query%")
+            )
+        ) { it.parseTutor() }
 }

@@ -9,7 +9,9 @@ import dev.inmo.tgbotapi.types.InlineQueries.InlineQueryResult.InlineQueryResult
 import dev.inmo.tgbotapi.types.InlineQueries.InputMessageContent.InputTextMessageContent
 import dev.inmo.tgbotapi.types.InlineQueryId
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
+import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.entity.fio
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import org.apache.commons.lang3.StringUtils
 
@@ -20,22 +22,52 @@ val noResultsArticle =
         InputTextMessageContent("/complete"),
     )
 
+enum class InlineSearchType {
+    STUDENT,
+    TUTOR
+}
+
 fun BehaviourContext.processInline() = onBaseInlineQuery {
     val text = it.query
     val articles: MutableList<InlineQueryResultArticle> = mutableListOf()
-    if (StringUtils.isBlank(text)) {
+
+    // Определяем тип поиска по префиксу (используется для разделения контекста)
+    val (searchType, searchQuery) = when {
+        text.startsWith("t:") -> InlineSearchType.TUTOR to text.removePrefix("t:").trim()
+        text.startsWith("s:") -> InlineSearchType.STUDENT to text.removePrefix("s:").trim()
+        else -> InlineSearchType.STUDENT to text // По умолчанию ищем студентов
+    }
+
+    if (StringUtils.isBlank(searchQuery)) {
         articles.add(noResultsArticle)
     } else {
-        val searchResults = StudentService.search(text)
-        KSLog.info("Inline search for '$text': found ${searchResults.size} students")
-        searchResults.forEachIndexed { i, student ->
-            articles.add(InlineQueryResultArticle(
-                InlineQueryId(i.toString()),
-                getFio(student),
-                InputTextMessageContent(getFio(student)),
-                description = getBio(student),
-            ))
+        when (searchType) {
+            InlineSearchType.STUDENT -> {
+                val searchResults = StudentService.search(searchQuery)
+                KSLog.info("Inline search for students '$searchQuery': found ${searchResults.size} students")
+                searchResults.forEachIndexed { i, student ->
+                    articles.add(InlineQueryResultArticle(
+                        InlineQueryId(i.toString()),
+                        getStudentFio(student),
+                        InputTextMessageContent(getStudentFio(student)),
+                        description = getStudentBio(student),
+                    ))
+                }
+            }
+            InlineSearchType.TUTOR -> {
+                val searchResults = TutorMapper.search(searchQuery)
+                KSLog.info("Inline search for tutors '$searchQuery': found ${searchResults.size} tutors")
+                searchResults.forEachIndexed { i, tutor ->
+                    articles.add(InlineQueryResultArticle(
+                        InlineQueryId(i.toString()),
+                        getTutorFio(tutor),
+                        InputTextMessageContent(getTutorFio(tutor)),
+                        description = getTutorBio(tutor),
+                    ))
+                }
+            }
         }
+
         if (articles.isEmpty()) {
             articles.add(noResultsArticle)
         }
@@ -44,6 +76,8 @@ fun BehaviourContext.processInline() = onBaseInlineQuery {
     answerInlineQuery(it, results = articles, isPersonal = true, cachedTime = 0)
 }
 
-private fun getFio(student: Student): String = "${student.id?.id} ${student.fio()}"
+private fun getStudentFio(student: Student): String = "${student.id?.id} ${student.fio()}"
+private fun getStudentBio(student: Student): String = "${student.schoolClass?.value?: ""} класс"
 
-private fun getBio(student: Student): String = "${student.schoolClass?.value?: ""} класс"
+private fun getTutorFio(tutor: Tutor): String = "${tutor.id?.id} ${tutor.name}"
+private fun getTutorBio(tutor: Tutor): String = "Репетитор"
