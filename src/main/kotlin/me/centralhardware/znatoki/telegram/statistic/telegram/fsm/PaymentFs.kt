@@ -27,19 +27,28 @@ import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 
-private suspend fun BehaviourContext.sendLog(payment: Payment, paymentId: PaymentId) {
+private suspend fun BehaviourContext.sendLog(
+    payment: Payment,
+    paymentId: PaymentId,
+    addedBy: TutorId? = null
+) {
     val keyboard = inlineKeyboard {
         row { dataButton("Удалить", "paymentDelete-${paymentId.id}") }
     }
-    val text =
-        """
-        #оплата
-        Время: ${payment.dateTime.formatDateTime()}
-        Клиент: ${StudentMapper.findById(payment.studentId).fio().hashtag()}
-        Предмет: ${SubjectMapper.getNameById(payment.subjectId)}
-        Оплата: ${payment.amount.amount}
-        Оплатил: ${TutorMapper.findByIdOrNull(payment.tutorId)?.name?.hashtag()}
-        """.trimIndent()
+    val text = buildString {
+        appendLine("#оплата")
+        appendLine("Время: ${payment.dateTime.formatDateTime()}")
+        appendLine("Ученик: ${StudentMapper.findById(payment.studentId).fio().hashtag()}")
+        appendLine("Предмет: ${SubjectMapper.getNameById(payment.subjectId)}")
+        appendLine("Сумма: ${payment.amount.amount}")
+        val tutorName = TutorMapper.findByIdOrNull(payment.tutorId)?.name?.hashtag()
+        if (addedBy != null && addedBy != payment.tutorId) {
+            val addedByName = TutorMapper.findByIdOrNull(addedBy)?.name?.hashtag()
+            append("Оплату принял: $tutorName (внесено $addedByName)")
+        } else {
+            append("Оплату принял: $tutorName")
+        }
+    }.trimEnd()
     sendActionUploadPhoto(Config.logChat())
     sendPhoto(
         Config.logChat(),
@@ -125,11 +134,12 @@ suspend fun BehaviourContext.startPaymentFsm(
                 """.trimIndent()
             },
             {
+                val addedBy = message.tutorId()
                 if (it.tutorId == null) {
-                    it.tutorId = message.tutorId()
+                    it.tutorId = addedBy
                 }
                 val payment = it.build()
-                sendLog(payment, PaymentMapper.insert(payment))
+                sendLog(payment, PaymentMapper.insert(payment), addedBy)
                 sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
             },
             {
