@@ -81,7 +81,7 @@ suspend fun main() {
             val userCommands = mutableListOf<BotCommand>()
             if (user.hasTimePermission()) {
                 userCommands.apply {
-                    add(BotCommand("addtime", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
+                    add(BotCommand("addsubject", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
                 }
             }
             if (user.hasPaymentPermission()) {
@@ -101,7 +101,7 @@ suspend fun main() {
             }
             if (user.hasClientPermission()) {
                 userCommands.apply {
-                    add(BotCommand("addpupil", "Добавить ученика"))
+                    add(BotCommand("addstudent", "Добавить ученика"))
                 }
             }
             if (user.hasReadRight()) {

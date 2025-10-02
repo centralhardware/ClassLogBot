@@ -7,7 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startTimeFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
 
-fun BehaviourContext.addSubjectCommand() = onCommand(Regex("addTime|addtime")) {
+fun BehaviourContext.addSubjectCommand() = onCommand(Regex("addSubject|addsubject")) {
     if (!ensureNoActiveFsm(it.userId())) {
         return@onCommand
     }

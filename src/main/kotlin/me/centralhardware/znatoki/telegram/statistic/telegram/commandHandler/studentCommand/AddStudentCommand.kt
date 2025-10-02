@@ -7,7 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.startClientFsm
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.ensureNoActiveFsm
 
-fun BehaviourContext.addStudentCommand() = onCommand(Regex("addPupil|addpupil")) {
+fun BehaviourContext.addStudentCommand() = onCommand(Regex("addStudent|addstudent")) {
     if (!ensureNoActiveFsm(it.userId())) {
         return@onCommand
     }
