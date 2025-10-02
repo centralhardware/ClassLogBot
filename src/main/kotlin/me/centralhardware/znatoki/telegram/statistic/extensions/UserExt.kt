@@ -26,3 +26,6 @@ fun Tutor?.hasExtraHalfHour(): Boolean =
 
 fun Tutor?.canAddPaymentForOthers(): Boolean =
     this?.permissions?.containsAny(Permissions.ADD_PAYMENT_FOR_OTHERS, Permissions.ADMIN) == true
+
+fun Tutor?.canAddTimeForOthers(): Boolean =
+    this?.permissions?.containsAny(Permissions.ADD_TIME_FOR_OTHERS, Permissions.ADMIN) == true

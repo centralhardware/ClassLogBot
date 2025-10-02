@@ -16,21 +16,30 @@ import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toAmount
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentIds
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
+import me.centralhardware.znatoki.telegram.statistic.telegram.InlineSearchType
 import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
+import me.centralhardware.znatoki.telegram.statistic.validateTutor
 import ru.nsk.kstatemachine.statemachine.StateMachine
 
-suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>): StateMachine {
+suspend fun BehaviourContext.startTimeFsm(
+    message: CommonMessage<MessageContent>,
+    canAddForOthers: Boolean = false
+): StateMachine {
     val builder = ServiceBuilder().apply {
-        tutorId = message.tutorId()
+        if (!canAddForOthers) {
+            tutorId = message.tutorId()
+        }
         if (data.user.subjects.size == 1) subjectId = data.user.subjects.first()
     }
 
@@ -39,6 +48,18 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
         ctx = builder,
         msg = message
     ) {
+        if (canAddForOthers) {
+            text(
+                prompt = "Выберите репетитора",
+                inline = true,
+                inlineSearchType = InlineSearchType.TUTOR,
+                optionalSkip = false,
+                validator = { it.validateTutor() }
+            ) { ctx, value ->
+                ctx.tutorId = TutorId(value.split(" ")[0].toLong())
+            }
+        }
+
         if (data.user.subjects.size != 1) {
             val options = data.user.subjects.map { SubjectMapper.getNameById(it) }
             enum(
@@ -84,9 +105,10 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
             },
             onSave = { ctx ->
                 ctx.id = LessonId.random()
+                val addedBy = message.tutorId()
                 val services = ctx.build()
                 services.forEach { LessonMapper.insert(it) }
-                sendLog(services, message.userId())
+                sendLog(services, message.userId(), addedBy)
 
                 val allowForceGroup = data.user.hasForceGroup()
                 val allowExtraHalf = data.user.hasExtraHalfHour()
@@ -140,7 +162,7 @@ suspend fun BehaviourContext.startTimeFsm(message: CommonMessage<MessageContent>
     }
 }
 
-suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long) {
+suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long, addedBy: TutorId? = null) {
     val service = lessons.first()
     val keyboard = inlineKeyboard {
         row { dataButton("Удалить", "timeDelete-${service.id.id}") }
@@ -156,7 +178,13 @@ suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long) {
             "ученик: " + lessons.toStudentIds()
                 .joinToString(", ") { "#${StudentMapper.getFioById(it).replace(" ", "_")}" })
         appendLine("Стоимость: ${service.amount}")
-        appendLine("Преподаватель: ${data.user.name.hashtag()}")
+        val tutorName = TutorMapper.findByIdOrNull(service.tutorId)?.name?.hashtag()
+        if (addedBy != null && addedBy != service.tutorId) {
+            val addedByName = TutorMapper.findByIdOrNull(addedBy)?.name?.hashtag()
+            append("Преподаватель: $tutorName (внесено $addedByName)")
+        } else {
+            append("Преподаватель: $tutorName")
+        }
     }.trimIndent()
 
     sendPhoto(

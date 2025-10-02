@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.canAddPaymentForOthers
+import me.centralhardware.znatoki.telegram.statistic.extensions.canAddTimeForOthers
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
@@ -34,6 +35,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.sta
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentForOtherCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addSubjectCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addTimeForOtherCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
@@ -92,6 +94,11 @@ suspend fun main() {
                     add(BotCommand("addpaymentforother", "Добавить оплату за другого репетитора"))
                 }
             }
+            if (user.canAddTimeForOthers()) {
+                userCommands.apply {
+                    add(BotCommand("addtimeforother", "Добавить занятие за другого репетитора"))
+                }
+            }
             if (user.hasClientPermission()) {
                 userCommands.apply {
                     add(BotCommand("addpupil", "Добавить ученика"))
@@ -126,6 +133,10 @@ suspend fun main() {
 
         initContext({it.canAddPaymentForOthers()}) {
             addPaymentForOtherCommand()
+        }
+
+        initContext({it.canAddTimeForOthers()}) {
+            addTimeForOtherCommand()
         }
 
         initContext({it.hasTimePermission()}) {

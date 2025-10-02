@@ -11,9 +11,11 @@ import dev.inmo.tgbotapi.types.message.content.TextContent
 import me.centralhardware.znatoki.telegram.statistic.entity.Amount
 import me.centralhardware.znatoki.telegram.statistic.entity.PhoneNumber
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.extensions.parseDate
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import org.apache.commons.lang3.StringUtils
 import java.time.LocalDate
 import kotlin.collections.contains
@@ -24,6 +26,15 @@ fun String.validateFio(): Either<String, StudentId> =
     } else {
         Either.Left("ФИО не найдено")
     }
+
+fun String.validateTutor(): Either<String, String> =
+    split(" ").firstOrNull()?.toLongOrNull()?.let {
+        if (TutorMapper.findByIdOrNull(TutorId(it)) != null) {
+            Either.Right(this)
+        } else {
+            Either.Left("Репетитор с таким ID не найден")
+        }
+    } ?: Either.Left("Неверный формат.")
 
 fun Int?.validateAmount(): Either<String, Unit> {
     return if (Amount.validate(this)) {

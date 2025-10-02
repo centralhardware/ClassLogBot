@@ -8,5 +8,6 @@ enum class Permissions {
     ADMIN,
     FORCE_GROUP,
     EXTRA_HALF_HOUR,
-    ADD_PAYMENT_FOR_OTHERS
+    ADD_PAYMENT_FOR_OTHERS,
+    ADD_TIME_FOR_OTHERS
 }

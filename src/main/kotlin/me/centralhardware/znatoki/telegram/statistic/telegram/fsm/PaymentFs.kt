@@ -26,6 +26,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.InlineSearchType
 import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
+import me.centralhardware.znatoki.telegram.statistic.validateTutor
 
 private suspend fun BehaviourContext.sendLog(
     payment: Payment,
@@ -84,15 +85,7 @@ suspend fun BehaviourContext.startPaymentFsm(
                 inline = true,
                 inlineSearchType = InlineSearchType.TUTOR,
                 optionalSkip = false,
-                validator = { text ->
-                    text.split(" ").firstOrNull()?.toLongOrNull()?.let {
-                        if (TutorMapper.findByIdOrNull(TutorId(it)) != null) {
-                            arrow.core.Either.Right(text)
-                        } else {
-                            arrow.core.Either.Left("Репетитор с таким ID не найден")
-                        }
-                    } ?: arrow.core.Either.Left("Неверный формат.")
-                }
+                validator = { it.validateTutor() }
             ) { builder, value ->
                 builder.tutorId = TutorId(value.split(" ")[0].toLong())
             }
