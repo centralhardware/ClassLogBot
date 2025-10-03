@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчеты</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 24px;
+            color: #ffffff;
+            text-align: center;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filters {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background-color: #ffffff;
+            color: #2d3748;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-item .value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .summary-item .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f7fafc;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: #ffffff;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .filter-row {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading" class="loading">Загрузка...</div>
+
+        <div id="error-container" class="hidden"></div>
+
+        <div id="content" class="hidden">
+            <h1>📊 Отчеты</h1>
+
+            <div class="filters">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="subject">Предмет</label>
+                        <select id="subject">
+                            <option value="">Выберите предмет</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="period-type">Тип периода</label>
+                        <select id="period-type">
+                            <option value="current">Текущий месяц</option>
+                            <option value="previous">Предыдущий месяц</option>
+                            <option value="custom">Выбрать период</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row hidden" id="custom-period-row">
+                    <div class="filter-group">
+                        <label for="custom-period">Период (ГГГГ-ММ)</label>
+                        <input type="month" id="custom-period">
+                    </div>
+                </div>
+            </div>
+
+            <div id="report-container" class="hidden">
+                <div class="card">
+                    <h2 id="report-title">Отчет</h2>
+
+                    <div class="summary">
+                        <div class="summary-item">
+                            <div class="value" id="total-individual">0</div>
+                            <div class="label">Индивидуальных</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value" id="total-group">0</div>
+                            <div class="label">Групповых</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value" id="total-payments">0</div>
+                            <div class="label">Оплачено (₽)</div>
+                        </div>
+                    </div>
+
+                    <div class="tab-buttons">
+                        <button class="tab-button active" data-tab="students">Ученики</button>
+                        <button class="tab-button" data-tab="lessons">Занятия</button>
+                        <button class="tab-button" data-tab="payments">Оплаты</button>
+                    </div>
+
+                    <div id="students-tab" class="tab-content active">
+                        <table id="students-table">
+                            <thead>
+                                <tr>
+                                    <th>№</th>
+                                    <th>ФИО ученика</th>
+                                    <th>Класс</th>
+                                    <th>Индив.</th>
+                                    <th>Групп.</th>
+                                    <th>Оплата</th>
+                                    <th>Даты посещений</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="lessons-tab" class="tab-content">
+                        <table id="lessons-table">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Ученики</th>
+                                    <th>Сумма</th>
+                                    <th>Принуд. групп.</th>
+                                    <th>Полтора часа</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lessons-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="payments-tab" class="tab-content">
+                        <table id="payments-table">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Ученик</th>
+                                    <th>Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let subjectsData = [];
+        let currentReport = null;
+
+        // Initialize
+        async function init() {
+            try {
+                const response = await fetch('/api/report/subjects', {
+                    headers: {
+                        'Authorization': `tma ${tg.initData}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки списка предметов');
+                }
+
+                subjectsData = await response.json();
+                populateSubjects();
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+            } catch (error) {
+                showError('Не удалось загрузить данные: ' + error.message);
+            }
+        }
+
+        function populateSubjects() {
+            const subjectSelect = document.getElementById('subject');
+            subjectsData.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.subjectId;
+                option.textContent = subject.subjectName;
+                subjectSelect.appendChild(option);
+            });
+        }
+
+        function getPeriod() {
+            const periodType = document.getElementById('period-type').value;
+            if (periodType === 'custom') {
+                const customPeriod = document.getElementById('custom-period').value;
+                if (!customPeriod) {
+                    return null;
+                }
+                return customPeriod;
+            }
+            return periodType;
+        }
+
+        async function loadReport() {
+            const subjectId = document.getElementById('subject').value;
+            const period = getPeriod();
+
+            if (!subjectId || !period) {
+                return;
+            }
+
+            try {
+                document.getElementById('report-container').classList.add('hidden');
+                document.getElementById('loading').classList.remove('hidden');
+
+                const response = await fetch(`/api/report/${subjectId}/${period}`, {
+                    headers: {
+                        'Authorization': `tma ${tg.initData}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки отчета');
+                }
+
+                currentReport = await response.json();
+                displayReport();
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('report-container').classList.remove('hidden');
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                showError('Не удалось загрузить отчет: ' + error.message);
+            }
+        }
+
+        function displayReport() {
+            const months = {
+                'JANUARY': 'Январь',
+                'FEBRUARY': 'Февраль',
+                'MARCH': 'Март',
+                'APRIL': 'Апрель',
+                'MAY': 'Май',
+                'JUNE': 'Июнь',
+                'JULY': 'Июль',
+                'AUGUST': 'Август',
+                'SEPTEMBER': 'Сентябрь',
+                'OCTOBER': 'Октябрь',
+                'NOVEMBER': 'Ноябрь',
+                'DECEMBER': 'Декабрь'
+            };
+
+            document.getElementById('report-title').textContent =
+                `${currentReport.tutorName} - ${currentReport.subjectName} - ${months[currentReport.month]} ${currentReport.year}`;
+
+            document.getElementById('total-individual').textContent = currentReport.totalIndividual;
+            document.getElementById('total-group').textContent = currentReport.totalGroup;
+            document.getElementById('total-payments').textContent = currentReport.totalPayments;
+
+            // Students table
+            const studentsTbody = document.getElementById('students-tbody');
+            studentsTbody.innerHTML = '';
+            currentReport.students.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${student.fio}</td>
+                    <td>${student.schoolClass}</td>
+                    <td>${student.individual}</td>
+                    <td>${student.group}</td>
+                    <td>${student.payment}</td>
+                    <td>${student.dates}</td>
+                `;
+                studentsTbody.appendChild(row);
+            });
+
+            // Lessons table
+            const lessonsTbody = document.getElementById('lessons-tbody');
+            lessonsTbody.innerHTML = '';
+            currentReport.lessons.forEach(lesson => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${lesson.dateTime}</td>
+                    <td>${lesson.students.join(', ')}</td>
+                    <td>${lesson.amount}</td>
+                    <td>${lesson.forceGroup ? 'Да' : 'Нет'}</td>
+                    <td>${lesson.extraHalfHour ? 'Да' : 'Нет'}</td>
+                `;
+                lessonsTbody.appendChild(row);
+            });
+
+            // Payments table
+            const paymentsTbody = document.getElementById('payments-tbody');
+            paymentsTbody.innerHTML = '';
+            currentReport.payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${payment.dateTime}</td>
+                    <td>${payment.studentFio}</td>
+                    <td>${payment.amount}</td>
+                `;
+                paymentsTbody.appendChild(row);
+            });
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `<div class="error">${message}</div>`;
+            errorContainer.classList.remove('hidden');
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        // Event listeners
+        document.getElementById('subject').addEventListener('change', loadReport);
+
+        document.getElementById('period-type').addEventListener('change', () => {
+            const periodType = document.getElementById('period-type').value;
+            const customPeriodRow = document.getElementById('custom-period-row');
+
+            if (periodType === 'custom') {
+                customPeriodRow.classList.remove('hidden');
+            } else {
+                customPeriodRow.classList.add('hidden');
+                loadReport();
+            }
+        });
+
+        document.getElementById('custom-period').addEventListener('change', loadReport);
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+
+                // Remove active class from all buttons and tabs
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding tab
+                button.classList.add('active');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Start initialization
+        init();
+    </script>
+</body>
+</html>

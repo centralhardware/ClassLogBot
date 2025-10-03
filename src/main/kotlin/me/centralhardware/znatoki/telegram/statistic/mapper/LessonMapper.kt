@@ -16,6 +16,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.update
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfDay
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
+import java.time.YearMonth
 
 object LessonMapper {
 
@@ -157,6 +158,13 @@ object LessonMapper {
         subjectId,
         LocalDateTime.now().prevMonth().startOfMonth(),
         LocalDateTime.now().prevMonth().endOfMonth(),
+    )
+
+    fun getTimesByMonth(tutorId: TutorId, subjectId: SubjectId, yearMonth: YearMonth): List<Lesson> = findAllByTutorId(
+        tutorId,
+        subjectId,
+        yearMonth.atDay(1).atStartOfDay(),
+        yearMonth.atEndOfMonth().atTime(23, 59, 59),
     )
 
     fun getTutorIds(): List<TutorId> =

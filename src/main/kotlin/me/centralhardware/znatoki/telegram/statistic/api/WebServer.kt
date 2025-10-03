@@ -48,6 +48,7 @@ object WebServer {
 
             routing {
                 studentApi()
+                reportApi()
 
                 // Serve static files
                 staticResources("/", "static")

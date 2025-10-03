@@ -14,6 +14,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 import me.centralhardware.znatoki.telegram.statistic.extensions.update
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
+import java.time.YearMonth
 
 object PaymentMapper {
 
@@ -152,6 +153,13 @@ object PaymentMapper {
         subjectId,
         LocalDateTime.now().prevMonth().startOfMonth(),
         LocalDateTime.now().prevMonth().endOfMonth(),
+    )
+
+    fun getPaymentsByMonth(tutorId: TutorId, subjectId: SubjectId, yearMonth: YearMonth) = getPayments(
+        tutorId,
+        subjectId,
+        yearMonth.atDay(1).atStartOfDay(),
+        yearMonth.atEndOfMonth().atTime(23, 59, 59),
     )
 
 }
