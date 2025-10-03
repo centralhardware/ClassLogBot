@@ -110,6 +110,7 @@ fun Route.studentApi() {
             val validatedData = validateTelegramWebAppData(initData, botToken)
 
             if (validatedData == null) {
+                KSLog.warning("StudentApi.GET: Invalid Telegram authorization attempt for student $id")
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid Telegram authorization"))
                 return@get
             }
@@ -117,6 +118,7 @@ fun Route.studentApi() {
             // Получаем user из данных Telegram
             val userJson = validatedData["user"]
             if (userJson == null) {
+                KSLog.warning("StudentApi.GET: User data not found in Telegram initData for student $id")
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "User data not found"))
                 return@get
             }
@@ -133,12 +135,20 @@ fun Route.studentApi() {
             }
 
             if (userId == null) {
+                KSLog.warning("StudentApi.GET: Invalid user data in Telegram initData for student $id")
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid user data"))
                 return@get
             }
 
             val tutor = TutorMapper.findByIdOrNull(TutorId(userId))
-            if (tutor == null || !tutor.hasReadRight()) {
+            if (tutor == null) {
+                KSLog.warning("StudentApi.GET: Unknown user $userId attempted to access student $id")
+                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
+                return@get
+            }
+
+            if (!tutor.hasReadRight()) {
+                KSLog.warning("StudentApi.GET: User $userId without read rights attempted to access student $id")
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
                 return@get
             }
@@ -174,6 +184,7 @@ fun Route.studentApi() {
             val validatedData = validateTelegramWebAppData(initData, botToken)
 
             if (validatedData == null) {
+                KSLog.warning("StudentApi.PUT: Invalid Telegram authorization attempt for student $id")
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid Telegram authorization"))
                 return@put
             }
@@ -181,6 +192,7 @@ fun Route.studentApi() {
             // Получаем user из данных Telegram
             val userJson = validatedData["user"]
             if (userJson == null) {
+                KSLog.warning("StudentApi.PUT: User data not found in Telegram initData for student $id")
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "User data not found"))
                 return@put
             }
@@ -197,12 +209,20 @@ fun Route.studentApi() {
             }
 
             if (userId == null) {
+                KSLog.warning("StudentApi.PUT: Invalid user data in Telegram initData for student $id")
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid user data"))
                 return@put
             }
 
             val tutor = TutorMapper.findByIdOrNull(TutorId(userId))
-            if (tutor == null || !tutor.hasClientPermission()) {
+            if (tutor == null) {
+                KSLog.warning("StudentApi.PUT: Unknown user $userId attempted to update student $id")
+                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
+                return@put
+            }
+
+            if (!tutor.hasClientPermission()) {
+                KSLog.warning("StudentApi.PUT: User $userId without client permission attempted to update student $id")
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
                 return@put
             }
