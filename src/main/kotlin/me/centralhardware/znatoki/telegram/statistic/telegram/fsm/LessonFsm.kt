@@ -32,7 +32,7 @@ import me.centralhardware.znatoki.telegram.statistic.validateFio
 import me.centralhardware.znatoki.telegram.statistic.validateTutor
 import ru.nsk.kstatemachine.statemachine.StateMachine
 
-suspend fun BehaviourContext.startTimeFsm(
+suspend fun BehaviourContext.startLessonFsm(
     message: CommonMessage<MessageContent>,
     canAddForOthers: Boolean = false
 ): StateMachine {
@@ -106,6 +106,7 @@ suspend fun BehaviourContext.startTimeFsm(
             onSave = { ctx ->
                 ctx.id = LessonId.random()
                 val addedBy = message.tutorId()
+                ctx.addedByTutorId = if (addedBy != ctx.tutorId) addedBy else null
                 val services = ctx.build()
                 services.forEach { LessonMapper.insert(it) }
                 sendLog(services, message.userId(), addedBy)
@@ -115,7 +116,7 @@ suspend fun BehaviourContext.startTimeFsm(
                 if ((allowForceGroup && services.size == 1) || allowExtraHalf) {
                     runBlocking {
                         sendTextMessage(
-                            ctx.tutorId!!.toChatId(),
+                            message.chat,
                             "Сохранено",
                             replyMarkup = inlineKeyboard {
                                 if (allowForceGroup) row {
@@ -133,13 +134,13 @@ suspend fun BehaviourContext.startTimeFsm(
                             }
                         )
                         val tmp =
-                            sendTextMessage(ctx.tutorId!!.toChatId(), "temp", replyMarkup = ReplyKeyboardRemove())
+                            sendTextMessage(message.chat, "temp", replyMarkup = ReplyKeyboardRemove())
                         deleteMessage(tmp.chat, tmp.messageId)
                     }
                 } else {
                     runBlocking {
                         sendTextMessage(
-                            ctx.tutorId!!.toChatId(),
+                            message.chat,
                             "Сохранено",
                             replyMarkup = ReplyKeyboardRemove()
                         )

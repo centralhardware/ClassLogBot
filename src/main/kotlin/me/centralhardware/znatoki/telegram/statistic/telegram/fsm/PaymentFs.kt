@@ -131,6 +131,7 @@ suspend fun BehaviourContext.startPaymentFsm(
                 if (it.tutorId == null) {
                     it.tutorId = addedBy
                 }
+                it.addedByTutorId = if (addedBy != it.tutorId) addedBy else null
                 val payment = it.build()
                 sendLog(payment, PaymentMapper.insert(payment), addedBy)
                 sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())

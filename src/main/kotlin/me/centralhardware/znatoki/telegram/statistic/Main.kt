@@ -34,8 +34,8 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.res
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.startCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentForOtherCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addSubjectCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addTimeForOtherCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addLessonCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addLessonForOtherCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
@@ -81,7 +81,7 @@ suspend fun main() {
             val userCommands = mutableListOf<BotCommand>()
             if (user.hasTimePermission()) {
                 userCommands.apply {
-                    add(BotCommand("addsubject", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
+                    add(BotCommand("addlesson", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
                 }
             }
             if (user.hasPaymentPermission()) {
@@ -96,7 +96,7 @@ suspend fun main() {
             }
             if (user.canAddTimeForOthers()) {
                 userCommands.apply {
-                    add(BotCommand("addtimeforother", "Добавить занятие за другого репетитора"))
+                    add(BotCommand("addlessonforother", "Добавить занятие за другого репетитора"))
                 }
             }
             if (user.hasClientPermission()) {
@@ -136,11 +136,11 @@ suspend fun main() {
         }
 
         initContext({it.canAddTimeForOthers()}) {
-            addTimeForOtherCommand()
+            addLessonForOtherCommand()
         }
 
         initContext({it.hasTimePermission()}) {
-            addSubjectCommand()
+            addLessonCommand()
         }
 
         initContext({it.hasReadRight()}) {

@@ -27,6 +27,7 @@ class Lesson(
     val extraHalfHour: Boolean = false,
     val photoReport: String? = null,
     val deleted: Boolean = false,
+    val addedByTutorId: TutorId? = null,
 ) {
     val amount: Double
         get() = if (extraHalfHour) _amount.amount * 1.5 else _amount.amount * 1.0
@@ -45,6 +46,7 @@ fun Row.parseTime() =
         boolean("extra_half_hour"),
         stringOrNull("photo_report"),
         boolean("is_deleted"),
+        longOrNull("added_by_tutor_id")?.let { TutorId(it) }
     )
 
 class ServiceBuilder {
@@ -54,6 +56,7 @@ class ServiceBuilder {
     var amount: Amount? = null
     var studentIds: Set<StudentId> = mutableSetOf()
     var photoReport: String? = null
+    var addedByTutorId: TutorId? = null
 
     fun build(): List<Lesson> =
         studentIds.map {
@@ -64,6 +67,7 @@ class ServiceBuilder {
                 studentId = it,
                 _amount = amount!!,
                 photoReport = photoReport,
+                addedByTutorId = addedByTutorId,
             )
         }
 }

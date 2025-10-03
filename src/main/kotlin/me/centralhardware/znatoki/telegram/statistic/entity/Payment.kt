@@ -15,6 +15,7 @@ data class Payment(
     val subjectId: SubjectId,
     val deleted: Boolean = false,
     val photoReport: String? = null,
+    val addedByTutorId: TutorId? = null,
 )
 
 fun Row.parsePayment() = Payment(
@@ -25,7 +26,8 @@ fun Row.parsePayment() = Payment(
     int("amount").toAmount(),
     long("subject_id").toSubjectId(),
     boolean("is_deleted"),
-    stringOrNull("photo_report")
+    stringOrNull("photo_report"),
+    longOrNull("added_by_tutor_id")?.let { TutorId(it) }
 )
 
 class PaymentBuilder {
@@ -34,6 +36,7 @@ class PaymentBuilder {
     var amount: Amount? = null
     var subjectId: SubjectId? = null
     var photoReport: String? = null
+    var addedByTutorId: TutorId? = null
 
     fun build(): Payment =
         Payment(
@@ -42,5 +45,6 @@ class PaymentBuilder {
             amount = amount!!,
             subjectId = subjectId!!,
             photoReport = photoReport,
+            addedByTutorId = addedByTutorId,
         )
 }

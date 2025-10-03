@@ -31,7 +31,8 @@ object LessonMapper {
                     subject_id,
                     amount,
                     student_id,
-                    photo_report
+                    photo_report,
+                    added_by_tutor_id
                 ) VALUES (
                     :dateTime,
                     :updateTime,
@@ -40,7 +41,8 @@ object LessonMapper {
                     :subjectId,
                     :amount,
                     :studentId,
-                    :photo_report
+                    :photo_report,
+                    :addedByTutorId
                 )
                 """,
                 mapOf(
@@ -52,6 +54,7 @@ object LessonMapper {
                     "amount" to lesson.amount,
                     "studentId" to lesson.studentId.id,
                     "photo_report" to lesson.photoReport,
+                    "addedByTutorId" to lesson.addedByTutorId?.id,
                 ),
             )
         )
@@ -75,7 +78,8 @@ object LessonMapper {
                        l.force_group,
                        l.extra_half_hour,
                        l.photo_report,
-                       l.is_deleted
+                       l.is_deleted,
+                       l.added_by_tutor_id
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
                     AND l.subject_id = :subjectId
@@ -104,7 +108,8 @@ object LessonMapper {
                        l.force_group,
                        l.extra_half_hour,
                        l.photo_report,
-                       l.is_deleted
+                       l.is_deleted,
+                       l.added_by_tutor_id
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
                     AND l.date_time between :startDate and :endDate
@@ -128,7 +133,8 @@ object LessonMapper {
                        photo_report,
                        force_group,
                        extra_half_hour,
-                       is_deleted
+                       is_deleted,
+                       added_by_tutor_id
                 FROM lessons
                 WHERE id = :id
                 """,

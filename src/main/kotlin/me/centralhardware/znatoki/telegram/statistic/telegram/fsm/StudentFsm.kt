@@ -4,6 +4,7 @@ import arrow.core.left
 import arrow.core.right
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
@@ -106,6 +107,7 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                     }
                 ),
                 parseMode = MarkdownParseMode,
+                replyMarkup = ReplyKeyboardRemove()
             )
 
             // лог

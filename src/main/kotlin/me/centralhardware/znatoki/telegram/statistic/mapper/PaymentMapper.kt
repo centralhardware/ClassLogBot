@@ -27,14 +27,16 @@ object PaymentMapper {
                     student_id,
                     amount,
                     subject_id,
-                    photo_report
+                    photo_report,
+                    added_by_tutor_id
                 ) VALUES (
                     :dateTime,
                     :tutorId,
                     :studentId,
                     :amount,
                     :subjectId,
-                    :photo_report
+                    :photo_report,
+                    :addedByTutorId
                 ) RETURNING id
                 """,
                 mapOf(
@@ -44,6 +46,7 @@ object PaymentMapper {
                     "amount" to payment.amount.amount,
                     "subjectId" to payment.subjectId.id,
                     "photo_report" to payment.photoReport,
+                    "addedByTutorId" to payment.addedByTutorId?.id,
                 ),
             )
         ) { row -> PaymentId(row.int("id")) }!!
@@ -123,7 +126,8 @@ object PaymentMapper {
                    p.amount,
                    p.subject_id,
                    p.is_deleted,
-                   p.photo_report
+                   p.photo_report,
+                   p.added_by_tutor_id
             FROM payment p
             WHERE p.tutor_id = :tutor_id
                 AND p.subject_id = :subject_id
