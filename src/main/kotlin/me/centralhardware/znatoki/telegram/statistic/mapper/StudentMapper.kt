@@ -91,6 +91,40 @@ object StudentMapper {
         mapOf("id" to id.id),
     ))
 
+    fun update(student: Student) = update(queryOf(
+        """
+        UPDATE students
+        SET name = :name,
+            last_name = :last_name,
+            second_name = :second_name,
+            school_class = :school_class,
+            record_date = :record_date,
+            birth_date = :birth_date,
+            source = :source,
+            phone = :phone,
+            responsible_phone = :responsible_phone,
+            mother_fio = :mother_fio,
+            modify_date = :modify_date,
+            update_by = :update_by
+        WHERE id = :id
+        """,
+        mapOf(
+            "id" to student.id.id,
+            "name" to student.name,
+            "last_name" to student.lastName,
+            "second_name" to student.secondName,
+            "school_class" to student.schoolClass?.value,
+            "record_date" to student.recordDate,
+            "birth_date" to student.birthDate,
+            "source" to student.source?.title,
+            "phone" to student.phone?.value,
+            "responsible_phone" to student.responsiblePhone?.value,
+            "mother_fio" to student.motherFio,
+            "modify_date" to student.modifyDate,
+            "update_by" to student.updateBy?.id,
+        )
+    ))
+
     fun findById(id: StudentId): Student =
         runSingle(
             queryOf(

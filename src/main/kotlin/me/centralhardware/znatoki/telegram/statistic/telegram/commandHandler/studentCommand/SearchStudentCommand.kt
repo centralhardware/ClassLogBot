@@ -5,8 +5,12 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommandWithArgs
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.webAppButton
+import dev.inmo.tgbotapi.types.webapps.WebAppInfo
 import dev.inmo.tgbotapi.utils.row
+import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasClientPermission
 import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import me.centralhardware.znatoki.telegram.statistic.user
 import org.apache.commons.collections4.CollectionUtils
@@ -21,6 +25,8 @@ fun BehaviourContext.searchStudentCommand() = onCommandWithArgs("s") { message, 
     }
 
     sendMessage(message.chat, "результаты поиска")
+    val webAppUrl = "${Config.getString("WEB_APP_URL")}/edit_student.html"
+
     searchResult.forEach { client ->
         sendMessage(
             message.chat,
@@ -28,6 +34,14 @@ fun BehaviourContext.searchStudentCommand() = onCommandWithArgs("s") { message, 
             replyMarkup =
                 inlineKeyboard {
                     row { dataButton("информация", "user_info${client.id?.id}") }
+                    if (data.user.hasClientPermission()) {
+                        row {
+                            webAppButton(
+                                "Редактировать",
+                                WebAppInfo("$webAppUrl?student_id=${client.id?.id}")
+                            )
+                        }
+                    }
                     if (data.user.hasAdminPermission()) {
                         row { dataButton("удалить", "delete_user${client.id?.id}") }
                     }

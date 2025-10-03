@@ -7,6 +7,8 @@ object Config {
     private fun getEnvOrThrow(name: String): String =
         System.getenv(name) ?: System.getProperty(name) ?: throw IllegalStateException("Environment variable '$name' is required but not set")
 
+    fun getString(name: String): String = getEnvOrThrow(name)
+
     object Minio {
         val url: String         by lazy { getEnvOrThrow("MINIO_URL") }
         val bucket: String      by lazy { getEnvOrThrow("MINIO_BUCKET") }

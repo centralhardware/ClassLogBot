@@ -43,6 +43,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.stu
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.studentInfoCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
+import me.centralhardware.znatoki.telegram.statistic.api.WebServer
 import restrictAccess
 
 var BehaviourContextData.user: Tutor
@@ -65,6 +66,7 @@ suspend fun main() {
     runMigrations()
 
     StudentService.init()
+    WebServer.start()
     longPolling(
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->

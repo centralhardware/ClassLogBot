@@ -16,8 +16,16 @@ val ktgbotapiVersion = "29.0.0"
 val poiVersion = "5.4.1"
 val kstatemachineVersion = "0.34.2"
 val luceneVersion = "10.3.0"
+val ktorVersion = "3.0.3"
 
 dependencies {
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-server-cors:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation("io.ktor:ktor-server-resources:$ktorVersion")
     implementation("io.arrow-kt:arrow-core:2.1.2")
     implementation("com.github.seratch:kotliquery:1.9.1")
 
