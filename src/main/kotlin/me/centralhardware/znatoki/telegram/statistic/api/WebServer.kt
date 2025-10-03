@@ -19,7 +19,6 @@ import kotlinx.serialization.json.Json
 object WebServer {
 
     fun start(port: Int = 8080) {
-        KSLog.info("WebServer.start: Starting web server on port $port...")
         embeddedServer(Netty, port = port) {
             install(ContentNegotiation) {
                 json(Json {
@@ -54,6 +53,5 @@ object WebServer {
                 staticResources("/", "static")
             }
         }.start(wait = false)
-        KSLog.info("WebServer.start: Web server started successfully on port $port")
     }
 }

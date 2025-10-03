@@ -177,20 +177,15 @@
             }
 
             try {
-                console.log('Loading student:', studentId);
-                console.log('Telegram initData:', tg.initData);
-
                 const response = await fetch(`/api/student/${studentId}`, {
                     headers: {
                         'Authorization': `tma ${tg.initData}`
                     }
                 });
 
-                console.log('Response status:', response.status);
-
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    console.error('Error response:', errorData);
+                    console.error('Error loading student:', errorData);
                     throw new Error(errorData.error || 'Ошибка загрузки данных');
                 }
 
@@ -316,14 +311,16 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Ошибка сохранения данных');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error saving student:', errorData);
+                    throw new Error(errorData.error || 'Ошибка сохранения данных');
                 }
 
-                tg.showAlert('Данные успешно сохранены', () => {
-                    tg.close();
-                });
+                tg.MainButton.hideProgress();
+                tg.showAlert('Данные успешно сохранены');
             } catch (error) {
                 tg.MainButton.hideProgress();
+                console.error('Save error:', error);
                 tg.showAlert('Не удалось сохранить данные: ' + error.message);
             }
         }
