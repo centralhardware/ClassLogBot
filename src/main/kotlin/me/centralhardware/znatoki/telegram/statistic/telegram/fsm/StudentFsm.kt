@@ -40,7 +40,8 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
         }
 
         int(
-            "Введите класс /skip для пропуска.",
+            optionalSkip = true,
+            prompt = "Введите класс /skip для пропуска.",
             validator = {
                 if (SchoolClass.validate(it)) {
                     Unit.right()
