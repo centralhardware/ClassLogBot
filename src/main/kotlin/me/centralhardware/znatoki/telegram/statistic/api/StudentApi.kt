@@ -145,6 +145,7 @@ fun Route.studentApi() {
 
             try {
                 val student = StudentMapper.findById(id.toStudentId())
+                KSLog.info("StudentApi.GET: User $userId loaded student $id")
                 call.respond(student.toDto())
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Student not found"))
@@ -251,6 +252,7 @@ fun Route.studentApi() {
                 )
 
                 StudentMapper.update(updatedStudent)
+                KSLog.info("StudentApi.PUT: User $userId updated student $id")
                 call.respond(HttpStatusCode.OK, updatedStudent.toDto())
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Student not found"))
