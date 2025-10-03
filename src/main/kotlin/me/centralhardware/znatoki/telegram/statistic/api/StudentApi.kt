@@ -175,15 +175,30 @@ fun sendStudentEditLog(oldStudent: Student, newStudent: Student, updatedBy: Tuto
             if (oldStudent.recordDate != newStudent.recordDate) {
                 changes.add("Дата записи: ${oldStudent.recordDate ?: "не указана"} → ${newStudent.recordDate ?: "не указана"}")
             }
+            if (oldStudent.createdBy != newStudent.createdBy) {
+                val oldCreator = TutorMapper.findByIdOrNull(oldStudent.createdBy)?.name?.hashtag() ?: "Unknown"
+                val newCreator = TutorMapper.findByIdOrNull(newStudent.createdBy)?.name?.hashtag() ?: "Unknown"
+                changes.add("Создал: $oldCreator → $newCreator")
+            }
+            if (oldStudent.updateBy != newStudent.updateBy) {
+                val oldUpdater = oldStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
+                val newUpdater = newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
+                changes.add("Последний раз изменил: $oldUpdater → $newUpdater")
+            }
 
             if (changes.isEmpty()) {
                 return@runBlocking
             }
 
+            val createdByName = TutorMapper.findByIdOrNull(newStudent.createdBy)?.name?.hashtag() ?: "Unknown"
+            val updatedByName = newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
+
             val text = buildString {
                 appendLine("#редактирование_ученика")
                 appendLine("Ученик: ${newStudent.fio().hashtag()}")
                 appendLine("ID: ${newStudent.id.id}")
+                appendLine("Создан: ${newStudent.createDate} ($createdByName)")
+                newStudent.modifyDate?.let { appendLine("Изменён: $it ($updatedByName)") }
                 appendLine()
                 appendLine("Изменения:")
                 changes.forEach { appendLine("• $it") }
@@ -191,8 +206,7 @@ fun sendStudentEditLog(oldStudent: Student, newStudent: Student, updatedBy: Tuto
                 append("Изменил: $tutorName")
             }.trimEnd()
 
-            sendTextMessage(
-                bot,
+            bot.sendTextMessage(
                 me.centralhardware.znatoki.telegram.statistic.Config.logChat(),
                 text
             )

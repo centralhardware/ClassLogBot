@@ -2,8 +2,10 @@ package me.centralhardware.znatoki.telegram.statistic.entity
 
 import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
+import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatTelephone
 import me.centralhardware.znatoki.telegram.statistic.extensions.makeBold
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.regex.Pattern
@@ -86,8 +88,11 @@ class Student(
     }
 }
 
-fun Student.getInfo(subjects: List<String>) =
-    """
+fun Student.getInfo(subjects: List<String>): String {
+    val createdByName = TutorMapper.findByIdOrNull(createdBy)?.name ?: "Unknown (${createdBy.id})"
+    val updatedByName = updateBy?.let { TutorMapper.findByIdOrNull(it)?.name ?: "Unknown (${it.id})" } ?: ""
+
+    return """
     id=${id.id.makeBold()}
     ФИО: ${fio().makeBold()}
     класс=${schoolClass?.value.makeBold()}
@@ -98,11 +103,12 @@ fun Student.getInfo(subjects: List<String>) =
     телефон ответственного=${responsiblePhone?.format().makeBold()}
     ФИО матери=${motherFio?.makeBold() ?: ""}
     Предметы=${subjects.joinToString(",").makeBold()}
-    дата создания=${createDate.formatDate().makeBold()}
-    дата изменения=${modifyDate.formatDate().makeBold()}
-    создано=${createdBy.id}
-    редактировано=${updateBy?.id?:""}
+    дата создания=${createDate.formatDateTime().makeBold()}
+    создано=${createdByName.makeBold()}
+    дата изменения=${modifyDate.formatDateTime().makeBold()}
+    редактировано=${updatedByName.makeBold()}
     """.trimIndent()
+}
 
 fun Student.fio(): String {
     val parts = listOf(name, secondName, lastName)
