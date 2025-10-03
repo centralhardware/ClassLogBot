@@ -177,13 +177,21 @@
             }
 
             try {
+                console.log('Loading student:', studentId);
+                console.log('Telegram initData:', tg.initData);
+
                 const response = await fetch(`/api/student/${studentId}`, {
                     headers: {
                         'Authorization': `tma ${tg.initData}`
                     }
                 });
+
+                console.log('Response status:', response.status);
+
                 if (!response.ok) {
-                    throw new Error('Ошибка загрузки данных');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error response:', errorData);
+                    throw new Error(errorData.error || 'Ошибка загрузки данных');
                 }
 
                 const student = await response.json();
