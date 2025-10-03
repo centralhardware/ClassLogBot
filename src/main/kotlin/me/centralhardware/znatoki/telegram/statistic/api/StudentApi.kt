@@ -137,8 +137,14 @@ fun Route.studentApi() {
                 return@get
             }
 
+            KSLog.info("StudentApi.GET: User JSON: $userJson")
+
             val userId = try {
-                Json.parseToJsonElement(userJson)
+                // userJson - это URL-encoded JSON строка, нужно сначала декодировать
+                val decodedUserJson = java.net.URLDecoder.decode(userJson, "UTF-8")
+                KSLog.info("StudentApi.GET: Decoded user JSON: $decodedUserJson")
+
+                Json.parseToJsonElement(decodedUserJson)
                     .jsonObject["id"]
                     ?.jsonPrimitive?.content?.toLong()
             } catch (e: Exception) {
@@ -216,8 +222,14 @@ fun Route.studentApi() {
                 return@put
             }
 
+            KSLog.info("StudentApi.PUT: User JSON: $userJson")
+
             val userId = try {
-                Json.parseToJsonElement(userJson)
+                // userJson - это URL-encoded JSON строка, нужно сначала декодировать
+                val decodedUserJson = java.net.URLDecoder.decode(userJson, "UTF-8")
+                KSLog.info("StudentApi.PUT: Decoded user JSON: $decodedUserJson")
+
+                Json.parseToJsonElement(decodedUserJson)
                     .jsonObject["id"]
                     ?.jsonPrimitive?.content?.toLong()
             } catch (e: Exception) {
