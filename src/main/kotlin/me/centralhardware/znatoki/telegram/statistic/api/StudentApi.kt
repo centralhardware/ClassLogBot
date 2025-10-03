@@ -89,6 +89,49 @@ fun validateTelegramWebAppData(initData: String, botToken: String): Map<String, 
     }
 }
 
+// Извлечение и валидация пользователя из Telegram Web App данных
+fun extractAndValidateTelegramUser(
+    authHeader: String?,
+    studentId: Int,
+    operation: String
+): TutorId? {
+    if (authHeader == null) {
+        return null
+    }
+
+    val initData = authHeader.removePrefix("tma ")
+    val botToken = me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN")
+    val validatedData = validateTelegramWebAppData(initData, botToken)
+
+    if (validatedData == null) {
+        KSLog.warning("StudentApi.$operation: Invalid Telegram authorization attempt for student $studentId")
+        return null
+    }
+
+    val userJson = validatedData["user"]
+    if (userJson == null) {
+        KSLog.warning("StudentApi.$operation: User data not found in Telegram initData for student $studentId")
+        return null
+    }
+
+    val userId = try {
+        val decodedUserJson = java.net.URLDecoder.decode(userJson, "UTF-8")
+        Json.parseToJsonElement(decodedUserJson)
+            .jsonObject["id"]
+            ?.jsonPrimitive?.content?.toLong()
+    } catch (e: Exception) {
+        KSLog.error("StudentApi.$operation: Error parsing user ID", e)
+        null
+    }
+
+    if (userId == null) {
+        KSLog.warning("StudentApi.$operation: Invalid user data in Telegram initData for student $studentId")
+        return null
+    }
+
+    return TutorId(userId)
+}
+
 fun Route.studentApi() {
     route("/api/student") {
         get("/{id}") {
@@ -98,64 +141,33 @@ fun Route.studentApi() {
                 return@get
             }
 
-            // Проверяем авторизацию через Telegram
-            val authHeader = call.request.headers["Authorization"]
-            if (authHeader == null) {
+            val tutorId = extractAndValidateTelegramUser(
+                call.request.headers["Authorization"],
+                id,
+                "GET"
+            )
+
+            if (tutorId == null) {
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
                 return@get
             }
 
-            val initData = authHeader.removePrefix("tma ")
-            val botToken = me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN")
-            val validatedData = validateTelegramWebAppData(initData, botToken)
-
-            if (validatedData == null) {
-                KSLog.warning("StudentApi.GET: Invalid Telegram authorization attempt for student $id")
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid Telegram authorization"))
-                return@get
-            }
-
-            // Получаем user из данных Telegram
-            val userJson = validatedData["user"]
-            if (userJson == null) {
-                KSLog.warning("StudentApi.GET: User data not found in Telegram initData for student $id")
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "User data not found"))
-                return@get
-            }
-
-            val userId = try {
-                // userJson - это URL-encoded JSON строка, нужно сначала декодировать
-                val decodedUserJson = java.net.URLDecoder.decode(userJson, "UTF-8")
-                Json.parseToJsonElement(decodedUserJson)
-                    .jsonObject["id"]
-                    ?.jsonPrimitive?.content?.toLong()
-            } catch (e: Exception) {
-                KSLog.error("StudentApi.GET: Error parsing user ID", e)
-                null
-            }
-
-            if (userId == null) {
-                KSLog.warning("StudentApi.GET: Invalid user data in Telegram initData for student $id")
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid user data"))
-                return@get
-            }
-
-            val tutor = TutorMapper.findByIdOrNull(TutorId(userId))
+            val tutor = TutorMapper.findByIdOrNull(tutorId)
             if (tutor == null) {
-                KSLog.warning("StudentApi.GET: Unknown user $userId attempted to access student $id")
+                KSLog.warning("StudentApi.GET: Unknown user ${tutorId.id} attempted to access student $id")
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
                 return@get
             }
 
             if (!tutor.hasReadRight()) {
-                KSLog.warning("StudentApi.GET: User $userId without read rights attempted to access student $id")
+                KSLog.warning("StudentApi.GET: User ${tutorId.id} without read rights attempted to access student $id")
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
                 return@get
             }
 
             try {
                 val student = StudentMapper.findById(id.toStudentId())
-                KSLog.info("StudentApi.GET: User $userId loaded student $id")
+                KSLog.info("StudentApi.GET: User ${tutorId.id} loaded student $id")
                 call.respond(student.toDto())
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Student not found"))
@@ -172,57 +184,26 @@ fun Route.studentApi() {
                 return@put
             }
 
-            // Проверяем авторизацию через Telegram
-            val authHeader = call.request.headers["Authorization"]
-            if (authHeader == null) {
+            val tutorId = extractAndValidateTelegramUser(
+                call.request.headers["Authorization"],
+                id,
+                "PUT"
+            )
+
+            if (tutorId == null) {
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
                 return@put
             }
 
-            val initData = authHeader.removePrefix("tma ")
-            val botToken = me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN")
-            val validatedData = validateTelegramWebAppData(initData, botToken)
-
-            if (validatedData == null) {
-                KSLog.warning("StudentApi.PUT: Invalid Telegram authorization attempt for student $id")
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid Telegram authorization"))
-                return@put
-            }
-
-            // Получаем user из данных Telegram
-            val userJson = validatedData["user"]
-            if (userJson == null) {
-                KSLog.warning("StudentApi.PUT: User data not found in Telegram initData for student $id")
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "User data not found"))
-                return@put
-            }
-
-            val userId = try {
-                // userJson - это URL-encoded JSON строка, нужно сначала декодировать
-                val decodedUserJson = java.net.URLDecoder.decode(userJson, "UTF-8")
-                Json.parseToJsonElement(decodedUserJson)
-                    .jsonObject["id"]
-                    ?.jsonPrimitive?.content?.toLong()
-            } catch (e: Exception) {
-                KSLog.error("StudentApi.PUT: Error parsing user ID", e)
-                null
-            }
-
-            if (userId == null) {
-                KSLog.warning("StudentApi.PUT: Invalid user data in Telegram initData for student $id")
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid user data"))
-                return@put
-            }
-
-            val tutor = TutorMapper.findByIdOrNull(TutorId(userId))
+            val tutor = TutorMapper.findByIdOrNull(tutorId)
             if (tutor == null) {
-                KSLog.warning("StudentApi.PUT: Unknown user $userId attempted to update student $id")
+                KSLog.warning("StudentApi.PUT: Unknown user ${tutorId.id} attempted to update student $id")
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
                 return@put
             }
 
             if (!tutor.hasClientPermission()) {
-                KSLog.warning("StudentApi.PUT: User $userId without client permission attempted to update student $id")
+                KSLog.warning("StudentApi.PUT: User ${tutorId.id} without client permission attempted to update student $id")
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
                 return@put
             }
@@ -268,11 +249,11 @@ fun Route.studentApi() {
                     createDate = existingStudent.createDate,
                     modifyDate = java.time.LocalDateTime.now(),
                     createdBy = existingStudent.createdBy,
-                    updateBy = TutorId(userId)
+                    updateBy = tutorId
                 )
 
                 StudentMapper.update(updatedStudent)
-                KSLog.info("StudentApi.PUT: User $userId updated student $id")
+                KSLog.info("StudentApi.PUT: User ${tutorId.id} updated student $id")
                 call.respond(HttpStatusCode.OK, updatedStudent.toDto())
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Student not found"))
