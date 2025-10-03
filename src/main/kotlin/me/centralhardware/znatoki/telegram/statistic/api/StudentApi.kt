@@ -4,6 +4,8 @@ import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.warning
+import dev.inmo.tgbotapi.bot.ktor.telegramBot
+import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.utils.TelegramAPIUrlsKeeper
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,9 +19,11 @@ import kotlinx.serialization.json.jsonPrimitive
 import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasClientPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasReadRight
+import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import java.time.LocalDate
+import kotlinx.coroutines.runBlocking
 
 @Serializable
 data class StudentDto(
@@ -130,6 +134,72 @@ fun extractAndValidateTelegramUser(
     }
 
     return TutorId(userId)
+}
+
+// Отправка лога об изменении студента
+fun sendStudentEditLog(oldStudent: Student, newStudent: Student, updatedBy: TutorId) {
+    runBlocking {
+        try {
+            val bot = telegramBot(me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN"))
+            val tutorName = TutorMapper.findByIdOrNull(updatedBy)?.name?.hashtag() ?: "Unknown"
+
+            val changes = mutableListOf<String>()
+
+            if (oldStudent.name != newStudent.name) {
+                changes.add("Имя: ${oldStudent.name} → ${newStudent.name}")
+            }
+            if (oldStudent.secondName != newStudent.secondName) {
+                changes.add("Фамилия: ${oldStudent.secondName} → ${newStudent.secondName}")
+            }
+            if (oldStudent.lastName != newStudent.lastName) {
+                changes.add("Отчество: ${oldStudent.lastName} → ${newStudent.lastName}")
+            }
+            if (oldStudent.schoolClass != newStudent.schoolClass) {
+                changes.add("Класс: ${oldStudent.schoolClass?.value ?: "не указан"} → ${newStudent.schoolClass?.value ?: "не указан"}")
+            }
+            if (oldStudent.birthDate != newStudent.birthDate) {
+                changes.add("Дата рождения: ${oldStudent.birthDate ?: "не указана"} → ${newStudent.birthDate ?: "не указана"}")
+            }
+            if (oldStudent.source != newStudent.source) {
+                changes.add("Источник: ${oldStudent.source?.title ?: "не указан"} → ${newStudent.source?.title ?: "не указан"}")
+            }
+            if (oldStudent.phone != newStudent.phone) {
+                changes.add("Телефон: ${oldStudent.phone?.value ?: "не указан"} → ${newStudent.phone?.value ?: "не указан"}")
+            }
+            if (oldStudent.responsiblePhone != newStudent.responsiblePhone) {
+                changes.add("Телефон ответственного: ${oldStudent.responsiblePhone?.value ?: "не указан"} → ${newStudent.responsiblePhone?.value ?: "не указан"}")
+            }
+            if (oldStudent.motherFio != newStudent.motherFio) {
+                changes.add("ФИО матери: ${oldStudent.motherFio ?: "не указано"} → ${newStudent.motherFio ?: "не указано"}")
+            }
+            if (oldStudent.recordDate != newStudent.recordDate) {
+                changes.add("Дата записи: ${oldStudent.recordDate ?: "не указана"} → ${newStudent.recordDate ?: "не указана"}")
+            }
+
+            if (changes.isEmpty()) {
+                return@runBlocking
+            }
+
+            val text = buildString {
+                appendLine("#редактирование_ученика")
+                appendLine("Ученик: ${newStudent.fio().hashtag()}")
+                appendLine("ID: ${newStudent.id.id}")
+                appendLine()
+                appendLine("Изменения:")
+                changes.forEach { appendLine("• $it") }
+                appendLine()
+                append("Изменил: $tutorName")
+            }.trimEnd()
+
+            sendTextMessage(
+                bot,
+                me.centralhardware.znatoki.telegram.statistic.Config.logChat(),
+                text
+            )
+        } catch (e: Exception) {
+            KSLog.error("sendStudentEditLog: Error sending log", e)
+        }
+    }
 }
 
 fun Route.studentApi() {
@@ -254,6 +324,7 @@ fun Route.studentApi() {
 
                 StudentMapper.update(updatedStudent)
                 KSLog.info("StudentApi.PUT: User ${tutorId.id} updated student $id")
+                sendStudentEditLog(existingStudent, updatedStudent, tutorId)
                 call.respond(HttpStatusCode.OK, updatedStudent.toDto())
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Student not found"))
