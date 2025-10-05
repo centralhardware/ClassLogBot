@@ -305,18 +305,81 @@
                 flex-direction: column;
             }
 
-            table {
-                font-size: 12px;
-                min-width: 600px;
-            }
-
-            th, td {
-                padding: 8px 4px;
-                font-size: 12px;
-            }
-
             .summary {
                 grid-template-columns: 1fr;
+            }
+
+            /* Hide table headers on mobile */
+            table thead {
+                display: none;
+            }
+
+            /* Make table rows display as cards */
+            table, table tbody, table tr, table td {
+                display: block;
+                width: 100%;
+            }
+
+            table tr {
+                margin-bottom: 16px;
+                background: white;
+                border-radius: 12px;
+                padding: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                border: 1px solid #e2e8f0;
+            }
+
+            table td {
+                text-align: left !important;
+                padding: 8px 0 !important;
+                border: none !important;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            /* Add labels before data on mobile */
+            table td:before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            /* Special styling for student rows */
+            .student-row {
+                position: relative;
+            }
+
+            .student-row.expanded {
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+                margin-bottom: 0;
+            }
+
+            .dates-row {
+                margin-top: 0;
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+                border-top: 2px solid #667eea;
+            }
+
+            .dates-row.expanded {
+                display: block;
+            }
+
+            .dates-list {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .expand-icon {
+                position: absolute;
+                right: 12px;
+                top: 12px;
+            }
+
+            .table-wrapper {
+                overflow-x: visible;
             }
         }
     </style>
@@ -813,13 +876,13 @@
                 }
 
                 studentRow.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${student.fio}</td>
-                    <td>${student.schoolClass}</td>
-                    <td>${student.individual}</td>
-                    <td>${student.group}</td>
-                    <td>${student.payment}</td>
-                    <td>${datesDisplay}</td>
+                    <td data-label="№">${index + 1}</td>
+                    <td data-label="ФИО">${student.fio}</td>
+                    <td data-label="Класс">${student.schoolClass}</td>
+                    <td data-label="Индив.">${student.individual}</td>
+                    <td data-label="Групп.">${student.group}</td>
+                    <td data-label="Оплата">${student.payment}</td>
+                    <td data-label="Даты">${datesDisplay}</td>
                 `;
                 studentsTbody.appendChild(studentRow);
 
@@ -845,11 +908,11 @@
             currentReport.lessons.forEach(lesson => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${lesson.dateTime}</td>
-                    <td>${lesson.students.join(', ')}</td>
-                    <td>${lesson.amount}</td>
-                    <td>${lesson.forceGroup ? 'Да' : 'Нет'}</td>
-                    <td>${lesson.extraHalfHour ? 'Да' : 'Нет'}</td>
+                    <td data-label="Дата">${lesson.dateTime}</td>
+                    <td data-label="Ученики">${lesson.students.join(', ')}</td>
+                    <td data-label="Сумма">${lesson.amount}</td>
+                    <td data-label="Принуд. групп.">${lesson.forceGroup ? 'Да' : 'Нет'}</td>
+                    <td data-label="Полтора часа">${lesson.extraHalfHour ? 'Да' : 'Нет'}</td>
                 `;
                 lessonsTbody.appendChild(row);
             });
@@ -860,9 +923,9 @@
             currentReport.payments.forEach(payment => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${payment.dateTime}</td>
-                    <td>${payment.studentFio}</td>
-                    <td>${payment.amount}</td>
+                    <td data-label="Дата">${payment.dateTime}</td>
+                    <td data-label="Ученик">${payment.studentFio}</td>
+                    <td data-label="Сумма">${payment.amount}</td>
                 `;
                 paymentsTbody.appendChild(row);
             });
@@ -1027,12 +1090,12 @@
                 currentPeriod.subjectStats.forEach(subject => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${subject.subjectName}</td>
-                        <td>${subject.lessons}</td>
-                        <td>${subject.individual}</td>
-                        <td>${subject.group}</td>
-                        <td>${subject.payments}</td>
-                        <td>${subject.students}</td>
+                        <td data-label="Предмет">${subject.subjectName}</td>
+                        <td data-label="Занятий">${subject.lessons}</td>
+                        <td data-label="Индив.">${subject.individual}</td>
+                        <td data-label="Групп.">${subject.group}</td>
+                        <td data-label="Оплата">${subject.payments}</td>
+                        <td data-label="Учеников">${subject.students}</td>
                     `;
                     currentSubjectsTbody.appendChild(row);
                 });
@@ -1064,12 +1127,12 @@
                 previousPeriod.subjectStats.forEach(subject => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${subject.subjectName}</td>
-                        <td>${subject.lessons}</td>
-                        <td>${subject.individual}</td>
-                        <td>${subject.group}</td>
-                        <td>${subject.payments}</td>
-                        <td>${subject.students}</td>
+                        <td data-label="Предмет">${subject.subjectName}</td>
+                        <td data-label="Занятий">${subject.lessons}</td>
+                        <td data-label="Индив.">${subject.individual}</td>
+                        <td data-label="Групп.">${subject.group}</td>
+                        <td data-label="Оплата">${subject.payments}</td>
+                        <td data-label="Учеников">${subject.students}</td>
                     `;
                     previousSubjectsTbody.appendChild(row);
                 });
