@@ -579,12 +579,26 @@
 
         function populateSubjects() {
             const subjectSelect = document.getElementById('subject');
+            const subjectFilterGroup = subjectSelect.closest('.filter-group');
+
             subjectsData.forEach(subject => {
                 const option = document.createElement('option');
                 option.value = subject.subjectId;
                 option.textContent = subject.subjectName;
                 subjectSelect.appendChild(option);
             });
+
+            // If only one subject, hide selector and auto-select it
+            if (subjectsData.length === 1) {
+                subjectFilterGroup.style.display = 'none';
+                subjectSelect.value = subjectsData[0].subjectId;
+
+                // Trigger change event to load data
+                const event = new Event('change');
+                subjectSelect.dispatchEvent(event);
+            } else {
+                subjectFilterGroup.style.display = 'block';
+            }
         }
 
         function populatePeriods() {
