@@ -484,9 +484,7 @@
                                 <tr>
                                     <th>Дата</th>
                                     <th>Ученики</th>
-                                    <th>Сумма</th>
-                                    <th>Принуд. групп.</th>
-                                    <th>Полтора часа</th>
+                                    <th>Детали</th>
                                 </tr>
                             </thead>
                             <tbody id="lessons-tbody">
@@ -907,12 +905,17 @@
             lessonsTbody.innerHTML = '';
             currentReport.lessons.forEach(lesson => {
                 const row = document.createElement('tr');
+
+                // Build details string
+                const details = [];
+                details.push(`${lesson.amount} ₽`);
+                if (lesson.forceGroup) details.push('Принуд. групп.');
+                if (lesson.extraHalfHour) details.push('1.5 часа');
+
                 row.innerHTML = `
                     <td data-label="Дата">${lesson.dateTime}</td>
                     <td data-label="Ученики">${lesson.students.join(', ')}</td>
-                    <td data-label="Сумма">${lesson.amount}</td>
-                    <td data-label="Принуд. групп.">${lesson.forceGroup ? 'Да' : 'Нет'}</td>
-                    <td data-label="Полтора часа">${lesson.extraHalfHour ? 'Да' : 'Нет'}</td>
+                    <td data-label="Детали">${details.join(' • ')}</td>
                 `;
                 lessonsTbody.appendChild(row);
             });
