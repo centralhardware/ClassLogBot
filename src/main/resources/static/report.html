@@ -275,6 +275,14 @@
 
             <div id="reports-section" class="section-content">
                 <div class="filters">
+                <div class="filter-row" id="tutor-select-row" style="display: none;">
+                    <div class="filter-group">
+                        <label for="tutor-select">Преподаватель</label>
+                        <select id="tutor-select">
+                            <option value="">Выберите преподавателя</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="filter-row">
                     <div class="filter-group">
                         <label for="subject">Предмет</label>
@@ -376,6 +384,14 @@
 
             <div id="aggregated-section" class="section-content hidden">
                 <div class="filters">
+                    <div class="filter-row" id="agg-tutor-select-row" style="display: none;">
+                        <div class="filter-group">
+                            <label for="agg-tutor-select">Преподаватель</label>
+                            <select id="agg-tutor-select">
+                                <option value="">Выберите преподавателя</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="filter-row">
                         <div class="filter-group">
                             <label for="agg-period-type">Период</label>
@@ -521,12 +537,33 @@
         tg.expand();
 
         let subjectsData = [];
+        let tutorsData = [];
         let currentReport = null;
         let currentAggStats = null;
+        let isAdmin = false;
 
         // Initialize
         async function init() {
             try {
+                // Check if user is admin by trying to load tutors
+                try {
+                    const tutorsResponse = await fetch('/api/report/tutors', {
+                        headers: {
+                            'Authorization': `tma ${tg.initData}`
+                        }
+                    });
+
+                    if (tutorsResponse.ok) {
+                        tutorsData = await tutorsResponse.json();
+                        isAdmin = true;
+                        document.getElementById('tutor-select-row').style.display = 'flex';
+                        document.getElementById('agg-tutor-select-row').style.display = 'flex';
+                        populateTutors();
+                    }
+                } catch (e) {
+                    // Not admin, continue normally
+                }
+
                 const response = await fetch('/api/report/subjects', {
                     headers: {
                         'Authorization': `tma ${tg.initData}`
@@ -546,6 +583,23 @@
             } catch (error) {
                 showError('Не удалось загрузить данные: ' + error.message);
             }
+        }
+
+        function populateTutors() {
+            const tutorSelect = document.getElementById('tutor-select');
+            const aggTutorSelect = document.getElementById('agg-tutor-select');
+
+            tutorsData.forEach(tutor => {
+                const option1 = document.createElement('option');
+                option1.value = tutor.tutorId;
+                option1.textContent = tutor.tutorName;
+                tutorSelect.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = tutor.tutorId;
+                option2.textContent = tutor.tutorName;
+                aggTutorSelect.appendChild(option2);
+            });
         }
 
         function populateSubjects() {
@@ -605,7 +659,16 @@
                 document.getElementById('report-container').classList.add('hidden');
                 document.getElementById('loading').classList.remove('hidden');
 
-                const response = await fetch(`/api/report/${subjectId}/${period}`, {
+                // Build URL with optional tutorId parameter for admins
+                let url = `/api/report/${subjectId}/${period}`;
+                if (isAdmin) {
+                    const tutorId = document.getElementById('tutor-select').value;
+                    if (tutorId) {
+                        url += `?tutorId=${tutorId}`;
+                    }
+                }
+
+                const response = await fetch(url, {
                     headers: {
                         'Authorization': `tma ${tg.initData}`
                     }
@@ -706,6 +769,34 @@
         document.getElementById('subject').addEventListener('change', loadReport);
         document.getElementById('period-select').addEventListener('change', loadReport);
 
+        // Tutor selection for detailed reports
+        document.getElementById('tutor-select').addEventListener('change', async () => {
+            const tutorId = document.getElementById('tutor-select').value;
+
+            if (!tutorId) {
+                subjectsData = [];
+                document.getElementById('subject').innerHTML = '<option value="">Выберите предмет</option>';
+                return;
+            }
+
+            // Load subjects for selected tutor
+            try {
+                const response = await fetch(`/api/report/subjects?tutorId=${tutorId}`, {
+                    headers: {
+                        'Authorization': `tma ${tg.initData}`
+                    }
+                });
+
+                if (response.ok) {
+                    subjectsData = await response.json();
+                    document.getElementById('subject').innerHTML = '<option value="">Выберите предмет</option>';
+                    populateSubjects();
+                }
+            } catch (error) {
+                showError('Не удалось загрузить предметы: ' + error.message);
+            }
+        });
+
         // Aggregated stats functions
         async function loadAggregatedStats() {
             const period = document.getElementById('agg-period-type').value;
@@ -718,7 +809,16 @@
                 document.getElementById('agg-stats-container').classList.add('hidden');
                 document.getElementById('loading').classList.remove('hidden');
 
-                const response = await fetch(`/api/report/aggregated/${period}`, {
+                // Build URL with optional tutorId parameter for admins
+                let url = `/api/report/aggregated/${period}`;
+                if (isAdmin) {
+                    const tutorId = document.getElementById('agg-tutor-select').value;
+                    if (tutorId) {
+                        url += `?tutorId=${tutorId}`;
+                    }
+                }
+
+                const response = await fetch(url, {
                     headers: {
                         'Authorization': `tma ${tg.initData}`
                     }
@@ -848,6 +948,9 @@
 
         // Event listeners for aggregated stats
         document.getElementById('agg-period-type').addEventListener('change', loadAggregatedStats);
+
+        // Tutor selection for aggregated stats
+        document.getElementById('agg-tutor-select').addEventListener('change', loadAggregatedStats);
 
         // Main tab switching
         document.querySelectorAll('.tab-button[data-tab]').forEach(button => {
