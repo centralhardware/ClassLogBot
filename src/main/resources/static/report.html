@@ -489,22 +489,24 @@
                             </div>
                         </div>
 
-                        <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
-                        <div class="table-wrapper">
-                        <table id="agg-current-subjects-table">
-                            <thead>
-                                <tr>
-                                    <th>Предмет</th>
-                                    <th>Занятий</th>
-                                    <th>Индив.</th>
-                                    <th>Групп.</th>
-                                    <th>Оплата</th>
-                                    <th>Учеников</th>
-                                </tr>
-                            </thead>
-                            <tbody id="agg-current-subjects-tbody">
-                            </tbody>
-                        </table>
+                        <div id="agg-current-subjects-section">
+                            <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
+                            <div class="table-wrapper">
+                            <table id="agg-current-subjects-table">
+                                <thead>
+                                    <tr>
+                                        <th>Предмет</th>
+                                        <th>Занятий</th>
+                                        <th>Индив.</th>
+                                        <th>Групп.</th>
+                                        <th>Оплата</th>
+                                        <th>Учеников</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="agg-current-subjects-tbody">
+                                </tbody>
+                            </table>
+                            </div>
                         </div>
                     </div>
 
@@ -564,22 +566,24 @@
                             </div>
                         </div>
 
-                        <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
-                        <div class="table-wrapper">
-                        <table id="agg-previous-subjects-table">
-                            <thead>
-                                <tr>
-                                    <th>Предмет</th>
-                                    <th>Занятий</th>
-                                    <th>Индив.</th>
-                                    <th>Групп.</th>
-                                    <th>Оплата</th>
-                                    <th>Учеников</th>
-                                </tr>
-                            </thead>
-                            <tbody id="agg-previous-subjects-tbody">
-                            </tbody>
-                        </table>
+                        <div id="agg-previous-subjects-section">
+                            <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
+                            <div class="table-wrapper">
+                            <table id="agg-previous-subjects-table">
+                                <thead>
+                                    <tr>
+                                        <th>Предмет</th>
+                                        <th>Занятий</th>
+                                        <th>Индив.</th>
+                                        <th>Групп.</th>
+                                        <th>Оплата</th>
+                                        <th>Учеников</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="agg-previous-subjects-tbody">
+                                </tbody>
+                            </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1012,21 +1016,27 @@
             document.getElementById('agg-current-payments').textContent = currentPeriod.totalPayments;
             document.getElementById('agg-current-students').textContent = currentPeriod.totalStudents;
 
-            // Current subjects
-            const currentSubjectsTbody = document.getElementById('agg-current-subjects-tbody');
-            currentSubjectsTbody.innerHTML = '';
-            currentPeriod.subjectStats.forEach(subject => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${subject.subjectName}</td>
-                    <td>${subject.lessons}</td>
-                    <td>${subject.individual}</td>
-                    <td>${subject.group}</td>
-                    <td>${subject.payments}</td>
-                    <td>${subject.students}</td>
-                `;
-                currentSubjectsTbody.appendChild(row);
-            });
+            // Current subjects - hide if only one subject
+            const currentSubjectsSection = document.getElementById('agg-current-subjects-section');
+            if (currentPeriod.subjectStats.length <= 1) {
+                currentSubjectsSection.style.display = 'none';
+            } else {
+                currentSubjectsSection.style.display = 'block';
+                const currentSubjectsTbody = document.getElementById('agg-current-subjects-tbody');
+                currentSubjectsTbody.innerHTML = '';
+                currentPeriod.subjectStats.forEach(subject => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${subject.subjectName}</td>
+                        <td>${subject.lessons}</td>
+                        <td>${subject.individual}</td>
+                        <td>${subject.group}</td>
+                        <td>${subject.payments}</td>
+                        <td>${subject.students}</td>
+                    `;
+                    currentSubjectsTbody.appendChild(row);
+                });
+            }
 
             // Previous period
             const previousPeriod = currentAggStats.previousPeriod;
@@ -1043,21 +1053,27 @@
             document.getElementById('agg-previous-payments').textContent = previousPeriod.totalPayments;
             document.getElementById('agg-previous-students').textContent = previousPeriod.totalStudents;
 
-            // Previous subjects
-            const previousSubjectsTbody = document.getElementById('agg-previous-subjects-tbody');
-            previousSubjectsTbody.innerHTML = '';
-            previousPeriod.subjectStats.forEach(subject => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${subject.subjectName}</td>
-                    <td>${subject.lessons}</td>
-                    <td>${subject.individual}</td>
-                    <td>${subject.group}</td>
-                    <td>${subject.payments}</td>
-                    <td>${subject.students}</td>
-                `;
-                previousSubjectsTbody.appendChild(row);
-            });
+            // Previous subjects - hide if only one subject
+            const previousSubjectsSection = document.getElementById('agg-previous-subjects-section');
+            if (previousPeriod.subjectStats.length <= 1) {
+                previousSubjectsSection.style.display = 'none';
+            } else {
+                previousSubjectsSection.style.display = 'block';
+                const previousSubjectsTbody = document.getElementById('agg-previous-subjects-tbody');
+                previousSubjectsTbody.innerHTML = '';
+                previousPeriod.subjectStats.forEach(subject => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${subject.subjectName}</td>
+                        <td>${subject.lessons}</td>
+                        <td>${subject.individual}</td>
+                        <td>${subject.group}</td>
+                        <td>${subject.payments}</td>
+                        <td>${subject.students}</td>
+                    `;
+                    previousSubjectsTbody.appendChild(row);
+                });
+            }
 
             // Comparison
             const comparison = currentAggStats.comparison;
