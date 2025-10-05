@@ -88,6 +88,15 @@
             padding-right: 40px;
         }
 
+        select:disabled {
+            background-color: #f7fafc;
+            background-image: none;
+            color: #2d3748;
+            cursor: not-allowed;
+            opacity: 1;
+            border-color: #e2e8f0;
+        }
+
         .card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -590,7 +599,6 @@
 
         function populateSubjects() {
             const subjectSelect = document.getElementById('subject');
-            const subjectFilterGroup = subjectSelect.closest('.filter-group');
 
             subjectsData.forEach(subject => {
                 const option = document.createElement('option');
@@ -599,16 +607,16 @@
                 subjectSelect.appendChild(option);
             });
 
-            // If only one subject, hide selector and auto-select it
+            // If only one subject, disable selector and auto-select it
             if (subjectsData.length === 1) {
-                subjectFilterGroup.style.display = 'none';
+                subjectSelect.disabled = true;
                 subjectSelect.value = subjectsData[0].subjectId;
 
                 // Trigger change event to load data
                 const event = new Event('change');
                 subjectSelect.dispatchEvent(event);
             } else {
-                subjectFilterGroup.style.display = 'block';
+                subjectSelect.disabled = false;
             }
         }
 
