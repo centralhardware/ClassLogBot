@@ -372,7 +372,7 @@ fun Route.reportApi() {
                         )
                     }
                     .sortedWith(compareBy(
-                        { LocalDate.parse(it.dateTime.substringBefore(" "), DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) },
+                        { LocalDate.parse(it.dateTime.substringBefore(" "), DateTimeFormatter.ofPattern("dd.MM.yyyy")) },
                         { it.students.minOrNull() }
                     ))
 
