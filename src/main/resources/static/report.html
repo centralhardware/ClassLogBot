@@ -269,9 +269,38 @@
             display: table-row;
         }
 
-        .dates-cell {
+        .details-cell {
             padding: 16px !important;
             border-bottom: 1px solid #e2e8f0;
+        }
+
+        .student-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: #718096;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            color: #2d3748;
+            font-weight: 600;
         }
 
         .dates-list {
@@ -287,6 +316,17 @@
             font-size: 12px;
             text-align: center;
             border: 1px solid #e2e8f0;
+        }
+
+        .dates-section {
+            margin-top: 12px;
+        }
+
+        .dates-section-title {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
 
         .expand-icon {
@@ -464,11 +504,8 @@
                                 <tr>
                                     <th>№</th>
                                     <th>ФИО ученика</th>
-                                    <th>Класс</th>
-                                    <th>Индив.</th>
-                                    <th>Групп.</th>
+                                    <th>Занятий</th>
                                     <th>Оплата</th>
-                                    <th>Даты посещений</th>
                                 </tr>
                             </thead>
                             <tbody id="students-tbody">
@@ -857,47 +894,64 @@
                 // Parse dates string into array
                 const datesArray = student.dates.split(',').map(d => d.trim()).filter(d => d.length > 0);
 
-                // Main student row
+                // Calculate total lessons
+                const totalLessons = student.individual + student.group;
+
+                // Main student row (always clickable now)
                 const studentRow = document.createElement('tr');
                 studentRow.id = `student-row-${index}`;
                 studentRow.className = 'student-row';
-
-                // Determine dates display
-                let datesDisplay = '';
-                if (datesArray.length === 0) {
-                    datesDisplay = '-';
-                } else if (datesArray.length === 1) {
-                    datesDisplay = datesArray[0];
-                } else {
-                    datesDisplay = `${datesArray.length} занятий <span class="expand-icon">▼</span>`;
-                    studentRow.onclick = () => toggleDates(index);
-                }
+                studentRow.onclick = () => toggleDates(index);
 
                 studentRow.innerHTML = `
                     <td data-label="№">${index + 1}</td>
-                    <td data-label="ФИО">${student.fio}</td>
-                    <td data-label="Класс">${student.schoolClass}</td>
-                    <td data-label="Индив.">${student.individual}</td>
-                    <td data-label="Групп.">${student.group}</td>
-                    <td data-label="Оплата">${student.payment}</td>
-                    <td data-label="Даты">${datesDisplay}</td>
+                    <td data-label="ФИО">${student.fio} <span class="expand-icon">▼</span></td>
+                    <td data-label="Занятий">${totalLessons}</td>
+                    <td data-label="Оплата">${student.payment} ₽</td>
                 `;
                 studentsTbody.appendChild(studentRow);
 
-                // Dates detail row (only if multiple dates)
-                if (datesArray.length > 1) {
-                    const datesRow = document.createElement('tr');
-                    datesRow.id = `dates-row-${index}`;
-                    datesRow.className = 'dates-row';
-                    datesRow.innerHTML = `
-                        <td colspan="7" class="dates-cell">
+                // Details row (always created)
+                const detailsRow = document.createElement('tr');
+                detailsRow.id = `dates-row-${index}`;
+                detailsRow.className = 'dates-row';
+
+                let datesHtml = '';
+                if (datesArray.length > 0) {
+                    datesHtml = `
+                        <div class="dates-section">
+                            <div class="dates-section-title">Даты посещений</div>
                             <div class="dates-list">
                                 ${datesArray.map(date => `<div class="dates-list-item">${date}</div>`).join('')}
                             </div>
-                        </td>
+                        </div>
                     `;
-                    studentsTbody.appendChild(datesRow);
                 }
+
+                detailsRow.innerHTML = `
+                    <td colspan="4" class="details-cell">
+                        <div class="student-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Класс</div>
+                                <div class="detail-value">${student.schoolClass}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Индивидуальных</div>
+                                <div class="detail-value">${student.individual}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Групповых</div>
+                                <div class="detail-value">${student.group}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Оплачено</div>
+                                <div class="detail-value">${student.payment} ₽</div>
+                            </div>
+                        </div>
+                        ${datesHtml}
+                    </td>
+                `;
+                studentsTbody.appendChild(detailsRow);
             });
 
             // Lessons table
