@@ -38,6 +38,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.sta
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addLessonForOtherCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.webReportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.searchStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.studentInfoCommand
@@ -110,6 +111,7 @@ suspend fun main() {
                 userCommands.apply {
                     add(BotCommand("report", "Отчет за текущий месяц"))
                     add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
+                    add(BotCommand("web_report", "Веб-отчеты"))
                     add(BotCommand("reset", "Сбросить состояние"))
                 }
             }
@@ -150,6 +152,7 @@ suspend fun main() {
             searchStudentCommand()
             reportCommand()
             reportPreviousCommand()
+            webReportCommand()
             resetCommand()
 
             studentInfoCallback()

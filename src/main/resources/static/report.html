@@ -216,6 +216,14 @@
             display: block;
         }
 
+        .section-content {
+            display: block;
+        }
+
+        .section-content.hidden {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .filter-row {
                 flex-direction: column;
@@ -242,9 +250,15 @@
         <div id="error-container" class="hidden"></div>
 
         <div id="content" class="hidden">
-            <h1>📊 Отчеты</h1>
+            <h1>📊 Отчеты и статистика</h1>
 
-            <div class="filters">
+            <div class="tab-buttons" style="margin-bottom: 20px;">
+                <button class="tab-button active" data-tab="reports">Детальные отчеты</button>
+                <button class="tab-button" data-tab="aggregated">Агрегированная статистика</button>
+            </div>
+
+            <div id="reports-section" class="section-content">
+                <div class="filters">
                 <div class="filter-row">
                     <div class="filter-group">
                         <label for="subject">Предмет</label>
@@ -343,6 +357,150 @@
                     </div>
                 </div>
             </div>
+            </div>
+
+            <div id="aggregated-section" class="section-content hidden">
+                <div class="filters">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="agg-period-type">Период</label>
+                            <select id="agg-period-type">
+                                <option value="current">Текущий месяц</option>
+                                <option value="previous">Предыдущий месяц</option>
+                                <option value="custom">Выбрать период</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-row hidden" id="agg-custom-period-row">
+                        <div class="filter-group">
+                            <label for="agg-custom-period">Период (ГГГГ-ММ)</label>
+                            <input type="month" id="agg-custom-period">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="agg-stats-container" class="hidden">
+                    <!-- Current Period Stats -->
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h2 id="agg-current-period-title">Текущий период</h2>
+                            <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;" id="agg-current-period-badge">Текущий</span>
+                        </div>
+
+                        <div class="summary">
+                            <div class="summary-item">
+                                <div class="value" id="agg-current-total-lessons">0</div>
+                                <div class="label">Всего занятий</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-current-individual">0</div>
+                                <div class="label">Индивидуальных</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-current-group">0</div>
+                                <div class="label">Групповых</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-current-payments">0</div>
+                                <div class="label">Оплачено (₽)</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-current-students">0</div>
+                                <div class="label">Учеников</div>
+                            </div>
+                        </div>
+
+                        <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
+                        <table id="agg-current-subjects-table">
+                            <thead>
+                                <tr>
+                                    <th>Предмет</th>
+                                    <th>Занятий</th>
+                                    <th>Индив.</th>
+                                    <th>Групп.</th>
+                                    <th>Оплата</th>
+                                    <th>Учеников</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agg-current-subjects-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Comparison -->
+                    <div class="card">
+                        <h2>Сравнение с предыдущим периодом</h2>
+                        <div style="margin-bottom: 16px;">
+                            <span id="agg-previous-period-title">Предыдущий период</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                            <div style="background: #f7fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #667eea;" id="agg-lessons-comparison">
+                                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Занятия</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #2d3748;" id="agg-comparison-lessons">0</div>
+                                <div style="font-size: 14px; margin-top: 4px;" id="agg-comparison-lessons-change">+0 (0%)</div>
+                            </div>
+                            <div style="background: #f7fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #667eea;" id="agg-payments-comparison">
+                                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Оплаты</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #2d3748;" id="agg-comparison-payments">0</div>
+                                <div style="font-size: 14px; margin-top: 4px;" id="agg-comparison-payments-change">+0 (0%)</div>
+                            </div>
+                            <div style="background: #f7fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #667eea;" id="agg-students-comparison">
+                                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Ученики</div>
+                                <div style="font-size: 24px; font-weight: 700; color: #2d3748;" id="agg-comparison-students">0</div>
+                                <div style="font-size: 14px; margin-top: 4px;" id="agg-comparison-students-change">+0 (0%)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Previous Period Stats -->
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h2 id="agg-previous-period-title-full">Предыдущий период</h2>
+                            <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;" id="agg-previous-period-badge">Предыдущий</span>
+                        </div>
+
+                        <div class="summary">
+                            <div class="summary-item">
+                                <div class="value" id="agg-previous-total-lessons">0</div>
+                                <div class="label">Всего занятий</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-previous-individual">0</div>
+                                <div class="label">Индивидуальных</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-previous-group">0</div>
+                                <div class="label">Групповых</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-previous-payments">0</div>
+                                <div class="label">Оплачено (₽)</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="agg-previous-students">0</div>
+                                <div class="label">Учеников</div>
+                            </div>
+                        </div>
+
+                        <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
+                        <table id="agg-previous-subjects-table">
+                            <thead>
+                                <tr>
+                                    <th>Предмет</th>
+                                    <th>Занятий</th>
+                                    <th>Индив.</th>
+                                    <th>Групп.</th>
+                                    <th>Оплата</th>
+                                    <th>Учеников</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agg-previous-subjects-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -352,6 +510,7 @@
 
         let subjectsData = [];
         let currentReport = null;
+        let currentAggStats = null;
 
         // Initialize
         async function init() {
@@ -524,18 +683,207 @@
 
         document.getElementById('custom-period').addEventListener('change', loadReport);
 
-        // Tab switching
-        document.querySelectorAll('.tab-button').forEach(button => {
+        // Aggregated stats functions
+        async function loadAggregatedStats() {
+            const periodType = document.getElementById('agg-period-type').value;
+            let period = periodType;
+
+            if (periodType === 'custom') {
+                const customPeriod = document.getElementById('agg-custom-period').value;
+                if (!customPeriod) {
+                    return;
+                }
+                period = customPeriod;
+            }
+
+            try {
+                document.getElementById('agg-stats-container').classList.add('hidden');
+                document.getElementById('loading').classList.remove('hidden');
+
+                const response = await fetch(`/api/report/aggregated/${period}`, {
+                    headers: {
+                        'Authorization': `tma ${tg.initData}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки статистики');
+                }
+
+                currentAggStats = await response.json();
+                displayAggregatedStats();
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('agg-stats-container').classList.remove('hidden');
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                showError('Не удалось загрузить статистику: ' + error.message);
+            }
+        }
+
+        function displayAggregatedStats() {
+            const months = {
+                'JANUARY': 'Январь',
+                'FEBRUARY': 'Февраль',
+                'MARCH': 'Март',
+                'APRIL': 'Апрель',
+                'MAY': 'Май',
+                'JUNE': 'Июнь',
+                'JULY': 'Июль',
+                'AUGUST': 'Август',
+                'SEPTEMBER': 'Сентябрь',
+                'OCTOBER': 'Октябрь',
+                'NOVEMBER': 'Ноябрь',
+                'DECEMBER': 'Декабрь'
+            };
+
+            // Current period
+            const currentPeriod = currentAggStats.period;
+            document.getElementById('agg-current-period-title').textContent =
+                `${months[currentPeriod.month]} ${currentPeriod.year}`;
+            document.getElementById('agg-current-period-badge').textContent =
+                `${months[currentPeriod.month]} ${currentPeriod.year}`;
+
+            document.getElementById('agg-current-total-lessons').textContent = currentPeriod.totalLessons;
+            document.getElementById('agg-current-individual').textContent = currentPeriod.totalIndividual;
+            document.getElementById('agg-current-group').textContent = currentPeriod.totalGroup;
+            document.getElementById('agg-current-payments').textContent = currentPeriod.totalPayments;
+            document.getElementById('agg-current-students').textContent = currentPeriod.totalStudents;
+
+            // Current subjects
+            const currentSubjectsTbody = document.getElementById('agg-current-subjects-tbody');
+            currentSubjectsTbody.innerHTML = '';
+            currentPeriod.subjectStats.forEach(subject => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${subject.subjectName}</td>
+                    <td>${subject.lessons}</td>
+                    <td>${subject.individual}</td>
+                    <td>${subject.group}</td>
+                    <td>${subject.payments}</td>
+                    <td>${subject.students}</td>
+                `;
+                currentSubjectsTbody.appendChild(row);
+            });
+
+            // Previous period
+            const previousPeriod = currentAggStats.previousPeriod;
+            document.getElementById('agg-previous-period-title').textContent =
+                `${months[previousPeriod.month]} ${previousPeriod.year}`;
+            document.getElementById('agg-previous-period-title-full').textContent =
+                `${months[previousPeriod.month]} ${previousPeriod.year}`;
+            document.getElementById('agg-previous-period-badge').textContent =
+                `${months[previousPeriod.month]} ${previousPeriod.year}`;
+
+            document.getElementById('agg-previous-total-lessons').textContent = previousPeriod.totalLessons;
+            document.getElementById('agg-previous-individual').textContent = previousPeriod.totalIndividual;
+            document.getElementById('agg-previous-group').textContent = previousPeriod.totalGroup;
+            document.getElementById('agg-previous-payments').textContent = previousPeriod.totalPayments;
+            document.getElementById('agg-previous-students').textContent = previousPeriod.totalStudents;
+
+            // Previous subjects
+            const previousSubjectsTbody = document.getElementById('agg-previous-subjects-tbody');
+            previousSubjectsTbody.innerHTML = '';
+            previousPeriod.subjectStats.forEach(subject => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${subject.subjectName}</td>
+                    <td>${subject.lessons}</td>
+                    <td>${subject.individual}</td>
+                    <td>${subject.group}</td>
+                    <td>${subject.payments}</td>
+                    <td>${subject.students}</td>
+                `;
+                previousSubjectsTbody.appendChild(row);
+            });
+
+            // Comparison
+            const comparison = currentAggStats.comparison;
+
+            // Lessons comparison
+            const lessonsComp = document.getElementById('agg-lessons-comparison');
+            document.getElementById('agg-comparison-lessons').textContent = currentPeriod.totalLessons;
+            const lessonsChange = document.getElementById('agg-comparison-lessons-change');
+            const lessonsSign = comparison.lessonsChange >= 0 ? '+' : '';
+            lessonsChange.textContent = `${lessonsSign}${comparison.lessonsChange} (${comparison.lessonsChangePercent.toFixed(1)}%)`;
+            lessonsChange.style.color = comparison.lessonsChange >= 0 ? '#10b981' : '#ef4444';
+            lessonsComp.style.borderLeftColor = comparison.lessonsChange >= 0 ? '#10b981' : '#ef4444';
+
+            // Payments comparison
+            const paymentsComp = document.getElementById('agg-payments-comparison');
+            document.getElementById('agg-comparison-payments').textContent = currentPeriod.totalPayments;
+            const paymentsChange = document.getElementById('agg-comparison-payments-change');
+            const paymentsSign = comparison.paymentsChange >= 0 ? '+' : '';
+            paymentsChange.textContent = `${paymentsSign}${comparison.paymentsChange} (${comparison.paymentsChangePercent.toFixed(1)}%)`;
+            paymentsChange.style.color = comparison.paymentsChange >= 0 ? '#10b981' : '#ef4444';
+            paymentsComp.style.borderLeftColor = comparison.paymentsChange >= 0 ? '#10b981' : '#ef4444';
+
+            // Students comparison
+            const studentsComp = document.getElementById('agg-students-comparison');
+            document.getElementById('agg-comparison-students').textContent = currentPeriod.totalStudents;
+            const studentsChange = document.getElementById('agg-comparison-students-change');
+            const studentsSign = comparison.studentsChange >= 0 ? '+' : '';
+            studentsChange.textContent = `${studentsSign}${comparison.studentsChange} (${comparison.studentsChangePercent.toFixed(1)}%)`;
+            studentsChange.style.color = comparison.studentsChange >= 0 ? '#10b981' : '#ef4444';
+            studentsComp.style.borderLeftColor = comparison.studentsChange >= 0 ? '#10b981' : '#ef4444';
+        }
+
+        // Event listeners for aggregated stats
+        document.getElementById('agg-period-type').addEventListener('change', () => {
+            const periodType = document.getElementById('agg-period-type').value;
+            const customPeriodRow = document.getElementById('agg-custom-period-row');
+
+            if (periodType === 'custom') {
+                customPeriodRow.classList.remove('hidden');
+            } else {
+                customPeriodRow.classList.add('hidden');
+                loadAggregatedStats();
+            }
+        });
+
+        document.getElementById('agg-custom-period').addEventListener('change', loadAggregatedStats);
+
+        // Main tab switching
+        document.querySelectorAll('.tab-button[data-tab]').forEach(button => {
             button.addEventListener('click', () => {
                 const tabName = button.dataset.tab;
 
-                // Remove active class from all buttons and tabs
-                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                // Remove active class from all buttons
+                document.querySelectorAll('.tab-button[data-tab]').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+
+                // Hide all sections
+                document.getElementById('reports-section').classList.add('hidden');
+                document.getElementById('aggregated-section').classList.add('hidden');
+
+                // Show selected section
+                if (tabName === 'reports') {
+                    document.getElementById('reports-section').classList.remove('hidden');
+                } else if (tabName === 'aggregated') {
+                    document.getElementById('aggregated-section').classList.remove('hidden');
+                    // Load aggregated stats when switching to this tab
+                    if (!currentAggStats) {
+                        loadAggregatedStats();
+                    }
+                }
+            });
+        });
+
+        // Detail report tab switching (students/lessons/payments)
+        document.querySelectorAll('.tab-button:not([data-tab])').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab') || button.textContent.toLowerCase();
+
+                // Remove active class from all detail buttons and tabs
+                document.querySelectorAll('.tab-button:not([data-tab])').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
 
                 // Add active class to clicked button and corresponding tab
                 button.classList.add('active');
-                document.getElementById(`${tabName}-tab`).classList.add('active');
+                const targetTab = document.querySelector(`.tab-content[id*="${tabName}"]`);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
             });
         });
 

@@ -75,6 +75,45 @@ data class SubjectDto(
     val subjectName: String
 )
 
+@Serializable
+data class AggregatedStatsDto(
+    val period: PeriodStatsDto,
+    val previousPeriod: PeriodStatsDto,
+    val comparison: ComparisonDto
+)
+
+@Serializable
+data class PeriodStatsDto(
+    val month: String,
+    val year: Int,
+    val totalLessons: Int,
+    val totalIndividual: Int,
+    val totalGroup: Int,
+    val totalPayments: Int,
+    val totalStudents: Int,
+    val subjectStats: List<SubjectStatsDto>
+)
+
+@Serializable
+data class SubjectStatsDto(
+    val subjectName: String,
+    val lessons: Int,
+    val individual: Int,
+    val group: Int,
+    val payments: Int,
+    val students: Int
+)
+
+@Serializable
+data class ComparisonDto(
+    val lessonsChange: Int,
+    val lessonsChangePercent: Double,
+    val paymentsChange: Int,
+    val paymentsChangePercent: Double,
+    val studentsChange: Int,
+    val studentsChangePercent: Double
+)
+
 fun Route.reportApi() {
     route("/api/report") {
         get("/subjects") {
@@ -295,5 +334,133 @@ fun Route.reportApi() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
             }
         }
+
+        get("/aggregated/{period}") {
+            val period = call.parameters["period"]
+
+            if (period == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid parameters"))
+                return@get
+            }
+
+            val tutorId = extractAndValidateTelegramUser(
+                call.request.headers["Authorization"],
+                0,
+                "GET /aggregated"
+            )
+
+            if (tutorId == null) {
+                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
+                return@get
+            }
+
+            val tutor = TutorMapper.findByIdOrNull(tutorId)
+            if (tutor == null) {
+                KSLog.warning("ReportApi.GET /aggregated: Unknown user ${tutorId.id}")
+                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
+                return@get
+            }
+
+            try {
+                val (currentMonth, previousMonth) = when (period) {
+                    "current" -> Pair(YearMonth.now(), YearMonth.now().minusMonths(1))
+                    "previous" -> Pair(YearMonth.now().minusMonths(1), YearMonth.now().minusMonths(2))
+                    else -> {
+                        try {
+                            val yearMonth = YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
+                            Pair(yearMonth, yearMonth.minusMonths(1))
+                        } catch (e: Exception) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
+                            return@get
+                        }
+                    }
+                }
+
+                // Calculate stats for current period
+                val currentStats = calculatePeriodStats(tutorId, tutor, currentMonth)
+
+                // Calculate stats for previous period
+                val previousStats = calculatePeriodStats(tutorId, tutor, previousMonth)
+
+                // Calculate comparison
+                val comparison = ComparisonDto(
+                    lessonsChange = currentStats.totalLessons - previousStats.totalLessons,
+                    lessonsChangePercent = if (previousStats.totalLessons > 0)
+                        ((currentStats.totalLessons - previousStats.totalLessons).toDouble() / previousStats.totalLessons * 100)
+                        else 0.0,
+                    paymentsChange = currentStats.totalPayments - previousStats.totalPayments,
+                    paymentsChangePercent = if (previousStats.totalPayments > 0)
+                        ((currentStats.totalPayments - previousStats.totalPayments).toDouble() / previousStats.totalPayments * 100)
+                        else 0.0,
+                    studentsChange = currentStats.totalStudents - previousStats.totalStudents,
+                    studentsChangePercent = if (previousStats.totalStudents > 0)
+                        ((currentStats.totalStudents - previousStats.totalStudents).toDouble() / previousStats.totalStudents * 100)
+                        else 0.0
+                )
+
+                val aggregatedStats = AggregatedStatsDto(
+                    period = currentStats,
+                    previousPeriod = previousStats,
+                    comparison = comparison
+                )
+
+                KSLog.info("ReportApi.GET /aggregated: User ${tutorId.id} loaded aggregated stats for period $period")
+                call.respond(aggregatedStats)
+            } catch (e: Exception) {
+                KSLog.error("ReportApi.GET /aggregated: Error generating aggregated stats", e)
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
+            }
+        }
     }
+}
+
+private fun calculatePeriodStats(tutorId: TutorId, tutor: me.centralhardware.znatoki.telegram.statistic.entity.Tutor, yearMonth: YearMonth): PeriodStatsDto {
+    var totalLessons = 0
+    var totalIndividual = 0
+    var totalGroup = 0
+    var totalPayments = 0
+    val allStudents = mutableSetOf<me.centralhardware.znatoki.telegram.statistic.entity.StudentId>()
+
+    val subjectStats = tutor.subjects.mapNotNull { subjectId ->
+        val subjectName = SubjectMapper.getNameById(subjectId) ?: return@mapNotNull null
+
+        val lessons = LessonMapper.getTimesByMonth(tutorId, subjectId, yearMonth)
+        val payments = PaymentMapper.getPaymentsByMonth(tutorId, subjectId, yearMonth)
+
+        if (lessons.isEmpty() && payments.isEmpty()) {
+            return@mapNotNull null
+        }
+
+        val id2lessons = lessons.groupBy { it.id }
+        val individual = lessons.count { id2lessons[it.id]!!.isIndividual() }
+        val group = lessons.count { id2lessons[it.id]!!.isGroup() }
+        val paymentsSum = PaymentMapper.getPaymentsSum(tutorId, subjectId, yearMonth.atDay(1).atStartOfDay()).toInt()
+        val students = lessons.map { it.studentId }.toSet()
+
+        totalLessons += lessons.size
+        totalIndividual += individual
+        totalGroup += group
+        totalPayments += paymentsSum
+        allStudents.addAll(students)
+
+        SubjectStatsDto(
+            subjectName = subjectName,
+            lessons = lessons.size,
+            individual = individual,
+            group = group,
+            payments = paymentsSum,
+            students = students.size
+        )
+    }
+
+    return PeriodStatsDto(
+        month = yearMonth.month.name,
+        year = yearMonth.year,
+        totalLessons = totalLessons,
+        totalIndividual = totalIndividual,
+        totalGroup = totalGroup,
+        totalPayments = totalPayments,
+        totalStudents = allStudents.size,
+        subjectStats = subjectStats
+    )
 }
