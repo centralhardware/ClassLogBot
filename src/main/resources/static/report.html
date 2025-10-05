@@ -247,17 +247,20 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .student-main-row td {
-            padding-top: 12px !important;
-            padding-bottom: 4px !important;
-            border-bottom: none !important;
+        .student-row td {
+            padding: 12px 8px !important;
         }
 
-        .student-info-row td {
-            padding-top: 4px !important;
-            padding-bottom: 12px !important;
-            font-size: 13px;
-            color: #718096;
+        .student-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .student-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
         }
 
         .student-name {
@@ -267,19 +270,12 @@
 
         .student-class {
             color: #718096;
-            font-size: 14px;
-            margin-left: 8px;
+            font-size: 13px;
         }
 
-        .info-item {
-            display: inline-block;
-            margin-right: 16px;
-        }
-
-        .info-label {
-            font-weight: 600;
-            color: #4a5568;
-            margin-right: 4px;
+        .student-details {
+            font-size: 13px;
+            color: #718096;
         }
 
         .details-cell {
@@ -894,45 +890,24 @@
             const studentsTbody = document.getElementById('students-tbody');
             studentsTbody.innerHTML = '';
             currentReport.students.forEach((student, index) => {
-                // Parse dates string into array
-                const datesArray = student.dates.split(',').map(d => d.trim()).filter(d => d.length > 0);
-                const totalLessons = student.individual + student.group;
+                const row = document.createElement('tr');
+                row.className = 'student-row';
 
-                // Main row with name and class
-                const mainRow = document.createElement('tr');
-                mainRow.className = 'student-main-row';
-                mainRow.innerHTML = `
+                row.innerHTML = `
                     <td data-label="№">${index + 1}</td>
                     <td data-label="Ученик">
-                        <span class="student-name">${student.fio}</span>
-                        <span class="student-class">${student.schoolClass} класс</span>
-                    </td>
-                `;
-                studentsTbody.appendChild(mainRow);
-
-                // Info row with lessons and payment
-                const infoRow = document.createElement('tr');
-                infoRow.className = 'student-info-row';
-
-                const lessonInfo = [];
-                if (student.individual > 0) lessonInfo.push(`${student.individual} индив.`);
-                if (student.group > 0) lessonInfo.push(`${student.group} групп.`);
-                const lessonText = lessonInfo.length > 0 ? lessonInfo.join(', ') : '-';
-
-                infoRow.innerHTML = `
-                    <td data-label=""></td>
-                    <td data-label="Информация">
-                        <div class="info-item">
-                            <span class="info-label">Занятий:</span>
-                            <span>${lessonText}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Оплата:</span>
-                            <span>${student.payment} ₽</span>
+                        <div class="student-info">
+                            <div class="student-header">
+                                <span class="student-name">${student.fio}</span>
+                                <span class="student-class">${student.schoolClass} класс</span>
+                            </div>
+                            <div class="student-details">
+                                Инд: ${student.individual} • Групп: ${student.group} • Оплата: ${student.payment} ₽
+                            </div>
                         </div>
                     </td>
                 `;
-                studentsTbody.appendChild(infoRow);
+                studentsTbody.appendChild(row);
             });
 
             // Lessons table
