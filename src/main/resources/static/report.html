@@ -247,6 +247,47 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        .dates-toggle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dates-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .dates-toggle:active {
+            transform: translateY(0);
+        }
+
+        .dates-list {
+            display: none;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .dates-list.expanded {
+            display: block;
+        }
+
+        .dates-list-item {
+            padding: 2px 0;
+        }
+
         @media (max-width: 768px) {
             .filter-row {
                 flex-direction: column;
@@ -544,6 +585,20 @@
         let currentAggStats = null;
         let isAdmin = false;
 
+        // Toggle dates visibility
+        function toggleDates(datesId) {
+            const datesList = document.getElementById(datesId);
+            const icon = document.getElementById(`${datesId}-icon`);
+
+            if (datesList.classList.contains('expanded')) {
+                datesList.classList.remove('expanded');
+                icon.textContent = '▼';
+            } else {
+                datesList.classList.add('expanded');
+                icon.textContent = '▲';
+            }
+        }
+
         // Initialize
         async function init() {
             try {
@@ -728,6 +783,29 @@
             studentsTbody.innerHTML = '';
             currentReport.students.forEach((student, index) => {
                 const row = document.createElement('tr');
+
+                // Parse dates string into array
+                const datesArray = student.dates.split(',').map(d => d.trim()).filter(d => d.length > 0);
+                const datesId = `dates-${index}`;
+
+                // Create dates cell content
+                let datesContent = '';
+                if (datesArray.length === 0) {
+                    datesContent = '-';
+                } else if (datesArray.length === 1) {
+                    datesContent = datesArray[0];
+                } else {
+                    datesContent = `
+                        <button class="dates-toggle" onclick="toggleDates('${datesId}')">
+                            <span>${datesArray.length} занятий</span>
+                            <span id="${datesId}-icon">▼</span>
+                        </button>
+                        <div id="${datesId}" class="dates-list">
+                            ${datesArray.map(date => `<div class="dates-list-item">${date}</div>`).join('')}
+                        </div>
+                    `;
+                }
+
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${student.fio}</td>
@@ -735,7 +813,7 @@
                     <td>${student.individual}</td>
                     <td>${student.group}</td>
                     <td>${student.payment}</td>
-                    <td>${student.dates}</td>
+                    <td>${datesContent}</td>
                 `;
                 studentsTbody.appendChild(row);
             });
