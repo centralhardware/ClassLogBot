@@ -18,8 +18,11 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+
+private data class Tuple6<A, B, C, D, E, F>(val first: A, val second: B, val third: C, val fourth: D, val fifth: E, val sixth: F)
 
 @Serializable
 data class ReportDataDto(
@@ -452,13 +455,45 @@ fun Route.reportApi() {
             }
 
             try {
-                val (currentMonth, previousMonth) = when (period) {
-                    "current" -> Pair(YearMonth.now(), YearMonth.now().minusMonths(1))
-                    "previous" -> Pair(YearMonth.now().minusMonths(1), YearMonth.now().minusMonths(2))
+                val (currentMonth, currentStartDate, currentEndDate, previousMonth, previousStartDate, previousEndDate) = when (period) {
+                    "current" -> {
+                        val now = LocalDateTime.now()
+                        val currentMonth = YearMonth.now()
+                        val previousMonth = currentMonth.minusMonths(1)
+                        val dayOfMonth = now.dayOfMonth
+
+                        val currentStart = currentMonth.atDay(1).atStartOfDay()
+                        val currentEnd = now
+
+                        val previousStart = previousMonth.atDay(1).atStartOfDay()
+                        val previousEnd = previousMonth.atDay(minOf(dayOfMonth, previousMonth.lengthOfMonth())).atTime(23, 59, 59)
+
+                        Tuple6(currentMonth, currentStart, currentEnd, previousMonth, previousStart, previousEnd)
+                    }
+                    "previous" -> {
+                        val previousMonth = YearMonth.now().minusMonths(1)
+                        val twoMonthsAgo = previousMonth.minusMonths(1)
+
+                        val prevStart = previousMonth.atDay(1).atStartOfDay()
+                        val prevEnd = previousMonth.atEndOfMonth().atTime(23, 59, 59)
+
+                        val twoMonthsStart = twoMonthsAgo.atDay(1).atStartOfDay()
+                        val twoMonthsEnd = twoMonthsAgo.atDay(minOf(previousMonth.lengthOfMonth(), twoMonthsAgo.lengthOfMonth())).atTime(23, 59, 59)
+
+                        Tuple6(previousMonth, prevStart, prevEnd, twoMonthsAgo, twoMonthsStart, twoMonthsEnd)
+                    }
                     else -> {
                         try {
                             val yearMonth = YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
-                            Pair(yearMonth, yearMonth.minusMonths(1))
+                            val previousMonth = yearMonth.minusMonths(1)
+
+                            val currentStart = yearMonth.atDay(1).atStartOfDay()
+                            val currentEnd = yearMonth.atEndOfMonth().atTime(23, 59, 59)
+
+                            val previousStart = previousMonth.atDay(1).atStartOfDay()
+                            val previousEnd = previousMonth.atDay(minOf(yearMonth.lengthOfMonth(), previousMonth.lengthOfMonth())).atTime(23, 59, 59)
+
+                            Tuple6(yearMonth, currentStart, currentEnd, previousMonth, previousStart, previousEnd)
                         } catch (e: Exception) {
                             call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
                             return@get
@@ -467,10 +502,10 @@ fun Route.reportApi() {
                 }
 
                 // Calculate stats for current period
-                val currentStats = calculatePeriodStats(targetTutorId, tutor, currentMonth)
+                val currentStats = calculatePeriodStats(targetTutorId, tutor, currentMonth, currentStartDate, currentEndDate)
 
-                // Calculate stats for previous period
-                val previousStats = calculatePeriodStats(targetTutorId, tutor, previousMonth)
+                // Calculate stats for previous period (same number of days)
+                val previousStats = calculatePeriodStats(targetTutorId, tutor, previousMonth, previousStartDate, previousEndDate)
 
                 // Calculate comparison
                 val comparison = ComparisonDto(
@@ -504,7 +539,13 @@ fun Route.reportApi() {
     }
 }
 
-private fun calculatePeriodStats(tutorId: TutorId, tutor: me.centralhardware.znatoki.telegram.statistic.entity.Tutor, yearMonth: YearMonth): PeriodStatsDto {
+private fun calculatePeriodStats(
+    tutorId: TutorId,
+    tutor: me.centralhardware.znatoki.telegram.statistic.entity.Tutor,
+    yearMonth: YearMonth,
+    startDate: LocalDateTime,
+    endDate: LocalDateTime
+): PeriodStatsDto {
     var totalLessons = 0
     var totalIndividual = 0
     var totalGroup = 0
@@ -514,8 +555,8 @@ private fun calculatePeriodStats(tutorId: TutorId, tutor: me.centralhardware.zna
     val subjectStats = tutor.subjects.mapNotNull { subjectId ->
         val subjectName = SubjectMapper.getNameById(subjectId) ?: return@mapNotNull null
 
-        val lessons = LessonMapper.getTimesByMonth(tutorId, subjectId, yearMonth)
-        val payments = PaymentMapper.getPaymentsByMonth(tutorId, subjectId, yearMonth)
+        val lessons = LessonMapper.getTimesByDateRange(tutorId, subjectId, startDate, endDate)
+        val payments = PaymentMapper.getPaymentsByDateRange(tutorId, subjectId, startDate, endDate)
 
         if (lessons.isEmpty() && payments.isEmpty()) {
             return@mapNotNull null
@@ -524,7 +565,7 @@ private fun calculatePeriodStats(tutorId: TutorId, tutor: me.centralhardware.zna
         val id2lessons = lessons.groupBy { it.id }
         val individual = lessons.count { id2lessons[it.id]!!.isIndividual() }
         val group = lessons.count { id2lessons[it.id]!!.isGroup() }
-        val paymentsSum = PaymentMapper.getPaymentsSum(tutorId, subjectId, yearMonth.atDay(1).atStartOfDay()).toInt()
+        val paymentsSum = PaymentMapper.getPaymentsSumByDateRange(tutorId, subjectId, startDate, endDate).toInt()
         val students = lessons.map { it.studentId }.toSet()
 
         totalLessons += lessons.size

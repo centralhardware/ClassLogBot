@@ -162,4 +162,31 @@ object PaymentMapper {
         yearMonth.atEndOfMonth().atTime(23, 59, 59),
     )
 
+    fun getPaymentsByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime) = getPayments(
+        tutorId,
+        subjectId,
+        startDate,
+        endDate,
+    )
+
+    fun getPaymentsSumByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime): Long =
+        runSingle(
+            queryOf(
+                """
+                SELECT sum(amount) as sum
+                FROM payment
+                WHERE tutor_id = :tutor_id
+                    AND subject_id = :subject_id
+                    AND date_time between :startDate and :endDate
+                    AND is_deleted = false
+                """,
+                mapOf(
+                    "tutor_id" to tutorId.id,
+                    "subject_id" to subjectId.id,
+                    "startDate" to startDate,
+                    "endDate" to endDate,
+                ),
+            )
+        ) { row -> row.longOrNull("sum") }?: 0
+
 }

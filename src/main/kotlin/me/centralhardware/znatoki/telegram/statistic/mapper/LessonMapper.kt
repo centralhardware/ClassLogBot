@@ -167,6 +167,13 @@ object LessonMapper {
         yearMonth.atEndOfMonth().atTime(23, 59, 59),
     )
 
+    fun getTimesByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime): List<Lesson> = findAllByTutorId(
+        tutorId,
+        subjectId,
+        startDate,
+        endDate,
+    )
+
     fun getTutorIds(): List<TutorId> =
         runList(
             queryOf(
