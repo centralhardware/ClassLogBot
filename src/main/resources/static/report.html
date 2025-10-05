@@ -247,45 +247,57 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .dates-toggle {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
+        .student-row {
             cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+            transition: background-color 0.2s ease;
         }
 
-        .dates-toggle:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        .student-row:hover {
+            background-color: #f7fafc;
         }
 
-        .dates-toggle:active {
-            transform: translateY(0);
+        .student-row.expanded {
+            background-color: #edf2f7;
+        }
+
+        .dates-row {
+            display: none;
+            background-color: #f7fafc;
+        }
+
+        .dates-row.expanded {
+            display: table-row;
+        }
+
+        .dates-cell {
+            padding: 16px !important;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .dates-list {
-            display: none;
-            margin-top: 8px;
-            padding: 8px;
-            background: #f7fafc;
-            border-radius: 6px;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .dates-list.expanded {
-            display: block;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
         }
 
         .dates-list-item {
-            padding: 2px 0;
+            background: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .expand-icon {
+            display: inline-block;
+            transition: transform 0.2s ease;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        .student-row.expanded .expand-icon {
+            transform: rotate(180deg);
         }
 
         @media (max-width: 768px) {
@@ -586,17 +598,12 @@
         let isAdmin = false;
 
         // Toggle dates visibility
-        function toggleDates(datesId) {
-            const datesList = document.getElementById(datesId);
-            const icon = document.getElementById(`${datesId}-icon`);
+        function toggleDates(rowIndex) {
+            const studentRow = document.getElementById(`student-row-${rowIndex}`);
+            const datesRow = document.getElementById(`dates-row-${rowIndex}`);
 
-            if (datesList.classList.contains('expanded')) {
-                datesList.classList.remove('expanded');
-                icon.textContent = '▼';
-            } else {
-                datesList.classList.add('expanded');
-                icon.textContent = '▲';
-            }
+            studentRow.classList.toggle('expanded');
+            datesRow.classList.toggle('expanded');
         }
 
         // Initialize
@@ -782,40 +789,50 @@
             const studentsTbody = document.getElementById('students-tbody');
             studentsTbody.innerHTML = '';
             currentReport.students.forEach((student, index) => {
-                const row = document.createElement('tr');
-
                 // Parse dates string into array
                 const datesArray = student.dates.split(',').map(d => d.trim()).filter(d => d.length > 0);
-                const datesId = `dates-${index}`;
 
-                // Create dates cell content
-                let datesContent = '';
+                // Main student row
+                const studentRow = document.createElement('tr');
+                studentRow.id = `student-row-${index}`;
+                studentRow.className = 'student-row';
+
+                // Determine dates display
+                let datesDisplay = '';
                 if (datesArray.length === 0) {
-                    datesContent = '-';
+                    datesDisplay = '-';
                 } else if (datesArray.length === 1) {
-                    datesContent = datesArray[0];
+                    datesDisplay = datesArray[0];
                 } else {
-                    datesContent = `
-                        <button class="dates-toggle" onclick="toggleDates('${datesId}')">
-                            <span>${datesArray.length} занятий</span>
-                            <span id="${datesId}-icon">▼</span>
-                        </button>
-                        <div id="${datesId}" class="dates-list">
-                            ${datesArray.map(date => `<div class="dates-list-item">${date}</div>`).join('')}
-                        </div>
-                    `;
+                    datesDisplay = `${datesArray.length} занятий <span class="expand-icon">▼</span>`;
+                    studentRow.onclick = () => toggleDates(index);
                 }
 
-                row.innerHTML = `
+                studentRow.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${student.fio}</td>
                     <td>${student.schoolClass}</td>
                     <td>${student.individual}</td>
                     <td>${student.group}</td>
                     <td>${student.payment}</td>
-                    <td>${datesContent}</td>
+                    <td>${datesDisplay}</td>
                 `;
-                studentsTbody.appendChild(row);
+                studentsTbody.appendChild(studentRow);
+
+                // Dates detail row (only if multiple dates)
+                if (datesArray.length > 1) {
+                    const datesRow = document.createElement('tr');
+                    datesRow.id = `dates-row-${index}`;
+                    datesRow.className = 'dates-row';
+                    datesRow.innerHTML = `
+                        <td colspan="7" class="dates-cell">
+                            <div class="dates-list">
+                                ${datesArray.map(date => `<div class="dates-list-item">${date}</div>`).join('')}
+                            </div>
+                        </td>
+                    `;
+                    studentsTbody.appendChild(datesRow);
+                }
             });
 
             // Lessons table
