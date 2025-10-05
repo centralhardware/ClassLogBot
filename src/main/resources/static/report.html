@@ -301,6 +301,11 @@
             </div>
 
             <div id="reports-section" class="section-content">
+            <div id="no-data-placeholder" class="card hidden" style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">📊</div>
+                <h2 style="color: #718096; font-size: 20px; margin-bottom: 8px;">Нет данных для отображения</h2>
+                <p style="color: #a0aec0; font-size: 14px;">Выберите преподавателя и предмет для просмотра отчетов</p>
+            </div>
 
             <div id="report-container" class="hidden">
                 <div class="card">
@@ -385,6 +390,12 @@
             </div>
 
             <div id="aggregated-section" class="section-content hidden">
+                <div id="agg-no-data-placeholder" class="card hidden" style="text-align: center; padding: 60px 20px;">
+                    <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">📈</div>
+                    <h2 style="color: #718096; font-size: 20px; margin-bottom: 8px;">Нет данных для отображения</h2>
+                    <p style="color: #a0aec0; font-size: 14px;">Выберите преподавателя и предмет для просмотра статистики</p>
+                </div>
+
                 <div id="agg-stats-container" class="hidden">
                     <!-- Current Period Stats -->
                     <div class="card">
@@ -635,11 +646,14 @@
             const period = document.getElementById('period-select').value;
 
             if (!subjectId || !period) {
+                document.getElementById('report-container').classList.add('hidden');
+                document.getElementById('no-data-placeholder').classList.remove('hidden');
                 return;
             }
 
             try {
                 document.getElementById('report-container').classList.add('hidden');
+                document.getElementById('no-data-placeholder').classList.add('hidden');
                 document.getElementById('loading').classList.remove('hidden');
 
                 // Build URL with optional tutorId parameter for admins
@@ -662,10 +676,16 @@
                 }
 
                 currentReport = await response.json();
-                displayReport();
 
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('report-container').classList.remove('hidden');
+                // Check if report has any data
+                if (currentReport.students.length === 0 && currentReport.lessons.length === 0 && currentReport.payments.length === 0) {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('no-data-placeholder').classList.remove('hidden');
+                } else {
+                    displayReport();
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('report-container').classList.remove('hidden');
+                }
             } catch (error) {
                 document.getElementById('loading').classList.add('hidden');
                 showError('Не удалось загрузить отчет: ' + error.message);
@@ -774,12 +794,20 @@
             // Clear current data
             document.getElementById('report-container').classList.add('hidden');
             document.getElementById('agg-stats-container').classList.add('hidden');
+            document.getElementById('no-data-placeholder').classList.add('hidden');
+            document.getElementById('agg-no-data-placeholder').classList.add('hidden');
             currentReport = null;
             currentAggStats = null;
 
             if (!tutorId) {
                 subjectsData = [];
                 document.getElementById('subject').innerHTML = '<option value="">Выберите предмет</option>';
+                // Show placeholder
+                if (!document.getElementById('aggregated-section').classList.contains('hidden')) {
+                    document.getElementById('agg-no-data-placeholder').classList.remove('hidden');
+                } else {
+                    document.getElementById('no-data-placeholder').classList.remove('hidden');
+                }
                 return;
             }
 
@@ -806,11 +834,14 @@
             const period = document.getElementById('period-select').value;
 
             if (!period) {
+                document.getElementById('agg-stats-container').classList.add('hidden');
+                document.getElementById('agg-no-data-placeholder').classList.remove('hidden');
                 return;
             }
 
             try {
                 document.getElementById('agg-stats-container').classList.add('hidden');
+                document.getElementById('agg-no-data-placeholder').classList.add('hidden');
                 document.getElementById('loading').classList.remove('hidden');
 
                 // Build URL with optional tutorId parameter for admins
@@ -833,10 +864,16 @@
                 }
 
                 currentAggStats = await response.json();
-                displayAggregatedStats();
 
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('agg-stats-container').classList.remove('hidden');
+                // Check if there's any data
+                if (currentAggStats.period.totalLessons === 0 && currentAggStats.period.totalPayments === 0) {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('agg-no-data-placeholder').classList.remove('hidden');
+                } else {
+                    displayAggregatedStats();
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('agg-stats-container').classList.remove('hidden');
+                }
             } catch (error) {
                 document.getElementById('loading').classList.add('hidden');
                 showError('Не удалось загрузить статистику: ' + error.message);
