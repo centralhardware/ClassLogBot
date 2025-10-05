@@ -539,7 +539,6 @@
                         tutorsData = await tutorsResponse.json();
                         isAdmin = true;
                         document.getElementById('tutor-select-row').style.display = 'flex';
-                        document.getElementById('agg-tutor-select-row').style.display = 'flex';
                         populateTutors();
                     }
                 } catch (e) {
@@ -758,6 +757,12 @@
         document.getElementById('tutor-select').addEventListener('change', async () => {
             const tutorId = document.getElementById('tutor-select').value;
 
+            // Clear current data
+            document.getElementById('report-container').classList.add('hidden');
+            document.getElementById('agg-stats-container').classList.add('hidden');
+            currentReport = null;
+            currentAggStats = null;
+
             if (!tutorId) {
                 subjectsData = [];
                 document.getElementById('subject').innerHTML = '<option value="">Выберите предмет</option>';
@@ -776,15 +781,6 @@
                     subjectsData = await response.json();
                     document.getElementById('subject').innerHTML = '<option value="">Выберите предмет</option>';
                     populateSubjects();
-
-                    // Reload current active tab if subject is selected
-                    if (document.getElementById('subject').value) {
-                        if (!document.getElementById('aggregated-section').classList.contains('hidden')) {
-                            loadAggregatedStats();
-                        } else {
-                            loadReport();
-                        }
-                    }
                 }
             } catch (error) {
                 showError('Не удалось загрузить предметы: ' + error.message);
