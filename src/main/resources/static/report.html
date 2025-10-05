@@ -134,6 +134,14 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 16px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        table thead,
+        table tbody {
+            display: table;
+            width: 100%;
         }
 
         th, td {
@@ -224,17 +232,25 @@
             display: none;
         }
 
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         @media (max-width: 768px) {
             .filter-row {
                 flex-direction: column;
             }
 
             table {
-                font-size: 14px;
+                font-size: 12px;
+                min-width: 600px;
             }
 
             th, td {
-                padding: 8px;
+                padding: 8px 4px;
+                font-size: 12px;
             }
 
             .summary {
@@ -267,18 +283,11 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label for="period-type">Тип периода</label>
-                        <select id="period-type">
+                        <label for="period-select">Период</label>
+                        <select id="period-select">
                             <option value="current">Текущий месяц</option>
                             <option value="previous">Предыдущий месяц</option>
-                            <option value="custom">Выбрать период</option>
                         </select>
-                    </div>
-                </div>
-                <div class="filter-row hidden" id="custom-period-row">
-                    <div class="filter-group">
-                        <label for="custom-period">Период (ГГГГ-ММ)</label>
-                        <input type="month" id="custom-period">
                     </div>
                 </div>
             </div>
@@ -309,6 +318,7 @@
                     </div>
 
                     <div id="students-tab" class="tab-content active">
+                        <div class="table-wrapper">
                         <table id="students-table">
                             <thead>
                                 <tr>
@@ -324,9 +334,11 @@
                             <tbody id="students-tbody">
                             </tbody>
                         </table>
+                        </div>
                     </div>
 
                     <div id="lessons-tab" class="tab-content">
+                        <div class="table-wrapper">
                         <table id="lessons-table">
                             <thead>
                                 <tr>
@@ -340,9 +352,11 @@
                             <tbody id="lessons-tbody">
                             </tbody>
                         </table>
+                        </div>
                     </div>
 
                     <div id="payments-tab" class="tab-content">
+                        <div class="table-wrapper">
                         <table id="payments-table">
                             <thead>
                                 <tr>
@@ -354,6 +368,7 @@
                             <tbody id="payments-tbody">
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -367,14 +382,7 @@
                             <select id="agg-period-type">
                                 <option value="current">Текущий месяц</option>
                                 <option value="previous">Предыдущий месяц</option>
-                                <option value="custom">Выбрать период</option>
                             </select>
-                        </div>
-                    </div>
-                    <div class="filter-row hidden" id="agg-custom-period-row">
-                        <div class="filter-group">
-                            <label for="agg-custom-period">Период (ГГГГ-ММ)</label>
-                            <input type="month" id="agg-custom-period">
                         </div>
                     </div>
                 </div>
@@ -411,6 +419,7 @@
                         </div>
 
                         <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
+                        <div class="table-wrapper">
                         <table id="agg-current-subjects-table">
                             <thead>
                                 <tr>
@@ -425,6 +434,7 @@
                             <tbody id="agg-current-subjects-tbody">
                             </tbody>
                         </table>
+                        </div>
                     </div>
 
                     <!-- Comparison -->
@@ -484,6 +494,7 @@
                         </div>
 
                         <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 16px;">По предметам</h3>
+                        <div class="table-wrapper">
                         <table id="agg-previous-subjects-table">
                             <thead>
                                 <tr>
@@ -498,6 +509,7 @@
                             <tbody id="agg-previous-subjects-tbody">
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -527,6 +539,7 @@
 
                 subjectsData = await response.json();
                 populateSubjects();
+                populatePeriods();
 
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('content').classList.remove('hidden');
@@ -545,21 +558,44 @@
             });
         }
 
-        function getPeriod() {
-            const periodType = document.getElementById('period-type').value;
-            if (periodType === 'custom') {
-                const customPeriod = document.getElementById('custom-period').value;
-                if (!customPeriod) {
-                    return null;
+        function populatePeriods() {
+            const periodSelect = document.getElementById('period-select');
+            const aggPeriodSelect = document.getElementById('agg-period-type');
+
+            const months = [
+                'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+            ];
+
+            const now = new Date();
+
+            // Add last 12 months
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const monthStr = month < 10 ? `0${month}` : month;
+                const value = `${year}-${monthStr}`;
+                const label = `${months[date.getMonth()]} ${year}`;
+
+                const option1 = document.createElement('option');
+                option1.value = value;
+                option1.textContent = label;
+
+                const option2 = document.createElement('option');
+                option2.value = value;
+                option2.textContent = label;
+
+                if (i >= 2) { // Skip "current" and "previous" that are already there
+                    periodSelect.appendChild(option1);
+                    aggPeriodSelect.appendChild(option2);
                 }
-                return customPeriod;
             }
-            return periodType;
         }
 
         async function loadReport() {
             const subjectId = document.getElementById('subject').value;
-            const period = getPeriod();
+            const period = document.getElementById('period-select').value;
 
             if (!subjectId || !period) {
                 return;
@@ -668,32 +704,14 @@
 
         // Event listeners
         document.getElementById('subject').addEventListener('change', loadReport);
-
-        document.getElementById('period-type').addEventListener('change', () => {
-            const periodType = document.getElementById('period-type').value;
-            const customPeriodRow = document.getElementById('custom-period-row');
-
-            if (periodType === 'custom') {
-                customPeriodRow.classList.remove('hidden');
-            } else {
-                customPeriodRow.classList.add('hidden');
-                loadReport();
-            }
-        });
-
-        document.getElementById('custom-period').addEventListener('change', loadReport);
+        document.getElementById('period-select').addEventListener('change', loadReport);
 
         // Aggregated stats functions
         async function loadAggregatedStats() {
-            const periodType = document.getElementById('agg-period-type').value;
-            let period = periodType;
+            const period = document.getElementById('agg-period-type').value;
 
-            if (periodType === 'custom') {
-                const customPeriod = document.getElementById('agg-custom-period').value;
-                if (!customPeriod) {
-                    return;
-                }
-                period = customPeriod;
+            if (!period) {
+                return;
             }
 
             try {
@@ -829,19 +847,7 @@
         }
 
         // Event listeners for aggregated stats
-        document.getElementById('agg-period-type').addEventListener('change', () => {
-            const periodType = document.getElementById('agg-period-type').value;
-            const customPeriodRow = document.getElementById('agg-custom-period-row');
-
-            if (periodType === 'custom') {
-                customPeriodRow.classList.remove('hidden');
-            } else {
-                customPeriodRow.classList.add('hidden');
-                loadAggregatedStats();
-            }
-        });
-
-        document.getElementById('agg-custom-period').addEventListener('change', loadAggregatedStats);
+        document.getElementById('agg-period-type').addEventListener('change', loadAggregatedStats);
 
         // Main tab switching
         document.querySelectorAll('.tab-button[data-tab]').forEach(button => {
@@ -870,17 +876,26 @@
         });
 
         // Detail report tab switching (students/lessons/payments)
-        document.querySelectorAll('.tab-button:not([data-tab])').forEach(button => {
-            button.addEventListener('click', () => {
-                const tabName = button.getAttribute('data-tab') || button.textContent.toLowerCase();
+        // Find all tab buttons inside report-container
+        const reportTabButtons = document.querySelectorAll('#report-container .tab-button');
+        reportTabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tabName = button.getAttribute('data-tab');
 
-                // Remove active class from all detail buttons and tabs
-                document.querySelectorAll('.tab-button:not([data-tab])').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                if (!tabName) return;
 
-                // Add active class to clicked button and corresponding tab
+                // Remove active class from all detail report buttons
+                reportTabButtons.forEach(b => b.classList.remove('active'));
+
+                // Remove active class from all tab-content divs
+                document.querySelectorAll('#report-container .tab-content').forEach(t => t.classList.remove('active'));
+
+                // Add active class to clicked button
                 button.classList.add('active');
-                const targetTab = document.querySelector(`.tab-content[id*="${tabName}"]`);
+
+                // Show corresponding tab
+                const targetTab = document.getElementById(`${tabName}-tab`);
                 if (targetTab) {
                     targetTab.classList.add('active');
                 }
