@@ -268,13 +268,8 @@
         <div id="content" class="hidden">
             <h1>📊 Отчеты и статистика</h1>
 
-            <div class="tab-buttons" style="margin-bottom: 20px;">
-                <button class="tab-button active" data-tab="reports">Детальные отчеты</button>
-                <button class="tab-button" data-tab="aggregated">Агрегированная статистика</button>
-            </div>
-
-            <div id="reports-section" class="section-content">
-                <div class="filters">
+            <!-- Common filters for both tabs -->
+            <div class="filters">
                 <div class="filter-row" id="tutor-select-row" style="display: none;">
                     <div class="filter-group">
                         <label for="tutor-select">Преподаватель</label>
@@ -299,6 +294,13 @@
                     </div>
                 </div>
             </div>
+
+            <div class="tab-buttons" style="margin-bottom: 20px;">
+                <button class="tab-button active" data-main-tab="reports">Детальные отчеты</button>
+                <button class="tab-button" data-main-tab="aggregated">Агрегированная статистика</button>
+            </div>
+
+            <div id="reports-section" class="section-content">
 
             <div id="report-container" class="hidden">
                 <div class="card">
@@ -383,26 +385,6 @@
             </div>
 
             <div id="aggregated-section" class="section-content hidden">
-                <div class="filters">
-                    <div class="filter-row" id="agg-tutor-select-row" style="display: none;">
-                        <div class="filter-group">
-                            <label for="agg-tutor-select">Преподаватель</label>
-                            <select id="agg-tutor-select">
-                                <option value="">Выберите преподавателя</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="agg-period-type">Период</label>
-                            <select id="agg-period-type">
-                                <option value="current">Текущий месяц</option>
-                                <option value="previous">Предыдущий месяц</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="agg-stats-container" class="hidden">
                     <!-- Current Period Stats -->
                     <div class="card">
@@ -587,18 +569,12 @@
 
         function populateTutors() {
             const tutorSelect = document.getElementById('tutor-select');
-            const aggTutorSelect = document.getElementById('agg-tutor-select');
 
             tutorsData.forEach(tutor => {
-                const option1 = document.createElement('option');
-                option1.value = tutor.tutorId;
-                option1.textContent = tutor.tutorName;
-                tutorSelect.appendChild(option1);
-
-                const option2 = document.createElement('option');
-                option2.value = tutor.tutorId;
-                option2.textContent = tutor.tutorName;
-                aggTutorSelect.appendChild(option2);
+                const option = document.createElement('option');
+                option.value = tutor.tutorId;
+                option.textContent = tutor.tutorName;
+                tutorSelect.appendChild(option);
             });
         }
 
@@ -614,7 +590,6 @@
 
         function populatePeriods() {
             const periodSelect = document.getElementById('period-select');
-            const aggPeriodSelect = document.getElementById('agg-period-type');
 
             const months = [
                 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -632,17 +607,12 @@
                 const value = `${year}-${monthStr}`;
                 const label = `${months[date.getMonth()]} ${year}`;
 
-                const option1 = document.createElement('option');
-                option1.value = value;
-                option1.textContent = label;
-
-                const option2 = document.createElement('option');
-                option2.value = value;
-                option2.textContent = label;
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
 
                 if (i >= 2) { // Skip "current" and "previous" that are already there
-                    periodSelect.appendChild(option1);
-                    aggPeriodSelect.appendChild(option2);
+                    periodSelect.appendChild(option);
                 }
             }
         }
@@ -765,11 +735,26 @@
             document.getElementById('loading').classList.add('hidden');
         }
 
-        // Event listeners
-        document.getElementById('subject').addEventListener('change', loadReport);
-        document.getElementById('period-select').addEventListener('change', loadReport);
+        // Event listeners for filters
+        document.getElementById('subject').addEventListener('change', () => {
+            // Reload current active tab
+            if (!document.getElementById('aggregated-section').classList.contains('hidden')) {
+                loadAggregatedStats();
+            } else {
+                loadReport();
+            }
+        });
 
-        // Tutor selection for detailed reports
+        document.getElementById('period-select').addEventListener('change', () => {
+            // Reload current active tab
+            if (!document.getElementById('aggregated-section').classList.contains('hidden')) {
+                loadAggregatedStats();
+            } else {
+                loadReport();
+            }
+        });
+
+        // Tutor selection
         document.getElementById('tutor-select').addEventListener('change', async () => {
             const tutorId = document.getElementById('tutor-select').value;
 
@@ -791,6 +776,15 @@
                     subjectsData = await response.json();
                     document.getElementById('subject').innerHTML = '<option value="">Выберите предмет</option>';
                     populateSubjects();
+
+                    // Reload current active tab if subject is selected
+                    if (document.getElementById('subject').value) {
+                        if (!document.getElementById('aggregated-section').classList.contains('hidden')) {
+                            loadAggregatedStats();
+                        } else {
+                            loadReport();
+                        }
+                    }
                 }
             } catch (error) {
                 showError('Не удалось загрузить предметы: ' + error.message);
@@ -799,7 +793,7 @@
 
         // Aggregated stats functions
         async function loadAggregatedStats() {
-            const period = document.getElementById('agg-period-type').value;
+            const period = document.getElementById('period-select').value;
 
             if (!period) {
                 return;
@@ -812,7 +806,7 @@
                 // Build URL with optional tutorId parameter for admins
                 let url = `/api/report/aggregated/${period}`;
                 if (isAdmin) {
-                    const tutorId = document.getElementById('agg-tutor-select').value;
+                    const tutorId = document.getElementById('tutor-select').value;
                     if (tutorId) {
                         url += `?tutorId=${tutorId}`;
                     }
@@ -946,19 +940,14 @@
             studentsComp.style.borderLeftColor = comparison.studentsChange >= 0 ? '#10b981' : '#ef4444';
         }
 
-        // Event listeners for aggregated stats
-        document.getElementById('agg-period-type').addEventListener('change', loadAggregatedStats);
-
-        // Tutor selection for aggregated stats
-        document.getElementById('agg-tutor-select').addEventListener('change', loadAggregatedStats);
 
         // Main tab switching
-        document.querySelectorAll('.tab-button[data-tab]').forEach(button => {
+        document.querySelectorAll('[data-main-tab]').forEach(button => {
             button.addEventListener('click', () => {
-                const tabName = button.dataset.tab;
+                const tabName = button.dataset.mainTab;
 
-                // Remove active class from all buttons
-                document.querySelectorAll('.tab-button[data-tab]').forEach(b => b.classList.remove('active'));
+                // Remove active class from all main tab buttons
+                document.querySelectorAll('[data-main-tab]').forEach(b => b.classList.remove('active'));
                 button.classList.add('active');
 
                 // Hide all sections
