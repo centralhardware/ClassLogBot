@@ -47,6 +47,12 @@ object StudentService {
         }
     }
 
+    fun getAllActive(): List<Student> {
+        val students = StudentMapper.findAll()
+        KSLog.info("StudentService.getAllActive(): found ${students.size} students")
+        return students
+    }
+
     fun search(fio: String): List<Student> {
         if (directory == null) {
             KSLog.info("StudentService.search('$fio'): directory is null")

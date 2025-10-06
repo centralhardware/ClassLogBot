@@ -6,6 +6,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseTutor
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
+import me.centralhardware.znatoki.telegram.statistic.extensions.update
 
 object TutorMapper {
 
@@ -54,4 +55,23 @@ object TutorMapper {
                 mapOf("query" to "%$query%")
             )
         ) { it.parseTutor() }
+
+    fun updateTutor(id: Long, permissions: List<String>, subjectIds: List<Long>) {
+        val subjectsString = subjectIds.joinToString(":")
+        update(
+            queryOf(
+                """
+                UPDATE tutors
+                SET permissions = :permissions::text[],
+                    subjects = :subjects
+                WHERE id = :id
+                """,
+                mapOf(
+                    "id" to id,
+                    "permissions" to permissions.toTypedArray(),
+                    "subjects" to subjectsString
+                )
+            )
+        )
+    }
 }

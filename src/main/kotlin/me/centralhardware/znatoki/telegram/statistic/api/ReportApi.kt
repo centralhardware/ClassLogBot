@@ -40,6 +40,7 @@ data class ReportDataDto(
 
 @Serializable
 data class StudentReportDto(
+    val studentId: Int,
     val fio: String,
     val schoolClass: String,
     val individual: Int,
@@ -64,19 +65,6 @@ data class PaymentReportDto(
     val studentFio: String,
     val amount: Int,
     val photoReportLink: String?
-)
-
-@Serializable
-data class TutorSubjectDto(
-    val tutorId: Long,
-    val tutorName: String,
-    val subjects: List<SubjectDto>
-)
-
-@Serializable
-data class SubjectDto(
-    val subjectId: Long,
-    val subjectName: String
 )
 
 @Serializable
@@ -120,105 +108,9 @@ data class ComparisonDto(
 
 fun Route.reportApi() {
     route("/api/report") {
-        get("/tutors") {
-            val requestingTutorId = extractAndValidateTelegramUser(
-                call.request.headers["Authorization"],
-                0,
-                "GET /tutors"
-            )
-
-            if (requestingTutorId == null) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
-                return@get
-            }
-
-            val requestingTutor = TutorMapper.findByIdOrNull(requestingTutorId)
-            if (requestingTutor == null) {
-                KSLog.warning("ReportApi.GET /tutors: Unknown user ${requestingTutorId.id}")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@get
-            }
-
-            if (!requestingTutor.hasAdminPermission()) {
-                KSLog.warning("ReportApi.GET /tutors: User ${requestingTutorId.id} without admin permission")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@get
-            }
-
-            try {
-                val tutors = TutorMapper.getAll()
-                    .filter { it.subjects.isNotEmpty() }
-                    .map { tutorEntity ->
-                        TutorSubjectDto(
-                            tutorId = tutorEntity.id.id,
-                            tutorName = tutorEntity.name,
-                            subjects = emptyList()
-                        )
-                    }
-
-                KSLog.info("ReportApi.GET /tutors: Admin ${requestingTutorId.id} loaded tutors list")
-                call.respond(tutors)
-            } catch (e: Exception) {
-                KSLog.error("ReportApi.GET /tutors: Error retrieving tutors", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
-            }
-        }
-
-        get("/subjects") {
-            val tutorIdParam = call.request.queryParameters["tutorId"]?.toLongOrNull()
-
-            val requestingTutorId = extractAndValidateTelegramUser(
-                call.request.headers["Authorization"],
-                0,
-                "GET /subjects"
-            )
-
-            if (requestingTutorId == null) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
-                return@get
-            }
-
-            val requestingTutor = TutorMapper.findByIdOrNull(requestingTutorId)
-            if (requestingTutor == null) {
-                KSLog.warning("ReportApi.GET /subjects: Unknown user ${requestingTutorId.id}")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@get
-            }
-
-            // Determine which tutor's subjects to show
-            val targetTutorId = if (tutorIdParam != null && requestingTutor.hasAdminPermission()) {
-                TutorId(tutorIdParam)
-            } else {
-                requestingTutorId
-            }
-
-            val targetTutor = TutorMapper.findByIdOrNull(targetTutorId)
-            if (targetTutor == null) {
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Tutor not found"))
-                return@get
-            }
-
-            try {
-                val subjects = targetTutor.subjects.mapNotNull { subjectId ->
-                    SubjectMapper.getNameById(subjectId)?.let { name ->
-                        SubjectDto(
-                            subjectId = subjectId.id,
-                            subjectName = name
-                        )
-                    }
-                }
-
-                KSLog.info("ReportApi.GET /subjects: User ${requestingTutorId.id} loaded subjects list for tutor ${targetTutorId.id}")
-                call.respond(subjects)
-            } catch (e: Exception) {
-                KSLog.error("ReportApi.GET /subjects: Error retrieving subjects", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
-            }
-        }
-
         get("/{subjectId}/{period}") {
             val subjectIdParam = call.parameters["subjectId"]?.toLongOrNull()
-            val period = call.parameters["period"] // format: "current" or "previous" or "YYYY-MM"
+            val period = call.parameters["period"] // format: "YYYY-MM"
             val tutorIdParam = call.request.queryParameters["tutorId"]?.toLongOrNull()
 
             if (subjectIdParam == null || period == null) {
@@ -226,23 +118,8 @@ fun Route.reportApi() {
                 return@get
             }
 
-            val requestingTutorId = extractAndValidateTelegramUser(
-                call.request.headers["Authorization"],
-                0,
-                "GET /report"
-            )
-
-            if (requestingTutorId == null) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
-                return@get
-            }
-
-            val requestingTutor = TutorMapper.findByIdOrNull(requestingTutorId)
-            if (requestingTutor == null) {
-                KSLog.warning("ReportApi.GET: Unknown user ${requestingTutorId.id}")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@get
-            }
+            val requestingTutorId = call.authenticatedTutorId
+            val requestingTutor = TutorMapper.findByIdOrNull(requestingTutorId)!!
 
             // Determine which tutor's report to show
             val targetTutorId = if (tutorIdParam != null && requestingTutor.hasAdminPermission()) {
@@ -267,35 +144,15 @@ fun Route.reportApi() {
                     return@get
                 }
 
-                val (lessons, payments, targetMonth) = when (period) {
-                    "current" -> {
-                        Triple(
-                            LessonMapper.getCurrentMontTimes(targetTutorId, subjectId),
-                            PaymentMapper.getCurrentMonthPayments(targetTutorId, subjectId),
-                            YearMonth.now()
-                        )
-                    }
-                    "previous" -> {
-                        Triple(
-                            LessonMapper.getPrevMonthTimes(targetTutorId, subjectId),
-                            PaymentMapper.getPrevMonthPayments(targetTutorId, subjectId),
-                            YearMonth.now().minusMonths(1)
-                        )
-                    }
-                    else -> {
-                        try {
-                            val yearMonth = YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
-                            Triple(
-                                LessonMapper.getTimesByMonth(targetTutorId, subjectId, yearMonth),
-                                PaymentMapper.getPaymentsByMonth(targetTutorId, subjectId, yearMonth),
-                                yearMonth
-                            )
-                        } catch (e: Exception) {
-                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
-                            return@get
-                        }
-                    }
+                val targetMonth = try {
+                    YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
+                    return@get
                 }
+
+                val lessons = LessonMapper.getTimesByMonth(targetTutorId, subjectId, targetMonth)
+                val payments = PaymentMapper.getPaymentsByMonth(targetTutorId, subjectId, targetMonth)
 
                 if (lessons.isEmpty() && payments.isEmpty()) {
                     call.respond(
@@ -346,6 +203,7 @@ fun Route.reportApi() {
                     )
 
                     StudentReportDto(
+                        studentId = studentId.id,
                         fio = student.fio(),
                         schoolClass = student.schoolClass?.value?.toString() ?: "",
                         individual = individual,
@@ -422,23 +280,8 @@ fun Route.reportApi() {
                 return@get
             }
 
-            val requestingTutorId = extractAndValidateTelegramUser(
-                call.request.headers["Authorization"],
-                0,
-                "GET /aggregated"
-            )
-
-            if (requestingTutorId == null) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
-                return@get
-            }
-
-            val requestingTutor = TutorMapper.findByIdOrNull(requestingTutorId)
-            if (requestingTutor == null) {
-                KSLog.warning("ReportApi.GET /aggregated: Unknown user ${requestingTutorId.id}")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@get
-            }
+            val requestingTutorId = call.authenticatedTutorId
+            val requestingTutor = TutorMapper.findByIdOrNull(requestingTutorId)!!
 
             // Determine which tutor's stats to show
             val targetTutorId = if (tutorIdParam != null && requestingTutor.hasAdminPermission()) {
@@ -455,51 +298,20 @@ fun Route.reportApi() {
             }
 
             try {
-                val (currentMonth, currentStartDate, currentEndDate, previousMonth, previousStartDate, previousEndDate) = when (period) {
-                    "current" -> {
-                        val now = LocalDateTime.now()
-                        val currentMonth = YearMonth.now()
-                        val previousMonth = currentMonth.minusMonths(1)
-                        val dayOfMonth = now.dayOfMonth
-
-                        val currentStart = currentMonth.atDay(1).atStartOfDay()
-                        val currentEnd = now
-
-                        val previousStart = previousMonth.atDay(1).atStartOfDay()
-                        val previousEnd = previousMonth.atDay(minOf(dayOfMonth, previousMonth.lengthOfMonth())).atTime(23, 59, 59)
-
-                        Tuple6(currentMonth, currentStart, currentEnd, previousMonth, previousStart, previousEnd)
-                    }
-                    "previous" -> {
-                        val previousMonth = YearMonth.now().minusMonths(1)
-                        val twoMonthsAgo = previousMonth.minusMonths(1)
-
-                        val prevStart = previousMonth.atDay(1).atStartOfDay()
-                        val prevEnd = previousMonth.atEndOfMonth().atTime(23, 59, 59)
-
-                        val twoMonthsStart = twoMonthsAgo.atDay(1).atStartOfDay()
-                        val twoMonthsEnd = twoMonthsAgo.atDay(minOf(previousMonth.lengthOfMonth(), twoMonthsAgo.lengthOfMonth())).atTime(23, 59, 59)
-
-                        Tuple6(previousMonth, prevStart, prevEnd, twoMonthsAgo, twoMonthsStart, twoMonthsEnd)
-                    }
-                    else -> {
-                        try {
-                            val yearMonth = YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
-                            val previousMonth = yearMonth.minusMonths(1)
-
-                            val currentStart = yearMonth.atDay(1).atStartOfDay()
-                            val currentEnd = yearMonth.atEndOfMonth().atTime(23, 59, 59)
-
-                            val previousStart = previousMonth.atDay(1).atStartOfDay()
-                            val previousEnd = previousMonth.atDay(minOf(yearMonth.lengthOfMonth(), previousMonth.lengthOfMonth())).atTime(23, 59, 59)
-
-                            Tuple6(yearMonth, currentStart, currentEnd, previousMonth, previousStart, previousEnd)
-                        } catch (e: Exception) {
-                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
-                            return@get
-                        }
-                    }
+                val currentMonth = try {
+                    YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
+                    return@get
                 }
+                
+                val previousMonth = currentMonth.minusMonths(1)
+
+                val currentStartDate = currentMonth.atDay(1).atStartOfDay()
+                val currentEndDate = currentMonth.atEndOfMonth().atTime(23, 59, 59)
+
+                val previousStartDate = previousMonth.atDay(1).atStartOfDay()
+                val previousEndDate = previousMonth.atDay(minOf(currentMonth.lengthOfMonth(), previousMonth.lengthOfMonth())).atTime(23, 59, 59)
 
                 // Calculate stats for current period
                 val currentStats = calculatePeriodStats(targetTutorId, tutor, currentMonth, currentStartDate, currentEndDate)

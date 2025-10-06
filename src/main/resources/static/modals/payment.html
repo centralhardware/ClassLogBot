@@ -1,0 +1,65 @@
+<!-- Edit Payment Modal -->
+<div id="payment-modal" class="modal">
+    <div class="modal-content">
+        <h3>Редактировать оплату</h3>
+        <div id="payment-modal-info" style="margin-bottom: 16px; color: #718096; font-size: 14px;"></div>
+        <div class="form-group">
+            <label for="payment-amount">Сумма (₽)</label>
+            <input type="number" id="payment-amount" min="1" step="1">
+        </div>
+
+        <div id="payment-photo-container" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: none;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Фото отчет</label>
+            <img id="payment-photo" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0;">
+        </div>
+
+        <div class="modal-buttons">
+            <button class="modal-button secondary" onclick="closePaymentModal()">Отмена</button>
+            <button class="modal-button primary" onclick="savePaymentChanges()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Payment Modal -->
+<div id="add-payment-modal" class="modal">
+    <div class="modal-content">
+        <h3>Добавить оплату</h3>
+
+        <div class="form-group">
+            <label for="add-payment-subject">Предмет</label>
+            <select id="add-payment-subject" required></select>
+        </div>
+
+        <div class="form-group">
+            <label for="add-payment-student">Ученик *</label>
+            <input type="text" id="add-payment-student-search" placeholder="Поиск ученика..." required>
+            <div id="add-payment-student-results" style="max-height: 200px; overflow-y: auto; margin-top: 8px;"></div>
+            <input type="hidden" id="add-payment-student-id">
+            <div id="add-payment-selected-student" style="margin-top: 8px;"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="add-payment-amount">Сумма (₽)</label>
+            <input type="number" id="add-payment-amount" min="1" step="1" required>
+        </div>
+
+        <div class="form-group">
+            <label for="add-payment-photo">Фото отчет *</label>
+            <input type="file" id="add-payment-photo" accept="image/*" required style="padding: 8px;">
+            <div id="add-payment-photo-preview" style="margin-top: 8px;"></div>
+        </div>
+
+        <div id="add-payment-progress" class="upload-progress hidden">
+            <div class="progress-label">Загрузка...</div>
+            <div class="progress-bar-container">
+                <div id="add-payment-progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="add-payment-progress-text" class="progress-text">0%</div>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="modal-button secondary" onclick="closeAddPaymentModal()">Отмена</button>
+            <button id="save-new-payment-btn" class="modal-button primary" onclick="saveNewPayment()">Создать</button>
+        </div>
+    </div>
+</div>

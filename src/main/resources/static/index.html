@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Учебный центр - Управление</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div id="loading" class="loading">
+            <div class="loading-header">
+                <div class="loading-spinner">
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                </div>
+                <div class="loading-title">Загрузка приложения</div>
+            </div>
+            <div id="loading-log" class="loading-log"></div>
+        </div>
+
+        <div id="error-container" class="hidden"></div>
+
+        <div id="content" class="hidden">
+            <!-- Main Navigation -->
+            <div class="main-nav">
+                <div class="page-selector">
+                    <button id="page-selector-button" class="page-selector-button">
+                        <span id="current-page-label">📅 Сегодня</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div id="page-dropdown" class="page-dropdown hidden">
+                        <div class="page-option" data-page="today">📅 Сегодня</div>
+                        <div class="page-option" data-page="reports">📊 Отчеты</div>
+                        <div class="page-option" data-page="statistics">📈 Статистика</div>
+                        <div class="page-option" data-page="students">👥 Ученики</div>
+                        <div class="page-option" id="teachers-nav-option" data-page="teachers" style="display: none;">👨‍🏫 Учителя</div>
+                        <div class="page-option" data-page="audit-log">📋 Журнал действий</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pages Container - HTML partials will be loaded here -->
+            <div id="pages-container"></div>
+        </div>
+    </div>
+
+    <!-- Modals Container - HTML partials will be loaded here -->
+    <div id="modals-container"></div>
+
+    <!-- Load HTML Partials -->
+    <script>
+        async function loadHTMLPartials() {
+            const pages = ['today', 'reports', 'statistics', 'students', 'teachers', 'audit-log'];
+            const modals = ['lesson', 'payment', 'student', 'teacher'];
+
+            try {
+                // Load pages
+                for (const page of pages) {
+                    const response = await fetch(`pages/${page}.html`);
+                    if (!response.ok) throw new Error(`Failed to load pages/${page}.html`);
+                    const html = await response.text();
+                    document.getElementById('pages-container').insertAdjacentHTML('beforeend', html);
+                }
+
+                // Load modals
+                for (const modal of modals) {
+                    const response = await fetch(`modals/${modal}.html`);
+                    if (!response.ok) throw new Error(`Failed to load modals/${modal}.html`);
+                    const html = await response.text();
+                    document.getElementById('modals-container').insertAdjacentHTML('beforeend', html);
+                }
+
+                console.log('All HTML partials loaded successfully');
+            } catch (error) {
+                console.error('Error loading HTML partials:', error);
+                // Show error to user
+                const errorContainer = document.getElementById('error-container');
+                errorContainer.textContent = 'Ошибка загрузки интерфейса. Пожалуйста, обновите страницу.';
+                errorContainer.classList.remove('hidden');
+            }
+        }
+
+        // Load partials before loading the main application scripts
+        loadHTMLPartials().then(() => {
+            // Load application scripts after partials are loaded
+            const scripts = [
+                'app.js',
+                'today.js',
+                'reports.js',
+                'statistics.js',
+                'students.js',
+                'teachers.js',
+                'audit-log.js'
+            ];
+
+            scripts.forEach(src => {
+                const script = document.createElement('script');
+                script.src = src;
+                document.body.appendChild(script);
+            });
+        });
+    </script>
+</body>
+</html>

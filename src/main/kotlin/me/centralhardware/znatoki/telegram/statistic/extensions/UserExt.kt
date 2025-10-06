@@ -29,3 +29,9 @@ fun Tutor?.canAddPaymentForOthers(): Boolean =
 
 fun Tutor?.canAddTimeForOthers(): Boolean =
     this?.permissions?.containsAny(Permissions.ADD_TIME_FOR_OTHERS, Permissions.ADMIN) == true
+
+fun Tutor?.isAdmin(): Boolean =
+    this?.permissions?.contains(Permissions.ADMIN) == true
+
+fun Tutor?.hasWebInterfacePermission(): Boolean =
+    this?.permissions?.contains(Permissions.WEB_INTERFACE) == true

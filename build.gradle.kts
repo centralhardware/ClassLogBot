@@ -52,6 +52,9 @@ dependencies {
 
     implementation("dev.inmo:krontab:2.7.2")
 
+    // Diff library
+    implementation("io.github.java-diff-utils:java-diff-utils:4.15")
+
     // Test dependencies
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.0")

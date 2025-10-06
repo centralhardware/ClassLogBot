@@ -111,7 +111,7 @@ fun Student.getInfo(subjects: List<String>): String {
 }
 
 fun Student.fio(): String {
-    val parts = listOf(name, secondName, lastName)
+    val parts = listOf(secondName, name, lastName)
         .filter { it.isNotBlank() }
 
     return if (parts.isNotEmpty()) {

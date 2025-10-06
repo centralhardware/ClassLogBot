@@ -189,4 +189,88 @@ object PaymentMapper {
             )
         ) { row -> row.longOrNull("sum") }?: 0
 
+    private fun getPaymentsByTutorId(
+        tutorId: TutorId,
+        startDate: LocalDateTime,
+        endDate: LocalDateTime
+    ) = runList(
+        queryOf(
+            """
+            SELECT p.id,
+                   p.date_time,
+                   p.tutor_id,
+                   p.student_id,
+                   p.amount,
+                   p.subject_id,
+                   p.is_deleted,
+                   p.photo_report,
+                   p.added_by_tutor_id
+            FROM payment p
+            WHERE p.tutor_id = :tutor_id
+                AND p.date_time between :start_date and :end_date
+                AND p.is_deleted=false
+            """, mapOf(
+                "tutor_id" to tutorId.id,
+                "start_date" to startDate,
+                "end_date" to endDate)
+    )) { it.parsePayment() }
+
+    fun getTodayPayments(tutorId: TutorId): List<Payment> {
+        val now = LocalDateTime.now()
+        val startOfDay = now.toLocalDate().atStartOfDay()
+        return getPaymentsByTutorId(tutorId, startOfDay, now)
+    }
+
+    fun findById(id: PaymentId): Payment? = runSingle(
+        queryOf(
+            """
+            SELECT p.id,
+                   p.date_time,
+                   p.tutor_id,
+                   p.student_id,
+                   p.amount,
+                   p.subject_id,
+                   p.is_deleted,
+                   p.photo_report,
+                   p.added_by_tutor_id
+            FROM payment p
+            WHERE p.id = :id
+                AND p.is_deleted=false
+            """, mapOf("id" to id.id)
+        )
+    ) { it.parsePayment() }
+
+    fun updateAmount(id: PaymentId, amount: me.centralhardware.znatoki.telegram.statistic.entity.Amount) =
+        update(
+            queryOf(
+                """
+                UPDATE payment
+                SET amount = :amount
+                WHERE id = :id
+                """,
+                mapOf("id" to id.id, "amount" to amount.amount),
+            )
+        )
+
+    fun findAllByStudent(studentId: StudentId): List<Payment> =
+        runList(
+            queryOf(
+                """
+                SELECT p.id,
+                       p.date_time,
+                       p.tutor_id,
+                       p.student_id,
+                       p.amount,
+                       p.subject_id,
+                       p.is_deleted,
+                       p.photo_report,
+                       p.added_by_tutor_id
+                FROM payment p
+                WHERE p.student_id = :studentId AND p.is_deleted = false
+                ORDER BY p.date_time DESC
+                """,
+                mapOf("studentId" to studentId.id)
+            )
+        ) { it.parsePayment() }
+
 }

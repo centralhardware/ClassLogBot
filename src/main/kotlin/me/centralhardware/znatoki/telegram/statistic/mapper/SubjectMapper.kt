@@ -4,6 +4,7 @@ import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
+import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 
 object SubjectMapper {
 
@@ -47,5 +48,26 @@ object SubjectMapper {
     ) {
         row -> row.boolean("allow_multiply_clients")
     } ?: throw IllegalArgumentException("No subject with id $id found")
+
+    data class SubjectDto(
+        val subjectId: Long,
+        val subjectName: String
+    )
+
+    fun getAllSubjects(): List<SubjectDto> =
+        runList(
+            queryOf(
+                """
+                SELECT id, name
+                FROM subjects
+                ORDER BY name
+                """
+            )
+        ) { row ->
+            SubjectDto(
+                subjectId = row.long("id"),
+                subjectName = row.string("name")
+            )
+        }
 
 }

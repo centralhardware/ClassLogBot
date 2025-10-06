@@ -187,21 +187,31 @@ object LessonMapper {
             row -> TutorId(row.long("tutor_id"))
         }
 
-    fun setDeleted(lessonId: LessonId, isDeleted: Boolean) =
+    fun setDeleted(lessonId: LessonId, isDeleted: Boolean, studentId: StudentId? = null) =
         update(
             queryOf(
-                """
-                UPDATE lessons
-                SET is_deleted = :is_deleted,
-                    update_time = :update_time
-                WHERE id = :id
-                """,
-                    mapOf(
-                        "id" to lessonId.id,
-                        "is_deleted" to isDeleted,
-                        "update_time" to LocalDateTime.now(),
-                    ),
-                )
+                if (studentId != null) {
+                    """
+                    UPDATE lessons
+                    SET is_deleted = :is_deleted,
+                        update_time = :update_time
+                    WHERE id = :id AND student_id = :student_id
+                    """
+                } else {
+                    """
+                    UPDATE lessons
+                    SET is_deleted = :is_deleted,
+                        update_time = :update_time
+                    WHERE id = :id
+                    """
+                },
+                mapOf(
+                    "id" to lessonId.id,
+                    "is_deleted" to isDeleted,
+                    "update_time" to LocalDateTime.now(),
+                    "student_id" to studentId?.id,
+                ).filterValues { it != null },
+            )
         )
 
     fun getSubjectIdsForStudent(id: StudentId): List<SubjectId> =
@@ -217,6 +227,30 @@ object LessonMapper {
         ) {
             row -> row.long("subject_id").toSubjectId()
         }
+
+    fun findAllByStudent(studentId: StudentId): List<Lesson> =
+        runList(
+            queryOf(
+                """
+                SELECT id,
+                       date_time,
+                       update_time,
+                       tutor_id,
+                       subject_id,
+                       student_id,
+                       amount,
+                       photo_report,
+                       force_group,
+                       extra_half_hour,
+                       is_deleted,
+                       added_by_tutor_id
+                FROM lessons
+                WHERE student_id = :studentId AND is_deleted = false
+                ORDER BY date_time DESC
+                """,
+                mapOf("studentId" to studentId.id)
+            )
+        ) { it.parseTime() }
 
     fun setForceGroup(id: LessonId, forceGroup: Boolean) =
         update(
@@ -247,6 +281,23 @@ object LessonMapper {
                 mapOf(
                     "id" to id.id,
                     "extra_half_hour" to extraHalfHour,
+                    "update_time" to LocalDateTime.now(),
+                ),
+            )
+        )
+
+    fun setAmount(id: LessonId, amount: me.centralhardware.znatoki.telegram.statistic.entity.Amount) =
+        update(
+            queryOf(
+                """
+                UPDATE lessons
+                SET amount = :amount,
+                    update_time = :update_time
+                WHERE id = :id
+                """,
+                mapOf(
+                    "id" to id.id,
+                    "amount" to amount.amount,
                     "update_time" to LocalDateTime.now(),
                 ),
             )

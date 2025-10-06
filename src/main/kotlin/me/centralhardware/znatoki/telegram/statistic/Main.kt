@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic
 
 import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.warning
 import dev.inmo.micro_utils.common.Warning
 import dev.inmo.tgbotapi.AppConfig
@@ -68,117 +69,122 @@ suspend fun main() {
 
     StudentService.init()
     WebServer.start()
-    longPolling(
-        subcontextInitialAction = buildSubcontextInitialAction {
-            add { update ->
-                runCatching {
-                    TutorMapper.findByIdOrNull(update.tutorId())?.let { user -> data.user = user }
-                }
-            }
-        },
-        middlewares = {
-            addMiddleware { restrictAccess(UserExistChecker()) }
-        }
-    ) {
-        TutorMapper.getAll().forEach { user ->
-            val userCommands = mutableListOf<BotCommand>()
-            if (user.hasTimePermission()) {
-                userCommands.apply {
-                    add(BotCommand("addlesson", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
-                }
-            }
-            if (user.hasPaymentPermission()) {
-                userCommands.apply {
-                    add(BotCommand("addpayment", "Ведомость оплаты"))
-                }
-            }
-            if (user.canAddPaymentForOthers()) {
-                userCommands.apply {
-                    add(BotCommand("addpaymentforother", "Добавить оплату за другого репетитора"))
-                }
-            }
-            if (user.canAddTimeForOthers()) {
-                userCommands.apply {
-                    add(BotCommand("addlessonforother", "Добавить занятие за другого репетитора"))
-                }
-            }
-            if (user.hasClientPermission()) {
-                userCommands.apply {
-                    add(BotCommand("addstudent", "Добавить ученика"))
-                }
-            }
-            if (user.hasReadRight()) {
-                userCommands.apply {
-                    add(BotCommand("report", "Отчет за текущий месяц"))
-                    add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
-                    add(BotCommand("web_report", "Веб-отчеты"))
-                    add(BotCommand("reset", "Сбросить состояние"))
-                }
-            }
-            runCatching {
-                setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
-            }.onFailure { KSLog.warning("Failed to set my commands: ${it.message}") }
-        }
-
-        startCommand()
-
-        onContentMessage({
-            Storage.contain(it.userId()) &&
-            !(it.content is TextContent && it.text == "/reset")
-        }) { Storage.process(it) }
-
-        initContext({it.hasClientPermission()}) {
-            addStudentCommand()
-        }
-
-        initContext({it.hasPaymentPermission()}) {
-            addPaymentCommand()
-        }
-
-        initContext({it.canAddPaymentForOthers()}) {
-            addPaymentForOtherCommand()
-        }
-
-        initContext({it.canAddTimeForOthers()}) {
-            addLessonForOtherCommand()
-        }
-
-        initContext({it.hasTimePermission()}) {
-            addLessonCommand()
-        }
-
-        initContext({it.hasReadRight()}) {
-            studentInfoCommand()
-            searchStudentCommand()
-            reportCommand()
-            reportPreviousCommand()
-            webReportCommand()
-            resetCommand()
-
-            studentInfoCallback()
-
-            processInline()
-
-            registerForceGroupHandlers()
-
-            registerExtraHalfHourHandlers()
-        }
-
-        initContext({it.hasAdminPermission()}) {
-            dailyReportCommand()
-
-            deleteStudentCallback()
-
-            registerLessonChangeDeleteCallback()
-
-            registerPaymentChangeDeleteCallback()
-        }
-
-        launch {
-            dailyReport()
-        }
-        launch {
-            monthReport()
-        }
-    }.second.join()
+//    longPolling(
+//        subcontextInitialAction = buildSubcontextInitialAction {
+//            add { update ->
+//                runCatching {
+//                    TutorMapper.findByIdOrNull(update.tutorId())?.let { user -> data.user = user }
+//                }
+//            }
+//        },
+//        middlewares = {
+//            addMiddleware { restrictAccess(UserExistChecker()) }
+//        }
+//    ) {
+//        // Set commands asynchronously to not block bot startup
+//        launch {
+//            KSLog.info("Setting bot commands for all users...")
+//            TutorMapper.getAll().forEach { user ->
+//                val userCommands = mutableListOf<BotCommand>()
+//                if (user.hasTimePermission()) {
+//                    userCommands.apply {
+//                        add(BotCommand("addlesson", "ДОБАВИТЬ ЗАПИСЬ ЗАНЯТИЯ"))
+//                    }
+//                }
+//                if (user.hasPaymentPermission()) {
+//                    userCommands.apply {
+//                        add(BotCommand("addpayment", "Ведомость оплаты"))
+//                    }
+//                }
+//                if (user.canAddPaymentForOthers()) {
+//                    userCommands.apply {
+//                        add(BotCommand("addpaymentforother", "Добавить оплату за другого репетитора"))
+//                    }
+//                }
+//                if (user.canAddTimeForOthers()) {
+//                    userCommands.apply {
+//                        add(BotCommand("addlessonforother", "Добавить занятие за другого репетитора"))
+//                    }
+//                }
+//                if (user.hasClientPermission()) {
+//                    userCommands.apply {
+//                        add(BotCommand("addstudent", "Добавить ученика"))
+//                    }
+//                }
+//                if (user.hasReadRight()) {
+//                    userCommands.apply {
+//                        add(BotCommand("report", "Отчет за текущий месяц"))
+//                        add(BotCommand("reportprevious", "Отчет за предыдущий месяц"))
+//                        add(BotCommand("web_report", "Веб-отчеты"))
+//                        add(BotCommand("reset", "Сбросить состояние"))
+//                    }
+//                }
+//                runCatching {
+//                    setMyCommands(userCommands, scope = BotCommandScopeChat(user.id.toChatId()))
+//                }.onFailure { KSLog.warning("Failed to set commands for user ${user.id.id}: ${it.message}") }
+//            }
+//            KSLog.info("Bot commands set successfully")
+//        }
+//
+//        startCommand()
+//
+//        onContentMessage({
+//            Storage.contain(it.userId()) &&
+//            !(it.content is TextContent && it.text == "/reset")
+//        }) { Storage.process(it) }
+//
+//        initContext({it.hasClientPermission()}) {
+//            addStudentCommand()
+//        }
+//
+//        initContext({it.hasPaymentPermission()}) {
+//            addPaymentCommand()
+//        }
+//
+//        initContext({it.canAddPaymentForOthers()}) {
+//            addPaymentForOtherCommand()
+//        }
+//
+//        initContext({it.canAddTimeForOthers()}) {
+//            addLessonForOtherCommand()
+//        }
+//
+//        initContext({it.hasTimePermission()}) {
+//            addLessonCommand()
+//        }
+//
+//        initContext({it.hasReadRight()}) {
+//            studentInfoCommand()
+//            searchStudentCommand()
+//            reportCommand()
+//            reportPreviousCommand()
+//            webReportCommand()
+//            resetCommand()
+//
+//            studentInfoCallback()
+//
+//            processInline()
+//
+//            registerForceGroupHandlers()
+//
+//            registerExtraHalfHourHandlers()
+//        }
+//
+//        initContext({it.hasAdminPermission()}) {
+//            dailyReportCommand()
+//
+//            deleteStudentCallback()
+//
+//            registerLessonChangeDeleteCallback()
+//
+//            registerPaymentChangeDeleteCallback()
+//        }
+//
+//        launch {
+//            dailyReport()
+//        }
+//        launch {
+//            monthReport()
+//        }
+//    }.second.join()
 }

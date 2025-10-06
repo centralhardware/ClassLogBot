@@ -22,6 +22,10 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.hasReadRight
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
+import me.centralhardware.znatoki.telegram.statistic.service.StudentService
+import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
+import me.centralhardware.znatoki.telegram.statistic.exception.*
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 
@@ -181,8 +185,10 @@ fun sendStudentEditLog(oldStudent: Student, newStudent: Student, updatedBy: Tuto
                 changes.add("Создал: $oldCreator → $newCreator")
             }
             if (oldStudent.updateBy != newStudent.updateBy) {
-                val oldUpdater = oldStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
-                val newUpdater = newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
+                val oldUpdater =
+                    oldStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
+                val newUpdater =
+                    newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
                 changes.add("Последний раз изменил: $oldUpdater → $newUpdater")
             }
 
@@ -191,7 +197,8 @@ fun sendStudentEditLog(oldStudent: Student, newStudent: Student, updatedBy: Tuto
             }
 
             val createdByName = TutorMapper.findByIdOrNull(newStudent.createdBy)?.name?.hashtag() ?: "Unknown"
-            val updatedByName = newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
+            val updatedByName =
+                newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
 
             val text = buildString {
                 appendLine("#редактирование_ученика")
@@ -216,136 +223,213 @@ fun sendStudentEditLog(oldStudent: Student, newStudent: Student, updatedBy: Tuto
     }
 }
 
+@Serializable
+data class StudentLessonDto(
+    val id: String,
+    val dateTime: String,
+    val subjectName: String,
+    val amount: Double,
+    val forceGroup: Boolean,
+    val extraHalfHour: Boolean
+)
+
+@Serializable
+data class StudentPaymentDto(
+    val id: Int,
+    val dateTime: String,
+    val amount: Int
+)
+
+@Serializable
+data class StudentDetailsDto(
+    val lessons: List<StudentLessonDto>,
+    val payments: List<StudentPaymentDto>
+)
+
 fun Route.studentApi() {
     route("/api/student") {
+
+        get("/{id}/details") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
+            val period = call.request.queryParameters["period"] ?: throw BadRequestException("Period is required")
+            val subjectId = call.request.queryParameters["subjectId"]?.toIntOrNull()
+            
+            KSLog.info("StudentApi.GET /details: Received request for student $id with period: $period, subjectId: $subjectId")
+            
+            val tutorId = call.authenticatedTutorId
+            val studentId = id.toStudentId()
+
+            // Parse period (format: YYYY-MM)
+            val (year, month) = period.split("-").map { it.toInt() }
+            val periodStart = java.time.LocalDateTime.of(year, month, 1, 0, 0, 0)
+            val periodEnd = periodStart.plusMonths(1)
+
+            // Get lessons for student in period (and optionally filtered by subject)
+            val lessons =
+                me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper.findAllByStudent(studentId)
+                    .filter { it.dateTime >= periodStart && it.dateTime < periodEnd }
+                    .filter { subjectId == null || it.subjectId.id == subjectId.toLong() }
+                    .groupBy { it.id }
+                    .map { (lessonId, lessons) ->
+                        val firstLesson = lessons.first()
+                        StudentLessonDto(
+                            id = lessonId.id.toString(),
+                            dateTime = firstLesson.dateTime.format(
+                                java.time.format.DateTimeFormatter.ofPattern(
+                                    "dd.MM.yyyy HH:mm"
+                                )
+                            ),
+                            subjectName = me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper.getNameById(
+                                firstLesson.subjectId
+                            ),
+                            amount = firstLesson.amount,
+                            forceGroup = firstLesson.forceGroup,
+                            extraHalfHour = firstLesson.extraHalfHour
+                        )
+                    }
+                    .sortedByDescending { it.dateTime }
+
+            // Get payments for student in period (and optionally filtered by subject)
+            val payments =
+                me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper.findAllByStudent(studentId)
+                    .filter { it.dateTime >= periodStart && it.dateTime < periodEnd }
+                    .filter { subjectId == null || it.subjectId.id == subjectId.toLong() }
+                    .map { payment ->
+                        StudentPaymentDto(
+                            id = payment.id?.id ?: 0,
+                            dateTime = payment.dateTime.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+                            amount = payment.amount.amount
+                        )
+                    }
+                    .sortedByDescending { it.dateTime }
+
+            KSLog.info("StudentApi.GET /details: User ${tutorId.id} loaded details for student $id for period $period")
+            call.respond(StudentDetailsDto(lessons = lessons, payments = payments))
+        }
+
+        get("/search") {
+            val query = call.request.queryParameters["q"]
+            val tutorId = call.authenticatedTutorId
+            
+            val students = if (query.isNullOrEmpty() || query.length < 2) {
+                // Return all students sorted by class and name
+                StudentService.getAllActive()
+            } else {
+                StudentService.search(query.lowercase())
+            }
+
+            val sortedStudents = students
+                .map { it.toDto() }
+                .sortedWith(
+                    compareBy(
+                    { it.schoolClass ?: Int.MAX_VALUE },
+                    { it.secondName },
+                    { it.name },
+                    { it.lastName }
+                ))
+
+            KSLog.info("StudentApi.GET /search: User ${tutorId.id} searched for '${query ?: "all"}', found ${sortedStudents.size} students")
+            call.respond(sortedStudents)
+        }
+
         get("/{id}") {
-            val id = call.parameters["id"]?.toIntOrNull()
-            if (id == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid student ID"))
-                return@get
-            }
-
-            val tutorId = extractAndValidateTelegramUser(
-                call.request.headers["Authorization"],
-                id,
-                "GET"
-            )
-
-            if (tutorId == null) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
-                return@get
-            }
-
-            val tutor = TutorMapper.findByIdOrNull(tutorId)
-            if (tutor == null) {
-                KSLog.warning("StudentApi.GET: Unknown user ${tutorId.id} attempted to access student $id")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@get
-            }
-
-            if (!tutor.hasReadRight()) {
-                KSLog.warning("StudentApi.GET: User ${tutorId.id} without read rights attempted to access student $id")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@get
-            }
-
-            try {
-                val student = StudentMapper.findById(id.toStudentId())
-                KSLog.info("StudentApi.GET: User ${tutorId.id} loaded student $id")
-                call.respond(student.toDto())
-            } catch (e: IllegalArgumentException) {
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Student not found"))
-            } catch (e: Exception) {
-                KSLog.error("StudentApi.GET: Error retrieving student $id", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
-            }
+            val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
+            val tutorId = call.authenticatedTutorId
+            
+            val student = StudentMapper.findById(id.toStudentId())
+            KSLog.info("StudentApi.GET: User ${tutorId.id} loaded student $id")
+            call.respond(student.toDto())
         }
 
         put("/{id}") {
-            val id = call.parameters["id"]?.toIntOrNull()
-            if (id == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid student ID"))
-                return@put
+            requires(Permissions.ADD_CLIENT)
+            val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
+            val tutorId = call.authenticatedTutorId
+            val request = call.receive<UpdateStudentRequest>()
+
+            // Валидация
+            if (request.name.isBlank() || request.secondName.isBlank() || request.lastName.isBlank()) {
+                throw ValidationException("Name, secondName and lastName are required")
             }
 
-            val tutorId = extractAndValidateTelegramUser(
-                call.request.headers["Authorization"],
-                id,
-                "PUT"
+            if (request.schoolClass != null && !SchoolClass.validate(request.schoolClass)) {
+                throw ValidationException("Invalid school class")
+            }
+
+            if (request.phone != null && !PhoneNumber.validate(request.phone)) {
+                throw ValidationException("Invalid phone number")
+            }
+
+            if (request.responsiblePhone != null && !PhoneNumber.validate(request.responsiblePhone)) {
+                throw ValidationException("Invalid responsible phone number")
+            }
+
+            val existingStudent = StudentMapper.findById(id.toStudentId())
+
+            val updatedStudent = Student(
+                id = existingStudent.id,
+                name = request.name,
+                secondName = request.secondName,
+                lastName = request.lastName,
+                schoolClass = request.schoolClass?.let { SchoolClass(it) },
+                recordDate = request.recordDate?.let { LocalDate.parse(it) },
+                birthDate = request.birthDate?.let { LocalDate.parse(it) },
+                source = request.source?.let { SourceOption.fromTitle(it) },
+                phone = request.phone?.let { PhoneNumber(it) },
+                responsiblePhone = request.responsiblePhone?.let { PhoneNumber(it) },
+                motherFio = request.motherFio,
+                createDate = existingStudent.createDate,
+                modifyDate = java.time.LocalDateTime.now(),
+                createdBy = existingStudent.createdBy,
+                updateBy = tutorId
             )
 
-            if (tutorId == null) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authorization required"))
-                return@put
+            val changesMap = buildMap<String, Pair<String?, String?>> {
+                if (existingStudent.name != updatedStudent.name)
+                    put("name", existingStudent.name to updatedStudent.name)
+                if (existingStudent.secondName != updatedStudent.secondName)
+                    put("secondName", existingStudent.secondName to updatedStudent.secondName)
+                if (existingStudent.lastName != updatedStudent.lastName)
+                    put("lastName", existingStudent.lastName to updatedStudent.lastName)
+                if (existingStudent.schoolClass != updatedStudent.schoolClass)
+                    put("schoolClass", existingStudent.schoolClass?.value?.toString() to updatedStudent.schoolClass?.value?.toString())
+                if (existingStudent.phone != updatedStudent.phone)
+                    put("phone", existingStudent.phone?.value to updatedStudent.phone?.value)
+                if (existingStudent.responsiblePhone != updatedStudent.responsiblePhone)
+                    put("responsiblePhone", existingStudent.responsiblePhone?.value to updatedStudent.responsiblePhone?.value)
+                if (existingStudent.motherFio != updatedStudent.motherFio)
+                    put("motherFio", existingStudent.motherFio to updatedStudent.motherFio)
+                if (existingStudent.birthDate != updatedStudent.birthDate)
+                    put("birthDate", existingStudent.birthDate?.toString() to updatedStudent.birthDate?.toString())
+                if (existingStudent.source != updatedStudent.source)
+                    put("source", existingStudent.source?.title to updatedStudent.source?.title)
+                if (existingStudent.recordDate != updatedStudent.recordDate)
+                    put("recordDate", existingStudent.recordDate?.toString() to updatedStudent.recordDate?.toString())
             }
 
-            val tutor = TutorMapper.findByIdOrNull(tutorId)
-            if (tutor == null) {
-                KSLog.warning("StudentApi.PUT: Unknown user ${tutorId.id} attempted to update student $id")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@put
-            }
+            // Only save and log if there are actual changes
+            if (changesMap.isNotEmpty()) {
+                StudentMapper.update(updatedStudent)
 
-            if (!tutor.hasClientPermission()) {
-                KSLog.warning("StudentApi.PUT: User ${tutorId.id} without client permission attempted to update student $id")
-                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Access denied"))
-                return@put
-            }
+                val htmlDiff = DiffService.generateHtmlDiff(changesMap)
 
-            try {
-                val request = call.receive<UpdateStudentRequest>()
-
-                // Валидация
-                if (request.name.isBlank() || request.secondName.isBlank() || request.lastName.isBlank()) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Name, secondName and lastName are required"))
-                    return@put
-                }
-
-                if (request.schoolClass != null && !SchoolClass.validate(request.schoolClass)) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid school class"))
-                    return@put
-                }
-
-                if (request.phone != null && !PhoneNumber.validate(request.phone)) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid phone number"))
-                    return@put
-                }
-
-                if (request.responsiblePhone != null && !PhoneNumber.validate(request.responsiblePhone)) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid responsible phone number"))
-                    return@put
-                }
-
-                val existingStudent = StudentMapper.findById(id.toStudentId())
-
-                val updatedStudent = Student(
-                    id = existingStudent.id,
-                    name = request.name,
-                    secondName = request.secondName,
-                    lastName = request.lastName,
-                    schoolClass = request.schoolClass?.let { SchoolClass(it) },
-                    recordDate = request.recordDate?.let { LocalDate.parse(it) },
-                    birthDate = request.birthDate?.let { LocalDate.parse(it) },
-                    source = request.source?.let { SourceOption.fromTitle(it) },
-                    phone = request.phone?.let { PhoneNumber(it) },
-                    responsiblePhone = request.responsiblePhone?.let { PhoneNumber(it) },
-                    motherFio = request.motherFio,
-                    createDate = existingStudent.createDate,
-                    modifyDate = java.time.LocalDateTime.now(),
-                    createdBy = existingStudent.createdBy,
-                    updateBy = tutorId
+                AuditLogMapper.log(
+                    userId = tutorId.id,
+                    action = "UPDATE_STUDENT",
+                    entityType = "student",
+                    entityId = id,
+                    details = htmlDiff,
+                    studentId = id,
+                    subjectId = null
                 )
 
-                StudentMapper.update(updatedStudent)
                 KSLog.info("StudentApi.PUT: User ${tutorId.id} updated student $id")
                 sendStudentEditLog(existingStudent, updatedStudent, tutorId)
-                call.respond(HttpStatusCode.OK, updatedStudent.toDto())
-            } catch (e: IllegalArgumentException) {
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Student not found"))
-            } catch (e: Exception) {
-                KSLog.error("StudentApi.PUT: Error updating student $id", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
+            } else {
+                KSLog.info("StudentApi.PUT: User ${tutorId.id} attempted to update student $id with no changes")
             }
+
+            call.respond(HttpStatusCode.OK, updatedStudent.toDto())
         }
     }
 }

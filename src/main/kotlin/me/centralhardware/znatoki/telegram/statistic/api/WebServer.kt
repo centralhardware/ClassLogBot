@@ -30,25 +30,49 @@ object WebServer {
             install(CORS) {
                 anyHost()
                 allowHeader(HttpHeaders.ContentType)
+                allowHeader(HttpHeaders.Authorization)
                 allowMethod(HttpMethod.Get)
                 allowMethod(HttpMethod.Put)
                 allowMethod(HttpMethod.Post)
                 allowMethod(HttpMethod.Delete)
             }
 
+            install(TelegramAuthPlugin)
+
             install(StatusPages) {
+                exception<me.centralhardware.znatoki.telegram.statistic.exception.AppException> { call, cause ->
+                    KSLog.error("WebServer: Application exception: ${cause.message}", cause)
+                    call.respond(
+                        cause.statusCode,
+                        mapOf("error" to cause.message)
+                    )
+                }
+                exception<IllegalArgumentException> { call, cause ->
+                    KSLog.error("WebServer: Validation error: ${cause.message}", cause)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "Invalid input")
+                    )
+                }
                 exception<Throwable> { call, cause ->
-                    KSLog.error("WebServer: Exception handling request: ${cause.message}", cause)
+                    KSLog.error("WebServer: Unexpected error", cause)
                     call.respond(
                         HttpStatusCode.InternalServerError,
-                        mapOf("error" to (cause.message ?: "Unknown error"))
+                        mapOf("error" to "Internal server error")
                     )
                 }
             }
 
             routing {
+                tutorApi()
+                subjectApi()
                 studentApi()
                 reportApi()
+                lessonApi()
+                paymentApi()
+                imageApi()
+                versionApi()
+                auditLogApi()
 
                 // Serve static files
                 staticResources("/", "static")
