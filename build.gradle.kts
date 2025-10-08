@@ -16,7 +16,7 @@ val ktgbotapiVersion = "29.0.0"
 val poiVersion = "5.4.1"
 val kstatemachineVersion = "0.34.2"
 val luceneVersion = "10.3.1"
-val ktorVersion = "3.3.0"
+val ktorVersion = "3.3.1"
 
 dependencies {
     implementation("io.ktor:ktor-server-core:$ktorVersion")
