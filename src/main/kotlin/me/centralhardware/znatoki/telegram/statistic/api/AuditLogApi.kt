@@ -48,7 +48,7 @@ fun AuditLog.toDto(): AuditLogDto {
 
     // Format tutor name as "Name I.I."
     val userName = user?.let { tutor ->
-        val parts = listOf(tutor.name, tutor.secondName, tutor.lastName)
+        val parts = tutor.name.split(" ")
         if (parts.size >= 2) {
             "${parts[0]} ${parts[1].firstOrNull()?.toString()?.uppercase() ?: ""}." +
             (parts.getOrNull(2)?.firstOrNull()?.toString()?.uppercase()?.let { " $it." } ?: "")
