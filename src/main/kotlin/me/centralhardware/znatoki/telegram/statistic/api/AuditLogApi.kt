@@ -46,14 +46,26 @@ data class ErrorResponse(
 fun AuditLog.toDto(): AuditLogDto {
     val user = TutorMapper.findByIdOrNull(me.centralhardware.znatoki.telegram.statistic.entity.TutorId(userId))
 
+    // Format tutor name as "Name I.I."
+    val userName = user?.let { tutor ->
+        val parts = listOf(tutor.name, tutor.secondName, tutor.lastName)
+        if (parts.size >= 2) {
+            "${parts[0]} ${parts[1].firstOrNull()?.toString()?.uppercase() ?: ""}." +
+            (parts.getOrNull(2)?.firstOrNull()?.toString()?.uppercase()?.let { " $it." } ?: "")
+        } else {
+            tutor.name
+        }
+    }
+
+    // Format student name as "Name I.I."
     val studentName = studentId?.let {
         me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper.findById(
             it.toStudentId()
         )?.let { student ->
-            val nameParts = student.name.split(" ")
-            if (nameParts.size >= 2) {
-                "${nameParts[0]} ${nameParts[1].firstOrNull()?.toString() ?: ""}." +
-                (nameParts.getOrNull(2)?.firstOrNull()?.let { " $it." } ?: "")
+            val parts = listOf(student.name, student.secondName, student.lastName)
+            if (parts.size >= 2) {
+                "${parts[0]} ${parts[1].firstOrNull()?.toString()?.uppercase() ?: ""}." +
+                (parts.getOrNull(2)?.firstOrNull()?.toString()?.uppercase()?.let { " $it." } ?: "")
             } else {
                 student.name
             }
@@ -73,7 +85,7 @@ fun AuditLog.toDto(): AuditLogDto {
     return AuditLogDto(
         id = id,
         userId = userId,
-        userName = user?.name,
+        userName = userName,
         action = action,
         entityType = entityType,
         entityId = entityId,

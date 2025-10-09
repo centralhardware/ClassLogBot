@@ -495,16 +495,19 @@ async function openAddLessonModal() {
     // Populate subject select
     const subjectSelect = document.getElementById('add-lesson-subject');
     subjectSelect.innerHTML = '<option value="">Выберите предмет</option>';
+    
+    console.log('subjectsData:', subjectsData);
+
     subjectsData.forEach(subject => {
         const option = document.createElement('option');
-        option.value = subject.subjectId;
-        option.textContent = subject.subjectName;
+        option.value = subject.id || subject.subjectId;
+        option.textContent = subject.name || subject.subjectName;
         subjectSelect.appendChild(option);
     });
 
     // Auto-select if only one subject
     if (subjectsData.length === 1) {
-        subjectSelect.value = subjectsData[0].subjectId;
+        subjectSelect.value = subjectsData[0].id || subjectsData[0].subjectId;
         subjectSelect.disabled = true;
     }
 
@@ -760,14 +763,14 @@ async function openAddPaymentModal() {
     subjectSelect.innerHTML = '<option value="">Выберите предмет</option>';
     subjectsData.forEach(subject => {
         const option = document.createElement('option');
-        option.value = subject.subjectId;
-        option.textContent = subject.subjectName;
+        option.value = subject.id || subject.subjectId;
+        option.textContent = subject.name || subject.subjectName;
         subjectSelect.appendChild(option);
     });
 
     // Auto-select if only one subject
     if (subjectsData.length === 1) {
-        subjectSelect.value = subjectsData[0].subjectId;
+        subjectSelect.value = subjectsData[0].id || subjectsData[0].subjectId;
         subjectSelect.disabled = true;
     }
 

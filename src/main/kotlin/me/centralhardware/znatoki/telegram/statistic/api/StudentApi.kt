@@ -311,25 +311,31 @@ fun Route.studentApi() {
             val query = call.request.queryParameters["q"]
             val tutorId = call.authenticatedTutorId
             
-            val students = if (query.isNullOrEmpty() || query.length < 2) {
+            val students = if (query.isNullOrEmpty()) {
                 // Return all students sorted by class and name
                 StudentService.getAllActive()
             } else {
                 StudentService.search(query.lowercase())
             }
 
-            val sortedStudents = students
-                .map { it.toDto() }
-                .sortedWith(
-                    compareBy(
-                    { it.schoolClass ?: Int.MAX_VALUE },
-                    { it.secondName },
-                    { it.name },
-                    { it.lastName }
-                ))
+            val result = if (query.isNullOrEmpty()) {
+                // Sort only when returning all students
+                students
+                    .map { it.toDto() }
+                    .sortedWith(
+                        compareBy(
+                        { it.schoolClass ?: Int.MAX_VALUE },
+                        { it.secondName },
+                        { it.name },
+                        { it.lastName }
+                    ))
+            } else {
+                // Preserve Lucene order when searching
+                students.map { it.toDto() }
+            }
 
-            KSLog.info("StudentApi.GET /search: User ${tutorId.id} searched for '${query ?: "all"}', found ${sortedStudents.size} students")
-            call.respond(sortedStudents)
+            KSLog.info("StudentApi.GET /search: User ${tutorId.id} searched for '${query ?: "all"}', found ${result.size} students")
+            call.respond(result)
         }
 
         get("/{id}") {

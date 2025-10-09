@@ -96,8 +96,8 @@ async function loadFiltersData() {
                 subjectSelect.innerHTML = '<option value="">Все предметы</option>';
                 subjects.forEach(subject => {
                     const option = document.createElement('option');
-                    option.value = subject.subjectId;
-                    option.textContent = subject.subjectName;
+                    option.value = subject.id || subject.subjectId;
+                    option.textContent = subject.name || subject.subjectName;
                     subjectSelect.appendChild(option);
                 });
             }
@@ -110,8 +110,8 @@ async function loadFiltersData() {
         subjectSelect.innerHTML = '<option value="">Все предметы</option>';
         subjectsData.forEach(subject => {
             const option = document.createElement('option');
-            option.value = subject.subjectId;
-            option.textContent = subject.subjectName;
+            option.value = subject.id || subject.subjectId;
+            option.textContent = subject.name || subject.subjectName;
             subjectSelect.appendChild(option);
         });
     }
