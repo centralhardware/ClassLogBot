@@ -56,22 +56,43 @@ object TutorMapper {
             )
         ) { it.parseTutor() }
 
-    fun updateTutor(id: Long, permissions: List<String>, subjectIds: List<Long>) {
+    fun updateTutor(id: Long, permissions: List<String>, subjectIds: List<Long>, name: String? = null) {
         val subjectsString = subjectIds.joinToString(":")
-        update(
-            queryOf(
-                """
-                UPDATE tutors
-                SET permissions = :permissions::text[],
-                    subjects = :subjects
-                WHERE id = :id
-                """,
-                mapOf(
-                    "id" to id,
-                    "permissions" to permissions.toTypedArray(),
-                    "subjects" to subjectsString
+        
+        if (name != null) {
+            update(
+                queryOf(
+                    """
+                    UPDATE tutors
+                    SET permissions = :permissions::text[],
+                        subjects = :subjects,
+                        name = :name
+                    WHERE id = :id
+                    """,
+                    mapOf(
+                        "id" to id,
+                        "permissions" to permissions.toTypedArray(),
+                        "subjects" to subjectsString,
+                        "name" to name
+                    )
                 )
             )
-        )
+        } else {
+            update(
+                queryOf(
+                    """
+                    UPDATE tutors
+                    SET permissions = :permissions::text[],
+                        subjects = :subjects
+                    WHERE id = :id
+                    """,
+                    mapOf(
+                        "id" to id,
+                        "permissions" to permissions.toTypedArray(),
+                        "subjects" to subjectsString
+                    )
+                )
+            )
+        }
     }
 }

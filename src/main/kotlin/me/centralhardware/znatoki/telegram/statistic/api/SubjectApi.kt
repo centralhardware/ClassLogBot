@@ -21,7 +21,6 @@ data class SubjectDto(
 fun Route.subjectApi() {
     route("/api/subjects") {
         get("/all") {
-            requires(Permissions.ADMIN)
             val tutorId = call.authenticatedTutorId
             val subjects = SubjectMapper.getAllSubjects().map { 
                 SubjectDto(it.subjectId, it.subjectName) 

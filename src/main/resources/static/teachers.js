@@ -107,6 +107,7 @@ async function openTeacherModal(teacherId) {
     currentTeacherSubjects = teacher.subjects.map(s => ({ id: s.id, name: s.name }));
 
     document.getElementById('teacher-modal-title').textContent = `Редактирование: ${teacher.name}`;
+    document.getElementById('teacher-name-input').value = teacher.name;
 
     // Render permissions as cards
     const permissionsContainer = document.getElementById('permissions-grid');
@@ -208,7 +209,15 @@ function togglePermission(permissionKey) {
 
 async function saveTeacherChanges() {
     try {
+        const newName = document.getElementById('teacher-name-input').value.trim();
+        
+        if (!newName) {
+            showError('Имя преподавателя не может быть пустым');
+            return;
+        }
+
         const updateData = {
+            name: newName,
             permissions: currentTeacherPermissions,
             subjectIds: currentTeacherSubjects.map(s => s.id)
         };

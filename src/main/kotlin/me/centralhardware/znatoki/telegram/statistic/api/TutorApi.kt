@@ -42,6 +42,7 @@ data class CurrentUserDto(
 
 @Serializable
 data class UpdateTutorRequest(
+    val name: String? = null,
     val permissions: List<String>,
     val subjectIds: List<Long>
 )
@@ -108,8 +109,13 @@ fun Route.tutorApi() {
                 throw ValidationException("Invalid permissions: $invalidPermissions")
             }
 
+            // Validate name if provided
+            if (request.name != null && request.name.isBlank()) {
+                throw ValidationException("Name cannot be blank")
+            }
+
             // Update tutor
-            TutorMapper.updateTutor(id, request.permissions, request.subjectIds)
+            TutorMapper.updateTutor(id, request.permissions, request.subjectIds, request.name)
 
             val updatedTutor = TutorMapper.findByIdOrNull(TutorId(id)) ?: throw NotFoundException("Tutor not found")
 
