@@ -43,8 +43,8 @@ dependencies {
 
     implementation("org.postgresql:postgresql:42.7.8")
     implementation("com.zaxxer:HikariCP:7.0.2")
-    implementation("org.flywaydb:flyway-core:11.13.3")
-    implementation("org.flywaydb:flyway-database-postgresql:11.13.3")
+    implementation("org.flywaydb:flyway-core:11.14.0")
+    implementation("org.flywaydb:flyway-database-postgresql:11.14.0")
 
     implementation("org.apache.lucene:lucene-core:$luceneVersion")
     implementation("org.apache.lucene:lucene-queryparser:$luceneVersion")
