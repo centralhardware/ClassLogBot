@@ -132,6 +132,8 @@ async function init() {
         addLoadingLog('Данные загружены', true);
 
         addLoadingLog('Настройка интерфейса...');
+        // Populate period selects BEFORE subject selects to avoid calling loadReport with empty period
+        populatePeriodSelects();
         setupEventListeners();
         addLoadingLog('Готово!', true);
 
@@ -203,9 +205,6 @@ function setupEventListeners() {
     document.getElementById('student-search').addEventListener('input', (e) => {
         searchStudents(e.target.value);
     });
-
-    // Period selects - add custom periods
-    populatePeriodSelects();
 
     // Phone formatting
     setupPhoneFormatting('student-phone');
