@@ -21,6 +21,8 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.telegram.InlineSearchType
 import me.centralhardware.znatoki.telegram.statistic.user
@@ -133,7 +135,25 @@ suspend fun BehaviourContext.startPaymentFsm(
                 }
                 it.addedByTutorId = if (addedBy != it.tutorId) addedBy else null
                 val payment = it.build()
-                sendLog(payment, PaymentMapper.insert(payment), addedBy)
+                val paymentId = PaymentMapper.insert(payment)
+                sendLog(payment, paymentId, addedBy)
+                
+                // Audit log
+                val htmlDiff = DiffService.generateHtmlDiff(
+                    oldObj = null,
+                    newObj = payment
+                )
+                
+                AuditLogMapper.log(
+                    userId = addedBy.id,
+                    action = "CREATE_PAYMENT",
+                    entityType = "payment",
+                    entityId = paymentId.id,
+                    details = htmlDiff,
+                    studentId = payment.studentId.id,
+                    subjectId = payment.subjectId.id.toInt()
+                )
+                
                 sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
             },
             {

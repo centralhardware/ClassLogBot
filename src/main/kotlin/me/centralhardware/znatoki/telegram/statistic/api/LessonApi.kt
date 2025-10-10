@@ -240,18 +240,9 @@ fun Route.lessonApi() {
                 val updatedLessons = LessonMapper.findById(lessonId)
                 val updatedLesson = updatedLessons.first()
 
-                val changesMap = buildMap<String, Pair<String?, String?>> {
-                    if (oldLesson.forceGroup != updatedLesson.forceGroup)
-                        put("forceGroup", (if (oldLesson.forceGroup) "Да" else "Нет") to (if (updatedLesson.forceGroup) "Да" else "Нет"))
-                    if (oldLesson.extraHalfHour != updatedLesson.extraHalfHour)
-                        put("extraHalfHour", (if (oldLesson.extraHalfHour) "Да" else "Нет") to (if (updatedLesson.extraHalfHour) "Да" else "Нет"))
-                    if (oldLesson.amount != updatedLesson.amount)
-                        put("amount", "${oldLesson.amount} ₽" to "${updatedLesson.amount} ₽")
-                }
-
                 val student = StudentMapper.findById(oldLesson.studentId)
                 val subject = SubjectMapper.getNameById(oldLesson.subjectId) ?: "Unknown"
-                val htmlDiff = DiffService.generateHtmlDiff(changesMap)
+                val htmlDiff = DiffService.generateHtmlDiff(oldObj = oldLesson, newObj = updatedLesson)
 
                 AuditLogMapper.log(
                     userId = tutorId.id,

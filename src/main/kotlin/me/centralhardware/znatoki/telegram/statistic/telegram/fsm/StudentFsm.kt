@@ -18,6 +18,8 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 
 suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageContent>) =
     startTelegramFsm(
@@ -124,6 +126,22 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                 }
                 """.trimIndent(),
                 parseMode = MarkdownParseMode,
+            )
+
+            // Audit log
+            val htmlDiff = DiffService.generateHtmlDiff(
+                oldObj = null,
+                newObj = client
+            )
+            
+            AuditLogMapper.log(
+                userId = message.tutorId().id,
+                action = "CREATE_STUDENT",
+                entityType = "student",
+                entityId = client.id?.id,
+                details = htmlDiff,
+                studentId = client.id?.id,
+                subjectId = null
             )
 
             sendTextMessage(message.chat, "Создание ученика закончено")

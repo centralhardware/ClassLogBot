@@ -24,6 +24,8 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.telegram.InlineSearchType
 import me.centralhardware.znatoki.telegram.statistic.user
@@ -110,6 +112,23 @@ suspend fun BehaviourContext.startLessonFsm(
                 val services = ctx.build()
                 services.forEach { LessonMapper.insert(it) }
                 sendLog(services, message.userId(), addedBy)
+                
+                // Audit log
+                val lesson = services.first()
+                val htmlDiff = DiffService.generateHtmlDiff(
+                    oldObj = null,
+                    newObj = lesson
+                )
+                
+                AuditLogMapper.log(
+                    userId = addedBy.id,
+                    action = "CREATE_LESSON",
+                    entityType = "lesson",
+                    entityId = null,
+                    details = htmlDiff,
+                    studentId = lesson.studentId.id,
+                    subjectId = lesson.subjectId.id.toInt()
+                )
 
                 val allowForceGroup = data.user.hasForceGroup()
                 val allowExtraHalf = data.user.hasExtraHalfHour()

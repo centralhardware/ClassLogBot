@@ -117,26 +117,3 @@ function displayReport() {
         </div>
     `).join('');
 }
-
-// Load subjects for selected tutor (admin only)
-async function loadSubjectsForTutor(prefix) {
-    const tutorId = document.getElementById(`${prefix}-tutor-select`).value;
-    if (!tutorId) {
-        subjectsData = [];
-        if (prefix === 'reports') {
-            document.getElementById('reports-subject').innerHTML = '<option value="">Выберите предмет</option>';
-            document.getElementById('reports-container').classList.add('hidden');
-            document.getElementById('reports-no-data').classList.remove('hidden');
-        }
-        return;
-    }
-
-    // Get subjects from tutorsData loaded in app.js
-    const tutor = tutorsData.find(t => t.id == tutorId);
-    if (tutor) {
-        subjectsData = tutor.subjects || [];
-        if (prefix === 'reports') {
-            populateSubjectSelects();
-        }
-    }
-}

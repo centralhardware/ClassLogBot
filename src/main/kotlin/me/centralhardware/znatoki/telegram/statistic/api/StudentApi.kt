@@ -417,7 +417,7 @@ fun Route.studentApi() {
             if (changesMap.isNotEmpty()) {
                 StudentMapper.update(updatedStudent)
 
-                val htmlDiff = DiffService.generateHtmlDiff(changesMap)
+                val htmlDiff = DiffService.generateHtmlDiff(oldObj = existingStudent, newObj = updatedStudent)
 
                 AuditLogMapper.log(
                     userId = tutorId.id,

@@ -10,7 +10,12 @@ import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 
 private const val ACTION_DELETE = "timeDelete"
 private const val ACTION_RESTORE = "timeRestore"
@@ -43,6 +48,23 @@ private suspend fun BehaviourContext.changeLessonDelete(
             forceGroup = lesson.forceGroup,
             isSingle = lessons.size == 1))
     }
+    
+    // Audit log
+    val htmlDiff = if (deleted) {
+        DiffService.generateHtmlDiff(oldObj = lesson, newObj = null)
+    } else {
+        DiffService.generateHtmlDiff(oldObj = null, newObj = lesson)
+    }
+    
+    AuditLogMapper.log(
+        userId = query.user.id.chatId.long,
+        action = if (deleted) "DELETE_LESSON" else "RESTORE_LESSON",
+        entityType = "lesson",
+        entityId = null,
+        details = htmlDiff,
+        studentId = lesson.studentId.id,
+        subjectId = lesson.subjectId.id.toInt()
+    )
 }
 
 private fun buildLessonKeyboard(id: LessonId, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {

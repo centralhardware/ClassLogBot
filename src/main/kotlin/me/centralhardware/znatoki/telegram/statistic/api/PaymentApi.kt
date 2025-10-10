@@ -155,23 +155,14 @@ fun Route.paymentApi() {
             val student = StudentMapper.findById(oldPayment.studentId)
             val subject = SubjectMapper.getNameById(oldPayment.subjectId) ?: "Unknown"
 
-            val changesMap = buildMap<String, Pair<String?, String?>> {
-                if (oldPayment.amount != updatedPayment.amount) {
-                    put("amount", "${oldPayment.amount.amount} ₽" to "${updatedPayment.amount.amount} ₽")
-                }
-            }
-
-            val details = buildString {
-                append("<div class=\"entity-info\">${student.fio()} - $subject</div>")
-                append(DiffService.generateHtmlDiff(changesMap))
-            }
+            val htmlDiff = DiffService.generateHtmlDiff(oldObj = oldPayment, newObj = updatedPayment)
 
             AuditLogMapper.log(
                 userId = tutorId.id,
                 action = "UPDATE_PAYMENT",
                 entityType = "payment",
                 entityId = paymentIdStr,
-                details = details,
+                details = htmlDiff,
                 studentId = oldPayment.studentId.id,
                 subjectId = oldPayment.subjectId.id.toInt()
             )

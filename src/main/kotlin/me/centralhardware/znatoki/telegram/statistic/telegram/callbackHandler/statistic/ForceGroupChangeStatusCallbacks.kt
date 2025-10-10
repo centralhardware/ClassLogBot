@@ -10,6 +10,7 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
+import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasExtraHalfHour
@@ -17,6 +18,10 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 
@@ -77,6 +82,25 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
 
     query.messageDataCallbackQueryOrNull()
         ?.let { edit(it.message, replyMarkup = keyboard) }
+    
+    // Audit log
+    val htmlDiff = DiffService.generateHtmlDiff(
+        oldObj = service,
+        newObj = current
+    )
+    
+    val student = StudentMapper.findById(service.studentId)
+    val subject = SubjectMapper.getNameById(service.subjectId) ?: "Unknown"
+    
+    AuditLogMapper.log(
+        userId = query.user.id.chatId.long,
+        action = "UPDATE_LESSON",
+        entityType = "lesson",
+        entityId = null,
+        details = "<div class=\"entity-info\">${student?.fio()}, $subject</div>$htmlDiff",
+        studentId = service.studentId.id,
+        subjectId = service.subjectId.id.toInt()
+    )
 }
 
 private fun buildServiceKeyboard(

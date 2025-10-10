@@ -52,6 +52,22 @@
 
     <!-- Load HTML Partials -->
     <script>
+        // Check if opened from Telegram WebApp
+        if (!window.Telegram || !window.Telegram.WebApp) {
+            document.body.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🚫</div>
+                    <h1 style="font-size: 24px; margin-bottom: 10px; color: #333;">Доступ запрещен</h1>
+                    <p style="font-size: 16px; color: #666; max-width: 400px;">
+                        Это приложение доступно только через Telegram WebApp.
+                        <br><br>
+                        Пожалуйста, откройте приложение через Telegram бот.
+                    </p>
+                </div>
+            `;
+            throw new Error('Not opened from Telegram WebApp');
+        }
+
         async function loadHTMLPartials() {
             const pages = ['today', 'reports', 'statistics', 'students', 'teachers', 'audit-log'];
             const modals = ['lesson', 'payment', 'student', 'teacher'];

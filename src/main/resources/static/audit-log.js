@@ -54,6 +54,9 @@ async function loadAuditLog() {
         loadingEl.classList.add('hidden');
         contentEl.classList.remove('hidden');
         filtersEl.classList.remove('hidden');
+        
+        // Setup filters after loading
+        setupAuditLogFilters();
     } catch (error) {
         console.error('Error loading audit log:', error);
         loadingEl.classList.add('hidden');
@@ -348,12 +351,16 @@ function setupInfiniteScroll() {
 setupInfiniteScroll();
 
 // Setup filter button
-document.addEventListener('DOMContentLoaded', () => {
+function setupAuditLogFilters() {
     const applyButton = document.getElementById('audit-log-apply-filters');
     if (applyButton) {
+        applyButton.removeEventListener('click', applyAuditLogFilters);
         applyButton.addEventListener('click', applyAuditLogFilters);
     }
-});
+}
+
+// Setup filters immediately when script loads
+setupAuditLogFilters();
 
 // Register page loader
 if (typeof window.pageLoaders !== 'undefined') {

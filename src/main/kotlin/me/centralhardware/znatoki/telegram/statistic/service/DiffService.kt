@@ -1,18 +1,37 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
-import com.github.difflib.text.DiffRowGenerator
+import de.danielbechler.diff.ObjectDifferBuilder
 
 object DiffService {
 
-    private val diffGenerator = DiffRowGenerator.create()
-        .showInlineDiffs(true)
-        .inlineDiffByWord(true)
-        .oldTag { if (it) "<span class=\"diff-deleted\">" else "</span>" }
-        .newTag { if (it) "<span class=\"diff-inserted\">" else "</span>" }
-        .columnWidth(Integer.MAX_VALUE)
-        .build()
+    fun <T> generateHtmlDiff(
+        oldObj: T?,
+        newObj: T?
+    ): String {
+        if (oldObj == null && newObj == null) return ""
+        
+        val differ = ObjectDifferBuilder.buildDefault()
+        val diff = differ.compare(newObj, oldObj)
+        
+        val changes = mutableMapOf<String, Pair<String?, String?>>()
+        
+        diff.visit { node, _ ->
+            if (node.hasChanges() && !node.hasChildren()) {
+                val fieldPath = node.path.toString()
+                val fieldName = fieldPath.removePrefix("/")
+                
+                if (fieldName.isNotEmpty()) {
+                    val oldValue = node.canonicalGet(oldObj)?.toString()
+                    val newValue = node.canonicalGet(newObj)?.toString()
+                    changes[fieldName] = oldValue to newValue
+                }
+            }
+        }
+        
+        return formatChangesToHtml(changes)
+    }
 
-    fun generateHtmlDiff(changes: Map<String, Pair<String?, String?>>): String {
+    private fun formatChangesToHtml(changes: Map<String, Pair<String?, String?>>): String {
         if (changes.isEmpty()) return ""
 
         val html = StringBuilder()
@@ -25,13 +44,7 @@ object DiffService {
 
             when {
                 oldValue != null && newValue != null -> {
-                    val rows = diffGenerator.generateDiffRows(listOf(oldValue), listOf(newValue))
-                    if (rows.isNotEmpty()) {
-                        val row = rows[0]
-                        html.append(row.oldLine)
-                        html.append(" → ")
-                        html.append(row.newLine)
-                    }
+                    html.append("<del>$oldValue</del> → <ins>$newValue</ins>")
                 }
                 oldValue != null -> html.append("<del>$oldValue</del>")
                 newValue != null -> html.append("<ins>$newValue</ins>")
@@ -58,6 +71,10 @@ object DiffService {
             "forceGroup" -> "Групповое занятие"
             "extraHalfHour" -> "1.5 часа"
             "amount" -> "Сумма"
+            "tutorId" -> "Репетитор"
+            "subjectId" -> "Предмет"
+            "studentId" -> "Ученик"
+            "_amount" -> "Сумма"
             else -> field
         }
     }
