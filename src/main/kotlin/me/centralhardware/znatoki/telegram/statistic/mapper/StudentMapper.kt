@@ -17,8 +17,9 @@ object StudentMapper {
             SELECT EXISTS(
                 SELECT *
                 FROM students
-                WHERE lower(trim(concat(id, ' ', name, ' ', second_name, ' ', last_name))) = lower(:fio)
-                ORDER BY create_date DESC
+                WHERE lower(trim(regexp_replace(concat(id, ' ', second_name, ' ', name, ' ', last_name), '\s+', ' ', 'g'))) = 
+                      lower(trim(regexp_replace(:fio, '\s+', ' ', 'g')))
+                  AND deleted = false
             ) as e
             """,
             mapOf("fio" to fio)
