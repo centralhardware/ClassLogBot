@@ -6,6 +6,8 @@ import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.warning
 import io.ktor.http.*
 import io.ktor.server.application.*
+import me.centralhardware.znatoki.telegram.statistic.exception.BadRequestException
+import me.centralhardware.znatoki.telegram.statistic.exception.NotFoundException
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
@@ -114,8 +116,7 @@ fun Route.reportApi() {
             val tutorIdParam = call.request.queryParameters["tutorId"]?.toLongOrNull()
 
             if (subjectIdParam == null || period == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid parameters"))
-                return@get
+                throw BadRequestException("Invalid parameters: subjectId=$subjectIdParam, period=$period")
             }
 
             val requestingTutorId = call.authenticatedTutorId
@@ -129,146 +130,133 @@ fun Route.reportApi() {
             }
 
             val tutor = TutorMapper.findByIdOrNull(targetTutorId)
-            if (tutor == null) {
-                KSLog.warning("ReportApi.GET: Target tutor ${targetTutorId.id} not found")
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Tutor not found"))
+                ?: throw NotFoundException("Tutor not found: ${targetTutorId.id}")
+
+            val subjectId = subjectIdParam.toSubjectId()
+
+            val subjectName = SubjectMapper.getNameById(subjectId)
+                ?: throw NotFoundException("Subject not found: ${subjectId.id}")
+
+            val targetMonth = try {
+                YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
+            } catch (e: Exception) {
+                throw BadRequestException("Invalid period format: $period")
+            }
+
+            val lessons = LessonMapper.getTimesByMonth(targetTutorId, subjectId, targetMonth)
+            val payments = PaymentMapper.getPaymentsByMonth(targetTutorId, subjectId, targetMonth)
+
+            if (lessons.isEmpty() && payments.isEmpty()) {
+                call.respond(
+                    ReportDataDto(
+                        tutorName = tutor.name,
+                        subjectName = subjectName,
+                        month = targetMonth.month.name,
+                        year = targetMonth.year,
+                        students = emptyList(),
+                        totalIndividual = 0,
+                        totalGroup = 0,
+                        totalPayments = 0,
+                        lessons = emptyList(),
+                        payments = emptyList()
+                    )
+                )
                 return@get
             }
 
-            try {
-                val subjectId = subjectIdParam.toSubjectId()
+            // Group lessons by student
+            val studentLessons = lessons.groupBy { it.studentId }
+            val id2lessons = lessons.groupBy { it.id }
 
-                val subjectName = SubjectMapper.getNameById(subjectId)
-                if (subjectName == null) {
-                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Subject not found"))
-                    return@get
-                }
+            var totalIndividual = 0
+            var totalGroup = 0
 
-                val targetMonth = try {
-                    YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
-                    return@get
-                }
+            val studentReports = studentLessons.map { (studentId, studentLessonsList) ->
+                val student = StudentMapper.findById(studentId)
+                val individual = studentLessonsList.count { id2lessons[it.id]!!.isIndividual() }
+                val group = studentLessonsList.count { id2lessons[it.id]!!.isGroup() }
 
-                val lessons = LessonMapper.getTimesByMonth(targetTutorId, subjectId, targetMonth)
-                val payments = PaymentMapper.getPaymentsByMonth(targetTutorId, subjectId, targetMonth)
+                totalIndividual += individual
+                totalGroup += group
 
-                if (lessons.isEmpty() && payments.isEmpty()) {
-                    call.respond(
-                        ReportDataDto(
-                            tutorName = tutor.name,
-                            subjectName = subjectName,
-                            month = targetMonth.month.name,
-                            year = targetMonth.year,
-                            students = emptyList(),
-                            totalIndividual = 0,
-                            totalGroup = 0,
-                            totalPayments = 0,
-                            lessons = emptyList(),
-                            payments = emptyList()
-                        )
-                    )
-                    return@get
-                }
+                val dates = studentLessonsList
+                    .sortedBy { it.dateTime }
+                    .groupBy { it.dateTime.toLocalDate() }
+                    .map { (date, lessonsOnDate) ->
+                        "${date.format(DateTimeFormatter.ofPattern("dd.MM"))}(${lessonsOnDate.size})"
+                    }
+                    .joinToString(",")
 
-                // Group lessons by student
-                val studentLessons = lessons.groupBy { it.studentId }
-                val id2lessons = lessons.groupBy { it.id }
-
-                var totalIndividual = 0
-                var totalGroup = 0
-
-                val studentReports = studentLessons.map { (studentId, studentLessonsList) ->
-                    val student = StudentMapper.findById(studentId)
-                    val individual = studentLessonsList.count { id2lessons[it.id]!!.isIndividual() }
-                    val group = studentLessonsList.count { id2lessons[it.id]!!.isGroup() }
-
-                    totalIndividual += individual
-                    totalGroup += group
-
-                    val dates = studentLessonsList
-                        .sortedBy { it.dateTime }
-                        .groupBy { it.dateTime.toLocalDate() }
-                        .map { (date, lessonsOnDate) ->
-                            "${date.format(DateTimeFormatter.ofPattern("dd.MM"))}(${lessonsOnDate.size})"
-                        }
-                        .joinToString(",")
-
-                    val paymentSum = PaymentMapper.getPaymentsSumForStudent(
-                        targetTutorId,
-                        subjectId,
-                        studentId,
-                        targetMonth.atDay(1).atStartOfDay()
-                    )
-
-                    StudentReportDto(
-                        studentId = studentId.id,
-                        fio = student.fio(),
-                        schoolClass = student.schoolClass?.value?.toString() ?: "",
-                        individual = individual,
-                        group = group,
-                        payment = paymentSum.toInt(),
-                        dates = dates
-                    )
-                }.sortedWith(compareBy({ it.schoolClass.toIntOrNull() ?: 999 }, { it.fio }))
-
-                val totalPaymentsSum = PaymentMapper.getPaymentsSum(
+                val paymentSum = PaymentMapper.getPaymentsSumForStudent(
                     targetTutorId,
                     subjectId,
+                    studentId,
                     targetMonth.atDay(1).atStartOfDay()
                 )
 
-                val lessonReports = lessons
-                    .groupBy { it.id }
-                    .map { (_, lessonGroup) ->
-                        val lesson = lessonGroup.first()
-                        LessonReportDto(
-                            dateTime = lesson.dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
-                            students = lessonGroup.map { StudentMapper.findById(it.studentId).fio() }.sorted(),
-                            amount = lesson.amount,
-                            forceGroup = lesson.forceGroup,
-                            extraHalfHour = lesson.extraHalfHour,
-                            photoReportLink = null // MinioService links would need special handling
-                        )
-                    }
-                    .sortedWith(compareBy(
-                        { LocalDate.parse(it.dateTime.substringBefore(" "), DateTimeFormatter.ofPattern("dd.MM.yyyy")) },
-                        { it.students.minOrNull() }
-                    ))
+                StudentReportDto(
+                    studentId = studentId.id,
+                    fio = student.fio(),
+                    schoolClass = student.schoolClass?.value?.toString() ?: "",
+                    individual = individual,
+                    group = group,
+                    payment = paymentSum.toInt(),
+                    dates = dates
+                )
+            }.sortedWith(compareBy({ it.schoolClass.toIntOrNull() ?: 999 }, { it.fio }))
 
-                val paymentReports = payments.map { payment ->
-                    val student = StudentMapper.findById(payment.studentId)
-                    PaymentReportDto(
-                        dateTime = payment.dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
-                        studentFio = student.fio(),
-                        amount = payment.amount.amount,
-                        photoReportLink = null
+            val totalPaymentsSum = PaymentMapper.getPaymentsSum(
+                targetTutorId,
+                subjectId,
+                targetMonth.atDay(1).atStartOfDay()
+            )
+
+            val lessonReports = lessons
+                .groupBy { it.id }
+                .map { (_, lessonGroup) ->
+                    val lesson = lessonGroup.first()
+                    LessonReportDto(
+                        dateTime = lesson.dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+                        students = lessonGroup.map { StudentMapper.findById(it.studentId).fio() }.sorted(),
+                        amount = lesson.amount,
+                        forceGroup = lesson.forceGroup,
+                        extraHalfHour = lesson.extraHalfHour,
+                        photoReportLink = null // MinioService links would need special handling
                     )
-                }.sortedWith(compareBy(
+                }
+                .sortedWith(compareBy(
                     { LocalDate.parse(it.dateTime.substringBefore(" "), DateTimeFormatter.ofPattern("dd.MM.yyyy")) },
-                    { it.studentFio }
+                    { it.students.minOrNull() }
                 ))
 
-                val reportData = ReportDataDto(
-                    tutorName = tutor.name,
-                    subjectName = subjectName,
-                    month = targetMonth.month.name,
-                    year = targetMonth.year,
-                    students = studentReports,
-                    totalIndividual = totalIndividual,
-                    totalGroup = totalGroup,
-                    totalPayments = totalPaymentsSum.toInt(),
-                    lessons = lessonReports,
-                    payments = paymentReports
+            val paymentReports = payments.map { payment ->
+                val student = StudentMapper.findById(payment.studentId)
+                PaymentReportDto(
+                    dateTime = payment.dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+                    studentFio = student.fio(),
+                    amount = payment.amount.amount,
+                    photoReportLink = null
                 )
+            }.sortedWith(compareBy(
+                { LocalDate.parse(it.dateTime.substringBefore(" "), DateTimeFormatter.ofPattern("dd.MM.yyyy")) },
+                { it.studentFio }
+            ))
 
-                KSLog.info("ReportApi.GET: User ${requestingTutorId.id} loaded report for tutor ${targetTutorId.id}, subject $subjectIdParam, period $period")
-                call.respond(reportData)
-            } catch (e: Exception) {
-                KSLog.error("ReportApi.GET: Error generating report", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
-            }
+            val reportData = ReportDataDto(
+                tutorName = tutor.name,
+                subjectName = subjectName,
+                month = targetMonth.month.name,
+                year = targetMonth.year,
+                students = studentReports,
+                totalIndividual = totalIndividual,
+                totalGroup = totalGroup,
+                totalPayments = totalPaymentsSum.toInt(),
+                lessons = lessonReports,
+                payments = paymentReports
+            )
+
+            KSLog.info("ReportApi.GET: User ${requestingTutorId.id} loaded report for tutor ${targetTutorId.id}, subject $subjectIdParam, period $period")
+            call.respond(reportData)
         }
 
         get("/aggregated/{period}") {
@@ -276,8 +264,7 @@ fun Route.reportApi() {
             val tutorIdParam = call.request.queryParameters["tutorId"]?.toLongOrNull()
 
             if (period == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid parameters"))
-                return@get
+                throw BadRequestException("Invalid parameters: period is required")
             }
 
             val requestingTutorId = call.authenticatedTutorId
@@ -291,62 +278,52 @@ fun Route.reportApi() {
             }
 
             val tutor = TutorMapper.findByIdOrNull(targetTutorId)
-            if (tutor == null) {
-                KSLog.warning("ReportApi.GET /aggregated: Target tutor ${targetTutorId.id} not found")
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Tutor not found"))
-                return@get
-            }
+                ?: throw NotFoundException("Tutor not found: ${targetTutorId.id}")
 
-            try {
-                val currentMonth = try {
-                    YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid period format"))
-                    return@get
-                }
-                
-                val previousMonth = currentMonth.minusMonths(1)
-
-                val currentStartDate = currentMonth.atDay(1).atStartOfDay()
-                val currentEndDate = currentMonth.atEndOfMonth().atTime(23, 59, 59)
-
-                val previousStartDate = previousMonth.atDay(1).atStartOfDay()
-                val previousEndDate = previousMonth.atDay(minOf(currentMonth.lengthOfMonth(), previousMonth.lengthOfMonth())).atTime(23, 59, 59)
-
-                // Calculate stats for current period
-                val currentStats = calculatePeriodStats(targetTutorId, tutor, currentMonth, currentStartDate, currentEndDate)
-
-                // Calculate stats for previous period (same number of days)
-                val previousStats = calculatePeriodStats(targetTutorId, tutor, previousMonth, previousStartDate, previousEndDate)
-
-                // Calculate comparison
-                val comparison = ComparisonDto(
-                    lessonsChange = currentStats.totalLessons - previousStats.totalLessons,
-                    lessonsChangePercent = if (previousStats.totalLessons > 0)
-                        ((currentStats.totalLessons - previousStats.totalLessons).toDouble() / previousStats.totalLessons * 100)
-                        else 0.0,
-                    paymentsChange = currentStats.totalPayments - previousStats.totalPayments,
-                    paymentsChangePercent = if (previousStats.totalPayments > 0)
-                        ((currentStats.totalPayments - previousStats.totalPayments).toDouble() / previousStats.totalPayments * 100)
-                        else 0.0,
-                    studentsChange = currentStats.totalStudents - previousStats.totalStudents,
-                    studentsChangePercent = if (previousStats.totalStudents > 0)
-                        ((currentStats.totalStudents - previousStats.totalStudents).toDouble() / previousStats.totalStudents * 100)
-                        else 0.0
-                )
-
-                val aggregatedStats = AggregatedStatsDto(
-                    period = currentStats,
-                    previousPeriod = previousStats,
-                    comparison = comparison
-                )
-
-                KSLog.info("ReportApi.GET /aggregated: User ${requestingTutorId.id} loaded aggregated stats for tutor ${targetTutorId.id}, period $period")
-                call.respond(aggregatedStats)
+            val currentMonth = try {
+                YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
             } catch (e: Exception) {
-                KSLog.error("ReportApi.GET /aggregated: Error generating aggregated stats", e)
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
+                throw BadRequestException("Invalid period format: $period")
             }
+            
+            val previousMonth = currentMonth.minusMonths(1)
+
+            val currentStartDate = currentMonth.atDay(1).atStartOfDay()
+            val currentEndDate = currentMonth.atEndOfMonth().atTime(23, 59, 59)
+
+            val previousStartDate = previousMonth.atDay(1).atStartOfDay()
+            val previousEndDate = previousMonth.atDay(minOf(currentMonth.lengthOfMonth(), previousMonth.lengthOfMonth())).atTime(23, 59, 59)
+
+            // Calculate stats for current period
+            val currentStats = calculatePeriodStats(targetTutorId, tutor, currentMonth, currentStartDate, currentEndDate)
+
+            // Calculate stats for previous period (same number of days)
+            val previousStats = calculatePeriodStats(targetTutorId, tutor, previousMonth, previousStartDate, previousEndDate)
+
+            // Calculate comparison
+            val comparison = ComparisonDto(
+                lessonsChange = currentStats.totalLessons - previousStats.totalLessons,
+                lessonsChangePercent = if (previousStats.totalLessons > 0)
+                    ((currentStats.totalLessons - previousStats.totalLessons).toDouble() / previousStats.totalLessons * 100)
+                    else 0.0,
+                paymentsChange = currentStats.totalPayments - previousStats.totalPayments,
+                paymentsChangePercent = if (previousStats.totalPayments > 0)
+                    ((currentStats.totalPayments - previousStats.totalPayments).toDouble() / previousStats.totalPayments * 100)
+                    else 0.0,
+                studentsChange = currentStats.totalStudents - previousStats.totalStudents,
+                studentsChangePercent = if (previousStats.totalStudents > 0)
+                    ((currentStats.totalStudents - previousStats.totalStudents).toDouble() / previousStats.totalStudents * 100)
+                    else 0.0
+            )
+
+            val aggregatedStats = AggregatedStatsDto(
+                period = currentStats,
+                previousPeriod = previousStats,
+                comparison = comparison
+            )
+
+            KSLog.info("ReportApi.GET /aggregated: User ${requestingTutorId.id} loaded aggregated stats for tutor ${targetTutorId.id}, period $period")
+            call.respond(aggregatedStats)
         }
     }
 }
