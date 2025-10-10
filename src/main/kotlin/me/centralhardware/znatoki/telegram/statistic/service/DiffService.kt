@@ -1,8 +1,12 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
 import de.danielbechler.diff.ObjectDifferBuilder
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object DiffService {
+
+    private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
 
     fun <T> generateHtmlDiff(
         oldObj: T?,
@@ -21,14 +25,22 @@ object DiffService {
                 val fieldName = fieldPath.removePrefix("/")
                 
                 if (fieldName.isNotEmpty()) {
-                    val oldValue = node.canonicalGet(oldObj)?.toString()
-                    val newValue = node.canonicalGet(newObj)?.toString()
+                    val oldValue = formatValue(node.canonicalGet(oldObj))
+                    val newValue = formatValue(node.canonicalGet(newObj))
                     changes[fieldName] = oldValue to newValue
                 }
             }
         }
         
         return formatChangesToHtml(changes)
+    }
+
+    private fun formatValue(value: Any?): String? {
+        return when (value) {
+            null -> null
+            is LocalDateTime -> value.format(dateTimeFormatter)
+            else -> value.toString()
+        }
     }
 
     private fun formatChangesToHtml(changes: Map<String, Pair<String?, String?>>): String {

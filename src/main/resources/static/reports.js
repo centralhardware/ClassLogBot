@@ -117,3 +117,114 @@ function displayReport() {
         </div>
     `).join('');
 }
+
+// STUDENT DETAILS MODAL
+async function openStudentDetailsModal(studentId, studentName) {
+    try {
+        const period = currentReportPeriod || document.getElementById('reports-period').value;
+
+        // Validate period format (must be YYYY-MM)
+        if (!period || !period.match(/^\d{4}-\d{2}$/)) {
+            showError('Период отчета некорректен. Пожалуйста, выберите период из списка.');
+            return;
+        }
+
+        const subjectId = currentReportSubjectId || document.getElementById('reports-subject').value;
+
+        console.log('Opening student details:', studentId, 'period:', period, 'subjectId:', subjectId);
+
+        let url = `/api/student/${studentId}/details?period=${period}`;
+        if (subjectId) {
+            url += `&subjectId=${subjectId}`;
+        }
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `tma ${tg.initData}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Ошибка загрузки данных');
+
+        const data = await response.json();
+
+        document.getElementById('student-details-title').textContent = studentName;
+
+        // Display lessons
+        const lessonsContainer = document.getElementById('student-lessons-list');
+        if (data.lessons.length === 0) {
+            lessonsContainer.innerHTML = '<div class="no-data">Занятий не найдено</div>';
+        } else {
+            lessonsContainer.innerHTML = data.lessons.map(lesson => {
+                const details = [
+                    lesson.forceGroup ? 'Групп.' : '',
+                    lesson.extraHalfHour ? '1.5 часа' : ''
+                ].filter(Boolean).join(' • ');
+
+                return `
+                    <div style="background: #f7fafc; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <div style="font-weight: 600; color: #2d3748;">${lesson.dateTime}</div>
+                                <div style="color: #4a5568; font-size: 14px; margin-top: 4px;">${lesson.subjectName}</div>
+                                ${details ? `<div style="color: #718096; font-size: 13px; margin-top: 2px;">${details}</div>` : ''}
+                            </div>
+                            <div style="font-weight: 600; color: #667eea; white-space: nowrap;">${lesson.amount} ₽</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Display payments
+        const paymentsContainer = document.getElementById('student-payments-list');
+        if (data.payments.length === 0) {
+            paymentsContainer.innerHTML = '<div class="no-data">Оплат не найдено</div>';
+        } else {
+            paymentsContainer.innerHTML = data.payments.map(payment => `
+                <div style="background: #f7fafc; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; color: #2d3748;">${payment.dateTime}</div>
+                        </div>
+                        <div style="font-weight: 600; color: #48bb78;">${payment.amount} ₽</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Setup tabs
+        setupTabsForModal('student-details-modal');
+
+        document.getElementById('student-details-modal').classList.add('active');
+    } catch (error) {
+        showError('Не удалось загрузить данные студента: ' + error.message);
+    }
+}
+
+function closeStudentDetailsModal() {
+    document.getElementById('student-details-modal').classList.remove('active');
+}
+
+function setupTabsForModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const tabButtons = modal.querySelectorAll('.tab-button');
+    const tabContents = modal.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.getAttribute('data-tab');
+
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            tabContents.forEach(content => {
+                if (content.id === targetTab) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        });
+    });
+}
