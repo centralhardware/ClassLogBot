@@ -88,6 +88,9 @@ async function init() {
                 subjectsData = userData.subjects || [];
                 addLoadingLog('Информация о пользователе загружена', true);
 
+                // Populate period selects BEFORE subject selects to avoid calling loadReport with empty period
+                populatePeriodSelects();
+                
                 // Populate subject selects with loaded data
                 populateSubjectSelects();
             }
@@ -132,8 +135,6 @@ async function init() {
         addLoadingLog('Данные загружены', true);
 
         addLoadingLog('Настройка интерфейса...');
-        // Populate period selects BEFORE subject selects to avoid calling loadReport with empty period
-        populatePeriodSelects();
         setupEventListeners();
         addLoadingLog('Готово!', true);
 
