@@ -141,10 +141,12 @@ async function init() {
             addLoadingLog('Стандартный режим');
         }
 
-        // Load today's data
-        addLoadingLog('Загрузка данных за сегодня...');
-        await loadTodayData();
-        addLoadingLog('Данные загружены', true);
+        // Load today's data (only if function is available)
+        if (typeof loadTodayData === 'function') {
+            addLoadingLog('Загрузка данных за сегодня...');
+            await loadTodayData();
+            addLoadingLog('Данные загружены', true);
+        }
 
         addLoadingLog('Настройка интерфейса...');
         setupEventListeners();
@@ -444,7 +446,7 @@ function switchPage(pageName) {
     document.getElementById(`page-${pageName}`).classList.add('active');
 
     // Load data for specific pages
-    if (pageName === 'today' && todayLessons.length === 0) {
+    if (pageName === 'today' && typeof loadTodayData === 'function' && todayLessons.length === 0) {
         loadTodayData();
     } else if (pageName === 'reports') {
         // Auto-select first subject if only one available and nothing selected
