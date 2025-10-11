@@ -78,12 +78,10 @@ jobs:
         run: |
           REPO_LOWER="${GITHUB_REPOSITORY,,}"
           BASE_IMAGE="ghcr.io/${REPO_LOWER}"
-          # Главный образ с префиксом web-latest
-          IMAGE="${BASE_IMAGE}:web-latest"
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "image=$BASE_IMAGE" >> "$GITHUB_OUTPUT"
 
-          # Дополнительные теги (без двоеточия, только имена тегов)
-          TAGS=("web-sha-${GITHUB_SHA::7}")
+          # Теги (без двоеточия, только имена тегов)
+          TAGS=("web-latest" "web-sha-${GITHUB_SHA::7}")
 
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAGS+=("web-$GITHUB_REF_NAME")
@@ -162,12 +160,10 @@ jobs:
         run: |
           REPO_LOWER="${GITHUB_REPOSITORY,,}"
           BASE_IMAGE="ghcr.io/${REPO_LOWER}"
-          # Главный образ с префиксом bot-latest
-          IMAGE="${BASE_IMAGE}:bot-latest"
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "image=$BASE_IMAGE" >> "$GITHUB_OUTPUT"
 
-          # Дополнительные теги (без двоеточия, только имена тегов)
-          TAGS=("bot-sha-${GITHUB_SHA::7}")
+          # Теги (без двоеточия, только имена тегов)
+          TAGS=("bot-latest" "bot-sha-${GITHUB_SHA::7}")
 
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAGS+=("bot-$GITHUB_REF_NAME")
