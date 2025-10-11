@@ -326,13 +326,13 @@ function populateSubjectSelects() {
     select.disabled = false;
     subjectsData.forEach(subject => {
         const option = document.createElement('option');
-        option.value = subject.subjectId;
-        option.textContent = subject.subjectName;
+        option.value = subject.id;
+        option.textContent = subject.name;
         select.appendChild(option);
     });
 
     if (subjectsData.length === 1) {
-        select.value = subjectsData[0].subjectId;
+        select.value = subjectsData[0].id;
         // Don't auto-load report here, let the user trigger it or let switchPage handle it
     }
 
@@ -360,8 +360,8 @@ function populateStatsSubjectSelect() {
     statsSelect.disabled = false;
     subjectsData.forEach(subject => {
         const option = document.createElement('option');
-        option.value = subject.subjectName;
-        option.textContent = subject.subjectName;
+        option.value = subject.name;
+        option.textContent = subject.name;
         statsSelect.appendChild(option);
     });
 }
