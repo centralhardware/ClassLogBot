@@ -17,6 +17,9 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
     implementation("io.ktor:ktor-server-resources:$ktorVersion")
+
+    // Logging - SLF4J to JUL bridge (KSLog uses JUL on JVM)
+    implementation("org.slf4j:slf4j-jdk14:2.0.17")
 }
 
 jib {
@@ -32,7 +35,8 @@ jib {
         mainClass = "me.centralhardware.znatoki.telegram.statistic.web.WebMainKt"
         jvmFlags = listOf(
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
-            "--add-modules=jdk.incubator.vector"
+            "--add-modules=jdk.incubator.vector",
+            "--enable-native-access=ALL-UNNAMED"
         )
         creationTime = "USE_CURRENT_TIMESTAMP"
         labels = mapOf(

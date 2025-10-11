@@ -45,7 +45,7 @@ async function loadReport() {
     }
 }
 
-function displayReport() {
+async function displayReport() {
     const months = {
         'JANUARY': 'Январь', 'FEBRUARY': 'Февраль', 'MARCH': 'Март',
         'APRIL': 'Апрель', 'MAY': 'Май', 'JUNE': 'Июнь',
@@ -77,31 +77,29 @@ function displayReport() {
 
     // Lessons - Cards
     const lessonsTbody = document.getElementById('reports-lessons-tbody');
-    lessonsTbody.innerHTML = await TemplateLoader.renderList('reports/lesson-card.html',
-        currentReport.lessons.map(lesson => {
-            const details = [
-                lesson.forceGroup ? 'Групп.' : '',
-                lesson.extraHalfHour ? '1.5 часа' : ''
-            ].filter(Boolean).join(' • ');
+    lessonsTbody.innerHTML = '';
+    const lessonsFragment = TemplateUtils.createMany('template-report-lesson-card', currentReport.lessons, (el, lesson) => {
+        const details = [
+            lesson.forceGroup ? 'Групп.' : '',
+            lesson.extraHalfHour ? '1.5 часа' : ''
+        ].filter(Boolean).join(' • ');
 
-            return {
-                dateTime: lesson.dateTime,
-                students: lesson.students.join(', '),
-                details: details,
-                amount: lesson.amount
-            };
-        })
-    );
+        TemplateUtils.setText(el, '.lesson-datetime', lesson.dateTime);
+        TemplateUtils.setText(el, '.lesson-students', lesson.students.join(', '));
+        TemplateUtils.setText(el, '.lesson-details', details);
+        TemplateUtils.setText(el, '.lesson-amount', `${lesson.amount} ₽`);
+    });
+    lessonsTbody.appendChild(lessonsFragment);
 
     // Payments - Cards
     const paymentsTbody = document.getElementById('reports-payments-tbody');
-    paymentsTbody.innerHTML = await TemplateLoader.renderList('reports/payment-card.html',
-        currentReport.payments.map(payment => ({
-            dateTime: payment.dateTime,
-            studentFio: payment.studentFio,
-            amount: payment.amount
-        }))
-    );
+    paymentsTbody.innerHTML = '';
+    const paymentsFragment = TemplateUtils.createMany('template-report-payment-card', currentReport.payments, (el, payment) => {
+        TemplateUtils.setText(el, '.payment-datetime', payment.dateTime);
+        TemplateUtils.setText(el, '.payment-student', payment.studentFio);
+        TemplateUtils.setText(el, '.payment-amount', `${payment.amount} ₽`);
+    });
+    paymentsTbody.appendChild(paymentsFragment);
 }
 
 // STUDENT DETAILS MODAL
@@ -137,21 +135,19 @@ async function openStudentDetailsModal(studentId, studentName) {
         if (data.lessons.length === 0) {
             lessonsContainer.innerHTML = '<div class="no-data">Занятий не найдено</div>';
         } else {
-            lessonsContainer.innerHTML = await TemplateLoader.renderList('reports/student-detail-lesson.html',
-                data.lessons.map(lesson => {
-                    const details = [
-                        lesson.forceGroup ? 'Групп.' : '',
-                        lesson.extraHalfHour ? '1.5 часа' : ''
-                    ].filter(Boolean).join(' • ');
+            lessonsContainer.innerHTML = '';
+            const lessonsFragment = TemplateUtils.createMany('template-student-detail-lesson', data.lessons, (el, lesson) => {
+                const details = [
+                    lesson.forceGroup ? 'Групп.' : '',
+                    lesson.extraHalfHour ? '1.5 часа' : ''
+                ].filter(Boolean).join(' • ');
 
-                    return {
-                        dateTime: lesson.dateTime,
-                        subjectName: lesson.subjectName,
-                        details: details,
-                        amount: lesson.amount
-                    };
-                })
-            );
+                TemplateUtils.setText(el, '.lesson-datetime', lesson.dateTime);
+                TemplateUtils.setText(el, '.lesson-subject', lesson.subjectName);
+                TemplateUtils.setText(el, '.lesson-details', details);
+                TemplateUtils.setText(el, '.lesson-amount', `${lesson.amount} ₽`);
+            });
+            lessonsContainer.appendChild(lessonsFragment);
         }
 
         // Display payments
@@ -159,12 +155,12 @@ async function openStudentDetailsModal(studentId, studentName) {
         if (data.payments.length === 0) {
             paymentsContainer.innerHTML = '<div class="no-data">Оплат не найдено</div>';
         } else {
-            paymentsContainer.innerHTML = await TemplateLoader.renderList('reports/student-detail-payment.html',
-                data.payments.map(payment => ({
-                    dateTime: payment.dateTime,
-                    amount: payment.amount
-                }))
-            );
+            paymentsContainer.innerHTML = '';
+            const paymentsFragment = TemplateUtils.createMany('template-student-detail-payment', data.payments, (el, payment) => {
+                TemplateUtils.setText(el, '.payment-datetime', payment.dateTime);
+                TemplateUtils.setText(el, '.payment-amount', `${payment.amount} ₽`);
+            });
+            paymentsContainer.appendChild(paymentsFragment);
         }
 
         // Setup tabs
