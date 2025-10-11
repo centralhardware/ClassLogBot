@@ -2,15 +2,18 @@ package me.centralhardware.znatoki.telegram.statistic.api
 
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
+import dev.inmo.kslog.common.info
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
@@ -20,6 +23,27 @@ object WebServer {
 
     fun start(port: Int = 8080) {
         embeddedServer(Netty, port = port) {
+            install(CallLogging) {
+                format { call ->
+                    val status = call.response.status()
+                    val method = call.request.httpMethod.value
+                    val path = call.request.path()
+                    val userAgent = call.request.headers["User-Agent"]
+
+                    buildString {
+                        append("$method $path")
+                        append(" -> $status")
+                        if (userAgent != null && userAgent.isNotEmpty()) {
+                            append(" [${userAgent.take(100)}]")
+                        }
+                    }
+                }
+                // Log all requests including static resources
+                filter { call ->
+                    true
+                }
+            }
+
             install(ContentNegotiation) {
                 json(Json {
                     ignoreUnknownKeys = true
@@ -77,6 +101,10 @@ object WebServer {
                 // Serve static files
                 staticResources("/", "static")
             }
-        }.start(wait = false)
+        }.apply {
+            KSLog.info("WebServer: Starting web server on port $port")
+        }.start(wait = false).also {
+            KSLog.info("WebServer: Web server started successfully on port $port")
+        }
     }
 }

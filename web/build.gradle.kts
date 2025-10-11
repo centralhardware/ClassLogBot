@@ -17,6 +17,7 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
     implementation("io.ktor:ktor-server-resources:$ktorVersion")
+    implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
 
     // Logging - SLF4J to JUL bridge (KSLog uses JUL on JVM)
     implementation("org.slf4j:slf4j-jdk14:2.0.17")
