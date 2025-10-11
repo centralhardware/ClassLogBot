@@ -46,12 +46,10 @@ fun Route.imageApi() {
                 throw BadRequestException("No file provided")
             }
 
-            // Generate unique file name
             val extension = fileName?.substringAfterLast('.', "jpg") ?: "jpg"
             val uniqueName = "${UUID.randomUUID()}.$extension"
             val path = "photos/$uniqueName"
 
-            // Upload to MinIO
             MinioService.put(path, fileBytes!!.inputStream())
                 .onSuccess {
                     KSLog.info("ImageApi.POST: User ${tutorId.id} uploaded image $path")
@@ -67,7 +65,6 @@ fun Route.imageApi() {
             val path = call.parameters.getAll("path")?.joinToString("/")
                 ?: throw BadRequestException("Path is required")
 
-            // Авторизация проверена в middleware
             val tutorId = call.authenticatedTutorId
             KSLog.info("ImageApi.GET: User ${tutorId.id} accessing image $path")
 

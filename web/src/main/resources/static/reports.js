@@ -1,16 +1,11 @@
-// REPORTS PAGE - Monthly reports by subject
-
-// State variables
 let currentReport = null;
 let currentReportPeriod = null;
 let currentReportSubjectId = null;
 
-// Load and display report
 async function loadReport() {
     const subjectId = document.getElementById('reports-subject').value;
     const period = document.getElementById('reports-period').value;
 
-    // Validate both subjectId and period before making request
     if (!subjectId || !period || subjectId === '' || period === '') {
         document.getElementById('reports-container').classList.add('hidden');
         document.getElementById('reports-no-data').classList.remove('hidden');
@@ -60,7 +55,6 @@ async function displayReport() {
     document.getElementById('reports-total-group').textContent = currentReport.totalGroup;
     document.getElementById('reports-total-payments').textContent = currentReport.totalPayments;
 
-    // Students - Cards instead of table
     const studentsTbody = document.getElementById('reports-students-tbody');
     studentsTbody.innerHTML = '';
 
@@ -75,7 +69,6 @@ async function displayReport() {
 
     studentsTbody.appendChild(studentsFragment);
 
-    // Lessons - Cards
     const lessonsTbody = document.getElementById('reports-lessons-tbody');
     lessonsTbody.innerHTML = '';
     const lessonsFragment = TemplateUtils.createMany('template-report-lesson-card', currentReport.lessons, (el, lesson) => {
@@ -91,7 +84,6 @@ async function displayReport() {
     });
     lessonsTbody.appendChild(lessonsFragment);
 
-    // Payments - Cards
     const paymentsTbody = document.getElementById('reports-payments-tbody');
     paymentsTbody.innerHTML = '';
     const paymentsFragment = TemplateUtils.createMany('template-report-payment-card', currentReport.payments, (el, payment) => {
@@ -102,20 +94,16 @@ async function displayReport() {
     paymentsTbody.appendChild(paymentsFragment);
 }
 
-// STUDENT DETAILS MODAL
 async function openStudentDetailsModal(studentId, studentName) {
     try {
         const period = currentReportPeriod || document.getElementById('reports-period').value;
 
-        // Validate period format (must be YYYY-MM)
         if (!period || !period.match(/^\d{4}-\d{2}$/)) {
             showError('Период отчета некорректен. Пожалуйста, выберите период из списка.');
             return;
         }
 
         const subjectId = currentReportSubjectId || document.getElementById('reports-subject').value;
-
-        console.log('Opening student details:', studentId, 'period:', period, 'subjectId:', subjectId);
 
         let url = `/api/student/${studentId}/details?period=${period}`;
         if (subjectId) {
@@ -130,7 +118,6 @@ async function openStudentDetailsModal(studentId, studentName) {
 
         document.getElementById('student-details-title').textContent = studentName;
 
-        // Display lessons
         const lessonsContainer = document.getElementById('student-lessons-list');
         if (data.lessons.length === 0) {
             lessonsContainer.innerHTML = '<div class="no-data">Занятий не найдено</div>';
@@ -150,7 +137,6 @@ async function openStudentDetailsModal(studentId, studentName) {
             lessonsContainer.appendChild(lessonsFragment);
         }
 
-        // Display payments
         const paymentsContainer = document.getElementById('student-payments-list');
         if (data.payments.length === 0) {
             paymentsContainer.innerHTML = '<div class="no-data">Оплат не найдено</div>';
@@ -163,7 +149,6 @@ async function openStudentDetailsModal(studentId, studentName) {
             paymentsContainer.appendChild(paymentsFragment);
         }
 
-        // Setup tabs
         setupTabsForModal('student-details-modal');
 
         document.getElementById('student-details-modal').classList.add('active');

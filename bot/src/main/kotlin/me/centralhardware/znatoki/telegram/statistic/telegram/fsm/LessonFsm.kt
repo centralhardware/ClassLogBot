@@ -113,7 +113,6 @@ suspend fun BehaviourContext.startLessonFsm(
                 services.forEach { LessonMapper.insert(it) }
                 sendLog(services, message.userId(), addedBy)
                 
-                // Audit log
                 val lesson = services.first()
                 val htmlDiff = DiffService.generateHtmlDiff(
                     oldObj = null,

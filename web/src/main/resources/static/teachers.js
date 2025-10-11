@@ -1,4 +1,3 @@
-// Teachers page state
 let teachers = [];
 let allSubjects = [];
 let currentTeacherId = null;
@@ -16,13 +15,11 @@ const permissionNames = {
     'ADD_TIME_FOR_OTHERS': 'Время за других'
 };
 
-// Teachers page functions
 async function loadTeachers() {
     try {
         const response = await authorizedFetch('/api/tutors');
         if (!response.ok) throw new Error('Failed to load teachers');
         teachers = await response.json();
-        // Sort teachers by name (ФИО)
         teachers.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
         renderTeachers();
     } catch (error) {
@@ -105,7 +102,6 @@ async function openTeacherModal(teacherId) {
     document.getElementById('teacher-modal-title').textContent = `Редактирование: ${teacher.name}`;
     document.getElementById('teacher-name-input').value = teacher.name;
 
-    // Render permissions as cards
     const permissionsContainer = document.getElementById('permissions-grid');
     permissionsContainer.innerHTML = Object.entries(permissionNames).map(([key, label]) => `
         <div class="permission-card ${currentTeacherPermissions.includes(key) ? 'active' : ''}"

@@ -10,17 +10,15 @@ import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasWebInterfacePermission
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 
-/**
- * Ключ для хранения авторизованного пользователя в call attributes
- */
 val AuthenticatedTutorKey = AttributeKey<TutorId>("AuthenticatedTutor")
 
 /**
- * Plugin для базовой авторизации через Telegram Web App и проверки прав доступа
+ * Authentication plugin for Telegram Web App.
+ * Validates Telegram user tokens from Authorization header,
+ * checks WEB_INTERFACE permission, and stores authenticated user in call attributes.
  */
 val TelegramAuthPlugin = createApplicationPlugin(name = "TelegramAuth") {
     onCall { call ->
-        // Пропускаем статические файлы
         if (call.request.local.uri.startsWith("/static") ||
             call.request.local.uri == "/" ||
             call.request.local.uri.startsWith("/index") ||
@@ -28,16 +26,15 @@ val TelegramAuthPlugin = createApplicationPlugin(name = "TelegramAuth") {
             call.request.local.uri.startsWith("/modals") ||
             call.request.local.uri.endsWith(".js") ||
             call.request.local.uri.endsWith(".css") ||
-            call.request.local.uri.endsWith(".html")) {
+            call.request.local.uri.endsWith(".html")
+        ) {
             return@onCall
         }
 
-        // Пропускаем эндпоинт версии (публичный)
         if (call.request.local.uri.startsWith("/api/version")) {
             return@onCall
         }
 
-        // Проверяем авторизацию для всех остальных API эндпоинтов
         if (call.request.local.uri.startsWith("/api/")) {
             val authHeader = call.request.headers["Authorization"]
 
@@ -66,28 +63,20 @@ val TelegramAuthPlugin = createApplicationPlugin(name = "TelegramAuth") {
                 return@onCall
             }
 
-            // Проверяем наличие permission WEB_INTERFACE
             if (!tutor.hasWebInterfacePermission()) {
                 KSLog.warning("TelegramAuth: User ${tutorId.id} doesn't have WEB_INTERFACE permission for ${call.request.local.uri}")
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Web interface access denied"))
                 return@onCall
             }
 
-            // Сохраняем авторизованного пользователя в call attributes
             call.attributes.put(AuthenticatedTutorKey, tutorId)
         }
     }
 }
 
-/**
- * Extension для получения авторизованного пользователя
- */
 val ApplicationCall.authenticatedTutorId: TutorId
     get() = attributes.getOrNull(AuthenticatedTutorKey)
         ?: throw IllegalStateException("User not authenticated")
 
-/**
- * Extension для безопасного получения авторизованного пользователя
- */
 val ApplicationCall.authenticatedTutorIdOrNull: TutorId?
     get() = attributes.getOrNull(AuthenticatedTutorKey)

@@ -10,9 +10,14 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.regex.Pattern
 
+/**
+ * Represents a student ID.
+ * Uses the None pattern to handle uninitialized/unsaved students safely.
+ */
 @JvmInline
 value class StudentId private constructor(private val _id: Int?) {
     companion object {
+        /** Represents a student that hasn't been persisted yet */
         val None = StudentId(null)
 
         fun of(id: Int): StudentId = StudentId(id)
@@ -39,7 +44,7 @@ value class SchoolClass(val value: Int) {
 }
 
 @JvmInline
-value class PhoneNumber (val value: String) {
+value class PhoneNumber(val value: String) {
     init {
         require(validate(value)) {
             "Invalid phone number: $value"

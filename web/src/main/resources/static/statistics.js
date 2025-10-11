@@ -1,9 +1,5 @@
-// STATISTICS PAGE - Aggregated statistics with comparison
-
-// State variables
 let currentStats = null;
 
-// Load and display statistics
 async function loadStatistics() {
     const subjectId = document.getElementById('stats-subject').value;
     const period = document.getElementById('stats-period').value;
@@ -15,11 +11,9 @@ async function loadStatistics() {
 
     try {
         let url;
-        // If "all" is selected or subject is empty, use aggregated endpoint
         if (!subjectId || subjectId === 'all') {
             url = `/api/report/aggregated/${period}`;
         } else {
-            // Otherwise use subject-specific endpoint
             url = `/api/report/${subjectId}/aggregated/${period}`;
         }
 
@@ -54,7 +48,6 @@ function displayStatistics() {
     const previous = currentStats.previousPeriod;
     const comp = currentStats.comparison;
 
-    // Subject name for title (if specific subject is selected)
     const subjectTitle = (selectedSubject && selectedSubject !== 'all' && current.subjectStats.length > 0)
         ? ' - ' + current.subjectStats[0].subjectName
         : '';

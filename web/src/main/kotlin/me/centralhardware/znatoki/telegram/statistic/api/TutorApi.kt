@@ -100,19 +100,16 @@ fun Route.tutorApi() {
             val tutorId = call.authenticatedTutorId
             val request = call.receive<UpdateTutorRequest>()
 
-            // Validate permissions
             val validPermissions = Permissions.entries.map { it.name }
             val invalidPermissions = request.permissions.filter { it !in validPermissions }
             if (invalidPermissions.isNotEmpty()) {
                 throw ValidationException("Invalid permissions: $invalidPermissions")
             }
 
-            // Validate name if provided
             if (request.name != null && request.name.isBlank()) {
                 throw ValidationException("Name cannot be blank")
             }
 
-            // Update tutor
             TutorMapper.updateTutor(id, request.permissions, request.subjectIds, request.name)
 
             val updatedTutor = TutorMapper.findByIdOrNull(TutorId(id)) ?: throw NotFoundException("Tutor not found")

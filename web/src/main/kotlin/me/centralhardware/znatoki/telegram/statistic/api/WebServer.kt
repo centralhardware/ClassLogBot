@@ -38,7 +38,6 @@ object WebServer {
                         }
                     }
                 }
-                // Log all requests including static resources
                 filter { call ->
                     true
                 }
@@ -98,7 +97,6 @@ object WebServer {
                 versionApi()
                 auditLogApi()
 
-                // Serve static files
                 staticResources("/", "static")
             }
         }.apply {

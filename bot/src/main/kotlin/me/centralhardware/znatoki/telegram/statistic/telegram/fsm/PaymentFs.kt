@@ -138,7 +138,6 @@ suspend fun BehaviourContext.startPaymentFsm(
                 val paymentId = PaymentMapper.insert(payment)
                 sendLog(payment, paymentId, addedBy)
                 
-                // Audit log
                 val htmlDiff = DiffService.generateHtmlDiff(
                     oldObj = null,
                     newObj = payment

@@ -113,7 +113,6 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                 replyMarkup = ReplyKeyboardRemove()
             )
 
-            // лог
             sendTextMessage(
                 Config.logChat(),
                 """
@@ -128,7 +127,6 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                 parseMode = MarkdownParseMode,
             )
 
-            // Audit log
             val htmlDiff = DiffService.generateHtmlDiff(
                 oldObj = null,
                 newObj = client

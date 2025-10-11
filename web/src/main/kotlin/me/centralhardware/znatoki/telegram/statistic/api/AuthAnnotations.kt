@@ -4,11 +4,10 @@ import io.ktor.util.*
 import me.centralhardware.znatoki.telegram.statistic.entity.Permissions
 
 /**
- * Проверяет, есть ли у пользователя требуемое право
- * ADMIN право автоматически даёт доступ ко всем остальным правам
+ * Checks if user has the required permission.
+ * ADMIN permission automatically grants access to all other permissions.
  */
 fun Permissions.check(userPermissions: List<Permissions>): Boolean {
-    // ADMIN имеет все права
     if (userPermissions.contains(Permissions.ADMIN)) {
         return true
     }
@@ -16,7 +15,4 @@ fun Permissions.check(userPermissions: List<Permissions>): Boolean {
     return userPermissions.contains(this)
 }
 
-/**
- * Ключ для хранения требуемого уровня прав в route attributes
- */
 val RequiredPermissionKey = AttributeKey<Permissions>("RequiredPermission")

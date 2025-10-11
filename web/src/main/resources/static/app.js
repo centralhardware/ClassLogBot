@@ -1,7 +1,6 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// Authorization helpers
 function getAuthHeaders() {
     return {
         'Authorization': `tma ${tg.initData}`
@@ -20,14 +19,12 @@ async function authorizedFetch(url, options = {}) {
     });
 }
 
-// Global state
 let isAdmin = false;
 let tutorsData = [];
 let subjectsData = [];
 let userPermissions = [];
 let currentTutorId = null;
 
-// Loading log
 function addLoadingLog(message, isSuccess = false) {
     const log = document.getElementById('loading-log');
     if (!log) return;
@@ -38,7 +35,6 @@ function addLoadingLog(message, isSuccess = false) {
     log.appendChild(item);
 }
 
-// Show access denied page
 function showAccessDenied() {
     const template = document.getElementById('template-access-denied');
     const content = template.content.cloneNode(true);
@@ -46,8 +42,7 @@ function showAccessDenied() {
     document.body.appendChild(content);
 }
 
-// App version checking based on files hash
-const VERSION_CHECK_INTERVAL = 10000; // Check every minute
+const VERSION_CHECK_INTERVAL = 10000;
 let currentHash = null;
 
 async function checkForUpdates() {
@@ -59,11 +54,9 @@ async function checkForUpdates() {
         const serverHash = data.hash;
 
         if (currentHash === null) {
-            // First load - save hash
             currentHash = serverHash;
             localStorage.setItem('appHash', serverHash);
         } else if (currentHash !== serverHash) {
-            // Hash changed - force reload
             console.log('New version detected, reloading...');
             window.location.reload(true);
         }
@@ -72,24 +65,18 @@ async function checkForUpdates() {
     }
 }
 
-// Check for updates on load
 checkForUpdates();
-
-// Periodic version check
 setInterval(checkForUpdates, VERSION_CHECK_INTERVAL);
 
-// Initialize
 async function init() {
     try {
         addLoadingLog('Инициализация приложения...');
 
-        // Load user info from /api/me
         try {
             addLoadingLog('Загрузка информации о пользователе...');
             const meResponse = await authorizedFetch('/api/me');
 
             if (meResponse.status === 403) {
-                // No WEB_INTERFACE permission - show access denied page
                 showAccessDenied();
                 return;
             }
@@ -102,10 +89,7 @@ async function init() {
                 subjectsData = userData.subjects || [];
                 addLoadingLog('Информация о пользователе загружена', true);
 
-                // Populate period selects BEFORE subject selects to avoid calling loadReport with empty period
                 populatePeriodSelects();
-
-                // Populate subject selects with loaded data
                 populateSubjectSelects();
             }
         } catch (e) {
@@ -113,7 +97,6 @@ async function init() {
             addLoadingLog('Ошибка загрузки пользователя');
         }
 
-        // Load tutors list for admin
         if (isAdmin) {
             try {
                 addLoadingLog('Загрузка списка учителей...');
@@ -126,7 +109,6 @@ async function init() {
                     const teachersOption = document.getElementById('teachers-nav-option');
                     if (teachersOption) teachersOption.style.display = 'block';
                     populateTutorSelects();
-                    // Load subjects for current tutor
                     if (currentTutorId) {
                         addLoadingLog('Загрузка предметов...');
                         await loadSubjectsForTutor('reports');
@@ -141,7 +123,6 @@ async function init() {
             addLoadingLog('Стандартный режим');
         }
 
-        // Load today's data (only if function is available)
         if (typeof loadTodayData === 'function') {
             addLoadingLog('Загрузка данных за сегодня...');
             await loadTodayData();
@@ -152,7 +133,6 @@ async function init() {
         setupEventListeners();
         addLoadingLog('Готово!', true);
 
-        // Small delay to show final message
         await new Promise(resolve => setTimeout(resolve, 300));
 
         document.getElementById('loading').classList.add('hidden');
@@ -164,19 +144,16 @@ async function init() {
 }
 
 function setupEventListeners() {
-    // Navigation - custom dropdown
     const selectorButton = document.getElementById('page-selector-button');
     const dropdown = document.getElementById('page-dropdown');
 
     if (selectorButton && dropdown) {
-        // Toggle dropdown on button click
         selectorButton.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.classList.toggle('hidden');
             selectorButton.classList.toggle('open');
         });
 
-        // Handle page option clicks
         document.querySelectorAll('.page-option').forEach(option => {
             option.addEventListener('click', () => {
                 const pageName = option.dataset.page;
@@ -186,7 +163,6 @@ function setupEventListeners() {
             });
         });
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!selectorButton.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.classList.add('hidden');
@@ -195,12 +171,10 @@ function setupEventListeners() {
         });
     }
 
-    // Tabs
     document.querySelectorAll('[data-tab]').forEach(button => {
         button.addEventListener('click', () => switchTab(button));
     });
 
-    // Reports filters
     document.getElementById('reports-subject').addEventListener('change', loadReport);
     document.getElementById('reports-period').addEventListener('change', loadReport);
     if (isAdmin) {
@@ -210,7 +184,6 @@ function setupEventListeners() {
         });
     }
 
-    // Statistics filters
     document.getElementById('stats-subject').addEventListener('change', loadStatistics);
     document.getElementById('stats-period').addEventListener('change', loadStatistics);
     if (isAdmin) {
@@ -220,40 +193,33 @@ function setupEventListeners() {
         });
     }
 
-    // Student search - live results
     document.getElementById('student-search').addEventListener('input', (e) => {
         searchStudents(e.target.value);
     });
 
-    // Phone formatting
     setupPhoneFormatting('student-phone');
     setupPhoneFormatting('student-responsible-phone');
 }
 
-// Phone formatting function
 function setupPhoneFormatting(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
 
     input.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, ''); // Remove all non-digits
+        let value = e.target.value.replace(/\D/g, '');
 
-        // Ensure it starts with 7 or 8
         if (value.length > 0 && value[0] !== '7' && value[0] !== '8') {
             value = '7' + value;
         }
 
-        // Convert 8 to 7
         if (value[0] === '8') {
             value = '7' + value.substring(1);
         }
 
-        // Limit to 11 digits
         if (value.length > 11) {
             value = value.substring(0, 11);
         }
 
-        // Format the number
         let formatted = '';
         if (value.length > 0) {
             formatted = '+7';
@@ -275,18 +241,14 @@ function setupPhoneFormatting(inputId) {
     });
 
     input.addEventListener('keydown', (e) => {
-        // Allow: backspace, delete, tab, escape, enter
         if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
-            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
             (e.keyCode === 65 && e.ctrlKey === true) ||
             (e.keyCode === 67 && e.ctrlKey === true) ||
             (e.keyCode === 86 && e.ctrlKey === true) ||
             (e.keyCode === 88 && e.ctrlKey === true) ||
-            // Allow: home, end, left, right
             (e.keyCode >= 35 && e.keyCode <= 39)) {
             return;
         }
-        // Ensure that it is a number and stop the keypress if not
         if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
             e.preventDefault();
         }
@@ -303,7 +265,6 @@ function populateTutorSelects() {
             option.textContent = tutor.name;
             select.appendChild(option);
         });
-        // Set current tutor as selected by default
         if (currentTutorId) {
             select.value = currentTutorId;
         }
@@ -314,7 +275,6 @@ function populateSubjectSelects() {
     const select = document.getElementById('reports-subject');
     select.innerHTML = '<option value="">Выберите предмет</option>';
 
-    // For admin, if no tutor is selected, show placeholder message
     if (isAdmin && !document.getElementById('reports-tutor-select').value) {
         const option = document.createElement('option');
         option.value = '';
@@ -335,10 +295,8 @@ function populateSubjectSelects() {
 
     if (subjectsData.length === 1) {
         select.value = subjectsData[0].id;
-        // Don't auto-load report here, let the user trigger it or let switchPage handle it
     }
 
-    // Also populate stats subject select
     populateStatsSubjectSelect();
 }
 
@@ -348,7 +306,6 @@ function populateStatsSubjectSelect() {
 
     statsSelect.innerHTML = '<option value="all">Все предметы</option>';
 
-    // For admin, if no tutor is selected, show placeholder message
     if (isAdmin && !document.getElementById('stats-tutor-select').value) {
         const option = document.createElement('option');
         option.value = '';
@@ -368,7 +325,6 @@ function populateStatsSubjectSelect() {
     });
 }
 
-// Load subjects for selected tutor (admin only)
 async function loadSubjectsForTutor(prefix) {
     const tutorId = document.getElementById(`${prefix}-tutor-select`).value;
     if (!tutorId) {
@@ -384,7 +340,6 @@ async function loadSubjectsForTutor(prefix) {
         return;
     }
 
-    // Get subjects from tutorsData loaded in app.js
     const tutor = tutorsData.find(t => t.id === parseInt(tutorId));
     if (tutor) {
         subjectsData = tutor.subjects || [];
@@ -418,16 +373,13 @@ function populatePeriodSelects() {
             select.appendChild(option);
         }
 
-        // Select current month by default
         const currentMonth = now.getMonth() + 1;
         const currentMonthStr = currentMonth < 10 ? `0${currentMonth}` : currentMonth;
         select.value = `${now.getFullYear()}-${currentMonthStr}`;
     });
 }
 
-// Page Navigation
 function switchPage(pageName) {
-    // Update current page label
     const pageLabels = {
         'today': '📅 Сегодня',
         'reports': '📊 Отчеты',
@@ -445,17 +397,14 @@ function switchPage(pageName) {
     document.querySelectorAll('.page-section').forEach(section => section.classList.remove('active'));
     document.getElementById(`page-${pageName}`).classList.add('active');
 
-    // Load data for specific pages
     if (pageName === 'today' && typeof loadTodayData === 'function' && todayLessons.length === 0) {
         loadTodayData();
     } else if (pageName === 'reports') {
-        // Auto-select first subject if only one available and nothing selected
         const subjectSelect = document.getElementById('reports-subject');
         const periodSelect = document.getElementById('reports-period');
         if (!subjectSelect.value && subjectsData.length === 1) {
             subjectSelect.value = subjectsData[0].subjectId;
         }
-        // Load report if both subject and period are selected
         if (subjectSelect.value && periodSelect.value && !currentReport) {
             loadReport();
         }
@@ -491,7 +440,6 @@ function showError(message) {
     setTimeout(() => errorContainer.classList.add('hidden'), 5000);
 }
 
-// Close modals on outside click
 ['lesson-modal', 'payment-modal', 'student-modal', 'student-details-modal', 'add-lesson-modal', 'add-payment-modal'].forEach(modalId => {
     document.getElementById(modalId).addEventListener('click', (e) => {
         if (e.target.id === modalId) {
@@ -505,5 +453,4 @@ function showError(message) {
     });
 });
 
-// Initialize app
 init();

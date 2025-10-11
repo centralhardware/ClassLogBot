@@ -135,7 +135,6 @@ fun Route.paymentApi() {
             val paymentId = PaymentId(paymentIdStr)
             val oldPayment = PaymentMapper.findById(paymentId) ?: throw NotFoundException("Payment not found")
 
-            // Check if there are any changes
             if (oldPayment.amount.amount == request.amount) {
                 KSLog.info("PaymentsApi.PUT: User ${tutorId.id} attempted to update payment $paymentIdStr with no changes")
                 call.respond(HttpStatusCode.OK, oldPayment.toPaymentDto())

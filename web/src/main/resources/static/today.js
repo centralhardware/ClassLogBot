@@ -1,6 +1,3 @@
-// TODAY PAGE - Lessons and Payments for Today
-
-// State variables
 let todayLessons = [];
 let todayPayments = [];
 let currentLessonId = null;
@@ -12,7 +9,6 @@ let lessonStudentChanges = {
 let addLessonStudents = [];
 let selectedPaymentStudent = null;
 
-// Load today's data
 async function loadTodayData() {
     try {
         const [lessonsRes, paymentsRes] = await Promise.all([
@@ -95,13 +91,11 @@ function displayTodayPayments() {
     `).join('');
 }
 
-// LESSON MODAL
 function openLessonModal(lessonId) {
     currentLessonId = lessonId;
     const lesson = todayLessons.find(l => l.id === lessonId);
     if (!lesson) return;
 
-    // Reset changes
     lessonStudentChanges = {
         toAdd: [],
         toRemove: []
@@ -113,7 +107,6 @@ function openLessonModal(lessonId) {
     document.getElementById('lesson-force-group').checked = lesson.forceGroup;
     document.getElementById('lesson-extra-half-hour').checked = lesson.extraHalfHour;
 
-    // Show/hide checkboxes based on permissions
     const forceGroupContainer = document.getElementById('lesson-force-group').closest('.form-group');
     const extraHalfHourContainer = document.getElementById('lesson-extra-half-hour').closest('.form-group');
 
@@ -129,39 +122,28 @@ function openLessonModal(lessonId) {
         extraHalfHourContainer.style.display = 'none';
     }
 
-    // Display photo if exists
     const photoContainer = document.getElementById('lesson-photo-container');
     const photoImg = document.getElementById('lesson-photo');
     if (lesson.photoReport) {
-        console.log('Photo URL:', lesson.photoReport);
         photoImg.src = lesson.photoReport;
         photoImg.onerror = () => {
-            console.error('Failed to load image:', lesson.photoReport);
             photoContainer.style.display = 'none';
-        };
-        photoImg.onload = () => {
-            console.log('Image loaded successfully');
         };
         photoContainer.style.display = 'block';
     } else {
-        console.log('No photo report');
         photoContainer.style.display = 'none';
     }
 
-    // Display students list
     displayLessonStudents();
 
-    // Clear student search
     document.getElementById('add-student-search').value = '';
     document.getElementById('add-student-results').innerHTML = '';
 
-    // Setup student search
     const searchInput = document.getElementById('add-student-search');
     const resultsContainer = document.getElementById('add-student-results');
 
     searchInput.oninput = searchStudentForLesson;
 
-    // Hide results when clicking anywhere in modal except search field or results
     const modal = document.getElementById('lesson-modal');
     modal.addEventListener('click', (e) => {
         if (e.target !== searchInput && !resultsContainer.contains(e.target)) {
@@ -178,15 +160,12 @@ function displayLessonStudents() {
 
     const container = document.getElementById('lesson-students-list');
 
-    // Calculate current students (original + to add - to remove)
     let currentStudents = [...lesson.students];
 
-    // Add pending students
     lessonStudentChanges.toAdd.forEach(({studentId, studentName}) => {
         currentStudents.push({id: studentId, name: studentName});
     });
 
-    // Remove pending removals
     currentStudents = currentStudents.filter(s => !lessonStudentChanges.toRemove.includes(s.id));
 
     const canDelete = currentStudents.length > 1;
@@ -254,12 +233,10 @@ function markStudentForRemoval(studentId, studentName) {
     const lesson = todayLessons.find(l => l.id === currentLessonId);
     if (!lesson) return;
 
-    // Check if this is a pending add - just remove it from toAdd
     const addIndex = lessonStudentChanges.toAdd.findIndex(s => s.studentId === studentId);
     if (addIndex !== -1) {
         lessonStudentChanges.toAdd.splice(addIndex, 1);
     } else {
-        // Mark for removal
         if (!lessonStudentChanges.toRemove.includes(studentId)) {
             lessonStudentChanges.toRemove.push(studentId);
         }
@@ -274,7 +251,6 @@ function addStudentToLesson(studentId, studentName) {
     const lesson = todayLessons.find(l => l.id === currentLessonId);
     if (!lesson) return;
 
-    // Check if already in lesson or already added
     const alreadyExists = lesson.students.some(s => s.id === studentId);
     const alreadyAdded = lessonStudentChanges.toAdd.some(s => s.studentId === studentId);
 
@@ -294,16 +270,13 @@ function addStudentToLesson(studentId, studentName) {
         return;
     }
 
-    // If was marked for removal, unmark it
     const removeIndex = lessonStudentChanges.toRemove.indexOf(studentId);
     if (removeIndex !== -1) {
         lessonStudentChanges.toRemove.splice(removeIndex, 1);
     } else {
-        // Add to pending additions
         lessonStudentChanges.toAdd.push({ studentId, studentName });
     }
 
-    // Clear search
     document.getElementById('add-student-search').value = '';
     document.getElementById('add-student-results').innerHTML = '';
 
@@ -320,7 +293,6 @@ async function saveLessonChanges() {
     }
 
     try {
-        // 1. Update lesson properties
         const updateResponse = await authorizedFetch(`/api/lessons/${currentLessonId}`, {
             method: 'PUT',
             headers: {
@@ -335,7 +307,6 @@ async function saveLessonChanges() {
 
         if (!updateResponse.ok) throw new Error('Ошибка сохранения');
 
-        // 2. Remove students
         for (const studentId of lessonStudentChanges.toRemove) {
             const removeResponse = await authorizedFetch(`/api/lessons/${currentLessonId}/student/${studentId}`, {
                 method: 'DELETE'
@@ -345,7 +316,6 @@ async function saveLessonChanges() {
             }
         }
 
-        // 3. Add students
         for (const {studentId} of lessonStudentChanges.toAdd) {
             const addResponse = await authorizedFetch(`/api/lessons/${currentLessonId}/student`, {
                 method: 'POST',
@@ -384,7 +354,6 @@ async function deleteLesson(lessonId) {
     }
 }
 
-// PAYMENT MODAL
 function openPaymentModal(paymentId) {
     currentPaymentId = paymentId;
     const payment = todayPayments.find(p => p.id === paymentId);
@@ -394,22 +363,15 @@ function openPaymentModal(paymentId) {
         `${payment.studentName} - ${payment.subjectName} (${payment.dateTime})`;
     document.getElementById('payment-amount').value = payment.amount;
 
-    // Display photo if exists
     const photoContainer = document.getElementById('payment-photo-container');
     const photoImg = document.getElementById('payment-photo');
     if (payment.photoReport) {
-        console.log('Payment Photo URL:', payment.photoReport);
         photoImg.src = payment.photoReport;
         photoImg.onerror = () => {
-            console.error('Failed to load payment image:', payment.photoReport);
             photoContainer.style.display = 'none';
-        };
-        photoImg.onload = () => {
-            console.log('Payment image loaded successfully');
         };
         photoContainer.style.display = 'block';
     } else {
-        console.log('No payment photo report');
         photoContainer.style.display = 'none';
     }
 
@@ -466,7 +428,6 @@ async function deletePayment(paymentId) {
     }
 }
 
-// ADD LESSON MODAL
 async function openAddLessonModal() {
     addLessonStudents = [];
     document.getElementById('add-lesson-students-list').innerHTML = '';
@@ -476,11 +437,8 @@ async function openAddLessonModal() {
     document.getElementById('add-lesson-force-group').checked = false;
     document.getElementById('add-lesson-extra-half-hour').checked = false;
 
-    // Populate subject select
     const subjectSelect = document.getElementById('add-lesson-subject');
     subjectSelect.innerHTML = '<option value="">Выберите предмет</option>';
-    
-    console.log('subjectsData:', subjectsData);
 
     subjectsData.forEach(subject => {
         const option = document.createElement('option');
@@ -489,13 +447,11 @@ async function openAddLessonModal() {
         subjectSelect.appendChild(option);
     });
 
-    // Auto-select if only one subject
     if (subjectsData.length === 1) {
         subjectSelect.value = subjectsData[0].id || subjectsData[0].subjectId;
         subjectSelect.disabled = true;
     }
 
-    // Show/hide checkboxes based on permissions
     const forceGroupContainer = document.getElementById('add-lesson-force-group').closest('.form-group');
     const extraHalfHourContainer = document.getElementById('add-lesson-extra-half-hour').closest('.form-group');
 
@@ -511,13 +467,11 @@ async function openAddLessonModal() {
         extraHalfHourContainer.style.display = 'none';
     }
 
-    // Setup student search
     const searchInput = document.getElementById('add-lesson-student-search');
     const resultsContainer = document.getElementById('add-lesson-student-results');
 
     searchInput.oninput = searchStudentForNewLesson;
 
-    // Hide results when clicking anywhere in modal except search field or results
     const modal = document.getElementById('add-lesson-modal');
     modal.addEventListener('click', (e) => {
         if (e.target !== searchInput && !resultsContainer.contains(e.target)) {
@@ -606,7 +560,6 @@ function displayAddLessonStudents() {
 async function saveNewLesson() {
     const saveBtn = document.getElementById('save-new-lesson-btn');
 
-    // Prevent double-click
     if (saveBtn.disabled) return;
 
     const subjectId = document.getElementById('add-lesson-subject').value;
@@ -633,7 +586,6 @@ async function saveNewLesson() {
         return;
     }
 
-    // Disable button and show progress
     saveBtn.disabled = true;
     saveBtn.textContent = 'Сохранение...';
 
@@ -648,7 +600,6 @@ async function saveNewLesson() {
     progressLabel.textContent = 'Загрузка изображения...';
 
     try {
-        // Upload photo with real progress tracking
         const formData = new FormData();
         formData.append('file', photoFile);
 
@@ -691,7 +642,6 @@ async function saveNewLesson() {
 
         progressLabel.textContent = 'Создание занятия...';
 
-        // Create lesson with photo path
         const response = await authorizedFetch('/api/lessons', {
             method: 'POST',
             headers: {
@@ -726,14 +676,12 @@ async function saveNewLesson() {
     } catch (error) {
         showError('Не удалось создать: ' + error.message);
     } finally {
-        // Re-enable button and hide progress
         saveBtn.disabled = false;
         saveBtn.textContent = 'Создать';
         progressContainer.classList.add('hidden');
     }
 }
 
-// ADD PAYMENT MODAL
 async function openAddPaymentModal() {
     selectedPaymentStudent = null;
     document.getElementById('add-payment-student-search').value = '';
@@ -741,7 +689,6 @@ async function openAddPaymentModal() {
     document.getElementById('add-payment-selected-student').innerHTML = '';
     document.getElementById('add-payment-amount').value = '';
 
-    // Populate subject select
     const subjectSelect = document.getElementById('add-payment-subject');
     subjectSelect.innerHTML = '<option value="">Выберите предмет</option>';
     subjectsData.forEach(subject => {
@@ -751,19 +698,16 @@ async function openAddPaymentModal() {
         subjectSelect.appendChild(option);
     });
 
-    // Auto-select if only one subject
     if (subjectsData.length === 1) {
         subjectSelect.value = subjectsData[0].id || subjectsData[0].subjectId;
         subjectSelect.disabled = true;
     }
 
-    // Setup student search
     const searchInput = document.getElementById('add-payment-student-search');
     const resultsContainer = document.getElementById('add-payment-student-results');
 
     searchInput.oninput = searchStudentForNewPayment;
 
-    // Hide results when clicking anywhere in modal except search field or results
     const modal = document.getElementById('add-payment-modal');
     modal.addEventListener('click', (e) => {
         if (e.target !== searchInput && !resultsContainer.contains(e.target)) {
@@ -826,7 +770,6 @@ function selectStudentForNewPayment(studentId, studentName) {
 async function saveNewPayment() {
     const saveBtn = document.getElementById('save-new-payment-btn');
 
-    // Prevent double-click
     if (saveBtn.disabled) return;
 
     const subjectId = document.getElementById('add-payment-subject').value;
@@ -853,7 +796,6 @@ async function saveNewPayment() {
         return;
     }
 
-    // Disable button and show progress
     saveBtn.disabled = true;
     saveBtn.textContent = 'Сохранение...';
 
@@ -868,7 +810,6 @@ async function saveNewPayment() {
     progressLabel.textContent = 'Загрузка изображения...';
 
     try {
-        // Upload photo with real progress tracking
         const formData = new FormData();
         formData.append('file', photoFile);
 
@@ -911,7 +852,6 @@ async function saveNewPayment() {
 
         progressLabel.textContent = 'Создание оплаты...';
 
-        // Create payment with photo path
         const response = await authorizedFetch('/api/payments', {
             method: 'POST',
             headers: {
@@ -944,7 +884,6 @@ async function saveNewPayment() {
     } catch (error) {
         showError('Не удалось создать: ' + error.message);
     } finally {
-        // Re-enable button and hide progress
         saveBtn.disabled = false;
         saveBtn.textContent = 'Создать';
         progressContainer.classList.add('hidden');

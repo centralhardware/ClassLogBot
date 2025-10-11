@@ -1,9 +1,5 @@
-// STUDENTS PAGE - Student search and management
-
-// State variables
 let currentStudentId = null;
 
-// Search students
 async function searchStudents(query) {
     const container = document.getElementById('student-search-results');
 
@@ -36,7 +32,6 @@ async function searchStudents(query) {
     }
 }
 
-// STUDENT EDIT MODAL
 async function openStudentModal(studentId) {
     currentStudentId = studentId;
 
@@ -56,7 +51,6 @@ async function openStudentModal(studentId) {
         document.getElementById('student-source').value = student.source || '';
         document.getElementById('student-birth-date').value = student.birthDate || '';
 
-        // Blur search input to hide any potential dropdowns
         const searchInput = document.getElementById('student-search');
         if (searchInput) searchInput.blur();
 
@@ -69,23 +63,19 @@ async function openStudentModal(studentId) {
 function formatPhoneForDisplay(phone) {
     if (!phone) return '';
 
-    // Remove all non-digits
     const digits = phone.replace(/\D/g, '');
 
     if (digits.length === 0) return '';
-    if (digits.length !== 11) return phone; // Return as-is if not 11 digits
+    if (digits.length !== 11) return phone;
 
-    // Format as +7 (XXX) XXX-XX-XX
     return `+7 (${digits.substring(1, 4)}) ${digits.substring(4, 7)}-${digits.substring(7, 9)}-${digits.substring(9, 11)}`;
 }
 
 function unformatPhone(formattedPhone) {
     if (!formattedPhone) return null;
 
-    // Remove all non-digits
     const digits = formattedPhone.replace(/\D/g, '');
 
-    // Should have exactly 11 digits
     if (digits.length !== 11) return null;
 
     return digits;
@@ -118,7 +108,6 @@ async function saveStudentChanges() {
         return;
     }
 
-    // Validate phones if provided
     if (phone !== null && phone.length !== 11) {
         tg.showPopup({ message: 'Некорректный формат телефона', buttons: [{type: 'ok'}] });
         return;
@@ -142,7 +131,6 @@ async function saveStudentChanges() {
         closeStudentModal();
         tg.showPopup({ message: 'Данные сохранены', buttons: [{type: 'ok'}] });
 
-        // Refresh search
         const query = document.getElementById('student-search').value;
         if (query) searchStudents(query);
     } catch (error) {
@@ -150,20 +138,16 @@ async function saveStudentChanges() {
     }
 }
 
-// STUDENT DETAILS MODAL
 async function openStudentDetailsModal(studentId, studentName) {
     try {
         const period = currentReportPeriod || document.getElementById('reports-period').value;
 
-        // Validate period format (must be YYYY-MM)
         if (!period || !period.match(/^\d{4}-\d{2}$/)) {
             showError('Период отчета некорректен. Пожалуйста, выберите период из списка.');
             return;
         }
 
         const subjectId = currentReportSubjectId || document.getElementById('reports-subject').value;
-
-        console.log('Opening student details:', studentId, 'period:', period, 'subjectId:', subjectId);
 
         let url = `/api/student/${studentId}/details?period=${period}`;
         if (subjectId) {
@@ -178,7 +162,6 @@ async function openStudentDetailsModal(studentId, studentName) {
 
         document.getElementById('student-details-title').textContent = studentName;
 
-        // Display lessons
         const lessonsContainer = document.getElementById('student-lessons-list');
         if (data.lessons.length === 0) {
             lessonsContainer.innerHTML = '<div class="no-data">Занятий не найдено</div>';
@@ -221,7 +204,6 @@ async function openStudentDetailsModal(studentId, studentName) {
             `).join('');
         }
 
-        // Setup tabs
         setupTabsForModal('student-details-modal');
 
         document.getElementById('student-details-modal').classList.add('active');

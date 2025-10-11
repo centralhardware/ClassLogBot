@@ -49,7 +49,6 @@ private suspend fun BehaviourContext.changeLessonDelete(
             isSingle = lessons.size == 1))
     }
     
-    // Audit log
     val htmlDiff = if (deleted) {
         DiffService.generateHtmlDiff(oldObj = lesson, newObj = null)
     } else {

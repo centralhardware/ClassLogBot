@@ -14,6 +14,24 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * DSL for building Excel reports programmatically.
+ * Provides a fluent API for creating workbooks, sheets, rows, and cells
+ * with automatic styling and formatting.
+ *
+ * Example:
+ * ```
+ * ExcelDsl().apply {
+ *     sheet("Report") {
+ *         title("Monthly Report", 5)
+ *         row {
+ *             cell("Name")
+ *             cell("Amount")
+ *         }
+ *     }
+ * }.build("report.xlsx")
+ * ```
+ */
 class ExcelDsl {
     private val workbook: Workbook = XSSFWorkbook()
 

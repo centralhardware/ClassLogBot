@@ -42,7 +42,6 @@ private suspend fun BehaviourContext.changePaymentDelete(
         edit(msg, replyMarkup = paymentKeyboard(id = id, deleted = delete))
     }
     
-    // Audit log
     val payment = PaymentMapper.findById(id) ?: return
     val htmlDiff = if (delete) {
         DiffService.generateHtmlDiff(oldObj = payment, newObj = null)

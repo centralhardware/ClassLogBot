@@ -14,7 +14,6 @@ fun BehaviourContext.deleteStudentCallback() = onDataCallbackQuery(Regex("delete
     val student = StudentMapper.findById(id)
     StudentMapper.delete(id)
     
-    // Audit log
     if (student != null) {
         val htmlDiff = DiffService.generateHtmlDiff(oldObj = student, newObj = null)
         

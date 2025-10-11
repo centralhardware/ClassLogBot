@@ -166,7 +166,6 @@ fun Route.reportApi() {
                 return@get
             }
 
-            // Group lessons by student
             val studentLessons = lessons.groupBy { it.studentId }
             val id2lessons = lessons.groupBy { it.id }
 
@@ -311,7 +310,6 @@ fun Route.reportApi() {
                 previousMonth.atDay(minOf(currentMonth.lengthOfMonth(), previousMonth.lengthOfMonth()))
                     .atTime(23, 59, 59)
 
-            // Calculate stats for current period
             val currentStats = calculateSubjectPeriodStats(
                 targetTutorId,
                 subjectId,
@@ -321,7 +319,6 @@ fun Route.reportApi() {
                 currentEndDate
             )
 
-            // Calculate stats for previous period
             val previousStats = calculateSubjectPeriodStats(
                 targetTutorId,
                 subjectId,
@@ -331,7 +328,6 @@ fun Route.reportApi() {
                 previousEndDate
             )
 
-            // Calculate comparison
             val comparison = ComparisonDto(
                 lessonsChange = currentStats.totalLessons - previousStats.totalLessons,
                 lessonsChangePercent = if (previousStats.totalLessons > 0)
@@ -395,15 +391,12 @@ fun Route.reportApi() {
                 previousMonth.atDay(minOf(currentMonth.lengthOfMonth(), previousMonth.lengthOfMonth()))
                     .atTime(23, 59, 59)
 
-            // Calculate stats for current period
             val currentStats =
                 calculatePeriodStats(targetTutorId, tutor, currentMonth, currentStartDate, currentEndDate)
 
-            // Calculate stats for previous period (same number of days)
             val previousStats =
                 calculatePeriodStats(targetTutorId, tutor, previousMonth, previousStartDate, previousEndDate)
 
-            // Calculate comparison
             val comparison = ComparisonDto(
                 lessonsChange = currentStats.totalLessons - previousStats.totalLessons,
                 lessonsChangePercent = if (previousStats.totalLessons > 0)

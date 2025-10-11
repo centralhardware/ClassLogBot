@@ -1,5 +1,19 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.fsm
 
+/**
+ * DSL for building Telegram bot finite state machines (FSM).
+ * Allows declarative definition of multi-step user interactions with validation,
+ * custom keyboards, and state transitions.
+ *
+ * Example:
+ * ```
+ * telegramFsm("example", ctx, userId) {
+ *     text(prompt = "Enter name") { ctx, value -> ctx.name = value }
+ *     confirm(prompt = { "Save ${it.name}?" }, onSave = { save(it) }, onCancel = {})
+ * }
+ * ```
+ */
+
 import me.centralhardware.znatoki.telegram.statistic.telegram.InlineSearchType
 import arrow.core.Either
 import arrow.core.combine
@@ -56,19 +70,14 @@ class TelegramEvent(val message: CommonMessage<*>) : Event
 class Initial() : Event
 typealias FioValue = Triple<String, String, String>
 
-/* ===== Логгер FSM ===== */
 val fsmLog = StateMachine.Logger { lazyMessage -> KSLog.info(lazyMessage()) }
-
-/* =========================
-   ======   DSL CORE  ======
-   ========================= */
 
 class FsmBuilder<CTX : Any>(
     private val name: String,
     private val ctx: CTX,
 ) {
     internal val steps = mutableListOf<Step<CTX, *>>()
-    internal var onFinish: (suspend (CommonMessage<MessageContent>, CTX) -> Unit) = { _,_ ->  }
+    internal var onFinish: (suspend (CommonMessage<MessageContent>, CTX) -> Unit) = { _, _ -> }
 
     fun onFinish(block: suspend (CommonMessage<MessageContent>, CTX) -> Unit) {
         onFinish = block
@@ -82,7 +91,7 @@ class FsmBuilder<CTX : Any>(
         validator: ((String) -> Either<String, Any>) = { _ -> Either.Right(Unit) },
         apply: (ctx: CTX, value: String) -> Unit
     ) {
-        steps += Step.TextStep(prompt,steps.size,inline, inlineSearchType, optionalSkip, validator, apply)
+        steps += Step.TextStep(prompt, steps.size, inline, inlineSearchType, optionalSkip, validator, apply)
     }
 
     fun int(
@@ -91,7 +100,7 @@ class FsmBuilder<CTX : Any>(
         validator: ((Int?) -> Either<String, Unit>) = { _ -> Either.Right(Unit) },
         apply: (ctx: CTX, value: Int) -> Unit
     ) {
-        steps += Step.IntStep(prompt, steps.size,optionalSkip, validator, apply)
+        steps += Step.IntStep(prompt, steps.size, optionalSkip, validator, apply)
     }
 
     fun date(
@@ -99,7 +108,7 @@ class FsmBuilder<CTX : Any>(
         optionalSkip: Boolean = false,
         apply: (ctx: CTX, value: LocalDate) -> Unit
     ) {
-        steps += Step.DateStep( prompt, steps.size,optionalSkip, apply)
+        steps += Step.DateStep(prompt, steps.size, optionalSkip, apply)
     }
 
     fun phone(
@@ -107,7 +116,7 @@ class FsmBuilder<CTX : Any>(
         optionalSkip: Boolean = false,
         apply: (ctx: CTX, value: String) -> Unit
     ) {
-        steps += Step.PhoneStep( prompt, steps.size,optionalSkip, apply)
+        steps += Step.PhoneStep(prompt, steps.size, optionalSkip, apply)
     }
 
     fun enum(
@@ -116,7 +125,7 @@ class FsmBuilder<CTX : Any>(
         optionalSkip: Boolean = false,
         apply: (ctx: CTX, value: String) -> Unit
     ) {
-        steps += Step.EnumStep(prompt, steps.size,options, optionalSkip, apply)
+        steps += Step.EnumStep(prompt, steps.size, options, optionalSkip, apply)
     }
 
     fun fio(
@@ -156,7 +165,8 @@ class FsmBuilder<CTX : Any>(
             promptFormatter = prompt,
             steps.size,
             onSave = onSave,
-            onCancel = onCancel)
+            onCancel = onCancel
+        )
     }
 
     fun <T> multi(
@@ -252,7 +262,7 @@ sealed class Step<CTX : Any, T>(
         override val index: Int,
         val onSave: suspend (CTX) -> Unit,
         val onCancel: suspend (CTX) -> Unit
-    ) : Step<CTX, Unit>("", index, {_,_ -> })
+    ) : Step<CTX, Unit>("", index, { _, _ -> })
 
     data class MultiStep<CTX : Any, T>(
         override val prompt: String,
@@ -263,11 +273,6 @@ sealed class Step<CTX : Any, T>(
         override val apply: (CTX, @UnsafeVariance Set<T>) -> Unit
     ) : Step<CTX, Set<T>>(prompt, index, apply)
 }
-
-
-/* =============================
-   ======  СБОРКА МАШИНЫ  ======
-   ============================= */
 
 suspend fun <CTX : Any> BehaviourContext.telegramFsm(
     name: String,
@@ -287,7 +292,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
         val finish = object : DefaultState(), FinalState {}
         addState(finish)
 
-        val states: List<State> = built.steps.mapIndexed {  i, it ->
+        val states: List<State> = built.steps.mapIndexed { i, it ->
             if (i == 0) {
                 addInitialState(it)
             } else {
@@ -309,11 +314,16 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                 InlineSearchType.TUTOR -> "t:"
                                 InlineSearchType.STUDENT -> "s:"
                             }
-                            sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = switchToInlineKeyboard(prefix))
+                            sendTextMessage(
+                                userId.toChatId(),
+                                step.prompt,
+                                replyMarkup = switchToInlineKeyboard(prefix)
+                            )
                         } else {
                             sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = ReplyKeyboardRemove())
                         }
                     }
+
                     is Step.MultiStep<*, *> -> {
                         if (step.inline) {
                             sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = switchToInlineKeyboard)
@@ -321,6 +331,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                             sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = ReplyKeyboardRemove())
                         }
                     }
+
                     is Step.EnumStep -> send(
                         userId.toChatId(),
                         text = step.prompt,
@@ -328,11 +339,13 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                             step.options.forEach { row { simpleButton(it) } }
                         }
                     )
+
                     is Step.ConfirmStep -> sendTextMessage(
                         userId.toChatId(),
                         step.promptFormatter.invoke(ctx),
                         replyMarkup = yesNoKeyboard
                     )
+
                     else -> sendTextMessage(userId.toChatId(), step.prompt, replyMarkup = ReplyKeyboardRemove())
                 }
             }
@@ -355,9 +368,9 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                 memo = null; true
                             } else {
                                 message.validateText()
-                                    .combine(step.validator.invoke(text!!), {f,s -> "$f $s"}, {f,_ -> f})
+                                    .combine(step.validator.invoke(text!!), { f, s -> "$f $s" }, { f, _ -> f })
                                     .mapLeft { reply(it) }
-                                    .map { memo = it}
+                                    .map { memo = it }
                                     .isRight()
                             }
                         }
@@ -478,11 +491,11 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                     false
                                 } else {
                                     val value = parsed.swap().leftOrNull()!!
-                                    val data =  (memo as MutableSet<Any>)
+                                    val data = (memo as MutableSet<Any>)
                                     if (data.contains(value)) {
                                         reply("Уже добавлено")
                                         false
-                                    } else if ( data.size >= multiStep.maxCount) {
+                                    } else if (data.size >= multiStep.maxCount) {
                                         true
                                     } else {
                                         data.add(value)
@@ -497,15 +510,15 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
 
                 onTriggered { _ ->
                     when (step) {
-                        is Step.TextStep        -> step.apply(built.ctx, memo as String)
-                        is Step.IntStep         -> step.apply(built.ctx, memo as Int)
-                        is Step.DateStep        -> step.apply(built.ctx, memo as LocalDate)
-                        is Step.PhoneStep       -> step.apply(built.ctx, memo as String)
-                        is Step.EnumStep        -> step.apply(built.ctx, memo as String)
-                        is Step.FioStep         -> step.apply(built.ctx, memo as FioValue)
-                        is Step.PhotoStep       -> step.apply(built.ctx, memo as String)
-                        is Step.ConfirmStep     -> {}
-                        is Step.MultiStep<*, *> ->  if (memo is Set<*>) {
+                        is Step.TextStep -> step.apply(built.ctx, memo as String)
+                        is Step.IntStep -> step.apply(built.ctx, memo as Int)
+                        is Step.DateStep -> step.apply(built.ctx, memo as LocalDate)
+                        is Step.PhoneStep -> step.apply(built.ctx, memo as String)
+                        is Step.EnumStep -> step.apply(built.ctx, memo as String)
+                        is Step.FioStep -> step.apply(built.ctx, memo as FioValue)
+                        is Step.PhotoStep -> step.apply(built.ctx, memo as String)
+                        is Step.ConfirmStep -> {}
+                        is Step.MultiStep<*, *> -> if (memo is Set<*>) {
                             val setAny = memo as Set<Any>
                             val multiStep = step as Step.MultiStep<CTX, Any>
                             multiStep.apply(built.ctx, setAny)

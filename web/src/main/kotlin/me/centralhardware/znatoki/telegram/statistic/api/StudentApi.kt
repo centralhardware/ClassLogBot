@@ -256,12 +256,10 @@ fun Route.studentApi() {
             val tutorId = call.authenticatedTutorId
             val studentId = id.toStudentId()
 
-            // Parse period (format: YYYY-MM)
             val (year, month) = period.split("-").map { it.toInt() }
             val periodStart = java.time.LocalDateTime.of(year, month, 1, 0, 0, 0)
             val periodEnd = periodStart.plusMonths(1)
 
-            // Get lessons for student in period (and optionally filtered by subject)
             val lessons =
                 me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper.findAllByStudent(studentId)
                     .filter { it.dateTime >= periodStart && it.dateTime < periodEnd }
@@ -286,7 +284,6 @@ fun Route.studentApi() {
                     }
                     .sortedByDescending { it.dateTime }
 
-            // Get payments for student in period (and optionally filtered by subject)
             val payments =
                 me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper.findAllByStudent(studentId)
                     .filter { it.dateTime >= periodStart && it.dateTime < periodEnd }
@@ -309,14 +306,12 @@ fun Route.studentApi() {
             val tutorId = call.authenticatedTutorId
             
             val students = if (query.isNullOrEmpty()) {
-                // Return all students sorted by class and name
                 StudentService.getAllActive()
             } else {
                 StudentService.search(query.lowercase())
             }
 
             val result = if (query.isNullOrEmpty()) {
-                // Sort only when returning all students
                 students
                     .map { it.toDto() }
                     .sortedWith(
@@ -327,7 +322,6 @@ fun Route.studentApi() {
                         { it.lastName }
                     ))
             } else {
-                // Preserve Lucene order when searching
                 students.map { it.toDto() }
             }
 
@@ -350,7 +344,6 @@ fun Route.studentApi() {
             val tutorId = call.authenticatedTutorId
             val request = call.receive<UpdateStudentRequest>()
 
-            // Валидация
             if (request.name.isBlank() || request.secondName.isBlank() || request.lastName.isBlank()) {
                 throw ValidationException("Name, secondName and lastName are required")
             }
@@ -410,7 +403,6 @@ fun Route.studentApi() {
                     put("recordDate", existingStudent.recordDate?.toString() to updatedStudent.recordDate?.toString())
             }
 
-            // Only save and log if there are actual changes
             if (changesMap.isNotEmpty()) {
                 StudentMapper.update(updatedStudent)
 

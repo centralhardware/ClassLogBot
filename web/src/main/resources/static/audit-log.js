@@ -1,4 +1,3 @@
-// Audit Log Page
 let loadedLogsCount = 0;
 let totalAuditLogs = 0;
 let isLoadingMore = false;
@@ -17,9 +16,6 @@ async function loadAuditLog() {
         loadingEl.classList.remove('hidden');
         errorEl.classList.add('hidden');
 
-        // isAdmin is loaded in app.js from /api/me
-        
-        // Load filters data
         await loadFiltersData();
 
         const params = new URLSearchParams({ limit: auditLogPageSize, offset: 0 });
@@ -37,10 +33,8 @@ async function loadAuditLog() {
         totalAuditLogs = data.total;
         loadedLogsCount = 0;
 
-        // Clear list
         listEl.innerHTML = '';
 
-        // Populate list
         if (data.logs && data.logs.length > 0) {
             data.logs.forEach(log => appendLogCard(log, listEl));
             loadedLogsCount = data.logs.length;
@@ -53,7 +47,6 @@ async function loadAuditLog() {
         contentEl.classList.remove('hidden');
         filtersEl.classList.remove('hidden');
         
-        // Setup filters after loading
         setupAuditLogFilters();
     } catch (error) {
         console.error('Error loading audit log:', error);
@@ -64,7 +57,6 @@ async function loadAuditLog() {
 }
 
 async function loadFiltersData() {
-    // Load tutors for admin
     if (isAdmin) {
         try {
             const tutorsResponse = await authorizedFetch('/api/tutors');
@@ -84,7 +76,6 @@ async function loadFiltersData() {
             console.error('Error loading tutors:', e);
         }
 
-        // Load all subjects for admin
         try {
             const subjectsResponse = await authorizedFetch('/api/subjects/all');
             if (subjectsResponse.ok) {
@@ -102,7 +93,6 @@ async function loadFiltersData() {
             console.error('Error loading subjects:', e);
         }
     } else {
-        // Load only user's subjects for non-admin from subjectsData (loaded in app.js)
         const subjectSelect = document.getElementById('audit-log-subject-filter');
         subjectSelect.innerHTML = '<option value="">Все предметы</option>';
         subjectsData.forEach(subject => {
@@ -230,7 +220,6 @@ function appendLogCard(log, container) {
     const actionText = getActionText(log.action);
     const userName = log.userName || `User #${log.userId}`;
 
-    // Extract time from timestamp
     const timePart = log.timestamp.split(' ')[1] || log.timestamp;
     const datePart = log.timestamp.split(' ')[0] || '';
 
@@ -239,7 +228,6 @@ function appendLogCard(log, container) {
     card.style.cssText = 'margin-bottom: 8px; padding: 12px; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;';
     card.onclick = () => openAuditDetailsModal(log);
 
-    // Build student and subject line
     let studentSubjectLine = '';
     if (log.studentName || log.subject) {
         const parts = [];
@@ -310,18 +298,14 @@ function getActionText(action) {
         'DELETE_TEACHER': 'Удал. Учитель'
     };
     
-    const result = actionMap[action] || action;
-    console.log('getActionText:', action, '->', result); // Debug
-    return result;
+    return actionMap[action] || action;
 }
 
-// Infinite scroll
 let scrollTimeout;
 function setupInfiniteScroll() {
     window.addEventListener('scroll', () => {
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
-            // Проверяем, видна ли страница audit log
             const auditLogPage = document.getElementById('page-audit-log');
             if (!auditLogPage || !auditLogPage.classList.contains('active')) {
                 return;
@@ -337,10 +321,8 @@ function setupInfiniteScroll() {
     });
 }
 
-// Initialize
 setupInfiniteScroll();
 
-// Setup filter button
 function setupAuditLogFilters() {
     const applyButton = document.getElementById('audit-log-apply-filters');
     if (applyButton) {
@@ -349,10 +331,8 @@ function setupAuditLogFilters() {
     }
 }
 
-// Setup filters immediately when script loads
 setupAuditLogFilters();
 
-// Register page loader
 if (typeof window.pageLoaders !== 'undefined') {
     window.pageLoaders['audit-log'] = loadAuditLog;
 }

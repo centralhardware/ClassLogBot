@@ -19,9 +19,7 @@ private val PermissionCheckPlugin = createRouteScopedPlugin(
 ) {
     val permission = pluginConfig.permission
 
-    on(CallFailed) { call, _ ->
-        // Handle call failures if needed
-    }
+    on(CallFailed) { call, _ -> }
 
     onCall { call ->
         // Получаем авторизованного пользователя

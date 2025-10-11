@@ -83,7 +83,6 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
     query.messageDataCallbackQueryOrNull()
         ?.let { edit(it.message, replyMarkup = keyboard) }
     
-    // Audit log
     val htmlDiff = DiffService.generateHtmlDiff(
         oldObj = service,
         newObj = current

@@ -14,18 +14,15 @@ private fun createDataSource(): DataSource {
         username = Config.Datasource.username
         password = Config.Datasource.password
 
-        // Connection pool settings
         maximumPoolSize = 10
         minimumIdle = 2
         connectionTimeout = 30_000
         idleTimeout = 600_000
         maxLifetime = 1_800_000
 
-        // Performance settings
         isAutoCommit = true
         transactionIsolation = "TRANSACTION_READ_COMMITTED"
 
-        // Health check
         connectionTestQuery = "SELECT 1"
         validationTimeout = 5_000
     }

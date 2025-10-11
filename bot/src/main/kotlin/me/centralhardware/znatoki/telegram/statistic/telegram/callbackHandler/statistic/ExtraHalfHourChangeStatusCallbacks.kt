@@ -84,7 +84,6 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
     query.messageDataCallbackQueryOrNull()
         ?.let { edit(it.message, replyMarkup = keyboard) }
     
-    // Audit log
     val htmlDiff = DiffService.generateHtmlDiff(
         oldObj = service,
         newObj = updated

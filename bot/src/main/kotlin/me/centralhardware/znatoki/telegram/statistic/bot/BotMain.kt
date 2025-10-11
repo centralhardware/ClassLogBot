@@ -49,6 +49,11 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.user
 import me.centralhardware.znatoki.telegram.statistic.extensions.initContext
 import restrictAccess
 
+/**
+ * Main entry point for the Telegram bot.
+ * Initializes the bot, configures user permissions, registers command handlers,
+ * and starts scheduled reporting tasks.
+ */
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
 suspend fun main() {
@@ -69,7 +74,6 @@ suspend fun main() {
             addMiddleware { restrictAccess(UserExistChecker()) }
         }
     ) {
-        // Set commands asynchronously to not block bot startup
         launch {
             KSLog.info("Setting bot commands for all users...")
             TutorMapper.getAll().forEach { user ->
@@ -118,30 +122,30 @@ suspend fun main() {
 
         onContentMessage({
             Storage.contain(it.userId()) &&
-            !(it.content is TextContent && it.text == "/reset")
+                    !(it.content is TextContent && it.text == "/reset")
         }) { Storage.process(it) }
 
-        initContext({it.hasClientPermission()}) {
+        initContext({ it.hasClientPermission() }) {
             addStudentCommand()
         }
 
-        initContext({it.hasPaymentPermission()}) {
+        initContext({ it.hasPaymentPermission() }) {
             addPaymentCommand()
         }
 
-        initContext({it.canAddPaymentForOthers()}) {
+        initContext({ it.canAddPaymentForOthers() }) {
             addPaymentForOtherCommand()
         }
 
-        initContext({it.canAddTimeForOthers()}) {
+        initContext({ it.canAddTimeForOthers() }) {
             addLessonForOtherCommand()
         }
 
-        initContext({it.hasTimePermission()}) {
+        initContext({ it.hasTimePermission() }) {
             addLessonCommand()
         }
 
-        initContext({it.hasReadRight()}) {
+        initContext({ it.hasReadRight() }) {
             studentInfoCommand()
             searchStudentCommand()
             reportCommand()
@@ -157,7 +161,7 @@ suspend fun main() {
             registerExtraHalfHourHandlers()
         }
 
-        initContext({it.hasAdminPermission()}) {
+        initContext({ it.hasAdminPermission() }) {
             dailyReportCommand()
 
             deleteStudentCallback()

@@ -7,6 +7,11 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
+/**
+ * Generates HTML diffs between two objects for audit trail visualization.
+ * Automatically handles LocalDateTime, LocalDate, and other Java Time types.
+ * Used for tracking entity changes in the audit log.
+ */
 object DiffService {
 
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
@@ -28,14 +33,14 @@ object DiffService {
             .and()
             .build()
         val diff = differ.compare(newObj, oldObj)
-        
+
         val changes = mutableMapOf<String, Pair<String?, String?>>()
-        
+
         diff.visit { node, _ ->
             if (node.hasChanges() && !node.hasChildren()) {
                 val fieldPath = node.path.toString()
                 val fieldName = fieldPath.removePrefix("/")
-                
+
                 if (fieldName.isNotEmpty()) {
                     val oldValue = formatValue(node.canonicalGet(oldObj))
                     val newValue = formatValue(node.canonicalGet(newObj))
@@ -43,7 +48,7 @@ object DiffService {
                 }
             }
         }
-        
+
         return formatChangesToHtml(changes)
     }
 
@@ -70,6 +75,7 @@ object DiffService {
                 oldValue != null && newValue != null -> {
                     html.append("<del>$oldValue</del> → <ins>$newValue</ins>")
                 }
+
                 oldValue != null -> html.append("<del>$oldValue</del>")
                 newValue != null -> html.append("<ins>$newValue</ins>")
             }

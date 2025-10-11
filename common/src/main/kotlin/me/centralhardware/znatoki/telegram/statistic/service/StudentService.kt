@@ -15,6 +15,11 @@ import org.apache.lucene.index.*
 import org.apache.lucene.search.*
 import org.apache.lucene.store.ByteBuffersDirectory
 
+/**
+ * Lucene-based student search service.
+ * Maintains an in-memory index rebuilt every 60 seconds for fast fuzzy search
+ * across student names, supporting partial matches and typo tolerance.
+ */
 object StudentService {
 
     private var directory: ByteBuffersDirectory? = null
@@ -69,7 +74,6 @@ object StudentService {
                     )
                 }
 
-            // Конструируем BooleanQuery, объединяя все запросы
             val combinedQuery = BooleanQuery.Builder()
             queries.forEach { query -> combinedQuery.add(query, BooleanClause.Occur.SHOULD) }
 

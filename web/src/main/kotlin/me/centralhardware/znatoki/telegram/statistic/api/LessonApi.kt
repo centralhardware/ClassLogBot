@@ -123,7 +123,6 @@ fun Route.lessonApi() {
                 val lessonId = LessonId.random()
                 val subjectId = SubjectId(request.subjectId)
 
-                // Create a lesson for each student
                 request.studentIds.forEach { studentIdInt ->
                     val studentId = studentIdInt.toStudentId()
                     val lesson = Lesson(
@@ -181,7 +180,6 @@ fun Route.lessonApi() {
                     if (request.extraHalfHour) append("<div><b>1.5 часа:</b> Да</div>")
                 }
 
-                // For group lessons, log with first student only
                 val firstStudentId = request.studentIds.firstOrNull()
                 AuditLogMapper.log(
                     userId = tutorId.id,
@@ -210,7 +208,6 @@ fun Route.lessonApi() {
 
                 val oldLesson = lessons.first()
 
-                // Check if there are any changes
                 val hasAmountChange = request.amount != null && request.amount > 0 && oldLesson.amount != request.amount.toDouble()
                 val hasForceGroupChange = oldLesson.forceGroup != request.forceGroup
                 val hasExtraHalfHourChange = oldLesson.extraHalfHour != request.extraHalfHour
@@ -221,17 +218,14 @@ fun Route.lessonApi() {
                     return@put
                 }
 
-                // Update amount if provided
                 if (hasAmountChange) {
                     LessonMapper.setAmount(lessonId, request.amount!!.toAmount())
                 }
 
-                // Update forceGroup
                 if (hasForceGroupChange) {
                     LessonMapper.setForceGroup(lessonId, request.forceGroup)
                 }
 
-                // Update extraHalfHour
                 if (hasExtraHalfHourChange) {
                     LessonMapper.setExtraHalfHour(lessonId, request.extraHalfHour)
                 }
@@ -270,7 +264,6 @@ fun Route.lessonApi() {
                 throw NotFoundException("Lesson not found")
             }
 
-            // Don't allow deleting the last student
             if (allLessons.size == 1) {
                 throw ValidationException("Cannot remove last student from lesson")
             }
@@ -339,19 +332,16 @@ fun Route.lessonApi() {
             val templateLesson = existingLessons.first()
             val newStudentId = request.studentId.toStudentId()
 
-            // Check if student is already in this lesson
             if (existingLessons.any { it.studentId == newStudentId }) {
                 throw ValidationException("Student already in this lesson")
             }
 
-                // Get the base amount (without extraHalfHour multiplier)
                 val baseAmount = if (templateLesson.extraHalfHour) {
                     (templateLesson.amount / 1.5).toInt()
                 } else {
                     templateLesson.amount.toInt()
                 }
 
-                // Create new lesson with same ID but different student
                 val newLesson = Lesson(
                     id = templateLesson.id,
                     dateTime = templateLesson.dateTime,

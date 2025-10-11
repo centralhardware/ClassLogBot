@@ -5,6 +5,10 @@ import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import ru.nsk.kstatemachine.statemachine.StateMachine
 
+/**
+ * In-memory storage for active FSM instances per user.
+ * Maps user IDs to their current state machine for handling multi-step conversations.
+ */
 object Storage {
 
     private val fsms: MutableMap<Long, StateMachine> = mutableMapOf()
