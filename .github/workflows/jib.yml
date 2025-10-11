@@ -77,15 +77,13 @@ jobs:
         shell: bash
         run: |
           REPO_LOWER="${GITHUB_REPOSITORY,,}"
-          IMAGE="ghcr.io/${REPO_LOWER}"
+          BASE_IMAGE="ghcr.io/${REPO_LOWER}"
+          # Главный образ с префиксом web-latest
+          IMAGE="${BASE_IMAGE}:web-latest"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
+          # Дополнительные теги (без двоеточия, только имена тегов)
           TAGS=("web-sha-${GITHUB_SHA::7}")
-
-          # main/master → добавляем web-latest
-          if [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == "refs/heads/master" ]]; then
-            TAGS+=("web-latest")
-          fi
 
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAGS+=("web-$GITHUB_REF_NAME")
@@ -163,15 +161,13 @@ jobs:
         shell: bash
         run: |
           REPO_LOWER="${GITHUB_REPOSITORY,,}"
-          IMAGE="ghcr.io/${REPO_LOWER}"
+          BASE_IMAGE="ghcr.io/${REPO_LOWER}"
+          # Главный образ с префиксом bot-latest
+          IMAGE="${BASE_IMAGE}:bot-latest"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
+          # Дополнительные теги (без двоеточия, только имена тегов)
           TAGS=("bot-sha-${GITHUB_SHA::7}")
-
-          # main/master → добавляем bot-latest
-          if [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == "refs/heads/master" ]]; then
-            TAGS+=("bot-latest")
-          fi
 
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAGS+=("bot-$GITHUB_REF_NAME")
