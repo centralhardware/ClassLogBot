@@ -1,0 +1,102 @@
+<!-- Edit Lesson Modal -->
+<div id="lesson-modal" class="modal">
+    <div class="modal-content">
+        <h3>Редактировать занятие</h3>
+        <div id="lesson-modal-info" style="margin-bottom: 16px; color: #718096; font-size: 14px;"></div>
+
+        <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Ученики</label>
+            <div id="lesson-students-list"></div>
+            <div style="margin-top: 8px;">
+                <input type="text" id="add-student-search" placeholder="+ Добавить ученика..."
+                       style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px dashed #cbd5e0; border-radius: 8px; background: #f7fafc;">
+                <div id="add-student-results" style="max-height: 150px; overflow-y: auto; margin-top: 4px;"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="lesson-amount">Сумма (₽)</label>
+            <input type="number" id="lesson-amount" min="1" step="1">
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="lesson-force-group" style="width: auto; margin-right: 8px;">
+                Групповое занятие
+            </label>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="lesson-extra-half-hour" style="width: auto; margin-right: 8px;">
+                1.5 часа
+            </label>
+        </div>
+
+        <div id="lesson-photo-container" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: none;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Фото отчет</label>
+            <img id="lesson-photo" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0;">
+        </div>
+
+        <div class="modal-buttons">
+            <button class="modal-button secondary" onclick="closeLessonModal()">Отмена</button>
+            <button class="modal-button primary" onclick="saveLessonChanges()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Lesson Modal -->
+<div id="add-lesson-modal" class="modal">
+    <div class="modal-content">
+        <h3>Добавить занятие</h3>
+
+        <div class="form-group">
+            <label for="add-lesson-subject">Предмет</label>
+            <select id="add-lesson-subject" required></select>
+        </div>
+
+        <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568;">Ученики *</label>
+            <div id="add-lesson-students-list"></div>
+            <div style="margin-top: 8px;">
+                <input type="text" id="add-lesson-student-search" placeholder="+ Добавить ученика..."
+                       style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px dashed #cbd5e0; border-radius: 8px; background: #f7fafc;">
+                <div id="add-lesson-student-results" style="max-height: 150px; overflow-y: auto; margin-top: 4px;"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="add-lesson-amount">Сумма (₽)</label>
+            <input type="number" id="add-lesson-amount" min="1" step="1" required>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="add-lesson-force-group" style="width: auto; margin-right: 8px;">
+                Групповое занятие
+            </label>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="add-lesson-extra-half-hour" style="width: auto; margin-right: 8px;">
+                1.5 часа
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label for="add-lesson-photo">Фото отчет *</label>
+            <input type="file" id="add-lesson-photo" accept="image/*" required style="padding: 8px;">
+            <div id="add-lesson-photo-preview" style="margin-top: 8px;"></div>
+        </div>
+
+        <div id="add-lesson-progress" class="upload-progress hidden">
+            <div class="progress-label">Загрузка...</div>
+            <div class="progress-bar-container">
+                <div id="add-lesson-progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="add-lesson-progress-text" class="progress-text">0%</div>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="modal-button secondary" onclick="closeAddLessonModal()">Отмена</button>
+            <button id="save-new-lesson-btn" class="modal-button primary" onclick="saveNewLesson()">Создать</button>
+        </div>
+    </div>
+</div>

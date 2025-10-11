@@ -1,0 +1,73 @@
+<!-- REPORTS PAGE -->
+<div id="page-reports" class="page-section">
+    <div class="card filters">
+        <div class="filter-row" id="tutor-select-row" style="display: none;">
+            <div class="filter-group">
+                <label for="reports-tutor-select">Преподаватель</label>
+                <select id="reports-tutor-select">
+                    <option value="">Выберите преподавателя</option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="reports-subject">Предмет</label>
+                <select id="reports-subject">
+                    <option value="">Выберите предмет</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="reports-period">Период</label>
+                <select id="reports-period">
+                    <option value="">Выберите период</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="reports-no-data" class="card hidden">
+        <div class="no-data">
+            <div class="no-data-icon">📊</div>
+            <p>Выберите предмет для просмотра отчетов</p>
+        </div>
+    </div>
+
+    <div id="reports-container" class="hidden">
+        <div class="card">
+            <h2 id="reports-title">Отчет</h2>
+
+            <div class="summary">
+                <div class="summary-item">
+                    <div class="value" id="reports-total-individual">0</div>
+                    <div class="label">Индивидуальных</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value" id="reports-total-group">0</div>
+                    <div class="label">Групповых</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value" id="reports-total-payments">0</div>
+                    <div class="label">Оплачено (₽)</div>
+                </div>
+            </div>
+
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="reports-students">Ученики</button>
+                <button class="tab-button" data-tab="reports-lessons">Занятия</button>
+                <button class="tab-button" data-tab="reports-payments">Оплаты</button>
+            </div>
+
+            <div id="reports-students" class="tab-content active">
+                <div id="reports-students-tbody"></div>
+            </div>
+
+            <div id="reports-lessons" class="tab-content">
+                <div id="reports-lessons-tbody"></div>
+            </div>
+
+            <div id="reports-payments" class="tab-content">
+                <div id="reports-payments-tbody"></div>
+            </div>
+        </div>
+    </div>
+</div>
