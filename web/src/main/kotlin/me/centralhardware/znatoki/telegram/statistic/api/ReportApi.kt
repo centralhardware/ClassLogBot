@@ -1,11 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.api
 
 import dev.inmo.kslog.common.KSLog
-import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.info
-import dev.inmo.kslog.common.warning
-import io.ktor.http.*
-import io.ktor.server.application.*
 import me.centralhardware.znatoki.telegram.statistic.exception.BadRequestException
 import me.centralhardware.znatoki.telegram.statistic.exception.NotFoundException
 import io.ktor.server.response.*
@@ -13,7 +9,6 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasReadRight
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper

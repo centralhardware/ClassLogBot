@@ -1,19 +1,13 @@
 package me.centralhardware.znatoki.telegram.statistic.api
 
 import dev.inmo.kslog.common.KSLog
-import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.info
-import dev.inmo.tgbotapi.bot.ktor.telegramBot
-import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import me.centralhardware.znatoki.telegram.statistic.entity.*
-import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper

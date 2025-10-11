@@ -1,7 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.api
 
 import dev.inmo.kslog.common.KSLog
-import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.error
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -15,6 +14,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import me.centralhardware.znatoki.telegram.statistic.exception.AppException
 
 object WebServer {
 
@@ -40,7 +40,7 @@ object WebServer {
             install(TelegramAuthPlugin)
 
             install(StatusPages) {
-                exception<me.centralhardware.znatoki.telegram.statistic.exception.AppException> { call, cause ->
+                exception<AppException> { call, cause ->
                     KSLog.error("WebServer: Application exception: ${cause.message}", cause)
                     call.respond(
                         cause.statusCode,

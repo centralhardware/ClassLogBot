@@ -8,7 +8,6 @@ import dev.inmo.tgbotapi.bot.ktor.telegramBot
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.utils.TelegramAPIUrlsKeeper
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -17,8 +16,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import me.centralhardware.znatoki.telegram.statistic.entity.*
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasClientPermission
-import me.centralhardware.znatoki.telegram.statistic.extensions.hasReadRight
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
