@@ -106,7 +106,7 @@ jobs:
       - name: Trigger Coolify deployment for web
         env:
           COOLIFY_WEB_DEPLOY_HOOK_URL: ${{ secrets.COOLIFY_WEB_DEPLOY_HOOK_URL }}
-          COOLIFY_WEB_DEPLOY_BEARER_TOKEN: ${{ secrets.COOLIFY_WEB_DEPLOY_BEARER_TOKEN }}
+          COOLIFY_WEB_DEPLOY_BEARER_TOKEN: ${{ secrets.COOLIFY_DEPLOY_BEARER_TOKEN }}
         shell: bash
         run: |
           if [[ -z "$COOLIFY_WEB_DEPLOY_HOOK_URL" ]]; then
@@ -188,7 +188,7 @@ jobs:
       - name: Trigger Coolify deployment for bot
         env:
           COOLIFY_BOT_DEPLOY_HOOK_URL: ${{ secrets.COOLIFY_BOT_DEPLOY_HOOK_URL }}
-          COOLIFY_BOT_DEPLOY_BEARER_TOKEN: ${{ secrets.COOLIFY_BOT_DEPLOY_BEARER_TOKEN }}
+          COOLIFY_BOT_DEPLOY_BEARER_TOKEN: ${{ secrets.COOLIFY_DEPLOY_BEARER_TOKEN }}
         shell: bash
         run: |
           if [[ -z "$COOLIFY_BOT_DEPLOY_HOOK_URL" ]]; then
