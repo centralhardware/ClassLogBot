@@ -1,7 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
 import de.danielbechler.diff.ObjectDifferBuilder
+import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 object DiffService {
@@ -16,6 +19,12 @@ object DiffService {
 
         val differ = ObjectDifferBuilder.startBuilding()
             .comparison().ofType(LocalDateTime::class.java).toUseEqualsMethod()
+            .and()
+            .comparison().ofType(LocalDate::class.java).toUseEqualsMethod()
+            .and()
+            .comparison().ofType(LocalTime::class.java).toUseEqualsMethod()
+            .and()
+            .comparison().ofType(Instant::class.java).toUseEqualsMethod()
             .and()
             .build()
         val diff = differ.compare(newObj, oldObj)
