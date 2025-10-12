@@ -13,6 +13,8 @@ import io.ktor.utils.io.core.*
 import kotlinx.serialization.Serializable
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.exception.*
+import java.io.File
+import java.time.LocalDateTime
 import java.util.*
 
 @Serializable
@@ -37,6 +39,7 @@ fun Route.imageApi() {
                         source.readFully(buffer)
                         fileBytes = buffer
                     }
+
                     else -> {}
                 }
                 part.dispose()
@@ -46,19 +49,23 @@ fun Route.imageApi() {
                 throw BadRequestException("No file provided")
             }
 
-            val extension = fileName?.substringAfterLast('.', "jpg") ?: "jpg"
-            val uniqueName = "${UUID.randomUUID()}.$extension"
-            val path = "photos/$uniqueName"
+            val dateTime = LocalDateTime.now()
+            val tempFile = File.createTempFile("upload-", ".tmp")
+            try {
+                tempFile.writeBytes(fileBytes!!)
 
-            MinioService.put(path, fileBytes!!.inputStream())
-                .onSuccess {
-                    KSLog.info("ImageApi.POST: User ${tutorId.id} uploaded image $path")
-                    call.respond(HttpStatusCode.OK, UploadImageResponse(path = path))
-                }
-                .onFailure { error ->
-                    KSLog.error("ImageApi.POST: Error uploading image", error)
-                    throw Exception("Upload failed")
-                }
+                MinioService.upload(tempFile, dateTime)
+                    .onSuccess { path ->
+                        KSLog.info("ImageApi.POST: User ${tutorId.id} uploaded image $path")
+                        call.respond(HttpStatusCode.OK, UploadImageResponse(path = path))
+                    }
+                    .onFailure { error ->
+                        KSLog.error("ImageApi.POST: Error uploading image", error)
+                        throw Exception("Upload failed")
+                    }
+            } finally {
+                tempFile.delete()
+            }
         }
 
         get("/{path...}") {

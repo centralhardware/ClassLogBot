@@ -9,11 +9,9 @@ import io.ktor.utils.io.core.*
 import io.minio.GetObjectArgs
 import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioClient
-import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
 import io.minio.UploadObjectArgs
 import io.minio.http.Method
-import java.io.InputStream
 import korlibs.time.seconds
 import java.io.File
 import java.nio.file.Paths
@@ -30,22 +28,6 @@ object MinioService {
             .endpoint(Config.Minio.url)
             .credentials(Config.Minio.accessKey, Config.Minio.secretKey)
             .build()
-
-    fun put(path: String, inputStream: InputStream): Result<Unit> = runCatching {
-        KSLog.info { "Uploading stream to MinIO: $path" }
-
-        val bytes = inputStream.readAllBytes()
-        minioClient.putObject(
-            PutObjectArgs.builder()
-                .bucket(Config.Minio.bucket)
-                .`object`(path)
-                .stream(bytes.inputStream(), bytes.size.toLong(), -1)
-                .contentType("image/jpeg")
-                .build()
-        )
-
-        KSLog.info { "Successfully uploaded to MinIO: $path" }
-    }.onFailure { KSLog.error(it) }
 
     fun upload(file: File, dateTime: LocalDateTime): Result<String> = runCatching {
         KSLog.info { "Uploading file=${file.name}, size=${file.length()} to MinIO at $dateTime" }
