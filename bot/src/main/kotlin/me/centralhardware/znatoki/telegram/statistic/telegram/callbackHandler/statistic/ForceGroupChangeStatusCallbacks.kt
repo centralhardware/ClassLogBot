@@ -82,23 +82,16 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
 
     query.messageDataCallbackQueryOrNull()
         ?.let { edit(it.message, replyMarkup = keyboard) }
-    
-    val htmlDiff = DiffService.generateHtmlDiff(
-        oldObj = service,
-        newObj = current
-    )
-    
-    val student = StudentMapper.findById(service.studentId)
-    val subject = SubjectMapper.getNameById(service.subjectId) ?: "Unknown"
-    
+
     AuditLogMapper.log(
         userId = query.user.id.chatId.long,
         action = "UPDATE_LESSON",
         entityType = "lesson",
         entityId = null,
-        details = "<div class=\"entity-info\">${student?.fio()}, $subject</div>$htmlDiff",
         studentId = service.studentId.id,
-        subjectId = service.subjectId.id.toInt()
+        subjectId = service.subjectId.id.toInt(),
+        service,
+        current
     )
 }
 

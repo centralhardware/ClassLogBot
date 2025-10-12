@@ -137,20 +137,16 @@ suspend fun BehaviourContext.startPaymentFsm(
                 val payment = it.build()
                 val paymentId = PaymentMapper.insert(payment)
                 sendLog(payment, paymentId, addedBy)
-                
-                val htmlDiff = DiffService.generateHtmlDiff(
-                    oldObj = null,
-                    newObj = payment
-                )
-                
+
                 AuditLogMapper.log(
                     userId = addedBy.id,
                     action = "CREATE_PAYMENT",
                     entityType = "payment",
                     entityId = paymentId.id,
-                    details = htmlDiff,
                     studentId = payment.studentId.id,
-                    subjectId = payment.subjectId.id.toInt()
+                    subjectId = payment.subjectId.id.toInt(),
+                    null,
+                    payment
                 )
                 
                 sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())

@@ -1,6 +1,12 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
 import de.danielbechler.diff.ObjectDifferBuilder
+import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
+import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -41,22 +47,60 @@ object DiffService {
                 val fieldPath = node.path.toString()
                 val fieldName = fieldPath.removePrefix("/")
 
-                if (fieldName.isNotEmpty()) {
-                    val oldValue = formatValue(node.canonicalGet(oldObj))
-                    val newValue = formatValue(node.canonicalGet(newObj))
-                    changes[fieldName] = oldValue to newValue
+                // Skip deleted and id fields
+                if (fieldName.isEmpty() || fieldName == "deleted" || fieldName == "id") {
+                    return@visit
                 }
+
+                val oldValue = formatValue(fieldName, node.canonicalGet(oldObj))
+                val newValue = formatValue(fieldName, node.canonicalGet(newObj))
+                changes[fieldName] = oldValue to newValue
             }
         }
 
         return formatChangesToHtml(changes)
     }
 
-    private fun formatValue(value: Any?): String? {
-        return when (value) {
-            null -> null
-            is LocalDateTime -> value.format(dateTimeFormatter)
+    private fun formatValue(fieldName: String, value: Any?): String? {
+        return when {
+            value == null -> null
+            value is LocalDateTime -> value.format(dateTimeFormatter)
+            value is Boolean -> if (value) "Да" else "Нет"
+            value is StudentId -> {
+                try {
+                    val fio = StudentMapper.getFioById(value)
+                    formatFioWithInitials(fio)
+                } catch (e: Exception) {
+                    "ID: ${value.id}"
+                }
+            }
+            value is TutorId -> {
+                try {
+                    TutorMapper.findByIdOrNull(value)?.name ?: "ID: ${value.id}"
+                } catch (e: Exception) {
+                    "ID: ${value.id}"
+                }
+            }
+            value is SubjectId -> {
+                try {
+                    SubjectMapper.getNameById(value)
+                } catch (e: Exception) {
+                    "ID: ${value.id}"
+                }
+            }
+            fieldName == "photoReport" && value is String -> {
+                "<a href='/api/image/$value' target='_blank'>Фото</a>"
+            }
             else -> value.toString()
+        }
+    }
+
+    private fun formatFioWithInitials(fio: String): String {
+        val parts = fio.trim().split("\\s+".toRegex())
+        return when (parts.size) {
+            3 -> "${parts[0]} ${parts[1].firstOrNull()?.uppercase() ?: ""}. ${parts[2].firstOrNull()?.uppercase() ?: ""}."
+            2 -> "${parts[0]} ${parts[1].firstOrNull()?.uppercase() ?: ""}."
+            else -> fio
         }
     }
 
@@ -105,6 +149,8 @@ object DiffService {
             "subjectId" -> "Предмет"
             "studentId" -> "Ученик"
             "_amount" -> "Сумма"
+            "photoReport" -> "Фото отчётности"
+            "dateTime" -> "Дата и время"
             else -> field
         }
     }

@@ -127,19 +127,15 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                 parseMode = MarkdownParseMode,
             )
 
-            val htmlDiff = DiffService.generateHtmlDiff(
-                oldObj = null,
-                newObj = client
-            )
-            
             AuditLogMapper.log(
                 userId = message.tutorId().id,
                 action = "CREATE_STUDENT",
                 entityType = "student",
-                entityId = client.id?.id,
-                details = htmlDiff,
-                studentId = client.id?.id,
-                subjectId = null
+                entityId = client.id.id,
+                studentId = client.id.id,
+                subjectId = null,
+                null,
+                client
             )
 
             sendTextMessage(message.chat, "Создание ученика закончено")

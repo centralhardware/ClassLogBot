@@ -100,22 +100,17 @@ fun Route.paymentApi() {
             val createdPayment = PaymentMapper.findById(paymentId)!!
 
             val student = StudentMapper.findById(studentId)
-            val subject = SubjectMapper.getNameById(subjectId) ?: "Unknown"
-
-            val details = buildString {
-                append("<div><b>Ученик:</b> ${student.fio()}</div>")
-                append("<div><b>Предмет:</b> $subject</div>")
-                append("<div><b>Сумма:</b> ${request.amount} ₽</div>")
-            }
+            val subject = SubjectMapper.getNameById(subjectId)
 
             AuditLogMapper.log(
                 userId = tutorId.id,
                 action = "CREATE_PAYMENT",
                 entityType = "payment",
                 entityId = paymentId.id,
-                details = details,
                 studentId = request.studentId,
-                subjectId = request.subjectId.toInt()
+                subjectId = request.subjectId.toInt(),
+                null,
+                createdPayment
             )
 
             KSLog.info("PaymentsApi.POST: User ${tutorId.id} created payment for student ${request.studentId}")
@@ -145,19 +140,15 @@ fun Route.paymentApi() {
 
             val updatedPayment = PaymentMapper.findById(paymentId)!!
 
-            val student = StudentMapper.findById(oldPayment.studentId)
-            val subject = SubjectMapper.getNameById(oldPayment.subjectId) ?: "Unknown"
-
-            val htmlDiff = DiffService.generateHtmlDiff(oldObj = oldPayment, newObj = updatedPayment)
-
             AuditLogMapper.log(
                 userId = tutorId.id,
                 action = "UPDATE_PAYMENT",
                 entityType = "payment",
                 entityId = paymentIdStr,
-                details = htmlDiff,
                 studentId = oldPayment.studentId.id,
-                subjectId = oldPayment.subjectId.id.toInt()
+                subjectId = oldPayment.subjectId.id.toInt(),
+                oldPayment,
+                updatedPayment
             )
 
             KSLog.info("PaymentsApi.PUT: User ${tutorId.id} updated payment $paymentIdStr")
@@ -174,23 +165,15 @@ fun Route.paymentApi() {
 
             PaymentMapper.setDelete(paymentId, true)
 
-            val student = StudentMapper.findById(payment.studentId)
-            val subject = SubjectMapper.getNameById(payment.subjectId) ?: "Unknown"
-
-            val details = buildString {
-                append("<div><b>Ученик:</b> ${student.fio()}</div>")
-                append("<div><b>Предмет:</b> $subject</div>")
-                append("<div><b>Сумма:</b> ${payment.amount.amount} ₽</div>")
-            }
-
             AuditLogMapper.log(
                 userId = tutorId.id,
                 action = "DELETE_PAYMENT",
                 entityType = "payment",
                 entityId = paymentIdStr,
-                details = details,
                 studentId = payment.studentId.id,
-                subjectId = payment.subjectId.id.toInt()
+                subjectId = payment.subjectId.id.toInt(),
+                payment,
+                null
             )
 
             KSLog.info("PaymentsApi.DELETE: User ${tutorId.id} deleted payment $paymentIdStr")

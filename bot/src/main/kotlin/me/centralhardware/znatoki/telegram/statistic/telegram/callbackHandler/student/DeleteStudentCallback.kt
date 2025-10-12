@@ -13,20 +13,17 @@ fun BehaviourContext.deleteStudentCallback() = onDataCallbackQuery(Regex("delete
     val id = it.data.replace("delete_user", "").toInt().toStudentId()
     val student = StudentMapper.findById(id)
     StudentMapper.delete(id)
-    
-    if (student != null) {
-        val htmlDiff = DiffService.generateHtmlDiff(oldObj = student, newObj = null)
-        
-        AuditLogMapper.log(
-            userId = it.user.id.chatId.long,
-            action = "DELETE_STUDENT",
-            entityType = "student",
-            entityId = id.id,
-            details = htmlDiff,
-            studentId = id.id,
-            subjectId = null
-        )
-    }
+
+    AuditLogMapper.log(
+        userId = it.user.id.chatId.long,
+        action = "DELETE_STUDENT",
+        entityType = "student",
+        entityId = id.id,
+        studentId = id.id,
+        subjectId = null,
+        student,
+        null
+    )
     
     sendMessage(it.from, "Ученик удален")
 }

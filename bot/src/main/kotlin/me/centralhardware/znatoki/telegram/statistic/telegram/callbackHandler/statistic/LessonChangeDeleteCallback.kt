@@ -49,21 +49,31 @@ private suspend fun BehaviourContext.changeLessonDelete(
             isSingle = lessons.size == 1))
     }
     
-    val htmlDiff = if (deleted) {
-        DiffService.generateHtmlDiff(oldObj = lesson, newObj = null)
+    if (deleted) {
+        AuditLogMapper.log(
+            userId = query.user.id.chatId.long,
+            action = "DELETE_LESSON",
+            entityType = "lesson",
+            entityId = null,
+            studentId = lesson.studentId.id,
+            subjectId = lesson.subjectId.id.toInt(),
+            lesson,
+            null
+        )
     } else {
-        DiffService.generateHtmlDiff(oldObj = null, newObj = lesson)
+        AuditLogMapper.log(
+            userId = query.user.id.chatId.long,
+            action = "RESTORE_LESSON",
+            entityType = "lesson",
+            entityId = null,
+            studentId = lesson.studentId.id,
+            subjectId = lesson.subjectId.id.toInt(),
+            null,
+            lesson
+        )
     }
     
-    AuditLogMapper.log(
-        userId = query.user.id.chatId.long,
-        action = if (deleted) "DELETE_LESSON" else "RESTORE_LESSON",
-        entityType = "lesson",
-        entityId = null,
-        details = htmlDiff,
-        studentId = lesson.studentId.id,
-        subjectId = lesson.subjectId.id.toInt()
-    )
+
 }
 
 private fun buildLessonKeyboard(id: LessonId, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {

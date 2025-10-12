@@ -43,21 +43,31 @@ private suspend fun BehaviourContext.changePaymentDelete(
     }
     
     val payment = PaymentMapper.findById(id) ?: return
-    val htmlDiff = if (delete) {
-        DiffService.generateHtmlDiff(oldObj = payment, newObj = null)
+    if (delete) {
+        AuditLogMapper.log(
+            userId = query.user.id.chatId.long,
+            action = "DELETE_PAYMENT",
+            entityType = "payment",
+            entityId = id.id,
+            studentId = payment.studentId.id,
+            subjectId = payment.subjectId.id.toInt(),
+            payment,
+            null
+        )
     } else {
-        DiffService.generateHtmlDiff(oldObj = null, newObj = payment)
+        AuditLogMapper.log(
+            userId = query.user.id.chatId.long,
+            action = "RESTORE_PAYMENT",
+            entityType = "payment",
+            entityId = id.id,
+            studentId = payment.studentId.id,
+            subjectId = payment.subjectId.id.toInt(),
+            null,
+            payment
+        )
     }
     
-    AuditLogMapper.log(
-        userId = query.user.id.chatId.long,
-        action = if (delete) "DELETE_PAYMENT" else "RESTORE_PAYMENT",
-        entityType = "payment",
-        entityId = id.id,
-        details = htmlDiff,
-        studentId = payment.studentId.id,
-        subjectId = payment.subjectId.id.toInt()
-    )
+
 }
 
 private fun paymentKeyboard(id: PaymentId, deleted: Boolean) = inlineKeyboard {

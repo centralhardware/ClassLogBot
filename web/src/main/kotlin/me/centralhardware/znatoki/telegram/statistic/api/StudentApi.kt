@@ -413,9 +413,10 @@ fun Route.studentApi() {
                     action = "UPDATE_STUDENT",
                     entityType = "student",
                     entityId = id,
-                    details = htmlDiff,
                     studentId = id,
-                    subjectId = null
+                    subjectId = null,
+                    existingStudent,
+                    updatedStudent
                 )
 
                 KSLog.info("StudentApi.PUT: User ${tutorId.id} updated student $id")

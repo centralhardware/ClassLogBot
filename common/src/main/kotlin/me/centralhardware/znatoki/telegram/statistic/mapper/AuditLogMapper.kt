@@ -5,6 +5,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.AuditLog
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 import me.centralhardware.znatoki.telegram.statistic.extensions.update
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 import java.time.Instant
 
 object AuditLogMapper {
@@ -14,10 +15,16 @@ object AuditLogMapper {
         action: String,
         entityType: String? = null,
         entityId: Int? = null,
-        details: String? = null,
         studentId: Int? = null,
-        subjectId: Int? = null
+        subjectId: Int? = null,
+        oldEntity: Any?,
+        newEntity: Any?,
     ) {
+        val htmlDiff = DiffService.generateHtmlDiff(
+            oldObj = oldEntity,
+            newObj = newEntity
+        )
+
         update(
             queryOf(
                 """
@@ -29,7 +36,7 @@ object AuditLogMapper {
                     "action" to action,
                     "entityType" to entityType,
                     "entityId" to entityId,
-                    "details" to details,
+                    "details" to htmlDiff,
                     "timestamp" to Instant.now(),
                     "studentId" to studentId,
                     "subjectId" to subjectId

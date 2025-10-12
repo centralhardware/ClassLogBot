@@ -11,6 +11,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
@@ -123,7 +124,7 @@ fun Route.lessonApi() {
                 val lessonId = LessonId.random()
                 val subjectId = SubjectId(request.subjectId)
 
-                request.studentIds.forEach { studentIdInt ->
+                request.studentIds.map { studentIdInt ->
                     val studentId = studentIdInt.toStudentId()
                     val lesson = Lesson(
                         id = lessonId,
@@ -140,16 +141,17 @@ fun Route.lessonApi() {
                         addedByTutorId = tutorId
                     )
                     LessonMapper.insert(lesson)
+                    lesson
                 }
 
                 val lessons = LessonMapper.findById(lessonId)
-                val subject = SubjectMapper.getNameById(subjectId) ?: "Unknown"
+                val subject = SubjectMapper.getNameById(subjectId)
 
                 runBlocking {
                     try {
                         val bot = telegramBot(me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN"))
                         val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
-                        val students = lessons.map { StudentMapper.findById(it.studentId).fio() }.joinToString(", ")
+                        val students = lessons.joinToString(", ") { StudentMapper.findById(it.studentId).fio() }
 
                         val text = buildString {
                             appendLine("#создание_занятия")
@@ -164,7 +166,7 @@ fun Route.lessonApi() {
                         }.trimEnd()
 
                         bot.sendTextMessage(
-                            me.centralhardware.znatoki.telegram.statistic.Config.logChat(),
+                            Config.logChat(),
                             text
                         )
                     } catch (e: Exception) {
@@ -172,24 +174,18 @@ fun Route.lessonApi() {
                     }
                 }
 
-                val details = buildString {
-                    append("<div><b>Предмет:</b> $subject</div>")
-                    append("<div><b>Ученики:</b> ${lessons.map { StudentMapper.findById(it.studentId).fio() }.joinToString(", ")}</div>")
-                    append("<div><b>Сумма:</b> ${request.amount} ₽</div>")
-                    if (request.forceGroup) append("<div><b>Групповое:</b> Да</div>")
-                    if (request.extraHalfHour) append("<div><b>1.5 часа:</b> Да</div>")
+                lessons.forEach { lesson ->
+                    AuditLogMapper.log(
+                        userId = tutorId.id,
+                        action = "CREATE_LESSON",
+                        entityType = "lesson",
+                        entityId = null,
+                        studentId = lesson.studentId.id,
+                        subjectId = request.subjectId.toInt(),
+                        null,
+                        lesson
+                    )
                 }
-
-                val firstStudentId = request.studentIds.firstOrNull()
-                AuditLogMapper.log(
-                    userId = tutorId.id,
-                    action = "CREATE_LESSON",
-                    entityType = "lesson",
-                    entityId = null,
-                    details = details,
-                    studentId = firstStudentId,
-                    subjectId = request.subjectId.toInt()
-                )
 
             KSLog.info("LessonsApi.POST: User ${tutorId.id} created lesson with ${request.studentIds.size} students")
             call.respond(HttpStatusCode.Created, lessons.toLessonDto())
@@ -233,18 +229,15 @@ fun Route.lessonApi() {
                 val updatedLessons = LessonMapper.findById(lessonId)
                 val updatedLesson = updatedLessons.first()
 
-                val student = StudentMapper.findById(oldLesson.studentId)
-                val subject = SubjectMapper.getNameById(oldLesson.subjectId) ?: "Unknown"
-                val htmlDiff = DiffService.generateHtmlDiff(oldObj = oldLesson, newObj = updatedLesson)
-
                 AuditLogMapper.log(
                     userId = tutorId.id,
                     action = "UPDATE_LESSON",
                     entityType = "lesson",
                     entityId = null,
-                    details = "<div class=\"entity-info\">${student.fio()}, $subject</div>$htmlDiff",
                     studentId = oldLesson.studentId.id,
-                    subjectId = oldLesson.subjectId.id.toInt()
+                    subjectId = oldLesson.subjectId.id.toInt(),
+                    oldLesson,
+                    updatedLesson
                 )
 
             KSLog.info("LessonsApi.PUT: User ${tutorId.id} updated lesson $lessonIdStr")
@@ -274,11 +267,11 @@ fun Route.lessonApi() {
                 LessonMapper.setDeleted(lessonId, true, studentId)
 
                 val student = StudentMapper.findById(studentId)
-                val subject = SubjectMapper.getNameById(lessonToDelete.subjectId) ?: "Unknown"
+                val subject = SubjectMapper.getNameById(lessonToDelete.subjectId)
 
                 runBlocking {
                     try {
-                        val bot = telegramBot(me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN"))
+                        val bot = telegramBot(Config.getString("BOT_TOKEN"))
                         val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
 
                         val text = buildString {
@@ -291,7 +284,7 @@ fun Route.lessonApi() {
                         }.trimEnd()
 
                         bot.sendTextMessage(
-                            me.centralhardware.znatoki.telegram.statistic.Config.logChat(),
+                            Config.logChat(),
                             text
                         )
                     } catch (e: Exception) {
@@ -299,19 +292,15 @@ fun Route.lessonApi() {
                     }
                 }
 
-                val details = buildString {
-                    append("<div><b>Ученик:</b> ${student.fio()}</div>")
-                    append("<div><b>Предмет:</b> $subject</div>")
-                }
-
                 AuditLogMapper.log(
                     userId = tutorId.id,
                     action = "REMOVE_STUDENT_FROM_LESSON",
                     entityType = "lesson",
                     entityId = null,
-                    details = details,
                     studentId = studentId.id,
-                    subjectId = lessonToDelete.subjectId.id.toInt()
+                    subjectId = lessonToDelete.subjectId.id.toInt(),
+                    lessonToDelete,
+                    null
                 )
 
             KSLog.info("LessonsApi.DELETE: User ${tutorId.id} removed student $studentIdStr from lesson $lessonIdStr")
@@ -360,11 +349,11 @@ fun Route.lessonApi() {
                 LessonMapper.insert(newLesson)
 
                 val student = StudentMapper.findById(newStudentId)
-                val subject = SubjectMapper.getNameById(templateLesson.subjectId) ?: "Unknown"
+                val subject = SubjectMapper.getNameById(templateLesson.subjectId)
 
                 runBlocking {
                     try {
-                        val bot = telegramBot(me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN"))
+                        val bot = telegramBot(Config.getString("BOT_TOKEN"))
                         val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
 
                         val text = buildString {
@@ -378,7 +367,7 @@ fun Route.lessonApi() {
                         }.trimEnd()
 
                         bot.sendTextMessage(
-                            me.centralhardware.znatoki.telegram.statistic.Config.logChat(),
+                            Config.logChat(),
                             text
                         )
                     } catch (e: Exception) {
@@ -386,20 +375,15 @@ fun Route.lessonApi() {
                     }
                 }
 
-                val details = buildString {
-                    append("<div><b>Ученик:</b> ${student.fio()}</div>")
-                    append("<div><b>Предмет:</b> $subject</div>")
-                    append("<div><b>Сумма:</b> ${newLesson.amount} ₽</div>")
-                }
-
                 AuditLogMapper.log(
                     userId = tutorId.id,
                     action = "ADD_STUDENT_TO_LESSON",
                     entityType = "lesson",
                     entityId = null,
-                    details = details,
                     studentId = newStudentId.id,
-                    subjectId = templateLesson.subjectId.id.toInt()
+                    subjectId = templateLesson.subjectId.id.toInt(),
+                    null,
+                    newLesson
                 )
 
             KSLog.info("LessonsApi.POST: User ${tutorId.id} added student ${request.studentId} to lesson $lessonIdStr")
@@ -420,11 +404,11 @@ fun Route.lessonApi() {
 
                 val lesson = lessons.first()
                 val student = StudentMapper.findById(lesson.studentId)
-                val subject = SubjectMapper.getNameById(lesson.subjectId) ?: "Unknown"
+                val subject = SubjectMapper.getNameById(lesson.subjectId)
 
                 runBlocking {
                     try {
-                        val bot = telegramBot(me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN"))
+                        val bot = telegramBot(Config.getString("BOT_TOKEN"))
                         val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
 
                         val text = buildString {
@@ -438,7 +422,7 @@ fun Route.lessonApi() {
                         }.trimEnd()
 
                         bot.sendTextMessage(
-                            me.centralhardware.znatoki.telegram.statistic.Config.logChat(),
+                            Config.logChat(),
                             text
                         )
                     } catch (e: Exception) {
@@ -446,20 +430,15 @@ fun Route.lessonApi() {
                     }
                 }
 
-                val details = buildString {
-                    append("<div><b>Ученик:</b> ${student.fio()}</div>")
-                    append("<div><b>Предмет:</b> $subject</div>")
-                    append("<div><b>Сумма:</b> ${lesson.amount} ₽</div>")
-                }
-
                 AuditLogMapper.log(
                     userId = tutorId.id,
                     action = "DELETE_LESSON",
                     entityType = "lesson",
                     entityId = null,
-                    details = details,
                     studentId = lesson.studentId.id,
-                    subjectId = lesson.subjectId.id.toInt()
+                    subjectId = lesson.subjectId.id.toInt(),
+                    lesson,
+                    null
                 )
 
             KSLog.info("LessonsApi.DELETE: User ${tutorId.id} deleted lesson $lessonIdStr")
