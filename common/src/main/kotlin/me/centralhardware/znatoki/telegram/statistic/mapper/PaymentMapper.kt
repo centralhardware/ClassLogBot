@@ -240,6 +240,24 @@ object PaymentMapper {
         )
     ) { it.parsePayment() }
 
+    fun findByIdIncludingDeleted(id: PaymentId): Payment? = runSingle(
+        queryOf(
+            """
+            SELECT p.id,
+                   p.date_time,
+                   p.tutor_id,
+                   p.student_id,
+                   p.amount,
+                   p.subject_id,
+                   p.is_deleted,
+                   p.photo_report,
+                   p.added_by_tutor_id
+            FROM payment p
+            WHERE p.id = :id
+            """, mapOf("id" to id.id)
+        )
+    ) { it.parsePayment() }
+
     fun updateAmount(id: PaymentId, amount: me.centralhardware.znatoki.telegram.statistic.entity.Amount) =
         update(
             queryOf(

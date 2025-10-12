@@ -36,9 +36,10 @@ private suspend fun BehaviourContext.changeLessonDelete(
     deleted: Boolean,
     query: DataCallbackQuery
 ) {
-    LessonMapper.setDeleted(id, deleted)
     val lessons = LessonMapper.findById(id)
     val lesson = lessons.firstOrNull() ?: return
+    
+    LessonMapper.setDeleted(id, deleted)
 
     query.messageDataCallbackQueryOrNull()?.message?.let {
         edit(it, replyMarkup = buildLessonKeyboard(

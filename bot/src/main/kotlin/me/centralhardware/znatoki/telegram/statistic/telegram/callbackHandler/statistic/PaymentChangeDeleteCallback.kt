@@ -36,13 +36,13 @@ private suspend fun BehaviourContext.changePaymentDelete(
     delete: Boolean,
     query: DataCallbackQuery
 ) {
+    val payment = PaymentMapper.findByIdIncludingDeleted(id) ?: return
+    
     PaymentMapper.setDelete(id, delete)
 
     query.messageDataCallbackQueryOrNull()?.message?.let { msg ->
         edit(msg, replyMarkup = paymentKeyboard(id = id, deleted = delete))
     }
-    
-    val payment = PaymentMapper.findById(id) ?: return
     if (delete) {
         AuditLogMapper.log(
             userId = query.user.id.chatId.long,
