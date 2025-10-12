@@ -19,6 +19,26 @@ async function authorizedFetch(url, options = {}) {
     });
 }
 
+async function loadImageWithAuth(imageUrl, imgElement) {
+    try {
+        const response = await authorizedFetch(imageUrl);
+        if (!response.ok) throw new Error('Failed to load image');
+        
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        imgElement.src = objectUrl;
+        
+        imgElement.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+        };
+    } catch (error) {
+        console.error('Error loading image:', error);
+        if (imgElement.parentElement) {
+            imgElement.parentElement.style.display = 'none';
+        }
+    }
+}
+
 let isAdmin = false;
 let tutorsData = [];
 let subjectsData = [];
@@ -178,21 +198,29 @@ function setupEventListeners() {
         button.addEventListener('click', () => switchTab(button));
     });
 
-    document.getElementById('reports-subject').addEventListener('change', loadReport);
-    document.getElementById('reports-period').addEventListener('change', loadReport);
+    document.getElementById('reports-subject').addEventListener('change', () => {
+        if (typeof loadReport === 'function') loadReport();
+    });
+    document.getElementById('reports-period').addEventListener('change', () => {
+        if (typeof loadReport === 'function') loadReport();
+    });
     if (isAdmin) {
         document.getElementById('reports-tutor-select').addEventListener('change', async () => {
             await loadSubjectsForTutor('reports');
-            loadReport();
+            if (typeof loadReport === 'function') loadReport();
         });
     }
 
-    document.getElementById('stats-subject').addEventListener('change', loadStatistics);
-    document.getElementById('stats-period').addEventListener('change', loadStatistics);
+    document.getElementById('stats-subject').addEventListener('change', () => {
+        if (typeof loadStatistics === 'function') loadStatistics();
+    });
+    document.getElementById('stats-period').addEventListener('change', () => {
+        if (typeof loadStatistics === 'function') loadStatistics();
+    });
     if (isAdmin) {
         document.getElementById('stats-tutor-select').addEventListener('change', async () => {
             await loadSubjectsForTutor('stats');
-            loadStatistics();
+            if (typeof loadStatistics === 'function') loadStatistics();
         });
     }
 
@@ -408,16 +436,16 @@ function switchPage(pageName) {
         if (!subjectSelect.value && subjectsData.length === 1) {
             subjectSelect.value = subjectsData[0].subjectId;
         }
-        if (subjectSelect.value && periodSelect.value && !currentReport) {
+        if (subjectSelect.value && periodSelect.value && typeof loadReport === 'function' && !currentReport) {
             loadReport();
         }
-    } else if (pageName === 'statistics' && !currentStats) {
+    } else if (pageName === 'statistics' && typeof loadStatistics === 'function' && !currentStats) {
         loadStatistics();
-    } else if (pageName === 'students') {
+    } else if (pageName === 'students' && typeof searchStudents === 'function') {
         searchStudents('');
-    } else if (pageName === 'teachers' && teachers.length === 0) {
+    } else if (pageName === 'teachers' && typeof loadTeachers === 'function' && teachers.length === 0) {
         loadTeachers();
-    } else if (pageName === 'audit-log' && loadedLogsCount === 0) {
+    } else if (pageName === 'audit-log' && typeof loadAuditLog === 'function' && loadedLogsCount === 0) {
         loadAuditLog();
     }
 }

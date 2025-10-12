@@ -125,11 +125,8 @@ function openLessonModal(lessonId) {
     const photoContainer = document.getElementById('lesson-photo-container');
     const photoImg = document.getElementById('lesson-photo');
     if (lesson.photoReport) {
-        photoImg.src = lesson.photoReport;
-        photoImg.onerror = () => {
-            photoContainer.style.display = 'none';
-        };
         photoContainer.style.display = 'block';
+        loadImageWithAuth(lesson.photoReport, photoImg);
     } else {
         photoContainer.style.display = 'none';
     }
@@ -366,11 +363,8 @@ function openPaymentModal(paymentId) {
     const photoContainer = document.getElementById('payment-photo-container');
     const photoImg = document.getElementById('payment-photo');
     if (payment.photoReport) {
-        photoImg.src = payment.photoReport;
-        photoImg.onerror = () => {
-            photoContainer.style.display = 'none';
-        };
         photoContainer.style.display = 'block';
+        loadImageWithAuth(payment.photoReport, photoImg);
     } else {
         photoContainer.style.display = 'none';
     }
