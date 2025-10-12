@@ -13,6 +13,9 @@ import io.ktor.utils.io.core.*
 import kotlinx.serialization.Serializable
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.exception.*
+import me.centralhardware.znatoki.telegram.statistic.Config
+import io.minio.MinioClient
+import io.minio.GetObjectArgs
 import java.io.File
 import java.time.LocalDateTime
 import java.util.*
@@ -21,6 +24,11 @@ import java.util.*
 data class UploadImageResponse(
     val path: String
 )
+
+private val minioClient = MinioClient.builder()
+    .endpoint(Config.Minio.url)
+    .credentials(Config.Minio.accessKey, Config.Minio.secretKey)
+    .build()
 
 fun Route.imageApi() {
     route("/api/image") {
@@ -75,19 +83,23 @@ fun Route.imageApi() {
             val tutorId = call.authenticatedTutorId
             KSLog.info("ImageApi.GET: User ${tutorId.id} accessing image $path")
 
-            MinioService.get(path)
-                .onSuccess { input ->
-                    val bytes = input.readBytes()
-                    call.respondBytes(
-                        bytes = bytes,
-                        contentType = ContentType.Image.JPEG,
-                        status = HttpStatusCode.OK
-                    )
-                }
-                .onFailure { error ->
-                    KSLog.error("ImageApi.GET: Error fetching image $path", error)
-                    throw NotFoundException("Image not found")
-                }
+            runCatching {
+                val bytes = minioClient.getObject(
+                    GetObjectArgs.builder()
+                        .bucket(Config.Minio.bucket)
+                        .`object`(path)
+                        .build()
+                ).readAllBytes()
+                
+                call.respondBytes(
+                    bytes = bytes,
+                    contentType = ContentType.Image.JPEG,
+                    status = HttpStatusCode.OK
+                )
+            }.onFailure { error ->
+                KSLog.error("ImageApi.GET: Error fetching image $path", error)
+                throw NotFoundException("Image not found")
+            }
         }
     }
 }
