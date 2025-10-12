@@ -119,7 +119,7 @@ suspend fun BehaviourContext.startLessonFsm(
                     userId = addedBy.id,
                     action = "CREATE_LESSON",
                     entityType = "lesson",
-                    entityId = null,
+                    entityId = lesson.id.id.toString(),
                     studentId = lesson.studentId.id,
                     subjectId = lesson.subjectId.id.toInt(),
                     null,

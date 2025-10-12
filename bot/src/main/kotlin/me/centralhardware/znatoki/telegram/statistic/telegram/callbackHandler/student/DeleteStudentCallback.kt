@@ -18,7 +18,7 @@ fun BehaviourContext.deleteStudentCallback() = onDataCallbackQuery(Regex("delete
         userId = it.user.id.chatId.long,
         action = "DELETE_STUDENT",
         entityType = "student",
-        entityId = id.id,
+        entityId = id.id.toString(),
         studentId = id.id,
         subjectId = null,
         student,

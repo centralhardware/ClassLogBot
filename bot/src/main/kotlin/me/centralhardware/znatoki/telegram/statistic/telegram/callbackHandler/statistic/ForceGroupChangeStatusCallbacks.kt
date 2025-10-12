@@ -87,7 +87,7 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
         userId = query.user.id.chatId.long,
         action = "UPDATE_LESSON",
         entityType = "lesson",
-        entityId = null,
+        entityId = service.id.id.toString(),
         studentId = service.studentId.id,
         subjectId = service.subjectId.id.toInt(),
         service,

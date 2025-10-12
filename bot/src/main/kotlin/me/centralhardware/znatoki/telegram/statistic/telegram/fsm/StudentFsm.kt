@@ -131,7 +131,7 @@ suspend fun BehaviourContext.startClientFsm(message: CommonMessage<MessageConten
                 userId = message.tutorId().id,
                 action = "CREATE_STUDENT",
                 entityType = "student",
-                entityId = client.id.id,
+                entityId = client.id.id.toString(),
                 studentId = client.id.id,
                 subjectId = null,
                 null,

@@ -20,7 +20,7 @@ data class AuditLogDto(
     val userName: String?,
     val action: String,
     val entityType: String?,
-    val entityId: Int?,
+    val entityId: String?,
     val details: String?,
     val timestamp: String,
     val studentName: String?,

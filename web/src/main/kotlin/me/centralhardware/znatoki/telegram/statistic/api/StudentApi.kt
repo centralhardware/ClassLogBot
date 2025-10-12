@@ -412,7 +412,7 @@ fun Route.studentApi() {
                     userId = tutorId.id,
                     action = "UPDATE_STUDENT",
                     entityType = "student",
-                    entityId = id,
+                    entityId = id.toString(),
                     studentId = id,
                     subjectId = null,
                     existingStudent,

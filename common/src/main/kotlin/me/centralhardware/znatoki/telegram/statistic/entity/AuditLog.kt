@@ -7,7 +7,7 @@ data class AuditLog(
     val userId: Long,
     val action: String,
     val entityType: String?,
-    val entityId: Int?,
+    val entityId: String?,
     val details: String?,
     val timestamp: Instant,
     val studentId: Int?,

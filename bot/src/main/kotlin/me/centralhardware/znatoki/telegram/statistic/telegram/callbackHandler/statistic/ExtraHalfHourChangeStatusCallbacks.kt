@@ -96,10 +96,11 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
         userId = query.user.id.chatId.long,
         action = "UPDATE_LESSON",
         entityType = "lesson",
-        entityId = null,
-        details = "<div class=\"entity-info\">${student?.fio()}, $subject</div>$htmlDiff",
+        entityId = service.id.id.toString(),
         studentId = service.studentId.id,
-        subjectId = service.subjectId.id.toInt()
+        subjectId = service.subjectId.id.toInt(),
+        oldEntity = service,
+        newEntity = updated
     )
 }
 
