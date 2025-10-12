@@ -171,6 +171,9 @@ function setupEventListeners() {
         });
     }
 
+    // Hide tabs based on permissions
+    setupTabPermissions();
+
     document.querySelectorAll('[data-tab]').forEach(button => {
         button.addEventListener('click', () => switchTab(button));
     });
@@ -416,6 +419,61 @@ function switchPage(pageName) {
         loadTeachers();
     } else if (pageName === 'audit-log' && loadedLogsCount === 0) {
         loadAuditLog();
+    }
+}
+
+function setupTabPermissions() {
+    const hasAddTime = userPermissions.includes('ADD_TIME') || isAdmin;
+    const hasAddPayment = userPermissions.includes('ADD_PAYMENT') || isAdmin;
+
+    // Hide tabs based on permissions
+    const lessonsTab = document.getElementById('today-lessons-tab');
+    const paymentsTab = document.getElementById('today-payments-tab');
+    const lessonsContent = document.getElementById('today-lessons');
+    const paymentsContent = document.getElementById('today-payments');
+    const addLessonButton = document.getElementById('add-lesson-button');
+    const addPaymentButton = document.getElementById('add-payment-button');
+
+    if (!hasAddTime) {
+        if (lessonsTab) lessonsTab.style.display = 'none';
+        if (lessonsContent) lessonsContent.style.display = 'none';
+        if (addLessonButton) addLessonButton.style.display = 'none';
+    }
+
+    if (!hasAddPayment) {
+        if (paymentsTab) paymentsTab.style.display = 'none';
+        if (paymentsContent) paymentsContent.style.display = 'none';
+        if (addPaymentButton) addPaymentButton.style.display = 'none';
+    }
+
+    // If only one tab is visible, make it active and hide tab buttons
+    const visibleTabs = [];
+    if (hasAddTime) visibleTabs.push('lessons');
+    if (hasAddPayment) visibleTabs.push('payments');
+
+    if (visibleTabs.length === 1) {
+        const tabButtons = document.getElementById('today-tab-buttons');
+        if (tabButtons) tabButtons.style.display = 'none';
+        
+        if (visibleTabs[0] === 'lessons') {
+            if (lessonsTab) lessonsTab.classList.add('active');
+            if (lessonsContent) lessonsContent.classList.add('active');
+            if (paymentsTab) paymentsTab.classList.remove('active');
+            if (paymentsContent) paymentsContent.classList.remove('active');
+        } else {
+            if (paymentsTab) paymentsTab.classList.add('active');
+            if (paymentsContent) paymentsContent.classList.add('active');
+            if (lessonsTab) lessonsTab.classList.remove('active');
+            if (lessonsContent) lessonsContent.classList.remove('active');
+        }
+    }
+
+    // If no tabs are visible, show message
+    if (visibleTabs.length === 0) {
+        const pageToday = document.getElementById('page-today');
+        if (pageToday) {
+            pageToday.innerHTML = '<div class="card"><div class="no-data"><div class="no-data-icon">🚫</div><p>У вас нет прав для просмотра данных на этой странице</p></div></div>';
+        }
     }
 }
 

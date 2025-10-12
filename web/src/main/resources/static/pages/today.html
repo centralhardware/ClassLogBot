@@ -1,15 +1,15 @@
 <!-- TODAY PAGE -->
 <div id="page-today" class="page-section active">
-    <div class="tab-buttons">
-        <button class="tab-button active" data-tab="today-lessons">Занятия</button>
-        <button class="tab-button" data-tab="today-payments">Оплаты</button>
+    <div class="tab-buttons" id="today-tab-buttons">
+        <button class="tab-button active" data-tab="today-lessons" id="today-lessons-tab">Занятия</button>
+        <button class="tab-button" data-tab="today-payments" id="today-payments-tab">Оплаты</button>
     </div>
 
     <div id="today-lessons" class="tab-content active">
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h2 style="margin: 0;">🎓 Занятия сегодня</h2>
-                <button class="button" onclick="openAddLessonModal()">+ Добавить занятие</button>
+                <button class="button" id="add-lesson-button" onclick="openAddLessonModal()">+ Добавить занятие</button>
             </div>
             <div id="today-lessons-list"></div>
         </div>
@@ -19,7 +19,7 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h2 style="margin: 0;">💰 Оплаты сегодня</h2>
-                <button class="button" onclick="openAddPaymentModal()">+ Добавить оплату</button>
+                <button class="button" id="add-payment-button" onclick="openAddPaymentModal()">+ Добавить оплату</button>
             </div>
             <div id="today-payments-list"></div>
         </div>
