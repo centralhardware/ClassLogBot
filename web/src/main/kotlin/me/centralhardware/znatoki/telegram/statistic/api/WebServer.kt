@@ -39,7 +39,7 @@ object WebServer {
                     }
                 }
                 filter { call ->
-                    true
+                    !call.request.path().startsWith("/api/version")
                 }
             }
 

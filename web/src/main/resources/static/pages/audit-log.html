@@ -64,7 +64,23 @@
             <div id="audit-details-content" style="font-size: 14px; color: #2d3748; max-height: 400px; overflow-y: auto;"></div>
         </div>
 
+        <div id="audit-details-entity-id-group" class="form-group" style="display: none;">
+            <label style="color: #718096; font-size: 13px;">ID сущности</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div id="audit-details-entity-id" style="font-size: 14px; color: #2d3748; font-family: monospace;"></div>
+                <button onclick="copyEntityId()" style="padding: 4px 8px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                    Копировать
+                </button>
+            </div>
+        </div>
+
         <div class="modal-buttons">
+            <button class="modal-button secondary" onclick="copyAuditDetails()" style="background: #48bb78; color: white;">
+                Копировать текст
+            </button>
+            <button class="modal-button secondary" onclick="shareAuditDetails()">
+                Поделиться
+            </button>
             <button class="modal-button secondary" onclick="closeAuditDetailsModal()">Закрыть</button>
         </div>
     </div>

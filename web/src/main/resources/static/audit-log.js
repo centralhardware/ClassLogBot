@@ -4,6 +4,7 @@ let isLoadingMore = false;
 let hasMoreLogs = true;
 const auditLogPageSize = 50;
 let currentFilters = {};
+let currentAuditLog = null;
 
 async function loadAuditLog() {
     const loadingEl = document.getElementById('audit-log-loading');
@@ -257,13 +258,14 @@ function appendLogCard(log, container) {
 }
 
 function openAuditDetailsModal(log) {
+    currentAuditLog = log;
     const actionText = getActionText(log.action);
     const userName = log.userName || `User #${log.userId}`;
 
     document.getElementById('audit-details-timestamp').textContent = log.timestamp;
     document.getElementById('audit-details-user').textContent = userName;
     document.getElementById('audit-details-action').innerHTML = `<span class="action-badge action-${log.action.toLowerCase()}">${actionText}</span>`;
-    
+
     const detailsContent = document.getElementById('audit-details-content');
     if (log.details) {
         detailsContent.innerHTML = log.details;
@@ -271,14 +273,106 @@ function openAuditDetailsModal(log) {
         detailsContent.innerHTML = '<span style="color: #718096;">Нет деталей</span>';
     }
 
+    // Show entity ID if available
+    const entityIdGroup = document.getElementById('audit-details-entity-id-group');
+    const entityIdEl = document.getElementById('audit-details-entity-id');
+    if (log.entityId) {
+        entityIdEl.textContent = log.entityId;
+        entityIdGroup.style.display = 'block';
+    } else {
+        entityIdGroup.style.display = 'none';
+    }
+
     document.getElementById('audit-log-details-modal').classList.add('active');
 }
 
 function closeAuditDetailsModal() {
     document.getElementById('audit-log-details-modal').classList.remove('active');
+    currentAuditLog = null;
 }
 
+function copyEntityId() {
+    const entityId = document.getElementById('audit-details-entity-id').textContent;
+    navigator.clipboard.writeText(entityId).then(() => {
+        // Show temporary feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Скопировано!';
+        btn.style.background = '#48bb78';
+        btn.style.color = 'white';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '#e2e8f0';
+            btn.style.color = 'inherit';
+        }, 1500);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Не удалось скопировать ID');
+    });
+}
 
+function copyAuditDetails() {
+    if (!currentAuditLog) return;
+
+    const actionText = getActionText(currentAuditLog.action);
+    const userName = currentAuditLog.userName || `User #${currentAuditLog.userId}`;
+    const detailsContent = document.getElementById('audit-details-content');
+    const detailsText = detailsContent.textContent || detailsContent.innerText;
+
+    let text = `Дата и время: ${currentAuditLog.timestamp}\n`;
+    text += `Пользователь: ${userName}\n`;
+    text += `Действие: ${actionText}\n`;
+    if (currentAuditLog.entityId) {
+        text += `ID сущности: ${currentAuditLog.entityId}\n`;
+    }
+    text += `\nДетали:\n${detailsText}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Скопировано!';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 1500);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Не удалось скопировать текст');
+    });
+}
+
+function shareAuditDetails() {
+    if (!currentAuditLog) return;
+
+    const actionText = getActionText(currentAuditLog.action);
+    const userName = currentAuditLog.userName || `User #${currentAuditLog.userId}`;
+    const detailsContent = document.getElementById('audit-details-content');
+    const detailsText = detailsContent.textContent || detailsContent.innerText;
+
+    let text = `Дата и время: ${currentAuditLog.timestamp}\n`;
+    text += `Пользователь: ${userName}\n`;
+    text += `Действие: ${actionText}\n`;
+    if (currentAuditLog.entityId) {
+        text += `ID сущности: ${currentAuditLog.entityId}\n`;
+    }
+    text += `\nДетали:\n${detailsText}`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Запись из журнала действий',
+            text: text
+        }).catch(err => {
+            console.error('Failed to share:', err);
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Текст скопирован в буфер обмена');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('Функция "Поделиться" не поддерживается в этом браузере');
+        });
+    }
+}
 
 function getActionText(action) {
     const actionMap = {

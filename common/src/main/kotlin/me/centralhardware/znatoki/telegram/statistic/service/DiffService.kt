@@ -4,6 +4,8 @@ import de.danielbechler.diff.ObjectDifferBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
+import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
+import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
@@ -45,15 +47,21 @@ object DiffService {
         diff.visit { node, _ ->
             if (node.hasChanges() && !node.hasChildren()) {
                 val fieldPath = node.path.toString()
-                val fieldName = fieldPath.removePrefix("/")
+                val fieldNameRaw = fieldPath.removePrefix("/")
 
-                // Skip deleted and id fields
-                if (fieldName.isEmpty() || fieldName == "deleted" || fieldName == "id") {
+                // Remove random suffix from value class fields (e.g., "studentId-dvM1KdY" -> "studentId")
+                val fieldName = fieldNameRaw.substringBefore("-")
+
+                // Skip deleted, id, updateTime fields
+                if (fieldName.isEmpty() || fieldName == "deleted" || fieldName == "id" || fieldName == "updateTime") {
                     return@visit
                 }
 
-                val oldValue = formatValue(fieldName, node.canonicalGet(oldObj))
-                val newValue = formatValue(fieldName, node.canonicalGet(newObj))
+                val oldValueRaw = node.canonicalGet(oldObj)
+                val newValueRaw = node.canonicalGet(newObj)
+
+                val oldValue = formatValue(fieldName, oldValueRaw)
+                val newValue = formatValue(fieldName, newValueRaw)
                 changes[fieldName] = oldValue to newValue
             }
         }
@@ -66,31 +74,45 @@ object DiffService {
             value == null -> null
             value is LocalDateTime -> value.format(dateTimeFormatter)
             value is Boolean -> if (value) "Да" else "Нет"
-            value is StudentId -> {
+
+            // Handle studentId field
+            fieldName == "studentId" && value is Int -> {
                 try {
-                    val fio = StudentMapper.getFioById(value)
+                    val fio = StudentMapper.getFioById(value.toStudentId())
                     formatFioWithInitials(fio)
                 } catch (e: Exception) {
-                    "ID: ${value.id}"
+                    "ID: $value"
                 }
             }
-            value is TutorId -> {
+
+            // Handle tutorId and addedByTutorId fields
+            (fieldName == "tutorId" || fieldName == "addedByTutorId") && value is Long -> {
                 try {
-                    TutorMapper.findByIdOrNull(value)?.name ?: "ID: ${value.id}"
+                    TutorMapper.findByIdOrNull(TutorId(value))?.name ?: "ID: $value"
                 } catch (e: Exception) {
-                    "ID: ${value.id}"
+                    "ID: $value"
                 }
             }
-            value is SubjectId -> {
+
+            // Handle subjectId field
+            fieldName == "subjectId" && value is Long -> {
                 try {
-                    SubjectMapper.getNameById(value)
+                    SubjectMapper.getNameById(value.toSubjectId())
                 } catch (e: Exception) {
-                    "ID: ${value.id}"
+                    "ID: $value"
                 }
             }
+
+            // Handle amount field (comes as Double)
+            fieldName == "amount" && value is Number -> {
+                value.toInt().toString()
+            }
+
+            // Handle photoReport field
             fieldName == "photoReport" && value is String -> {
                 "<a href='/api/image/$value' target='_blank'>Фото</a>"
             }
+
             else -> value.toString()
         }
     }
@@ -140,17 +162,18 @@ object DiffService {
             "responsiblePhone" -> "Телефон ответственного"
             "motherFio" -> "ФИО матери"
             "birthDate" -> "Дата рождения"
-            "source" -> "Источник"
+            "source" -> "Узнал от"
             "recordDate" -> "Дата записи"
             "forceGroup" -> "Групповое занятие"
             "extraHalfHour" -> "1.5 часа"
             "amount" -> "Сумма"
-            "tutorId" -> "Репетитор"
+            "tutorId" -> "Учитель"
             "subjectId" -> "Предмет"
             "studentId" -> "Ученик"
             "_amount" -> "Сумма"
             "photoReport" -> "Фото отчётности"
             "dateTime" -> "Дата и время"
+            "addedByTutorId" -> "Добавлено"
             else -> field
         }
     }
