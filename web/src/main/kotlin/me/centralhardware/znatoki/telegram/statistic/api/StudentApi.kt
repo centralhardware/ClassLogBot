@@ -69,7 +69,6 @@ fun Student.toDto() = StudentDto(
     motherFio = motherFio
 )
 
-// Валидация данных Telegram Web App используя встроенную функцию ktgbotapi
 fun validateTelegramWebAppData(initData: String, botToken: String): Map<String, String>? {
     try {
         val params = initData.split("&")
@@ -80,7 +79,6 @@ fun validateTelegramWebAppData(initData: String, botToken: String): Map<String, 
 
         val hash = params["hash"] ?: return null
 
-        // Используем встроенную валидацию из ktgbotapi
         val telegramUrlsKeeper = TelegramAPIUrlsKeeper(botToken)
 
         if (!telegramUrlsKeeper.checkWebAppData(initData, hash)) {
@@ -94,7 +92,6 @@ fun validateTelegramWebAppData(initData: String, botToken: String): Map<String, 
     }
 }
 
-// Извлечение и валидация пользователя из Telegram Web App данных
 fun extractAndValidateTelegramUser(
     authHeader: String?,
     studentId: Int,
@@ -137,88 +134,6 @@ fun extractAndValidateTelegramUser(
     return TutorId(userId)
 }
 
-// Отправка лога об изменении студента
-fun sendStudentEditLog(oldStudent: Student, newStudent: Student, updatedBy: TutorId) {
-    runBlocking {
-        try {
-            val bot = telegramBot(me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN"))
-            val tutorName = TutorMapper.findByIdOrNull(updatedBy)?.name?.hashtag() ?: "Unknown"
-
-            val changes = mutableListOf<String>()
-
-            if (oldStudent.name != newStudent.name) {
-                changes.add("Имя: ${oldStudent.name} → ${newStudent.name}")
-            }
-            if (oldStudent.secondName != newStudent.secondName) {
-                changes.add("Фамилия: ${oldStudent.secondName} → ${newStudent.secondName}")
-            }
-            if (oldStudent.lastName != newStudent.lastName) {
-                changes.add("Отчество: ${oldStudent.lastName} → ${newStudent.lastName}")
-            }
-            if (oldStudent.schoolClass != newStudent.schoolClass) {
-                changes.add("Класс: ${oldStudent.schoolClass?.value ?: "не указан"} → ${newStudent.schoolClass?.value ?: "не указан"}")
-            }
-            if (oldStudent.birthDate != newStudent.birthDate) {
-                changes.add("Дата рождения: ${oldStudent.birthDate ?: "не указана"} → ${newStudent.birthDate ?: "не указана"}")
-            }
-            if (oldStudent.source != newStudent.source) {
-                changes.add("Источник: ${oldStudent.source?.title ?: "не указан"} → ${newStudent.source?.title ?: "не указан"}")
-            }
-            if (oldStudent.phone != newStudent.phone) {
-                changes.add("Телефон: ${oldStudent.phone?.value ?: "не указан"} → ${newStudent.phone?.value ?: "не указан"}")
-            }
-            if (oldStudent.responsiblePhone != newStudent.responsiblePhone) {
-                changes.add("Телефон ответственного: ${oldStudent.responsiblePhone?.value ?: "не указан"} → ${newStudent.responsiblePhone?.value ?: "не указан"}")
-            }
-            if (oldStudent.motherFio != newStudent.motherFio) {
-                changes.add("ФИО матери: ${oldStudent.motherFio ?: "не указано"} → ${newStudent.motherFio ?: "не указано"}")
-            }
-            if (oldStudent.recordDate != newStudent.recordDate) {
-                changes.add("Дата записи: ${oldStudent.recordDate ?: "не указана"} → ${newStudent.recordDate ?: "не указана"}")
-            }
-            if (oldStudent.createdBy != newStudent.createdBy) {
-                val oldCreator = TutorMapper.findByIdOrNull(oldStudent.createdBy)?.name?.hashtag() ?: "Unknown"
-                val newCreator = TutorMapper.findByIdOrNull(newStudent.createdBy)?.name?.hashtag() ?: "Unknown"
-                changes.add("Создал: $oldCreator → $newCreator")
-            }
-            if (oldStudent.updateBy != newStudent.updateBy) {
-                val oldUpdater =
-                    oldStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
-                val newUpdater =
-                    newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
-                changes.add("Последний раз изменил: $oldUpdater → $newUpdater")
-            }
-
-            if (changes.isEmpty()) {
-                return@runBlocking
-            }
-
-            val createdByName = TutorMapper.findByIdOrNull(newStudent.createdBy)?.name?.hashtag() ?: "Unknown"
-            val updatedByName =
-                newStudent.updateBy?.let { TutorMapper.findByIdOrNull(it)?.name?.hashtag() } ?: "не указан"
-
-            val text = buildString {
-                appendLine("#редактирование_ученика")
-                appendLine("Ученик: ${newStudent.fio().hashtag()}")
-                appendLine("ID: ${newStudent.id.id}")
-                appendLine("Создан: ${newStudent.createDate} ($createdByName)")
-                newStudent.modifyDate?.let { appendLine("Изменён: $it ($updatedByName)") }
-                appendLine()
-                appendLine("Изменения:")
-                changes.forEach { appendLine("• $it") }
-                appendLine()
-                append("Изменил: $tutorName")
-            }.trimEnd()
-
-            bot.sendTextMessage(
-                me.centralhardware.znatoki.telegram.statistic.Config.logChat(),
-                text
-            )
-        } catch (e: Exception) {
-            KSLog.error("sendStudentEditLog: Error sending log", e)
-        }
-    }
-}
 
 @Serializable
 data class StudentLessonDto(
@@ -250,9 +165,9 @@ fun Route.studentApi() {
             val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
             val period = call.request.queryParameters["period"] ?: throw BadRequestException("Period is required")
             val subjectId = call.request.queryParameters["subjectId"]?.toIntOrNull()
-            
+
             KSLog.info("StudentApi.GET /details: Received request for student $id with period: $period, subjectId: $subjectId")
-            
+
             val tutorId = call.authenticatedTutorId
             val studentId = id.toStudentId()
 
@@ -304,7 +219,7 @@ fun Route.studentApi() {
         get("/search") {
             val query = call.request.queryParameters["q"]
             val tutorId = call.authenticatedTutorId
-            
+
             val students = if (query.isNullOrEmpty()) {
                 StudentService.getAllActive()
             } else {
@@ -316,11 +231,11 @@ fun Route.studentApi() {
                     .map { it.toDto() }
                     .sortedWith(
                         compareBy(
-                        { it.schoolClass ?: Int.MAX_VALUE },
-                        { it.secondName },
-                        { it.name },
-                        { it.lastName }
-                    ))
+                            { it.schoolClass ?: Int.MAX_VALUE },
+                            { it.secondName },
+                            { it.name },
+                            { it.lastName }
+                        ))
             } else {
                 students.map { it.toDto() }
             }
@@ -332,7 +247,7 @@ fun Route.studentApi() {
         get("/{id}") {
             val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
             val tutorId = call.authenticatedTutorId
-            
+
             val student = StudentMapper.findById(id.toStudentId())
             KSLog.info("StudentApi.GET: User ${tutorId.id} loaded student $id")
             call.respond(student.toDto())
@@ -380,7 +295,7 @@ fun Route.studentApi() {
                 updateBy = tutorId
             )
 
-            val changesMap = buildMap<String, Pair<String?, String?>> {
+            val changesMap = buildMap {
                 if (existingStudent.name != updatedStudent.name)
                     put("name", existingStudent.name to updatedStudent.name)
                 if (existingStudent.secondName != updatedStudent.secondName)
@@ -388,11 +303,17 @@ fun Route.studentApi() {
                 if (existingStudent.lastName != updatedStudent.lastName)
                     put("lastName", existingStudent.lastName to updatedStudent.lastName)
                 if (existingStudent.schoolClass != updatedStudent.schoolClass)
-                    put("schoolClass", existingStudent.schoolClass?.value?.toString() to updatedStudent.schoolClass?.value?.toString())
+                    put(
+                        "schoolClass",
+                        existingStudent.schoolClass?.value?.toString() to updatedStudent.schoolClass?.value?.toString()
+                    )
                 if (existingStudent.phone != updatedStudent.phone)
                     put("phone", existingStudent.phone?.value to updatedStudent.phone?.value)
                 if (existingStudent.responsiblePhone != updatedStudent.responsiblePhone)
-                    put("responsiblePhone", existingStudent.responsiblePhone?.value to updatedStudent.responsiblePhone?.value)
+                    put(
+                        "responsiblePhone",
+                        existingStudent.responsiblePhone?.value to updatedStudent.responsiblePhone?.value
+                    )
                 if (existingStudent.motherFio != updatedStudent.motherFio)
                     put("motherFio", existingStudent.motherFio to updatedStudent.motherFio)
                 if (existingStudent.birthDate != updatedStudent.birthDate)
@@ -406,8 +327,6 @@ fun Route.studentApi() {
             if (changesMap.isNotEmpty()) {
                 StudentMapper.update(updatedStudent)
 
-                val htmlDiff = DiffService.generateHtmlDiff(oldObj = existingStudent, newObj = updatedStudent)
-
                 AuditLogMapper.log(
                     userId = tutorId.id,
                     action = "UPDATE_STUDENT",
@@ -420,7 +339,6 @@ fun Route.studentApi() {
                 )
 
                 KSLog.info("StudentApi.PUT: User ${tutorId.id} updated student $id")
-                sendStudentEditLog(existingStudent, updatedStudent, tutorId)
             } else {
                 KSLog.info("StudentApi.PUT: User ${tutorId.id} attempted to update student $id with no changes")
             }

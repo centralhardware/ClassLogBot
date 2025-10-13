@@ -10,12 +10,8 @@ import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
-import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
-import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 
 private const val ACTION_DELETE = "timeDelete"
 private const val ACTION_RESTORE = "timeRestore"
@@ -28,7 +24,8 @@ fun BehaviourContext.registerLessonChangeDeleteCallback() = onDataCallbackQuery(
     changeLessonDelete(
         idStr.toLessonId(),
         action == ACTION_DELETE,
-        query)
+        query
+    )
 }
 
 private suspend fun BehaviourContext.changeLessonDelete(
@@ -38,18 +35,21 @@ private suspend fun BehaviourContext.changeLessonDelete(
 ) {
     val lessons = LessonMapper.findById(id)
     val lesson = lessons.firstOrNull() ?: return
-    
+
     LessonMapper.setDeleted(id, deleted)
 
     query.messageDataCallbackQueryOrNull()?.message?.let {
-        edit(it, replyMarkup = buildLessonKeyboard(
-            id = id,
-            deleted = deleted,
-            extraHalfHour = lesson.extraHalfHour,
-            forceGroup = lesson.forceGroup,
-            isSingle = lessons.size == 1))
+        edit(
+            it, replyMarkup = buildLessonKeyboard(
+                id = id,
+                deleted = deleted,
+                extraHalfHour = lesson.extraHalfHour,
+                forceGroup = lesson.forceGroup,
+                isSingle = lessons.size == 1
+            )
+        )
     }
-    
+
     if (deleted) {
         AuditLogMapper.log(
             userId = query.user.id.chatId.long,
@@ -73,11 +73,17 @@ private suspend fun BehaviourContext.changeLessonDelete(
             lesson
         )
     }
-    
+
 
 }
 
-private fun buildLessonKeyboard(id: LessonId, deleted: Boolean, extraHalfHour: Boolean, forceGroup: Boolean, isSingle: Boolean) = inlineKeyboard {
+private fun buildLessonKeyboard(
+    id: LessonId,
+    deleted: Boolean,
+    extraHalfHour: Boolean,
+    forceGroup: Boolean,
+    isSingle: Boolean
+) = inlineKeyboard {
     row {
         if (deleted) {
             dataButton("Восстановить", "$ACTION_RESTORE-${id.id}")

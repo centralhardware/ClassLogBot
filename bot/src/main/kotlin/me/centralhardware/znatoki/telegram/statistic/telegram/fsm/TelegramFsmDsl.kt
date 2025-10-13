@@ -33,6 +33,7 @@ import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.types.toChatId
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
@@ -67,7 +68,7 @@ fun switchToInlineKeyboard(searchType: String) = inlineKeyboard {
 
 
 class TelegramEvent(val message: CommonMessage<*>) : Event
-class Initial() : Event
+class Initial : Event
 typealias FioValue = Triple<String, String, String>
 
 val fsmLog = StateMachine.Logger { lazyMessage -> KSLog.info(lazyMessage()) }
@@ -274,6 +275,7 @@ sealed class Step<CTX : Any, T>(
     ) : Step<CTX, Set<T>>(prompt, index, apply)
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <CTX : Any> BehaviourContext.telegramFsm(
     name: String,
     ctx: CTX,
@@ -306,7 +308,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
             val step = built.steps[idx]
             val next: State = if (idx == states.lastIndex) finish else states[idx + 1]
 
-            state.onEntry { params ->
+            state.onEntry { _ ->
                 when (step) {
                     is Step.TextStep -> {
                         if (step.inline) {
@@ -380,7 +382,7 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                 memo = null; true
                             } else {
                                 message.validateInt()
-                                    .flatMap { validInt ->
+                                    .flatMap { _ ->
                                         step.validator.invoke(text?.toIntOrNull())
                                     }
                                     .mapLeft { reply(it) }
@@ -477,9 +479,9 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                         is Step.MultiStep<CTX, *> -> {
                             if (memo == null) {
                                 memo = mutableSetOf<Any>()
-                                true
                             }
 
+                            @Suppress("UNCHECKED_CAST")
                             val multiStep = step as Step.MultiStep<CTX, Any>
                             val raw = text?.trim().orEmpty()
                             if (raw == COMPLETE) {
@@ -491,6 +493,8 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                                     false
                                 } else {
                                     val value = parsed.swap().leftOrNull()!!
+
+                                    @Suppress("UNCHECKED_CAST")
                                     val data = (memo as MutableSet<Any>)
                                     if (data.contains(value)) {
                                         reply("Уже добавлено")
@@ -519,7 +523,10 @@ suspend fun <CTX : Any> BehaviourContext.telegramFsm(
                         is Step.PhotoStep -> step.apply(built.ctx, memo as String)
                         is Step.ConfirmStep -> {}
                         is Step.MultiStep<*, *> -> if (memo is Set<*>) {
+                            @Suppress("UNCHECKED_CAST")
                             val setAny = memo as Set<Any>
+
+                            @Suppress("UNCHECKED_CAST")
                             val multiStep = step as Step.MultiStep<CTX, Any>
                             multiStep.apply(built.ctx, setAny)
                         }

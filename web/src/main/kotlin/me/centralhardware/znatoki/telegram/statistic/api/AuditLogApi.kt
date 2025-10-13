@@ -6,11 +6,15 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import me.centralhardware.znatoki.telegram.statistic.entity.AuditLog
+import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
 import me.centralhardware.znatoki.telegram.statistic.exception.*
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import java.time.format.DateTimeFormatter
 
 @Serializable
@@ -35,15 +39,9 @@ data class AuditLogResponse(
     val offset: Long
 )
 
-@Serializable
-data class ErrorResponse(
-    val error: String
-)
-
 fun AuditLog.toDto(): AuditLogDto {
-    val user = TutorMapper.findByIdOrNull(me.centralhardware.znatoki.telegram.statistic.entity.TutorId(userId))
+    val user = TutorMapper.findByIdOrNull(TutorId(userId))
 
-    // Format tutor name as "Name I.I."
     val userName = user?.let { tutor ->
         val parts = tutor.name.split(" ")
         if (parts.size >= 2) {
@@ -54,15 +52,14 @@ fun AuditLog.toDto(): AuditLogDto {
         }
     }
 
-    // Format student name as "Name I.I."
     val studentName = studentId?.let {
-        me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper.findById(
+        StudentMapper.findById(
             it.toStudentId()
-        )?.let { student ->
+        ).let { student ->
             val parts = listOf(student.name, student.secondName, student.lastName)
             if (parts.size >= 2) {
                 "${parts[0]} ${parts[1].firstOrNull()?.toString()?.uppercase() ?: ""}." +
-                (parts.getOrNull(2)?.firstOrNull()?.toString()?.uppercase()?.let { " $it." } ?: "")
+                        (parts.getOrNull(2)?.firstOrNull()?.toString()?.uppercase()?.let { " $it." } ?: "")
             } else {
                 student.name
             }
@@ -70,13 +67,9 @@ fun AuditLog.toDto(): AuditLogDto {
     }
 
     val subjectName = subjectId?.let {
-        try {
-            me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper.getNameById(
-                me.centralhardware.znatoki.telegram.statistic.entity.SubjectId(it.toLong())
-            )
-        } catch (e: Exception) {
-            null
-        }
+        SubjectMapper.getNameById(
+            SubjectId(it.toLong())
+        )
     }
 
     return AuditLogDto(
@@ -107,10 +100,8 @@ fun Route.auditLogApi() {
             val filterAction = call.request.queryParameters["action"]
 
             val logs = if (tutor.hasAdminPermission()) {
-                // Admin can see all logs with filters
                 AuditLogMapper.getAll(limit, offset, filterTutorId, filterSubjectId, filterAction)
             } else {
-                // Regular users can only see their own logs with subject and action filters
                 AuditLogMapper.getByUserId(tutorId.id, limit, offset, filterSubjectId, filterAction)
             }
 

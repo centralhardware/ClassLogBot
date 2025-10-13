@@ -10,7 +10,6 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
-import me.centralhardware.znatoki.telegram.statistic.entity.fio
 import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasExtraHalfHour
@@ -19,9 +18,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
-import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 
@@ -36,7 +32,8 @@ fun BehaviourContext.registerForceGroupHandlers() = onDataCallbackQuery(toggleRe
     changeForceGroupStatus(
         idStr.toLessonId(),
         action == ACTION_ADD,
-        query)
+        query
+    )
 }
 
 private suspend fun BehaviourContext.changeForceGroupStatus(

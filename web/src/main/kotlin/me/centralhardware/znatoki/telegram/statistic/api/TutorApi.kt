@@ -49,7 +49,7 @@ fun Tutor.toDetailDto(): TutorDetailDto {
     val subjectsList = subjects.map { subjectId ->
         TutorSubjectDto(
             id = subjectId.id,
-            name = SubjectMapper.getNameById(subjectId) ?: ""
+            name = SubjectMapper.getNameById(subjectId)
         )
     }
     return TutorDetailDto(
@@ -69,7 +69,7 @@ fun Route.tutorApi() {
         val subjectsList = tutor.subjects.map { subjectId ->
             TutorSubjectDto(
                 id = subjectId.id,
-                name = SubjectMapper.getNameById(subjectId) ?: ""
+                name = SubjectMapper.getNameById(subjectId)
             )
         }
         

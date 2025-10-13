@@ -1,8 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
 import de.danielbechler.diff.ObjectDifferBuilder
-import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
-import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
@@ -77,30 +75,18 @@ object DiffService {
 
             // Handle studentId field
             fieldName == "studentId" && value is Int -> {
-                try {
-                    val fio = StudentMapper.getFioById(value.toStudentId())
-                    formatFioWithInitials(fio)
-                } catch (e: Exception) {
-                    "ID: $value"
-                }
+                val fio = StudentMapper.getFioById(value.toStudentId())
+                formatFioWithInitials(fio)
             }
 
             // Handle tutorId and addedByTutorId fields
             (fieldName == "tutorId" || fieldName == "addedByTutorId") && value is Long -> {
-                try {
-                    TutorMapper.findByIdOrNull(TutorId(value))?.name ?: "ID: $value"
-                } catch (e: Exception) {
-                    "ID: $value"
-                }
+                TutorMapper.findByIdOrNull(TutorId(value))?.name ?: "ID: $value"
             }
 
             // Handle subjectId field
             fieldName == "subjectId" && value is Long -> {
-                try {
-                    SubjectMapper.getNameById(value.toSubjectId())
-                } catch (e: Exception) {
-                    "ID: $value"
-                }
+                SubjectMapper.getNameById(value.toSubjectId())
             }
 
             // Handle amount field (comes as Double)
@@ -120,7 +106,10 @@ object DiffService {
     private fun formatFioWithInitials(fio: String): String {
         val parts = fio.trim().split("\\s+".toRegex())
         return when (parts.size) {
-            3 -> "${parts[0]} ${parts[1].firstOrNull()?.uppercase() ?: ""}. ${parts[2].firstOrNull()?.uppercase() ?: ""}."
+            3 -> "${parts[0]} ${parts[1].firstOrNull()?.uppercase() ?: ""}. ${
+                parts[2].firstOrNull()?.uppercase() ?: ""
+            }."
+
             2 -> "${parts[0]} ${parts[1].firstOrNull()?.uppercase() ?: ""}."
             else -> fio
         }

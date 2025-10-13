@@ -19,15 +19,6 @@ import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
-private data class Tuple6<A, B, C, D, E, F>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D,
-    val fifth: E,
-    val sixth: F
-)
-
 @Serializable
 data class ReportDataDto(
     val tutorName: String,
@@ -137,11 +128,10 @@ fun Route.reportApi() {
             val subjectId = subjectIdParam.toSubjectId()
 
             val subjectName = SubjectMapper.getNameById(subjectId)
-                ?: throw NotFoundException("Subject not found: ${subjectId.id}")
 
             val targetMonth = try {
                 YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw BadRequestException("Invalid period format: $period")
             }
 
@@ -287,16 +277,12 @@ fun Route.reportApi() {
                 requestingTutorId
             }
 
-            val tutor = TutorMapper.findByIdOrNull(targetTutorId)
-                ?: throw NotFoundException("Tutor not found: ${targetTutorId.id}")
-
             val subjectId = subjectIdParam.toSubjectId()
             val subjectName = SubjectMapper.getNameById(subjectId)
-                ?: throw NotFoundException("Subject not found: ${subjectId.id}")
 
             val currentMonth = try {
                 YearMonth.parse(period, DateTimeFormatter.ofPattern("yyyy-MM"))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw BadRequestException("Invalid period format: $period")
             }
 
@@ -353,7 +339,6 @@ fun Route.reportApi() {
             call.respond(aggregatedStats)
         }
 
-        // Aggregated stats for all subjects
         get("/aggregated/{period}") {
             val period = call.parameters["period"]
             val tutorIdParam = call.request.queryParameters["tutorId"]?.toLongOrNull()
@@ -426,7 +411,7 @@ fun Route.reportApi() {
 
 private fun calculatePeriodStats(
     tutorId: TutorId,
-    tutor: me.centralhardware.znatoki.telegram.statistic.entity.Tutor,
+    tutor: Tutor,
     yearMonth: YearMonth,
     startDate: LocalDateTime,
     endDate: LocalDateTime
@@ -435,10 +420,10 @@ private fun calculatePeriodStats(
     var totalIndividual = 0
     var totalGroup = 0
     var totalPayments = 0
-    val allStudents = mutableSetOf<me.centralhardware.znatoki.telegram.statistic.entity.StudentId>()
+    val allStudents = mutableSetOf<StudentId>()
 
     val subjectStats = tutor.subjects.mapNotNull { subjectId ->
-        val subjectName = SubjectMapper.getNameById(subjectId) ?: return@mapNotNull null
+        val subjectName = SubjectMapper.getNameById(subjectId)
 
         val lessons = LessonMapper.getTimesByDateRange(tutorId, subjectId, startDate, endDate)
         val payments = PaymentMapper.getPaymentsByDateRange(tutorId, subjectId, startDate, endDate)

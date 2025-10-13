@@ -22,7 +22,6 @@ private val PermissionCheckPlugin = createRouteScopedPlugin(
     on(CallFailed) { call, _ -> }
 
     onCall { call ->
-        // Получаем авторизованного пользователя
         val tutorId = call.authenticatedTutorIdOrNull
             ?: run {
                 KSLog.warning("PermissionCheck: No authenticated user for ${call.request.local.uri}")
@@ -32,7 +31,6 @@ private val PermissionCheckPlugin = createRouteScopedPlugin(
 
         val tutor = TutorMapper.findByIdOrNull(tutorId)!!
 
-        // Проверяем права
         if (!permission.check(tutor.permissions)) {
             KSLog.warning("PermissionCheck: User ${tutorId.id} lacks required permission $permission for ${call.request.local.uri}")
             call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Insufficient permissions"))
@@ -40,16 +38,10 @@ private val PermissionCheckPlugin = createRouteScopedPlugin(
     }
 }
 
-/**
- * Конфигурация для PermissionCheckPlugin
- */
 class PermissionCheckConfiguration {
     lateinit var permission: Permissions
 }
 
-/**
- * Extension функция для установки требуемого уровня прав на Route с автоматической проверкой
- */
 fun Route.requires(permission: Permissions): Route {
     attributes.put(RequiredPermissionKey, permission)
 
@@ -58,29 +50,4 @@ fun Route.requires(permission: Permissions): Route {
     }
 
     return this
-}
-
-/**
- * Получает требуемый уровень прав для Route
- */
-fun Route.getRequiredPermission(): Permissions? {
-    return attributes.getOrNull(RequiredPermissionKey)
-}
-
-/**
- * Получает требуемый уровень прав, проверяя всю иерархию routes
- */
-fun Route.getInheritedPermission(): Permissions? {
-    // Проверяем текущий route
-    getRequiredPermission()?.let { return it }
-
-    // Если не найдено, проверяем родительские routes
-    var current: Route? = parent
-    while (current != null) {
-        current.getRequiredPermission()?.let { return it }
-        current = current.parent
-    }
-
-    // По умолчанию авторизация без специфичного права
-    return null
 }

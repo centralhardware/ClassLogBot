@@ -19,7 +19,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
-import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 import me.centralhardware.znatoki.telegram.statistic.exception.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -83,7 +82,7 @@ fun List<Lesson>.toLessonDto(): LessonDto {
         id = firstLesson.id.id.toString(),
         dateTime = firstLesson.dateTime.format(DateTimeFormatter.ofPattern("HH:mm")),
         tutorName = tutor?.name ?: "Unknown",
-        subjectName = subject ?: "Unknown",
+        subjectName = subject,
         studentName = students.joinToString(", ") { it.name },
         students = students,
         amount = firstLesson.amount,
@@ -92,7 +91,6 @@ fun List<Lesson>.toLessonDto(): LessonDto {
         photoReport = firstLesson.photoReport?.let { "/api/image/$it" }
     )
 }
-
 
 
 fun Route.lessonApi() {
@@ -109,22 +107,22 @@ fun Route.lessonApi() {
         }
 
         requires(Permissions.ADD_TIME).apply {
-        post {
-            val tutorId = call.authenticatedTutorId
-            val request = call.receive<CreateLessonRequest>()
+            post {
+                val tutorId = call.authenticatedTutorId
+                val request = call.receive<CreateLessonRequest>()
 
-            if (request.studentIds.isEmpty()) {
-                throw ValidationException("At least one student is required")
-            }
+                if (request.studentIds.isEmpty()) {
+                    throw ValidationException("At least one student is required")
+                }
 
-            if (request.amount <= 0) {
-                throw ValidationException("Amount must be positive")
-            }
+                if (request.amount <= 0) {
+                    throw ValidationException("Amount must be positive")
+                }
 
                 val lessonId = LessonId.random()
                 val subjectId = SubjectId(request.subjectId)
 
-                request.studentIds.map { studentIdInt ->
+                request.studentIds.forEach { studentIdInt ->
                     val studentId = studentIdInt.toStudentId()
                     val lesson = Lesson(
                         id = lessonId,
@@ -145,34 +143,6 @@ fun Route.lessonApi() {
                 }
 
                 val lessons = LessonMapper.findById(lessonId)
-                val subject = SubjectMapper.getNameById(subjectId)
-
-                runBlocking {
-                    try {
-                        val bot = telegramBot(me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN"))
-                        val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
-                        val students = lessons.joinToString(", ") { StudentMapper.findById(it.studentId).fio() }
-
-                        val text = buildString {
-                            appendLine("#создание_занятия")
-                            appendLine("Дата: ${LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))}")
-                            appendLine("Ученики: $students")
-                            appendLine("Предмет: $subject")
-                            appendLine("Сумма: ${request.amount} ₽")
-                            if (request.forceGroup) appendLine("Групповое: Да")
-                            if (request.extraHalfHour) appendLine("1.5 часа: Да")
-                            appendLine()
-                            append("Создал: $tutorName")
-                        }.trimEnd()
-
-                        bot.sendTextMessage(
-                            Config.logChat(),
-                            text
-                        )
-                    } catch (e: Exception) {
-                        KSLog.error("LessonsApi.POST: Error sending log", e)
-                    }
-                }
 
                 lessons.forEach { lesson ->
                     AuditLogMapper.log(
@@ -187,24 +157,25 @@ fun Route.lessonApi() {
                     )
                 }
 
-            KSLog.info("LessonsApi.POST: User ${tutorId.id} created lesson with ${request.studentIds.size} students")
-            call.respond(HttpStatusCode.Created, lessons.toLessonDto())
-        }
-
-        put("/{id}") {
-            val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
-            val tutorId = call.authenticatedTutorId
-            val request = call.receive<UpdateLessonRequest>()
-            val lessonId = lessonIdStr.toLessonId()
-
-            val lessons = LessonMapper.findById(lessonId)
-            if (lessons.isEmpty()) {
-                throw NotFoundException("Lesson not found")
+                KSLog.info("LessonsApi.POST: User ${tutorId.id} created lesson with ${request.studentIds.size} students")
+                call.respond(HttpStatusCode.Created, lessons.toLessonDto())
             }
+
+            put("/{id}") {
+                val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
+                val tutorId = call.authenticatedTutorId
+                val request = call.receive<UpdateLessonRequest>()
+                val lessonId = lessonIdStr.toLessonId()
+
+                val lessons = LessonMapper.findById(lessonId)
+                if (lessons.isEmpty()) {
+                    throw NotFoundException("Lesson not found")
+                }
 
                 val oldLesson = lessons.first()
 
-                val hasAmountChange = request.amount != null && request.amount > 0 && oldLesson.amount != request.amount.toDouble()
+                val hasAmountChange =
+                    request.amount != null && request.amount > 0 && oldLesson.amount != request.amount.toDouble()
                 val hasForceGroupChange = oldLesson.forceGroup != request.forceGroup
                 val hasExtraHalfHourChange = oldLesson.extraHalfHour != request.extraHalfHour
 
@@ -215,7 +186,7 @@ fun Route.lessonApi() {
                 }
 
                 if (hasAmountChange) {
-                    LessonMapper.setAmount(lessonId, request.amount!!.toAmount())
+                    LessonMapper.setAmount(lessonId, request.amount.toAmount())
                 }
 
                 if (hasForceGroupChange) {
@@ -240,57 +211,32 @@ fun Route.lessonApi() {
                     updatedLesson
                 )
 
-            KSLog.info("LessonsApi.PUT: User ${tutorId.id} updated lesson $lessonIdStr")
-            call.respond(HttpStatusCode.OK, updatedLessons.toLessonDto())
-        }
-
-        delete("/{id}/student/{studentId}") {
-            val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
-            val studentIdStr = call.parameters["studentId"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
-            val tutorId = call.authenticatedTutorId
-
-            val lessonId = lessonIdStr.toLessonId()
-            val studentId = studentIdStr.toStudentId()
-
-            val allLessons = LessonMapper.findById(lessonId)
-            if (allLessons.isEmpty()) {
-                throw NotFoundException("Lesson not found")
+                KSLog.info("LessonsApi.PUT: User ${tutorId.id} updated lesson $lessonIdStr")
+                call.respond(HttpStatusCode.OK, updatedLessons.toLessonDto())
             }
 
-            if (allLessons.size == 1) {
-                throw ValidationException("Cannot remove last student from lesson")
-            }
+            delete("/{id}/student/{studentId}") {
+                val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
+                val studentIdStr =
+                    call.parameters["studentId"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
+                val tutorId = call.authenticatedTutorId
 
-            val lessonToDelete = allLessons.find { it.studentId == studentId }
-                ?: throw NotFoundException("Student not in this lesson")
+                val lessonId = lessonIdStr.toLessonId()
+                val studentId = studentIdStr.toStudentId()
+
+                val allLessons = LessonMapper.findById(lessonId)
+                if (allLessons.isEmpty()) {
+                    throw NotFoundException("Lesson not found")
+                }
+
+                if (allLessons.size == 1) {
+                    throw ValidationException("Cannot remove last student from lesson")
+                }
+
+                val lessonToDelete = allLessons.find { it.studentId == studentId }
+                    ?: throw NotFoundException("Student not in this lesson")
 
                 LessonMapper.setDeleted(lessonId, true, studentId)
-
-                val student = StudentMapper.findById(studentId)
-                val subject = SubjectMapper.getNameById(lessonToDelete.subjectId)
-
-                runBlocking {
-                    try {
-                        val bot = telegramBot(Config.getString("BOT_TOKEN"))
-                        val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
-
-                        val text = buildString {
-                            appendLine("#удаление_ученика_из_занятия")
-                            appendLine("Дата: ${lessonToDelete.dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))}")
-                            appendLine("Ученик: ${student.fio().hashtag()}")
-                            appendLine("Предмет: $subject")
-                            appendLine()
-                            append("Удалил: $tutorName")
-                        }.trimEnd()
-
-                        bot.sendTextMessage(
-                            Config.logChat(),
-                            text
-                        )
-                    } catch (e: Exception) {
-                        KSLog.error("LessonsApi.DELETE student: Error sending log", e)
-                    }
-                }
 
                 AuditLogMapper.log(
                     userId = tutorId.id,
@@ -303,27 +249,27 @@ fun Route.lessonApi() {
                     null
                 )
 
-            KSLog.info("LessonsApi.DELETE: User ${tutorId.id} removed student $studentIdStr from lesson $lessonIdStr")
-            call.respond(HttpStatusCode.OK, mapOf("success" to true))
-        }
-
-        post("/{id}/student") {
-            val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
-            val tutorId = call.authenticatedTutorId
-            val request = call.receive<AddStudentToLessonRequest>()
-            val lessonId = lessonIdStr.toLessonId()
-
-            val existingLessons = LessonMapper.findById(lessonId)
-            if (existingLessons.isEmpty()) {
-                throw NotFoundException("Lesson not found")
+                KSLog.info("LessonsApi.DELETE: User ${tutorId.id} removed student $studentIdStr from lesson $lessonIdStr")
+                call.respond(HttpStatusCode.OK, mapOf("success" to true))
             }
 
-            val templateLesson = existingLessons.first()
-            val newStudentId = request.studentId.toStudentId()
+            post("/{id}/student") {
+                val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
+                val tutorId = call.authenticatedTutorId
+                val request = call.receive<AddStudentToLessonRequest>()
+                val lessonId = lessonIdStr.toLessonId()
 
-            if (existingLessons.any { it.studentId == newStudentId }) {
-                throw ValidationException("Student already in this lesson")
-            }
+                val existingLessons = LessonMapper.findById(lessonId)
+                if (existingLessons.isEmpty()) {
+                    throw NotFoundException("Lesson not found")
+                }
+
+                val templateLesson = existingLessons.first()
+                val newStudentId = request.studentId.toStudentId()
+
+                if (existingLessons.any { it.studentId == newStudentId }) {
+                    throw ValidationException("Student already in this lesson")
+                }
 
                 val baseAmount = if (templateLesson.extraHalfHour) {
                     (templateLesson.amount / 1.5).toInt()
@@ -348,33 +294,6 @@ fun Route.lessonApi() {
 
                 LessonMapper.insert(newLesson)
 
-                val student = StudentMapper.findById(newStudentId)
-                val subject = SubjectMapper.getNameById(templateLesson.subjectId)
-
-                runBlocking {
-                    try {
-                        val bot = telegramBot(Config.getString("BOT_TOKEN"))
-                        val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
-
-                        val text = buildString {
-                            appendLine("#добавление_ученика")
-                            appendLine("Дата: ${templateLesson.dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))}")
-                            appendLine("Добавлен ученик: ${student.fio().hashtag()}")
-                            appendLine("Предмет: $subject")
-                            appendLine("Сумма: ${newLesson.amount} ₽")
-                            appendLine()
-                            append("Добавил: $tutorName")
-                        }.trimEnd()
-
-                        bot.sendTextMessage(
-                            Config.logChat(),
-                            text
-                        )
-                    } catch (e: Exception) {
-                        KSLog.error("LessonsApi.POST: Error sending log", e)
-                    }
-                }
-
                 AuditLogMapper.log(
                     userId = tutorId.id,
                     action = "ADD_STUDENT_TO_LESSON",
@@ -386,64 +305,39 @@ fun Route.lessonApi() {
                     newLesson
                 )
 
-            KSLog.info("LessonsApi.POST: User ${tutorId.id} added student ${request.studentId} to lesson $lessonIdStr")
-            call.respond(HttpStatusCode.OK, mapOf("success" to true))
-        }
-
-        delete("/{id}") {
-            val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
-            val tutorId = call.authenticatedTutorId
-            val lessonId = lessonIdStr.toLessonId()
-
-            val lessons = LessonMapper.findById(lessonId)
-            if (lessons.isEmpty()) {
-                throw NotFoundException("Lesson not found")
+                KSLog.info("LessonsApi.POST: User ${tutorId.id} added student ${request.studentId} to lesson $lessonIdStr")
+                call.respond(HttpStatusCode.OK, mapOf("success" to true))
             }
+
+            delete("/{id}") {
+                val lessonIdStr = call.parameters["id"] ?: throw BadRequestException("Invalid lesson ID")
+                val tutorId = call.authenticatedTutorId
+                val lessonId = lessonIdStr.toLessonId()
+
+                val lessons = LessonMapper.findById(lessonId)
+                if (lessons.isEmpty()) {
+                    throw NotFoundException("Lesson not found")
+                }
 
                 LessonMapper.setDeleted(lessonId, true)
 
-                val lesson = lessons.first()
-                val student = StudentMapper.findById(lesson.studentId)
-                val subject = SubjectMapper.getNameById(lesson.subjectId)
-
-                runBlocking {
-                    try {
-                        val bot = telegramBot(Config.getString("BOT_TOKEN"))
-                        val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag() ?: "Unknown"
-
-                        val text = buildString {
-                            appendLine("#удаление_занятия")
-                            appendLine("Дата: ${lesson.dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))}")
-                            appendLine("Ученик: ${student.fio().hashtag()}")
-                            appendLine("Предмет: $subject")
-                            appendLine("Сумма: ${lesson.amount} ₽")
-                            appendLine()
-                            append("Удалил: $tutorName")
-                        }.trimEnd()
-
-                        bot.sendTextMessage(
-                            Config.logChat(),
-                            text
-                        )
-                    } catch (e: Exception) {
-                        KSLog.error("LessonsApi.DELETE: Error sending log", e)
-                    }
+                lessons.forEach { lesson ->
+                    AuditLogMapper.log(
+                        userId = tutorId.id,
+                        action = "DELETE_LESSON",
+                        entityType = "lesson",
+                        entityId = lesson.id.toString(),
+                        studentId = lesson.studentId.id,
+                        subjectId = lesson.subjectId.id.toInt(),
+                        lesson,
+                        null
+                    )
                 }
 
-                AuditLogMapper.log(
-                    userId = tutorId.id,
-                    action = "DELETE_LESSON",
-                    entityType = "lesson",
-                    entityId = lessonId.id.toString(),
-                    studentId = lesson.studentId.id,
-                    subjectId = lesson.subjectId.id.toInt(),
-                    lesson,
-                    null
-                )
 
-            KSLog.info("LessonsApi.DELETE: User ${tutorId.id} deleted lesson $lessonIdStr")
-            call.respond(HttpStatusCode.OK, mapOf("success" to true))
-        }
+                KSLog.info("LessonsApi.DELETE: User ${tutorId.id} deleted lesson $lessonIdStr")
+                call.respond(HttpStatusCode.OK, mapOf("success" to true))
+            }
         }
     }
 }

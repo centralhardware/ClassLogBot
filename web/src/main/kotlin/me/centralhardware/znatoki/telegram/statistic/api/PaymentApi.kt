@@ -13,7 +13,6 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
-import me.centralhardware.znatoki.telegram.statistic.service.DiffService
 import me.centralhardware.znatoki.telegram.statistic.exception.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -51,13 +50,12 @@ fun Payment.toPaymentDto(): PaymentDto {
         id = id!!.id,
         dateTime = dateTime.format(DateTimeFormatter.ofPattern("HH:mm")),
         tutorName = tutor?.name ?: "Unknown",
-        subjectName = subject ?: "Unknown",
+        subjectName = subject,
         studentName = student.fio(),
         amount = amount.amount,
         photoReport = photoReport?.let { "/api/image/$it" }
     )
 }
-
 
 
 fun Route.paymentApi() {
@@ -98,9 +96,6 @@ fun Route.paymentApi() {
 
             val paymentId = PaymentMapper.insert(payment)
             val createdPayment = PaymentMapper.findById(paymentId)!!
-
-            val student = StudentMapper.findById(studentId)
-            val subject = SubjectMapper.getNameById(subjectId)
 
             AuditLogMapper.log(
                 userId = tutorId.id,

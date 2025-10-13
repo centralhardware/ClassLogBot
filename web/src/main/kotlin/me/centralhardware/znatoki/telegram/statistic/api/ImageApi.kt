@@ -8,14 +8,12 @@ import io.ktor.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.serialization.Serializable
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.exception.*
 import java.io.File
 import java.time.LocalDateTime
-import java.util.*
 
 @Serializable
 data class UploadImageResponse(
@@ -28,12 +26,10 @@ fun Route.imageApi() {
             val tutorId = call.authenticatedTutorId
             val multipart = call.receiveMultipart()
             var fileBytes: ByteArray? = null
-            var fileName: String? = null
 
             multipart.forEachPart { part ->
                 when (part) {
                     is PartData.FileItem -> {
-                        fileName = part.originalFileName ?: "upload.jpg"
                         fileBytes = part.streamProvider().readBytes()
                     }
 
