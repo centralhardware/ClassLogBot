@@ -1,6 +1,9 @@
 plugins {
     kotlin("jvm") version "2.2.20" apply false
     kotlin("plugin.serialization") version "2.2.20" apply false
+    kotlin("multiplatform") version "2.2.20" apply false
+    id("org.jetbrains.compose") version "1.8.0" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20" apply false
     id("com.google.cloud.tools.jib") version "3.4.5" apply false
 }
 
@@ -10,6 +13,7 @@ version = "1.0-SNAPSHOT"
 allprojects {
     repositories {
         mavenCentral()
+        google()
         maven("https://jitpack.io")
     }
 }
@@ -20,9 +24,13 @@ extra["poiVersion"] = "5.4.1"
 extra["kstatemachineVersion"] = "0.34.2"
 extra["luceneVersion"] = "10.3.1"
 extra["ktorVersion"] = "3.3.1"
+extra["composeVersion"] = "1.8.0"
 
 subprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
+    // Don't apply JVM plugin to web module as it uses multiplatform
+    if (name != "web") {
+        apply(plugin = "org.jetbrains.kotlin.jvm")
+    }
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()

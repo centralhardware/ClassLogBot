@@ -270,6 +270,18 @@ object PaymentMapper {
             )
         )
 
+    fun setSubjectId(id: PaymentId, subjectId: SubjectId) =
+        update(
+            queryOf(
+                """
+                UPDATE payment
+                SET subject_id = :subject_id
+                WHERE id = :id
+                """,
+                mapOf("id" to id.id, "subject_id" to subjectId.id),
+            )
+        )
+
     fun findAllByStudent(studentId: StudentId): List<Payment> =
         runList(
             queryOf(

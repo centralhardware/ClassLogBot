@@ -126,7 +126,7 @@ fun Student.fio(): String {
     }
 }
 
-fun Row.parseClient(): Student =
+fun Row.parseStudent(): Student =
     Student(
         int("id").toStudentId(),
         string("name"),

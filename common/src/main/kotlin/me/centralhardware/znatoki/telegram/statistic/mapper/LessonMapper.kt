@@ -303,4 +303,21 @@ object LessonMapper {
             )
         )
 
+    fun setSubjectId(id: LessonId, subjectId: SubjectId) =
+        update(
+            queryOf(
+                """
+                UPDATE lessons
+                SET subject_id = :subject_id,
+                    update_time = :update_time
+                WHERE id = :id
+                """,
+                mapOf(
+                    "id" to id.id,
+                    "subject_id" to subjectId.id,
+                    "update_time" to LocalDateTime.now(),
+                ),
+            )
+        )
+
 }

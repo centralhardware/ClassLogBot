@@ -1,0 +1,355 @@
+package me.centralhardware.znatoki.telegram.statistic.api
+
+import dev.inmo.kslog.common.KSLog
+import dev.inmo.kslog.common.error
+import dev.inmo.kslog.common.info
+import dev.inmo.kslog.common.warning
+import dev.inmo.tgbotapi.bot.ktor.telegramBot
+import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
+import dev.inmo.tgbotapi.utils.TelegramAPIUrlsKeeper
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import me.centralhardware.znatoki.telegram.statistic.dto.*
+import me.centralhardware.znatoki.telegram.statistic.entity.*
+import me.centralhardware.znatoki.telegram.statistic.extensions.hashtag
+import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
+import me.centralhardware.znatoki.telegram.statistic.service.StudentService
+import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+import me.centralhardware.znatoki.telegram.statistic.service.DiffService
+import me.centralhardware.znatoki.telegram.statistic.exception.*
+import java.time.LocalDate
+import kotlinx.coroutines.runBlocking
+
+fun Student.toDto() = StudentDto(
+    id = id.id,
+    name = name,
+    secondName = secondName,
+    lastName = lastName,
+    schoolClass = schoolClass?.value,
+    recordDate = recordDate?.toString(),
+    birthDate = birthDate?.toString(),
+    source = source?.title,
+    phone = phone?.value,
+    responsiblePhone = responsiblePhone?.value,
+    motherFio = motherFio
+)
+
+fun validateTelegramWebAppData(initData: String, botToken: String): Map<String, String>? {
+    try {
+        val params = initData.split("&")
+            .associate {
+                val parts = it.split("=", limit = 2)
+                parts[0] to (parts.getOrNull(1) ?: "")
+            }
+
+        val hash = params["hash"] ?: return null
+
+        val telegramUrlsKeeper = TelegramAPIUrlsKeeper(botToken)
+
+        if (!telegramUrlsKeeper.checkWebAppData(initData, hash)) {
+            return null
+        }
+
+        return params
+    } catch (e: Exception) {
+        KSLog.error("validateTelegramWebAppData: Exception during validation", e)
+        return null
+    }
+}
+
+fun extractAndValidateTelegramUser(
+    authHeader: String?,
+    studentId: Int,
+    operation: String
+): TutorId? {
+    if (authHeader == null) {
+        return null
+    }
+
+    val initData = authHeader.removePrefix("tma ")
+    val botToken = me.centralhardware.znatoki.telegram.statistic.Config.getString("BOT_TOKEN")
+    val validatedData = validateTelegramWebAppData(initData, botToken)
+
+    if (validatedData == null) {
+        KSLog.warning("StudentApi.$operation: Invalid Telegram authorization attempt for student $studentId")
+        return null
+    }
+
+    val userJson = validatedData["user"]
+    if (userJson == null) {
+        KSLog.warning("StudentApi.$operation: User data not found in Telegram initData for student $studentId")
+        return null
+    }
+
+    val userId = try {
+        val decodedUserJson = java.net.URLDecoder.decode(userJson, "UTF-8")
+        Json.parseToJsonElement(decodedUserJson)
+            .jsonObject["id"]
+            ?.jsonPrimitive?.content?.toLong()
+    } catch (e: Exception) {
+        KSLog.error("StudentApi.$operation: Error parsing user ID", e)
+        null
+    }
+
+    if (userId == null) {
+        KSLog.warning("StudentApi.$operation: Invalid user data in Telegram initData for student $studentId")
+        return null
+    }
+
+    return TutorId(userId)
+}
+
+
+fun Route.studentApi() {
+    route("/api/students") {
+
+        get("/{id}/details") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
+            val period = call.request.queryParameters["period"] ?: throw BadRequestException("Period is required")
+            val subjectId = call.request.queryParameters["subjectId"]?.toIntOrNull()
+
+            KSLog.info("StudentApi.GET /details: Received request for student $id with period: $period, subjectId: $subjectId")
+
+            val tutorId = call.authenticatedTutorId
+            val studentId = id.toStudentId()
+
+            val (year, month) = period.split("-").map { it.toInt() }
+            val periodStart = java.time.LocalDateTime.of(year, month, 1, 0, 0, 0)
+            val periodEnd = periodStart.plusMonths(1)
+
+            val lessons =
+                me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper.findAllByStudent(studentId)
+                    .filter { it.dateTime >= periodStart && it.dateTime < periodEnd }
+                    .filter { subjectId == null || it.subjectId.id == subjectId.toLong() }
+                    .groupBy { it.id }
+                    .map { (lessonId, lessons) ->
+                        val firstLesson = lessons.first()
+                        StudentLessonDto(
+                            id = lessonId.id.toString(),
+                            dateTime = firstLesson.dateTime.format(
+                                java.time.format.DateTimeFormatter.ofPattern(
+                                    "dd.MM.yyyy HH:mm"
+                                )
+                            ),
+                            subjectName = me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper.getNameById(
+                                firstLesson.subjectId
+                            ),
+                            amount = firstLesson.amount,
+                            forceGroup = firstLesson.forceGroup,
+                            extraHalfHour = firstLesson.extraHalfHour
+                        )
+                    }
+                    .sortedByDescending { it.dateTime }
+
+            val payments =
+                me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper.findAllByStudent(studentId)
+                    .filter { it.dateTime >= periodStart && it.dateTime < periodEnd }
+                    .filter { subjectId == null || it.subjectId.id == subjectId.toLong() }
+                    .map { payment ->
+                        StudentPaymentDto(
+                            id = payment.id?.id ?: 0,
+                            dateTime = payment.dateTime.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+                            amount = payment.amount.amount
+                        )
+                    }
+                    .sortedByDescending { it.dateTime }
+
+            KSLog.info("StudentApi.GET /details: User ${tutorId.id} loaded details for student $id for period $period")
+            call.respond(StudentDetailsDto(lessons = lessons, payments = payments))
+        }
+
+        get("/search") {
+            val query = call.request.queryParameters["q"]
+            val tutorId = call.authenticatedTutorId
+
+            val students = if (query.isNullOrEmpty()) {
+                StudentService.getAllActive()
+            } else {
+                StudentService.search(query.lowercase())
+            }
+
+            val result = if (query.isNullOrEmpty()) {
+                students
+                    .map { it.toDto() }
+                    .sortedWith(
+                        compareBy(
+                            { it.schoolClass ?: Int.MAX_VALUE },
+                            { it.secondName },
+                            { it.name },
+                            { it.lastName }
+                        ))
+            } else {
+                students.map { it.toDto() }
+            }
+
+            KSLog.info("StudentApi.GET /search: User ${tutorId.id} searched for '${query ?: "all"}', found ${result.size} students")
+            call.respond(result)
+        }
+
+        post {
+            requires(Permissions.ADD_CLIENT)
+            val tutorId = call.authenticatedTutorId
+            val request = call.receive<UpdateStudentRequest>()
+
+            if (request.name.isBlank() || request.secondName.isBlank() || request.lastName.isBlank()) {
+                throw ValidationException("Name, secondName and lastName are required")
+            }
+
+            if (request.schoolClass != null && !SchoolClass.validate(request.schoolClass)) {
+                throw ValidationException("Invalid school class")
+            }
+
+            if (request.phone != null && !PhoneNumber.validate(request.phone)) {
+                throw ValidationException("Invalid phone number")
+            }
+
+            if (request.responsiblePhone != null && !PhoneNumber.validate(request.responsiblePhone)) {
+                throw ValidationException("Invalid responsible phone number")
+            }
+
+            val newStudent = Student(
+                id = StudentId.None,
+                name = request.name,
+                secondName = request.secondName,
+                lastName = request.lastName,
+                schoolClass = request.schoolClass?.let { SchoolClass(it) },
+                recordDate = request.recordDate?.let { LocalDate.parse(it) },
+                birthDate = request.birthDate?.let { LocalDate.parse(it) },
+                source = request.source?.let { SourceOption.fromTitle(it) },
+                phone = request.phone?.let { PhoneNumber(it) },
+                responsiblePhone = request.responsiblePhone?.let { PhoneNumber(it) },
+                motherFio = request.motherFio,
+                createDate = java.time.LocalDateTime.now(),
+                modifyDate = java.time.LocalDateTime.now(),
+                createdBy = tutorId,
+                updateBy = tutorId
+            )
+
+            val studentId = StudentMapper.save(newStudent)
+            val createdStudent = StudentMapper.findById(studentId)
+
+            AuditLogMapper.log(
+                userId = tutorId.id,
+                action = "CREATE_STUDENT",
+                entityType = "student",
+                entityId = studentId.id.toString(),
+                studentId = studentId.id.toInt(),
+                subjectId = null,
+                null,
+                createdStudent
+            )
+
+            KSLog.info("StudentApi.POST: User ${tutorId.id} created student ${studentId.id}")
+            call.respond(HttpStatusCode.Created, createdStudent.toDto())
+        }
+
+        get("/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
+            val tutorId = call.authenticatedTutorId
+
+            val student = StudentMapper.findById(id.toStudentId())
+            KSLog.info("StudentApi.GET: User ${tutorId.id} loaded student $id")
+            call.respond(student.toDto())
+        }
+
+        put("/{id}") {
+            requires(Permissions.ADD_CLIENT)
+            val id = call.parameters["id"]?.toIntOrNull() ?: throw BadRequestException("Invalid student ID")
+            val tutorId = call.authenticatedTutorId
+            val request = call.receive<UpdateStudentRequest>()
+
+            if (request.name.isBlank() || request.secondName.isBlank() || request.lastName.isBlank()) {
+                throw ValidationException("Name, secondName and lastName are required")
+            }
+
+            if (request.schoolClass != null && !SchoolClass.validate(request.schoolClass)) {
+                throw ValidationException("Invalid school class")
+            }
+
+            if (request.phone != null && !PhoneNumber.validate(request.phone)) {
+                throw ValidationException("Invalid phone number")
+            }
+
+            if (request.responsiblePhone != null && !PhoneNumber.validate(request.responsiblePhone)) {
+                throw ValidationException("Invalid responsible phone number")
+            }
+
+            val existingStudent = StudentMapper.findById(id.toStudentId())
+
+            val updatedStudent = Student(
+                id = existingStudent.id,
+                name = request.name,
+                secondName = request.secondName,
+                lastName = request.lastName,
+                schoolClass = request.schoolClass?.let { SchoolClass(it) },
+                recordDate = request.recordDate?.let { LocalDate.parse(it) },
+                birthDate = request.birthDate?.let { LocalDate.parse(it) },
+                source = request.source?.let { SourceOption.fromTitle(it) },
+                phone = request.phone?.let { PhoneNumber(it) },
+                responsiblePhone = request.responsiblePhone?.let { PhoneNumber(it) },
+                motherFio = request.motherFio,
+                createDate = existingStudent.createDate,
+                modifyDate = java.time.LocalDateTime.now(),
+                createdBy = existingStudent.createdBy,
+                updateBy = tutorId
+            )
+
+            val changesMap = buildMap {
+                if (existingStudent.name != updatedStudent.name)
+                    put("name", existingStudent.name to updatedStudent.name)
+                if (existingStudent.secondName != updatedStudent.secondName)
+                    put("secondName", existingStudent.secondName to updatedStudent.secondName)
+                if (existingStudent.lastName != updatedStudent.lastName)
+                    put("lastName", existingStudent.lastName to updatedStudent.lastName)
+                if (existingStudent.schoolClass != updatedStudent.schoolClass)
+                    put(
+                        "schoolClass",
+                        existingStudent.schoolClass?.value?.toString() to updatedStudent.schoolClass?.value?.toString()
+                    )
+                if (existingStudent.phone != updatedStudent.phone)
+                    put("phone", existingStudent.phone?.value to updatedStudent.phone?.value)
+                if (existingStudent.responsiblePhone != updatedStudent.responsiblePhone)
+                    put(
+                        "responsiblePhone",
+                        existingStudent.responsiblePhone?.value to updatedStudent.responsiblePhone?.value
+                    )
+                if (existingStudent.motherFio != updatedStudent.motherFio)
+                    put("motherFio", existingStudent.motherFio to updatedStudent.motherFio)
+                if (existingStudent.birthDate != updatedStudent.birthDate)
+                    put("birthDate", existingStudent.birthDate?.toString() to updatedStudent.birthDate?.toString())
+                if (existingStudent.source != updatedStudent.source)
+                    put("source", existingStudent.source?.title to updatedStudent.source?.title)
+                if (existingStudent.recordDate != updatedStudent.recordDate)
+                    put("recordDate", existingStudent.recordDate?.toString() to updatedStudent.recordDate?.toString())
+            }
+
+            if (changesMap.isNotEmpty()) {
+                StudentMapper.update(updatedStudent)
+
+                AuditLogMapper.log(
+                    userId = tutorId.id,
+                    action = "UPDATE_STUDENT",
+                    entityType = "student",
+                    entityId = id.toString(),
+                    studentId = id,
+                    subjectId = null,
+                    existingStudent,
+                    updatedStudent
+                )
+
+                KSLog.info("StudentApi.PUT: User ${tutorId.id} updated student $id")
+            } else {
+                KSLog.info("StudentApi.PUT: User ${tutorId.id} attempted to update student $id with no changes")
+            }
+
+            call.respond(HttpStatusCode.OK, updatedStudent.toDto())
+        }
+    }
+}

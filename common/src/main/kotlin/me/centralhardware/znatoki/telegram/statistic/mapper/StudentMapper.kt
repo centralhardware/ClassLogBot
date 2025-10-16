@@ -3,7 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.mapper
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
-import me.centralhardware.znatoki.telegram.statistic.entity.parseClient
+import me.centralhardware.znatoki.telegram.statistic.entity.parseStudent
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
@@ -136,7 +136,7 @@ object StudentMapper {
                 """,
                 mapOf("id" to id.id),
             )
-        ) { it.parseClient() } ?: throw IllegalArgumentException("No client with id $id found")
+        ) { it.parseStudent() } ?: throw IllegalArgumentException("No client with id $id found")
 
     fun findAll(): List<Student> =
         runList(
@@ -147,7 +147,7 @@ object StudentMapper {
                 WHERE deleted = false
                 """
             )
-        ) { it.parseClient() }
+        ) { it.parseStudent() }
 
     fun findAllByFio(name: String, secondName: String, lastName: String): List<Student> =
         runList(
@@ -159,7 +159,7 @@ object StudentMapper {
                 """,
                 mapOf("name" to name, "secondName" to secondName, "lastName" to lastName),
             )
-        ) { it.parseClient() }
+        ) { it.parseStudent() }
 
     fun getFioById(id: StudentId): String =
         runSingle(
