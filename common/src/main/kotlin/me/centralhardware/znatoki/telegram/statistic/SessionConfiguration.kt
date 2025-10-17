@@ -47,6 +47,7 @@ fun runMigrations(): MigrateResult {
             .baselineOnMigrate(true)  // Automatically baseline for existing databases
             .baselineVersion("000")
             .baselineDescription("Initial schema from existing database")
+            .javaBased()  // Disable classpath scanning for callbacks (fat JAR compatibility)
             .load()
 
         KSLog.info("Starting database migrations...")
