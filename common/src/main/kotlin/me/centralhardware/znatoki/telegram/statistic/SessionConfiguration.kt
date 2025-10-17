@@ -40,17 +40,14 @@ val dataSource: DataSource by lazy {
 
 fun runMigrations(): MigrateResult {
     return try {
-        val config = Flyway.configure()
+        val flyway = Flyway.configure()
             .dataSource(dataSource)
             .locations("classpath:migrations")
             .cleanDisabled(true)
             .baselineOnMigrate(true)  // Automatically baseline for existing databases
             .baselineVersion("000")
             .baselineDescription("Initial schema from existing database")
-        
-        config.classLoader(Thread.currentThread().contextClassLoader)
-        
-        val flyway = config.load()
+            .load()
 
         KSLog.info("Starting database migrations...")
         val result = flyway.migrate()
