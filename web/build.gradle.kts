@@ -109,7 +109,7 @@ tasks.named<Jar>("jvmJar") {
         attributes["Main-Class"] = "me.centralhardware.znatoki.telegram.statistic.web.WebMainKt"
     }
     val jvmMainCompilation = kotlin.targets.getByName("jvm").compilations.getByName("main")
-    from(jvmMainCompilation.runtimeDependencyFiles.map { if (it.isDirectory) it else zipTree(it) })
+    from(jvmMainCompilation.runtimeDependencyFiles?.map { if (it.isDirectory) it else zipTree(it) })
 }
 
 // Ensure all JavaExec tasks (including IDE run configurations) depend on copyJsToResources
