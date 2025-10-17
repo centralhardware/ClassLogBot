@@ -108,6 +108,7 @@ tasks.named<Jar>("jvmJar") {
     manifest {
         attributes["Main-Class"] = "me.centralhardware.znatoki.telegram.statistic.web.WebMainKt"
     }
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     val jvmMainCompilation = kotlin.targets.getByName("jvm").compilations.getByName("main")
     from(jvmMainCompilation.runtimeDependencyFiles?.map { if (it.isDirectory) it else zipTree(it) })
 }
