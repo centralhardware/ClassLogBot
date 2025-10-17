@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.compose") version "1.8.0" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20" apply false
     id("com.google.cloud.tools.jib") version "3.4.5" apply false
+    id("com.gradleup.shadow") version "8.3.5" apply false
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"

@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.serialization")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.gradleup.shadow")
 }
 
 val ktorVersion: String by rootProject.extra
@@ -102,17 +103,32 @@ tasks.named("jvmProcessResources") {
     finalizedBy("copyJsToResources")
 }
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 tasks.named<Jar>("jvmJar") {
+    dependsOn("copyJsToResources")
+    enabled = false // Disable default JAR, use shadow JAR instead
+}
+
+tasks.register<ShadowJar>("shadowJar") {
+    group = "shadow"
     dependsOn("copyJsToResources", ":common:jar")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveClassifier.set("")
+    archiveBaseName.set("web-jvm")
+    
     manifest {
         attributes["Main-Class"] = "me.centralhardware.znatoki.telegram.statistic.web.WebMainKt"
     }
+    
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+    mergeServiceFiles() // Properly merge META-INF/services files for SPI
+    
     val jvmMainCompilation = kotlin.targets.getByName("jvm").compilations.getByName("main")
-    from(jvmMainCompilation.runtimeDependencyFiles?.map { if (it.isDirectory) it else zipTree(it) })
     from(jvmMainCompilation.output.classesDirs)
     from(jvmMainCompilation.output.resourcesDir)
+    configurations = listOf(jvmMainCompilation.runtimeDependencyConfigurationName?.let { project.configurations.getByName(it) })
+        .filterNotNull()
+        .toMutableList()
 }
 
 // Ensure all JavaExec tasks (including IDE run configurations) depend on copyJsToResources
@@ -124,7 +140,7 @@ tasks.withType<JavaExec> {
 tasks.register<Exec>("dockerBuild") {
     group = "docker"
     description = "Build Docker image for web module"
-    dependsOn("jvmJar", "copyJsToResources")
+    dependsOn("shadowJar", "copyJsToResources")
 
     val repoLower = System.getenv("GITHUB_REPOSITORY")?.lowercase() ?: "local/classlogbot"
     val tag = System.getenv("GITHUB_SHA")?.take(7) ?: "dev"
