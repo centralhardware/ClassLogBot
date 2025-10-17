@@ -103,7 +103,7 @@ tasks.named("jvmProcessResources") {
 }
 
 tasks.named<Jar>("jvmJar") {
-    dependsOn("copyJsToResources")
+    dependsOn("copyJsToResources", ":common:jar")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes["Main-Class"] = "me.centralhardware.znatoki.telegram.statistic.web.WebMainKt"
@@ -111,6 +111,8 @@ tasks.named<Jar>("jvmJar") {
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     val jvmMainCompilation = kotlin.targets.getByName("jvm").compilations.getByName("main")
     from(jvmMainCompilation.runtimeDependencyFiles?.map { if (it.isDirectory) it else zipTree(it) })
+    from(jvmMainCompilation.output.classesDirs)
+    from(jvmMainCompilation.output.resourcesDir)
 }
 
 // Ensure all JavaExec tasks (including IDE run configurations) depend on copyJsToResources
