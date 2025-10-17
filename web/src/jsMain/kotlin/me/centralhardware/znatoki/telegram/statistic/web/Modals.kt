@@ -5,6 +5,7 @@ import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
 import org.jetbrains.compose.web.attributes.*
 import me.centralhardware.znatoki.telegram.statistic.dto.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun LessonModal(
@@ -16,23 +17,19 @@ fun LessonModal(
     onUpdate: (UpdateLessonRequest) -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
-    var date by remember { mutableStateOf(lesson?.dateTime ?: "") }
     var selectedSubjectId by remember { mutableStateOf(lesson?.subject?.id?.toString() ?: "") }
     var amount by remember { mutableStateOf(lesson?.amount?.toString() ?: "") }
     var isGroup by remember { mutableStateOf(lesson?.isGroup ?: false) }
     var isExtra by remember { mutableStateOf(lesson?.isExtra ?: false) }
+    var selectedFile by remember { mutableStateOf<org.w3c.files.File?>(null) }
+    var previewUrl by remember { mutableStateOf<String?>(lesson?.photoReport) }
+    var isUploading by remember { mutableStateOf(false) }
+    
+    val scope = rememberCoroutineScope()
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text(if (lesson != null) "Редактировать занятие" else "Новое занятие")
-        }
-
-        FormGroup("Дата") {
-            TextInput(
-                value = date,
-                onValueChange = { date = it },
-                type = "datetime-local"
-            )
         }
 
         FormGroup("Предмет") {
@@ -78,6 +75,36 @@ fun LessonModal(
             }
         }
 
+        FormGroup("Фото отчета") {
+            FileInput(
+                selectedFile = selectedFile,
+                previewUrl = previewUrl,
+                onFileSelected = { file ->
+                    selectedFile = file
+                    // Create preview URL
+                    val reader = org.w3c.files.FileReader()
+                    reader.onload = { event ->
+                        previewUrl = event.target.asDynamic().result as String
+                    }
+                    reader.readAsDataURL(file)
+                },
+                required = true
+            )
+        }
+
+        if (isUploading) {
+            Div({
+                style {
+                    textAlign("center")
+                    padding(12.px)
+                    color(Color("#4299e1"))
+                    fontSize(14.px)
+                }
+            }) {
+                Text("Загрузка фото...")
+            }
+        }
+
         Div({
             style {
                 display(DisplayStyle.Flex)
@@ -88,25 +115,51 @@ fun LessonModal(
             PrimaryButton("Сохранить") {
                 val subjectId = selectedSubjectId.toLongOrNull()
                 val amountInt = amount.toIntOrNull()
+                
+                // Validate required fields
+                if (lesson == null && selectedFile == null) {
+                    console.log("Фото отчета обязательно для новых занятий")
+                    return@PrimaryButton
+                }
+                
                 if (subjectId != null && amountInt != null) {
-                    if (lesson != null) {
-                        // Update existing lesson
-                        val studentId = lesson.students.firstOrNull()?.id
-                        if (studentId != null) {
-                            onUpdate(
-                                UpdateLessonRequest(
-                                    studentId = studentId,
-                                    subjectId = subjectId,
-                                    amount = amountInt,
-                                    forceGroup = isGroup,
-                                    extraHalfHour = isExtra
-                                )
-                            )
+                    scope.launch {
+                        try {
+                            isUploading = true
+                            
+                            // Upload photo if a new file was selected
+                            var photoUrl: String? = null
+                            if (selectedFile != null) {
+                                photoUrl = ApiClient.uploadImage(selectedFile!!)
+                            } else if (lesson != null) {
+                                photoUrl = lesson.photoReport
+                            }
+                            
+                            if (lesson != null) {
+                                // Update existing lesson
+                                val studentId = lesson.students.firstOrNull()?.id
+                                if (studentId != null) {
+                                    onUpdate(
+                                        UpdateLessonRequest(
+                                            studentId = studentId,
+                                            subjectId = subjectId,
+                                            amount = amountInt,
+                                            forceGroup = isGroup,
+                                            extraHalfHour = isExtra
+                                        )
+                                    )
+                                }
+                            } else {
+                                // Create new lesson - student selection needs to be added
+                                // For now, this is incomplete and needs student selection UI
+                                console.log("Creating new lesson - student selection not implemented yet")
+                                console.log("Photo URL: $photoUrl")
+                            }
+                        } catch (e: Exception) {
+                            console.log("Error uploading photo: ${e.message}")
+                        } finally {
+                            isUploading = false
                         }
-                    } else {
-                        // Create new lesson - student selection needs to be added
-                        // For now, this is incomplete and needs student selection UI
-                        console.log("Creating new lesson - student selection not implemented yet")
                     }
                 }
             }
@@ -132,21 +185,17 @@ fun PaymentModal(
     onUpdate: (UpdatePaymentRequest) -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
-    var date by remember { mutableStateOf(payment?.dateTime ?: "") }
     var amount by remember { mutableStateOf(payment?.amount?.toString() ?: "") }
     var selectedSubjectId by remember { mutableStateOf(payment?.subject?.id?.toString() ?: "") }
+    var selectedFile by remember { mutableStateOf<org.w3c.files.File?>(null) }
+    var previewUrl by remember { mutableStateOf<String?>(payment?.photoReport) }
+    var isUploading by remember { mutableStateOf(false) }
+    
+    val scope = rememberCoroutineScope()
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text(if (payment != null) "Редактировать оплату" else "Новая оплата")
-        }
-
-        FormGroup("Дата") {
-            TextInput(
-                value = date,
-                onValueChange = { date = it },
-                type = "datetime-local"
-            )
         }
 
         FormGroup("Предмет") {
@@ -166,6 +215,36 @@ fun PaymentModal(
             )
         }
 
+        FormGroup("Фото отчета") {
+            FileInput(
+                selectedFile = selectedFile,
+                previewUrl = previewUrl,
+                onFileSelected = { file ->
+                    selectedFile = file
+                    // Create preview URL
+                    val reader = org.w3c.files.FileReader()
+                    reader.onload = { event ->
+                        previewUrl = event.target.asDynamic().result as String
+                    }
+                    reader.readAsDataURL(file)
+                },
+                required = true
+            )
+        }
+
+        if (isUploading) {
+            Div({
+                style {
+                    textAlign("center")
+                    padding(12.px)
+                    color(Color("#4299e1"))
+                    fontSize(14.px)
+                }
+            }) {
+                Text("Загрузка фото...")
+            }
+        }
+
         Div({
             style {
                 display(DisplayStyle.Flex)
@@ -176,18 +255,44 @@ fun PaymentModal(
             PrimaryButton("Сохранить") {
                 val subjectId = selectedSubjectId.toLongOrNull()
                 val amountInt = amount.toIntOrNull()
+                
+                // Validate required fields
+                if (payment == null && selectedFile == null) {
+                    console.log("Фото отчета обязательно для новых оплат")
+                    return@PrimaryButton
+                }
+                
                 if (subjectId != null && amountInt != null) {
-                    if (payment != null) {
-                        // Update existing payment
-                        onUpdate(
-                            UpdatePaymentRequest(
-                                amount = amountInt,
-                                subjectId = subjectId
-                            )
-                        )
-                    } else {
-                        // Create new payment - student selection needs to be added
-                        console.log("Creating new payment - student selection not implemented yet")
+                    scope.launch {
+                        try {
+                            isUploading = true
+                            
+                            // Upload photo if a new file was selected
+                            var photoUrl: String? = null
+                            if (selectedFile != null) {
+                                photoUrl = ApiClient.uploadImage(selectedFile!!)
+                            } else if (payment != null) {
+                                photoUrl = payment.photoReport
+                            }
+                            
+                            if (payment != null) {
+                                // Update existing payment
+                                onUpdate(
+                                    UpdatePaymentRequest(
+                                        amount = amountInt,
+                                        subjectId = subjectId
+                                    )
+                                )
+                            } else {
+                                // Create new payment - student selection needs to be added
+                                console.log("Creating new payment - student selection not implemented yet")
+                                console.log("Photo URL: $photoUrl")
+                            }
+                        } catch (e: Exception) {
+                            console.log("Error uploading photo: ${e.message}")
+                        } finally {
+                            isUploading = false
+                        }
                     }
                 }
             }

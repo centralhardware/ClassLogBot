@@ -271,7 +271,7 @@ data class CreatePaymentRequest(
     val subjectId: Long,
     val amount: Int,
     val tutorId: Long,
-    val photoReport: String? = null
+    val photoReport: String
 )
 
 @Serializable
@@ -288,7 +288,7 @@ data class CreateLessonRequest(
     val tutorId: Long,
     val forceGroup: Boolean = false,
     val extraHalfHour: Boolean = false,
-    val photoReport: String? = null
+    val photoReport: String
 )
 
 @Serializable

@@ -210,6 +210,20 @@ object ApiClient {
         }.body()
         return response["hash"] ?: ""
     }
+
+    suspend fun uploadImage(file: org.w3c.files.File): String {
+        val formData = org.w3c.xhr.FormData()
+        formData.append("file", file)
+        
+        val response: ImageUploadResponse = client.post("/api/image/upload") {
+            getAuthHeaders().forEach { (key, value) ->
+                header(key, value)
+            }
+            setBody(formData)
+        }.body()
+        
+        return response.imageUrl
+    }
 }
 
 data class AppState(

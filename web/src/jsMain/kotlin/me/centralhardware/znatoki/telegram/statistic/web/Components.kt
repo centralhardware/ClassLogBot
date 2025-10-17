@@ -323,3 +323,88 @@ fun SelectInput(
         }
     }
 }
+
+@Composable
+fun FileInput(
+    selectedFile: org.w3c.files.File?,
+    previewUrl: String?,
+    onFileSelected: (org.w3c.files.File) -> Unit,
+    required: Boolean = false
+) {
+    Div({
+        style {
+            marginBottom(16.px)
+        }
+    }) {
+        // File input (hidden)
+        Input(InputType.File) {
+            attr("accept", "image/*")
+            if (required) {
+                attr("required", "required")
+            }
+            onChange { event ->
+                val files = event.target.asDynamic().files
+                if (files.length > 0) {
+                    val file = files[0] as org.w3c.files.File
+                    onFileSelected(file)
+                }
+            }
+            style {
+                display(DisplayStyle.None)
+            }
+            id("file-input")
+        }
+
+        // Custom file input button
+        Label(forId = "file-input", attrs = {
+            style {
+                display(DisplayStyle.InlineBlock)
+                padding(12.px, 20.px)
+                fontSize(16.px)
+                fontWeight(600)
+                color(Color.white)
+                backgroundColor(Color("#4299e1"))
+                borderRadius(12.px)
+                property("cursor", "pointer")
+                property("transition", "all 0.3s ease")
+                property("user-select", "none")
+            }
+        }) {
+            Text(if (selectedFile != null) "Изменить фото" else "Выбрать фото *")
+        }
+
+        // Preview
+        previewUrl?.let { url ->
+            Div({
+                style {
+                    marginTop(12.px)
+                    borderRadius(12.px)
+                    property("overflow", "hidden")
+                    border(2.px, LineStyle.Solid, Color("#e2e8f0"))
+                }
+            }) {
+                Img(src = url) {
+                    style {
+                        width(100.percent)
+                        property("max-height", "300px")
+                        property("object-fit", "contain")
+                        backgroundColor(Color("#f7fafc"))
+                    }
+                }
+            }
+        }
+
+        // File name
+        selectedFile?.let { file ->
+            Div({
+                style {
+                    marginTop(8.px)
+                    fontSize(14.px)
+                    color(Color("#718096"))
+                }
+            }) {
+                Text("Выбран файл: ${file.name}")
+            }
+        }
+    }
+}
