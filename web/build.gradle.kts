@@ -3,8 +3,6 @@ plugins {
     kotlin("plugin.serialization")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
-    // Jib will be applied later after JVM target is configured
-    // id("com.google.cloud.tools.jib")
 }
 
 val ktorVersion: String by rootProject.extra
@@ -113,5 +111,42 @@ tasks.withType<JavaExec> {
     dependsOn("copyJsToResources")
 }
 
-// TODO: Re-enable Jib for Docker builds later
-// For now, we'll build locally and run with ./gradlew :web:jvmRun
+// Create Docker build task as alternative to Jib for multiplatform projects
+tasks.register<Exec>("dockerBuild") {
+    group = "docker"
+    description = "Build Docker image for web module"
+    dependsOn("jvmJar", "copyJsToResources")
+
+    val repoLower = System.getenv("GITHUB_REPOSITORY")?.lowercase() ?: "local/classlogbot"
+    val tag = System.getenv("GITHUB_SHA")?.take(7) ?: "dev"
+    val serverUrl = System.getenv("GITHUB_SERVER_URL") ?: ""
+    val repo = System.getenv("GITHUB_REPOSITORY") ?: ""
+    val sha = System.getenv("GITHUB_SHA") ?: ""
+
+    workingDir = projectDir.parentFile
+    commandLine(
+        "docker", "build",
+        "-f", "web/Dockerfile",
+        "-t", "ghcr.io/${repoLower}:web-latest",
+        "-t", "ghcr.io/${repoLower}:web-sha-${tag}",
+        "--label", "org.opencontainers.image.source=${if (repo.isNotEmpty()) "$serverUrl/$repo" else ""}",
+        "--label", "org.opencontainers.image.revision=$sha",
+        "--label", "org.opencontainers.image.description=Web application module",
+        "."
+    )
+}
+
+tasks.register<Exec>("dockerPush") {
+    group = "docker"
+    description = "Push Docker image for web module to registry"
+    dependsOn("dockerBuild")
+
+    val repoLower = System.getenv("GITHUB_REPOSITORY")?.lowercase() ?: "local/classlogbot"
+    val tag = System.getenv("GITHUB_SHA")?.take(7) ?: "dev"
+
+    workingDir = projectDir.parentFile
+    commandLine(
+        "sh", "-c",
+        "docker push ghcr.io/${repoLower}:web-latest && docker push ghcr.io/${repoLower}:web-sha-${tag}"
+    )
+}
