@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -102,8 +104,6 @@ tasks.named("jvmProcessResources") {
     dependsOn("jsBrowserProductionWebpack")
     finalizedBy("copyJsToResources")
 }
-
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 tasks.named<Jar>("jvmJar") {
     dependsOn("copyJsToResources")
