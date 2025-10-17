@@ -47,6 +47,7 @@ fun runMigrations(): MigrateResult {
             .baselineOnMigrate(true)  // Automatically baseline for existing databases
             .baselineVersion("000")
             .baselineDescription("Initial schema from existing database")
+            .classLoader(Thread.currentThread().contextClassLoader)
             .load()
 
         KSLog.info("Starting database migrations...")
