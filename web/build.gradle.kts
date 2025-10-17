@@ -102,8 +102,11 @@ tasks.named("jvmProcessResources") {
     finalizedBy("copyJsToResources")
 }
 
-tasks.named("jvmJar") {
+tasks.named<Jar>("jvmJar") {
     dependsOn("copyJsToResources")
+    manifest {
+        attributes["Main-Class"] = "me.centralhardware.znatoki.telegram.statistic.web.WebMainKt"
+    }
 }
 
 // Ensure all JavaExec tasks (including IDE run configurations) depend on copyJsToResources
