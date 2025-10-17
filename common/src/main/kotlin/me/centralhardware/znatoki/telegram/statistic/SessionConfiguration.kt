@@ -5,7 +5,6 @@ import com.zaxxer.hikari.HikariDataSource
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
 import org.flywaydb.core.Flyway
-import org.flywaydb.core.api.callback.Callback
 import org.flywaydb.core.api.output.MigrateResult
 import javax.sql.DataSource
 
@@ -48,7 +47,6 @@ fun runMigrations(): MigrateResult {
             .baselineOnMigrate(true)  // Automatically baseline for existing databases
             .baselineVersion("000")
             .baselineDescription("Initial schema from existing database")
-            .callbacks(*emptyArray<Callback>())  // Clear default callback locations for fat JAR compatibility
             .load()
 
         KSLog.info("Starting database migrations...")
