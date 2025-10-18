@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.browser.window
@@ -220,18 +221,38 @@ object ApiClient {
     }
 
     suspend fun uploadImage(file: org.w3c.files.File): String {
-        val formData = org.w3c.xhr.FormData()
-        formData.append("file", file)
+        val fileBytes = file.readAsArrayBuffer()
         
         val response: ImageUploadResponse = client.post("/api/image/upload") {
             getAuthHeaders().forEach { (key, value) ->
                 header(key, value)
             }
-            setBody(formData)
+            setBody(MultiPartFormDataContent(
+                formData {
+                    append("file", fileBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
+                        append(HttpHeaders.ContentType, "image/jpeg")
+                    })
+                }
+            ))
         }.body()
         
         return response.imageUrl
     }
+    
+    private suspend fun org.w3c.files.File.readAsArrayBuffer(): ByteArray = 
+        kotlin.coroutines.suspendCoroutine { continuation ->
+            val reader = org.w3c.files.FileReader()
+            reader.onload = { event ->
+                val arrayBuffer = (event.target as org.w3c.files.FileReader).result
+                val uint8Array = js("new Uint8Array(arrayBuffer)").unsafeCast<ByteArray>()
+                continuation.resumeWith(Result.success(uint8Array))
+            }
+            reader.onerror = { _ ->
+                continuation.resumeWith(Result.failure(Exception("Failed to read file")))
+            }
+            reader.readAsArrayBuffer(this)
+        }
 }
 
 data class AppState(
