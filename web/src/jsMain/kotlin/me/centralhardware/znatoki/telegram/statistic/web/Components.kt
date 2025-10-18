@@ -555,11 +555,29 @@ fun StudentSelector(
                 position(Position.Relative)
             }
         }) {
-            TextInput(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = "Поиск ученика${if (required) " *" else ""}..."
-            )
+            Input(InputType.Text) {
+                value(searchQuery)
+                onInput { searchQuery = it.value }
+                attr("placeholder", "Поиск ученика${if (required) " *" else ""}...")
+                
+                onFocusOut {
+                    // Delay closing to allow click to register
+                    kotlinx.browser.window.setTimeout({
+                        showResults = false
+                    }, 200)
+                }
+                
+                style {
+                    width(100.percent)
+                    padding(12.px, 14.px)
+                    fontSize(16.px)
+                    border(2.px, LineStyle.Solid, Color("#e2e8f0"))
+                    borderRadius(12.px)
+                    backgroundColor(Color.white)
+                    color(Color("#2d3748"))
+                    property("transition", "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)")
+                }
+            }
 
             // Search results dropdown
             if (showResults && searchQuery.length >= 2) {
@@ -612,8 +630,7 @@ fun StudentSelector(
                                         backgroundColor(Color("#e6f7ff"))
                                     }
                                 }
-                                onMouseDown { event ->
-                                    event.preventDefault() // Prevent input from losing focus
+                                onClick {
                                     if (multiple) {
                                         if (isSelected) {
                                             onStudentsChange(selectedStudents.filter { it.id != student.id })
