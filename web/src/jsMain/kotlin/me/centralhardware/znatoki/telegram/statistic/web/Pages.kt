@@ -41,6 +41,7 @@ fun TodayPage(appState: AppState) {
                         style {
                             marginBottom(16.px)
                             display(DisplayStyle.Flex)
+                            justifyContent(JustifyContent.Center)
                         }
                     }) {
                         PrimaryButton("Добавить занятие") {
@@ -68,6 +69,7 @@ fun TodayPage(appState: AppState) {
                         style {
                             marginBottom(16.px)
                             display(DisplayStyle.Flex)
+                            justifyContent(JustifyContent.Center)
                         }
                     }) {
                         PrimaryButton("Добавить оплату") {
