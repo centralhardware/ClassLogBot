@@ -10,6 +10,8 @@ import kotlinx.browser.window
 import kotlinx.serialization.json.Json
 import me.centralhardware.znatoki.telegram.statistic.dto.*
 
+class AccessDeniedException(message: String) : Exception(message)
+
 object ApiClient {
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -27,11 +29,17 @@ object ApiClient {
     }
 
     suspend fun getUserInfo(): CurrentUserDto {
-        return client.get("/api/me") {
+        val response = client.get("/api/me") {
             getAuthHeaders().forEach { (key, value) ->
                 header(key, value)
             }
-        }.body()
+        }
+        
+        if (response.status.value == 403) {
+            throw AccessDeniedException("У вас нет доступа к веб-интерфейсу")
+        }
+        
+        return response.body()
     }
 
     suspend fun getTutors(): List<TutorDto> {

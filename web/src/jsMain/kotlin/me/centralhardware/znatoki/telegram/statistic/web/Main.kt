@@ -11,7 +11,7 @@ fun main() {
     // Check if opened from Telegram WebApp
     if (!checkTelegramWebApp()) {
         renderComposable(rootElementId = "root") {
-            AccessDeniedScreen()
+            TelegramWebAppRequiredScreen()
         }
         return
     }
@@ -31,6 +31,7 @@ fun App() {
     var currentPage by remember { mutableStateOf(Page.TODAY) }
     var appState by remember { mutableStateOf<AppState?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var accessDenied by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
@@ -45,20 +46,28 @@ fun App() {
 
             kotlinx.coroutines.delay(300)
             isLoading = false
+        } catch (e: AccessDeniedException) {
+            accessDenied = true
+            isLoading = false
         } catch (e: Exception) {
             error = e.message
             addLog(loadingLogs, false, { loadingLogs = it }, "❌ Ошибка: ${e.message}")
+            isLoading = false
         }
     }
 
-    Div({ classes(AppStyles.container) }) {
-        if (isLoading) {
-            LoadingScreen(loadingLogs)
-        } else if (error != null) {
-            ErrorScreen(error!!)
-        } else if (appState != null) {
-            MainNavigation(currentPage) { currentPage = it }
-            ContentArea(currentPage, appState!!)
+    if (accessDenied) {
+        AccessDeniedScreen()
+    } else {
+        Div({ classes(AppStyles.container) }) {
+            if (isLoading) {
+                LoadingScreen(loadingLogs)
+            } else if (error != null) {
+                ErrorScreen(error!!)
+            } else if (appState != null) {
+                MainNavigation(currentPage) { currentPage = it }
+                ContentArea(currentPage, appState!!)
+            }
         }
     }
 }
@@ -89,7 +98,7 @@ fun checkTelegramWebApp(): Boolean {
 }
 
 @Composable
-fun AccessDeniedScreen() {
+fun TelegramWebAppRequiredScreen() {
     Div({
         style {
             display(DisplayStyle.Flex)

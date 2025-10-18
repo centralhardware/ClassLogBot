@@ -62,6 +62,64 @@ fun ErrorScreen(message: String) {
 }
 
 @Composable
+fun AccessDeniedScreen() {
+    Div({
+        style {
+            display(DisplayStyle.Flex)
+            flexDirection(FlexDirection.Column)
+            alignItems(AlignItems.Center)
+            justifyContent(JustifyContent.Center)
+            height(100.vh)
+            padding(20.px)
+            property("text-align", "center")
+            fontFamily("system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif")
+            backgroundColor(Color("#f5f5f5"))
+        }
+    }) {
+        Div({ style { fontSize(64.px); property("margin-bottom", "20px") } }) {
+            Text("🚫")
+        }
+        H1({
+            style {
+                fontSize(28.px)
+                property("margin-bottom", "16px")
+                color(Color("#1a1a1a"))
+                fontWeight(600)
+            }
+        }) {
+            Text("Доступ запрещен")
+        }
+        P({
+            style {
+                fontSize(18.px)
+                color(Color("#333"))
+                property("max-width", "450px")
+                property("line-height", "1.6")
+                property("margin-bottom", "24px")
+            }
+        }) {
+            Text("У вас нет разрешения на доступ к веб-интерфейсу.")
+            Br()
+            Br()
+            Text("Для получения доступа обратитесь к администратору и запросите разрешение ")
+            Span({
+                style {
+                    fontWeight(600)
+                    color(Color("#4299e1"))
+                    fontFamily("monospace")
+                    backgroundColor(Color("#e6f7ff"))
+                    padding(2.px, 6.px)
+                    borderRadius(4.px)
+                }
+            }) {
+                Text("WEB_INTERFACE")
+            }
+            Text(".")
+        }
+    }
+}
+
+@Composable
 fun MainNavigation(currentPage: Page, onPageChange: (Page) -> Unit) {
     var isDropdownOpen by remember { mutableStateOf(false) }
 
