@@ -17,6 +17,7 @@ fun LessonModal(
     onUpdate: (UpdateLessonRequest) -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
+    var selectedStudents by remember { mutableStateOf<List<StudentDto>>(lesson?.students ?: emptyList()) }
     var selectedSubjectId by remember { mutableStateOf(lesson?.subject?.id?.toString() ?: "") }
     var amount by remember { mutableStateOf(lesson?.amount?.toString() ?: "") }
     var isGroup by remember { mutableStateOf(lesson?.isGroup ?: false) }
@@ -24,12 +25,24 @@ fun LessonModal(
     var selectedFile by remember { mutableStateOf<org.w3c.files.File?>(null) }
     var previewUrl by remember { mutableStateOf<String?>(lesson?.photoReport) }
     var isUploading by remember { mutableStateOf(false) }
-    
+
     val scope = rememberCoroutineScope()
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text(if (lesson != null) "Редактировать занятие" else "Новое занятие")
+        }
+
+        // Student selector - only show when creating new lesson
+        if (lesson == null) {
+            FormGroup("Ученики") {
+                StudentSelector(
+                    selectedStudents = selectedStudents,
+                    onStudentsChange = { selectedStudents = it },
+                    multiple = true,
+                    required = true
+                )
+            }
         }
 
         FormGroup("Предмет") {
@@ -115,18 +128,23 @@ fun LessonModal(
             PrimaryButton("Сохранить") {
                 val subjectId = selectedSubjectId.toLongOrNull()
                 val amountInt = amount.toIntOrNull()
-                
+
                 // Validate required fields
                 if (lesson == null && selectedFile == null) {
                     console.log("Фото отчета обязательно для новых занятий")
                     return@PrimaryButton
                 }
-                
-                if (subjectId != null && amountInt != null) {
+
+                if (lesson == null && selectedStudents.isEmpty()) {
+                    console.log("Выберите хотя бы одного ученика")
+                    return@PrimaryButton
+                }
+
+                if (subjectId != null && amountInt != null && tutorId != null) {
                     scope.launch {
                         try {
                             isUploading = true
-                            
+
                             // Upload photo if a new file was selected
                             var photoUrl: String? = null
                             if (selectedFile != null) {
@@ -134,7 +152,7 @@ fun LessonModal(
                             } else if (lesson != null) {
                                 photoUrl = lesson.photoReport
                             }
-                            
+
                             if (lesson != null) {
                                 // Update existing lesson
                                 val studentId = lesson.students.firstOrNull()?.id
@@ -150,10 +168,20 @@ fun LessonModal(
                                     )
                                 }
                             } else {
-                                // Create new lesson - student selection needs to be added
-                                // For now, this is incomplete and needs student selection UI
-                                console.log("Creating new lesson - student selection not implemented yet")
-                                console.log("Photo URL: $photoUrl")
+                                // Create new lesson
+                                if (photoUrl != null) {
+                                    onCreate(
+                                        CreateLessonRequest(
+                                            studentIds = selectedStudents.map { it.id },
+                                            subjectId = subjectId,
+                                            amount = amountInt,
+                                            tutorId = tutorId,
+                                            forceGroup = isGroup,
+                                            extraHalfHour = isExtra,
+                                            photoReport = photoUrl
+                                        )
+                                    )
+                                }
                             }
                         } catch (e: Exception) {
                             console.log("Error uploading photo: ${e.message}")
@@ -185,17 +213,32 @@ fun PaymentModal(
     onUpdate: (UpdatePaymentRequest) -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
+    var selectedStudent by remember {
+        mutableStateOf<List<StudentDto>>(payment?.student?.let { listOf(it) } ?: emptyList())
+    }
     var amount by remember { mutableStateOf(payment?.amount?.toString() ?: "") }
     var selectedSubjectId by remember { mutableStateOf(payment?.subject?.id?.toString() ?: "") }
     var selectedFile by remember { mutableStateOf<org.w3c.files.File?>(null) }
     var previewUrl by remember { mutableStateOf<String?>(payment?.photoReport) }
     var isUploading by remember { mutableStateOf(false) }
-    
+
     val scope = rememberCoroutineScope()
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text(if (payment != null) "Редактировать оплату" else "Новая оплата")
+        }
+
+        // Student selector - only show when creating new payment
+        if (payment == null) {
+            FormGroup("Ученик") {
+                StudentSelector(
+                    selectedStudents = selectedStudent,
+                    onStudentsChange = { selectedStudent = it },
+                    multiple = false,
+                    required = true
+                )
+            }
         }
 
         FormGroup("Предмет") {
@@ -255,18 +298,23 @@ fun PaymentModal(
             PrimaryButton("Сохранить") {
                 val subjectId = selectedSubjectId.toLongOrNull()
                 val amountInt = amount.toIntOrNull()
-                
+
                 // Validate required fields
                 if (payment == null && selectedFile == null) {
                     console.log("Фото отчета обязательно для новых оплат")
                     return@PrimaryButton
                 }
-                
-                if (subjectId != null && amountInt != null) {
+
+                if (payment == null && selectedStudent.isEmpty()) {
+                    console.log("Выберите ученика")
+                    return@PrimaryButton
+                }
+
+                if (subjectId != null && amountInt != null && tutorId != null) {
                     scope.launch {
                         try {
                             isUploading = true
-                            
+
                             // Upload photo if a new file was selected
                             var photoUrl: String? = null
                             if (selectedFile != null) {
@@ -274,7 +322,7 @@ fun PaymentModal(
                             } else if (payment != null) {
                                 photoUrl = payment.photoReport
                             }
-                            
+
                             if (payment != null) {
                                 // Update existing payment
                                 onUpdate(
@@ -284,9 +332,18 @@ fun PaymentModal(
                                     )
                                 )
                             } else {
-                                // Create new payment - student selection needs to be added
-                                console.log("Creating new payment - student selection not implemented yet")
-                                console.log("Photo URL: $photoUrl")
+                                // Create new payment
+                                if (photoUrl != null && selectedStudent.isNotEmpty()) {
+                                    onCreate(
+                                        CreatePaymentRequest(
+                                            studentId = selectedStudent.first().id,
+                                            subjectId = subjectId,
+                                            amount = amountInt,
+                                            tutorId = tutorId,
+                                            photoReport = photoUrl
+                                        )
+                                    )
+                                }
                             }
                         } catch (e: Exception) {
                             console.log("Error uploading photo: ${e.message}")

@@ -408,3 +408,195 @@ fun FileInput(
         }
     }
 }
+
+@Composable
+fun StudentSelector(
+    selectedStudents: List<me.centralhardware.znatoki.telegram.statistic.dto.StudentDto>,
+    onStudentsChange: (List<me.centralhardware.znatoki.telegram.statistic.dto.StudentDto>) -> Unit,
+    multiple: Boolean = false,
+    required: Boolean = false
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    var searchResults by remember {
+        mutableStateOf<List<me.centralhardware.znatoki.telegram.statistic.dto.StudentDto>>(
+            emptyList()
+        )
+    }
+    var isSearching by remember { mutableStateOf(false) }
+    var showResults by remember { mutableStateOf(false) }
+
+    // Search students with debounce
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.length >= 2) {
+            isSearching = true
+            showResults = true
+            try {
+                kotlinx.coroutines.delay(300) // Debounce
+                searchResults = ApiClient.searchStudents(searchQuery)
+            } catch (e: Exception) {
+                console.log("Error searching students: ${e.message}")
+                searchResults = emptyList()
+            } finally {
+                isSearching = false
+            }
+        } else {
+            searchResults = emptyList()
+            showResults = false
+        }
+    }
+
+    Div({
+        style {
+            marginBottom(16.px)
+        }
+    }) {
+        // Search input
+        Div({
+            style {
+                position(Position.Relative)
+            }
+        }) {
+            TextInput(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = "Поиск ученика${if (required) " *" else ""}..."
+            )
+
+            // Search results dropdown
+            if (showResults && searchQuery.length >= 2) {
+                Div({
+                    style {
+                        position(Position.Absolute)
+                        top(100.percent)
+                        left(0.px)
+                        right(0.px)
+                        backgroundColor(Color.white)
+                        border(2.px, LineStyle.Solid, Color("#e2e8f0"))
+                        borderRadius(12.px)
+                        property("margin-top", "4px")
+                        property("max-height", "200px")
+                        property("overflow-y", "auto")
+                        property("z-index", "1000")
+                        property("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1)")
+                    }
+                }) {
+                    if (isSearching) {
+                        Div({
+                            style {
+                                padding(12.px)
+                                textAlign("center")
+                                color(Color("#718096"))
+                            }
+                        }) {
+                            Text("Поиск...")
+                        }
+                    } else if (searchResults.isEmpty()) {
+                        Div({
+                            style {
+                                padding(12.px)
+                                textAlign("center")
+                                color(Color("#718096"))
+                            }
+                        }) {
+                            Text("Ничего не найдено")
+                        }
+                    } else {
+                        searchResults.forEach { student ->
+                            val isSelected = selectedStudents.any { it.id == student.id }
+
+                            Div({
+                                style {
+                                    padding(12.px)
+                                    property("cursor", "pointer")
+                                    property("transition", "background-color 0.2s")
+                                    if (isSelected) {
+                                        backgroundColor(Color("#e6f7ff"))
+                                    }
+                                }
+                                onClick {
+                                    if (multiple) {
+                                        if (isSelected) {
+                                            onStudentsChange(selectedStudents.filter { it.id != student.id })
+                                        } else {
+                                            onStudentsChange(selectedStudents + student)
+                                        }
+                                    } else {
+                                        onStudentsChange(listOf(student))
+                                        searchQuery = ""
+                                        showResults = false
+                                    }
+                                }
+                            }) {
+                                Div({
+                                    style {
+                                        fontWeight(600)
+                                        color(Color("#2d3748"))
+                                    }
+                                }) {
+                                    Text("${student.lastName} ${student.name} ${student.secondName}")
+                                }
+                                student.schoolClass?.let { schoolClass ->
+                                    Div({
+                                        style {
+                                            fontSize(12.px)
+                                            color(Color("#718096"))
+                                            marginTop(4.px)
+                                        }
+                                    }) {
+                                        Text("${schoolClass} класс")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Selected students
+        if (selectedStudents.isNotEmpty()) {
+            Div({
+                style {
+                    marginTop(12.px)
+                    display(DisplayStyle.Flex)
+                    property("flex-wrap", "wrap")
+                    property("gap", "8px")
+                }
+            }) {
+                selectedStudents.forEach { student ->
+                    Div({
+                        style {
+                            display(DisplayStyle.Flex)
+                            property("align-items", "center")
+                            property("gap", "8px")
+                            padding(8.px, 12.px)
+                            backgroundColor(Color("#e6f7ff"))
+                            borderRadius(8.px)
+                            fontSize(14.px)
+                        }
+                    }) {
+                        Span {
+                            Text("${student.lastName} ${student.name}")
+                        }
+                        Button({
+                            style {
+                                backgroundColor(Color.transparent)
+                                border(0.px)
+                                color(Color("#4299e1"))
+                                property("cursor", "pointer")
+                                fontSize(16.px)
+                                padding(0.px)
+                                property("line-height", "1")
+                            }
+                            onClick {
+                                onStudentsChange(selectedStudents.filter { it.id != student.id })
+                            }
+                        }) {
+                            Text("×")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
