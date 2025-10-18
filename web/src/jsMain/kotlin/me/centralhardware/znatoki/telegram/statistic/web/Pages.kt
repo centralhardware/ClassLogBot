@@ -210,6 +210,10 @@ fun ReportsPage(appState: AppState) {
         if (selectedSubject != null && availableSubjects.none { it.id == selectedSubject }) {
             selectedSubject = null
         }
+        // Auto-select subject if only one exists
+        if (selectedSubject == null && availableSubjects.size == 1) {
+            selectedSubject = availableSubjects.first().id
+        }
     }
 
     LaunchedEffect(selectedSubject, selectedPeriod, selectedTutor) {
@@ -287,6 +291,10 @@ fun StatisticsPage(appState: AppState) {
     LaunchedEffect(availableSubjects) {
         if (selectedSubject != null && availableSubjects.none { it.name == selectedSubject }) {
             selectedSubject = null
+        }
+        // Auto-select subject if only one exists
+        if (selectedSubject == null && availableSubjects.size == 1) {
+            selectedSubject = availableSubjects.first().name
         }
     }
 

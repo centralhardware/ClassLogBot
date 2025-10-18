@@ -29,6 +29,13 @@ fun LessonModal(
 
     val scope = rememberCoroutineScope()
 
+    // Auto-select subject if only one exists
+    LaunchedEffect(subjects) {
+        if (lesson == null && subjects.size == 1 && selectedSubjectId.isEmpty()) {
+            selectedSubjectId = subjects.first().id.toString()
+        }
+    }
+
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text(if (lesson != null) "Редактировать занятие" else "Новое занятие")
@@ -248,6 +255,13 @@ fun PaymentModal(
     var validationError by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
+
+    // Auto-select subject if only one exists
+    LaunchedEffect(subjects) {
+        if (payment == null && subjects.size == 1 && selectedSubjectId.isEmpty()) {
+            selectedSubjectId = subjects.first().id.toString()
+        }
+    }
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
