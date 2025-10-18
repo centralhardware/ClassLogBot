@@ -62,7 +62,8 @@ fun List<Lesson>.toLessonDto(): LessonDto {
         isGroup = this.size > 1 || firstLesson.forceGroup,
         isExtra = firstLesson.extraHalfHour,
         tutorId = firstLesson.tutorId.id,
-        photoReport = firstLesson.photoReport?.let { "/api/image/$it" }
+        photoReport = firstLesson.photoReport?.let { "/api/image/$it" },
+        dataSource = firstLesson.dataSource?.value
     )
 }
 
@@ -110,7 +111,8 @@ fun Route.lessonApi() {
                         extraHalfHour = request.extraHalfHour,
                         photoReport = request.photoReport,
                         deleted = false,
-                        addedByTutorId = tutorId
+                        addedByTutorId = tutorId,
+                        dataSource = DataSource.WEB
                     )
                     LessonMapper.insert(lesson)
                     lesson
@@ -267,7 +269,8 @@ fun Route.lessonApi() {
                     extraHalfHour = templateLesson.extraHalfHour,
                     photoReport = templateLesson.photoReport,
                     deleted = false,
-                    addedByTutorId = tutorId
+                    addedByTutorId = tutorId,
+                    dataSource = DataSource.WEB
                 )
 
                 LessonMapper.insert(newLesson)

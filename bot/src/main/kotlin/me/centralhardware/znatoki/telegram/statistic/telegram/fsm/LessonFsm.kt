@@ -13,6 +13,7 @@ import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
+import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.ServiceBuilder
@@ -109,6 +110,7 @@ suspend fun BehaviourContext.startLessonFsm(
                 ctx.id = LessonId.random()
                 val addedBy = message.tutorId()
                 ctx.addedByTutorId = if (addedBy != ctx.tutorId) addedBy else null
+                ctx.dataSource = DataSource.BOT
                 val services = ctx.build()
                 services.forEach { LessonMapper.insert(it) }
                 sendLog(services, message.userId(), addedBy)

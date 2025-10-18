@@ -134,6 +134,7 @@ suspend fun BehaviourContext.startPaymentFsm(
                     it.tutorId = addedBy
                 }
                 it.addedByTutorId = if (addedBy != it.tutorId) addedBy else null
+                it.dataSource = DataSource.BOT
                 val payment = it.build()
                 val paymentId = PaymentMapper.insert(payment)
                 sendLog(payment, paymentId, addedBy)

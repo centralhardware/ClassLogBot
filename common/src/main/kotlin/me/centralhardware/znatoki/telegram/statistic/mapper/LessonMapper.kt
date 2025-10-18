@@ -33,7 +33,8 @@ object LessonMapper {
                     amount,
                     student_id,
                     photo_report,
-                    added_by_tutor_id
+                    added_by_tutor_id,
+                    data_source
                 ) VALUES (
                     :dateTime,
                     :updateTime,
@@ -43,7 +44,8 @@ object LessonMapper {
                     :amount,
                     :studentId,
                     :photo_report,
-                    :addedByTutorId
+                    :addedByTutorId,
+                    :dataSource
                 )
                 """,
                 mapOf(
@@ -56,6 +58,7 @@ object LessonMapper {
                     "studentId" to lesson.studentId.id,
                     "photo_report" to lesson.photoReport,
                     "addedByTutorId" to lesson.addedByTutorId?.id,
+                    "dataSource" to lesson.dataSource?.value,
                 ),
             )
         )
@@ -80,7 +83,8 @@ object LessonMapper {
                        l.extra_half_hour,
                        l.photo_report,
                        l.is_deleted,
-                       l.added_by_tutor_id
+                       l.added_by_tutor_id,
+                       l.data_source
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
                     AND l.subject_id = :subjectId
@@ -110,7 +114,8 @@ object LessonMapper {
                        l.extra_half_hour,
                        l.photo_report,
                        l.is_deleted,
-                       l.added_by_tutor_id
+                       l.added_by_tutor_id,
+                       l.data_source
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
                     AND l.date_time between :startDate and :endDate
@@ -135,7 +140,8 @@ object LessonMapper {
                        force_group,
                        extra_half_hour,
                        is_deleted,
-                       added_by_tutor_id
+                       added_by_tutor_id,
+                       data_source
                 FROM lessons
                 WHERE id = :id
                 """,
@@ -243,7 +249,8 @@ object LessonMapper {
                        force_group,
                        extra_half_hour,
                        is_deleted,
-                       added_by_tutor_id
+                       added_by_tutor_id,
+                       data_source
                 FROM lessons
                 WHERE student_id = :studentId AND is_deleted = false
                 ORDER BY date_time DESC

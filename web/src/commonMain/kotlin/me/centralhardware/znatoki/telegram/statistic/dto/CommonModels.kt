@@ -43,7 +43,8 @@ data class LessonDto(
     val isGroup: Boolean,
     val isExtra: Boolean,
     val tutorId: Long,
-    val photoReport: String? = null
+    val photoReport: String? = null,
+    val dataSource: String? = null
 )
 
 @Serializable
@@ -54,7 +55,8 @@ data class PaymentDto(
     val subject: SubjectDto,
     val amount: Int,
     val tutorId: Long,
-    val photoReport: String? = null
+    val photoReport: String? = null,
+    val dataSource: String? = null
 )
 
 // ===== Audit Log DTOs =====

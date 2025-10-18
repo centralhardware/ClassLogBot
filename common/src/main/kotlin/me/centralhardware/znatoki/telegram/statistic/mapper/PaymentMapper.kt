@@ -29,7 +29,8 @@ object PaymentMapper {
                     amount,
                     subject_id,
                     photo_report,
-                    added_by_tutor_id
+                    added_by_tutor_id,
+                    data_source
                 ) VALUES (
                     :dateTime,
                     :tutorId,
@@ -37,7 +38,8 @@ object PaymentMapper {
                     :amount,
                     :subjectId,
                     :photo_report,
-                    :addedByTutorId
+                    :addedByTutorId,
+                    :dataSource
                 ) RETURNING id
                 """,
                 mapOf(
@@ -48,6 +50,7 @@ object PaymentMapper {
                     "subjectId" to payment.subjectId.id,
                     "photo_report" to payment.photoReport,
                     "addedByTutorId" to payment.addedByTutorId?.id,
+                    "dataSource" to payment.dataSource?.value,
                 ),
             )
         ) { row -> PaymentId(row.int("id")) }!!
@@ -128,7 +131,8 @@ object PaymentMapper {
                    p.subject_id,
                    p.is_deleted,
                    p.photo_report,
-                   p.added_by_tutor_id
+                   p.added_by_tutor_id,
+                   p.data_source
             FROM payment p
             WHERE p.tutor_id = :tutor_id
                 AND p.subject_id = :subject_id
@@ -204,7 +208,8 @@ object PaymentMapper {
                    p.subject_id,
                    p.is_deleted,
                    p.photo_report,
-                   p.added_by_tutor_id
+                   p.added_by_tutor_id,
+                   p.data_source
             FROM payment p
             WHERE p.tutor_id = :tutor_id
                 AND p.date_time between :start_date and :end_date
@@ -232,7 +237,8 @@ object PaymentMapper {
                    p.subject_id,
                    p.is_deleted,
                    p.photo_report,
-                   p.added_by_tutor_id
+                   p.added_by_tutor_id,
+                   p.data_source
             FROM payment p
             WHERE p.id = :id
                 AND p.is_deleted=false
@@ -251,7 +257,8 @@ object PaymentMapper {
                    p.subject_id,
                    p.is_deleted,
                    p.photo_report,
-                   p.added_by_tutor_id
+                   p.added_by_tutor_id,
+                   p.data_source
             FROM payment p
             WHERE p.id = :id
             """, mapOf("id" to id.id)
@@ -294,7 +301,8 @@ object PaymentMapper {
                        p.subject_id,
                        p.is_deleted,
                        p.photo_report,
-                       p.added_by_tutor_id
+                       p.added_by_tutor_id,
+                       p.data_source
                 FROM payment p
                 WHERE p.student_id = :studentId AND p.is_deleted = false
                 ORDER BY p.date_time DESC

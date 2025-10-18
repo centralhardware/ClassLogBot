@@ -43,7 +43,8 @@ fun Payment.toPaymentDto(): PaymentDto {
         ),
         amount = amount.amount,
         tutorId = tutorId.id,
-        photoReport = photoReport?.let { "/api/image/$it" }
+        photoReport = photoReport?.let { "/api/image/$it" },
+        dataSource = dataSource?.value
     )
 }
 
@@ -81,7 +82,8 @@ fun Route.paymentApi() {
                 subjectId = subjectId,
                 deleted = false,
                 photoReport = request.photoReport,
-                addedByTutorId = tutorId
+                addedByTutorId = tutorId,
+                dataSource = DataSource.WEB
             )
 
             val paymentId = PaymentMapper.insert(payment)
