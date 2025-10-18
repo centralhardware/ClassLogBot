@@ -25,12 +25,29 @@ fun LessonModal(
     var selectedFile by remember { mutableStateOf<org.w3c.files.File?>(null) }
     var previewUrl by remember { mutableStateOf<String?>(lesson?.photoReport) }
     var isUploading by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text(if (lesson != null) "Редактировать занятие" else "Новое занятие")
+        }
+
+        // Validation error message
+        validationError?.let { error ->
+            Div({
+                style {
+                    backgroundColor(Color("#fed7d7"))
+                    color(Color("#c53030"))
+                    padding(12.px)
+                    borderRadius(8.px)
+                    marginBottom(16.px)
+                    fontSize(14.px)
+                }
+            }) {
+                Text(error)
+            }
         }
 
         // Student selector - only show when creating new lesson
@@ -119,21 +136,34 @@ fun LessonModal(
             }
         }) {
             PrimaryButton("Сохранить") {
+                // Clear previous validation errors
+                validationError = null
+
                 val subjectId = selectedSubjectId.toLongOrNull()
                 val amountInt = amount.toIntOrNull()
 
                 // Validate required fields
-                if (lesson == null && selectedFile == null) {
-                    console.log("Фото отчета обязательно для новых занятий")
-                    return@PrimaryButton
-                }
-
                 if (lesson == null && selectedStudents.isEmpty()) {
-                    console.log("Выберите хотя бы одного ученика")
+                    validationError = "Выберите хотя бы одного ученика"
                     return@PrimaryButton
                 }
 
-                if (subjectId != null && amountInt != null && tutorId != null) {
+                if (subjectId == null) {
+                    validationError = "Выберите предмет"
+                    return@PrimaryButton
+                }
+
+                if (amountInt == null) {
+                    validationError = "Введите корректную сумму"
+                    return@PrimaryButton
+                }
+
+                if (lesson == null && selectedFile == null) {
+                    validationError = "Фото отчета обязательно для новых занятий"
+                    return@PrimaryButton
+                }
+
+                if (tutorId != null) {
                     scope.launch {
                         try {
                             isUploading = true
@@ -178,6 +208,7 @@ fun LessonModal(
                             }
                         } catch (e: Exception) {
                             console.log("Error uploading photo: ${e.message}")
+                            validationError = "Ошибка при загрузке фото: ${e.message}"
                         } finally {
                             isUploading = false
                         }
@@ -214,12 +245,29 @@ fun PaymentModal(
     var selectedFile by remember { mutableStateOf<org.w3c.files.File?>(null) }
     var previewUrl by remember { mutableStateOf<String?>(payment?.photoReport) }
     var isUploading by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text(if (payment != null) "Редактировать оплату" else "Новая оплата")
+        }
+
+        // Validation error message
+        validationError?.let { error ->
+            Div({
+                style {
+                    backgroundColor(Color("#fed7d7"))
+                    color(Color("#c53030"))
+                    padding(12.px)
+                    borderRadius(8.px)
+                    marginBottom(16.px)
+                    fontSize(14.px)
+                }
+            }) {
+                Text(error)
+            }
         }
 
         // Student selector - only show when creating new payment
@@ -282,21 +330,34 @@ fun PaymentModal(
             }
         }) {
             PrimaryButton("Сохранить") {
+                // Clear previous validation errors
+                validationError = null
+
                 val subjectId = selectedSubjectId.toLongOrNull()
                 val amountInt = amount.toIntOrNull()
 
                 // Validate required fields
-                if (payment == null && selectedFile == null) {
-                    console.log("Фото отчета обязательно для новых оплат")
-                    return@PrimaryButton
-                }
-
                 if (payment == null && selectedStudent.isEmpty()) {
-                    console.log("Выберите ученика")
+                    validationError = "Выберите ученика"
                     return@PrimaryButton
                 }
 
-                if (subjectId != null && amountInt != null && tutorId != null) {
+                if (subjectId == null) {
+                    validationError = "Выберите предмет"
+                    return@PrimaryButton
+                }
+
+                if (amountInt == null) {
+                    validationError = "Введите корректную сумму"
+                    return@PrimaryButton
+                }
+
+                if (payment == null && selectedFile == null) {
+                    validationError = "Фото отчета обязательно для новых оплат"
+                    return@PrimaryButton
+                }
+
+                if (tutorId != null) {
                     scope.launch {
                         try {
                             isUploading = true
@@ -333,6 +394,7 @@ fun PaymentModal(
                             }
                         } catch (e: Exception) {
                             console.log("Error uploading photo: ${e.message}")
+                            validationError = "Ошибка при загрузке фото: ${e.message}"
                         } finally {
                             isUploading = false
                         }
@@ -367,10 +429,27 @@ fun StudentModal(
     var phone by remember { mutableStateOf(student?.phone ?: "") }
     var responsiblePhone by remember { mutableStateOf(student?.responsiblePhone ?: "") }
     var motherFio by remember { mutableStateOf(student?.motherFio ?: "") }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     Modal(isOpen = true, onClose = onClose) {
         H3({ style { marginBottom(20.px) } }) {
             Text("Редактировать ученика")
+        }
+
+        // Validation error message
+        validationError?.let { error ->
+            Div({
+                style {
+                    backgroundColor(Color("#fed7d7"))
+                    color(Color("#c53030"))
+                    padding(12.px)
+                    borderRadius(8.px)
+                    marginBottom(16.px)
+                    fontSize(14.px)
+                }
+            }) {
+                Text(error)
+            }
         }
 
         FormGroup("Имя *") {
@@ -476,8 +555,11 @@ fun StudentModal(
             }
         }) {
             PrimaryButton("Сохранить") {
+                // Clear previous validation errors
+                validationError = null
+
                 if (name.isBlank() || secondName.isBlank() || lastName.isBlank()) {
-                    console.log("Имя, фамилия и отчество обязательны")
+                    validationError = "Имя, фамилия и отчество обязательны"
                     return@PrimaryButton
                 }
 
