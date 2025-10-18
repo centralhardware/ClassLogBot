@@ -223,18 +223,18 @@ object ApiClient {
     suspend fun uploadImage(file: org.w3c.files.File): String {
         val fileBytes = file.readAsArrayBuffer()
         
-        val response: ImageUploadResponse = client.post("/api/image/upload") {
+        val response: ImageUploadResponse = client.submitFormWithBinaryData(
+            url = "/api/image/upload",
+            formData = formData {
+                append("file", fileBytes, Headers.build {
+                    append(HttpHeaders.ContentDisposition, "form-data; name=\"file\"; filename=\"${file.name}\"")
+                    append(HttpHeaders.ContentType, file.type.ifEmpty { "image/jpeg" })
+                })
+            }
+        ) {
             getAuthHeaders().forEach { (key, value) ->
                 header(key, value)
             }
-            setBody(MultiPartFormDataContent(
-                formData {
-                    append("file", fileBytes, Headers.build {
-                        append(HttpHeaders.ContentDisposition, "form-data; name=\"file\"; filename=\"${file.name}\"")
-                        append(HttpHeaders.ContentType, file.type.ifEmpty { "image/jpeg" })
-                    })
-                }
-            ))
         }.body()
         
         return response.imageUrl

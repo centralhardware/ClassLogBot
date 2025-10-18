@@ -36,4 +36,8 @@ build/
 .vscode/
 
 ### Mac OS ###
-.DS_Storekotlin-js-store/
+.DS_Store
+
+### Kotlin ###
+.kotlin/
+kotlin-js-store/

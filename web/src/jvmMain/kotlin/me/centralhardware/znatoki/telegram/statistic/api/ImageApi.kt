@@ -19,16 +19,24 @@ fun Route.imageApi() {
     route("/api/image") {
         post("/upload") {
             val tutorId = call.authenticatedTutorId
+            KSLog.info("ImageApi.POST: Received upload request from user ${tutorId.id}")
+            KSLog.info("ImageApi.POST: Content-Type: ${call.request.contentType()}")
+            
             val multipart = call.receiveMultipart()
             var fileBytes: ByteArray? = null
 
             multipart.forEachPart { part ->
+                KSLog.info("ImageApi.POST: Processing part: ${part.javaClass.simpleName}")
                 when (part) {
                     is PartData.FileItem -> {
+                        KSLog.info("ImageApi.POST: FileItem found with name: ${part.name}, originalFileName: ${part.originalFileName}")
                         fileBytes = part.streamProvider().readBytes()
+                        KSLog.info("ImageApi.POST: Read ${fileBytes?.size ?: 0} bytes")
                     }
 
-                    else -> {}
+                    else -> {
+                        KSLog.info("ImageApi.POST: Skipping non-file part")
+                    }
                 }
                 part.dispose()
             }
