@@ -230,8 +230,8 @@ object ApiClient {
             setBody(MultiPartFormDataContent(
                 formData {
                     append("file", fileBytes, Headers.build {
-                        append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
-                        append(HttpHeaders.ContentType, "image/jpeg")
+                        append(HttpHeaders.ContentDisposition, "form-data; name=\"file\"; filename=\"${file.name}\"")
+                        append(HttpHeaders.ContentType, file.type.ifEmpty { "image/jpeg" })
                     })
                 }
             ))
