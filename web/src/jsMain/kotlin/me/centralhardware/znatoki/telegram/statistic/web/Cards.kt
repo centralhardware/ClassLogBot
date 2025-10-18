@@ -117,7 +117,7 @@ fun PaymentCard(payment: PaymentDto, onClick: () -> Unit) {
 }
 
 @Composable
-fun StudentCard(student: StudentDto) {
+fun StudentCard(student: StudentDto, onClick: () -> Unit = {}) {
     val fullName = "${student.name} ${student.secondName} ${student.lastName}".trim()
     Div({
         style {
@@ -129,6 +129,7 @@ fun StudentCard(student: StudentDto) {
             property("transition", "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)")
             border(2.px, LineStyle.Solid, Color.transparent)
         }
+        onClick { onClick() }
     }) {
         Div({
             style {

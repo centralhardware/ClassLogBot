@@ -350,3 +350,155 @@ fun PaymentModal(
         }
     }
 }
+
+@Composable
+fun StudentModal(
+    student: StudentDto?,
+    onClose: () -> Unit,
+    onUpdate: (UpdateStudentRequest) -> Unit
+) {
+    var name by remember { mutableStateOf(student?.name ?: "") }
+    var secondName by remember { mutableStateOf(student?.secondName ?: "") }
+    var lastName by remember { mutableStateOf(student?.lastName ?: "") }
+    var schoolClass by remember { mutableStateOf(student?.schoolClass?.toString() ?: "") }
+    var recordDate by remember { mutableStateOf(student?.recordDate ?: "") }
+    var birthDate by remember { mutableStateOf(student?.birthDate ?: "") }
+    var source by remember { mutableStateOf(student?.source ?: "") }
+    var phone by remember { mutableStateOf(student?.phone ?: "") }
+    var responsiblePhone by remember { mutableStateOf(student?.responsiblePhone ?: "") }
+    var motherFio by remember { mutableStateOf(student?.motherFio ?: "") }
+
+    Modal(isOpen = true, onClose = onClose) {
+        H3({ style { marginBottom(20.px) } }) {
+            Text("Редактировать ученика")
+        }
+
+        FormGroup("Имя *") {
+            TextInput(
+                value = name,
+                onValueChange = { name = it },
+                placeholder = "Имя"
+            )
+        }
+
+        FormGroup("Фамилия *") {
+            TextInput(
+                value = secondName,
+                onValueChange = { secondName = it },
+                placeholder = "Фамилия"
+            )
+        }
+
+        FormGroup("Отчество *") {
+            TextInput(
+                value = lastName,
+                onValueChange = { lastName = it },
+                placeholder = "Отчество"
+            )
+        }
+
+        FormGroup("Класс") {
+            TextInput(
+                value = schoolClass,
+                onValueChange = { schoolClass = it },
+                type = "number",
+                placeholder = "Класс"
+            )
+        }
+
+        FormGroup("Дата записи") {
+            TextInput(
+                value = recordDate,
+                onValueChange = { recordDate = it },
+                type = "date"
+            )
+        }
+
+        FormGroup("Дата рождения") {
+            TextInput(
+                value = birthDate,
+                onValueChange = { birthDate = it },
+                type = "date"
+            )
+        }
+
+        FormGroup("Источник") {
+            SelectInput(
+                value = source,
+                options = listOf("" to "Выберите источник") + listOf(
+                    "Вывеска" to "Вывеска",
+                    "С прошлых лет" to "С прошлых лет",
+                    "От знакомых" to "От знакомых",
+                    "2gis" to "2gis",
+                    "Реклама на подъезде" to "Реклама на подъезде",
+                    "Ходили старшие" to "Ходили старшие",
+                    "Интернет" to "Интернет",
+                    "Листовка" to "Листовка",
+                    "Аудио Реклама в магазине" to "Аудио Реклама в магазине",
+                    "Реклама на ТВ" to "Реклама на ТВ",
+                    "инстаграм" to "инстаграм"
+                ),
+                onValueChange = { source = it }
+            )
+        }
+
+        FormGroup("Телефон") {
+            TextInput(
+                value = phone,
+                onValueChange = { phone = it },
+                type = "tel",
+                placeholder = "+7 (XXX) XXX-XX-XX"
+            )
+        }
+
+        FormGroup("Телефон ответственного") {
+            TextInput(
+                value = responsiblePhone,
+                onValueChange = { responsiblePhone = it },
+                type = "tel",
+                placeholder = "+7 (XXX) XXX-XX-XX"
+            )
+        }
+
+        FormGroup("ФИО матери") {
+            TextInput(
+                value = motherFio,
+                onValueChange = { motherFio = it },
+                placeholder = "ФИО матери"
+            )
+        }
+
+        Div({
+            style {
+                display(DisplayStyle.Flex)
+                property("gap", "12px")
+                marginTop(24.px)
+            }
+        }) {
+            PrimaryButton("Сохранить") {
+                if (name.isBlank() || secondName.isBlank() || lastName.isBlank()) {
+                    console.log("Имя, фамилия и отчество обязательны")
+                    return@PrimaryButton
+                }
+
+                onUpdate(
+                    UpdateStudentRequest(
+                        name = name,
+                        secondName = secondName,
+                        lastName = lastName,
+                        schoolClass = schoolClass.toIntOrNull(),
+                        recordDate = recordDate.ifBlank { null },
+                        birthDate = birthDate.ifBlank { null },
+                        source = source.ifBlank { null },
+                        phone = phone.ifBlank { null },
+                        responsiblePhone = responsiblePhone.ifBlank { null },
+                        motherFio = motherFio.ifBlank { null }
+                    )
+                )
+            }
+            SecondaryButton("Отмена") {
+                onClose()
+            }
+        }
+    }
+}

@@ -37,11 +37,11 @@ fun TodayPage(appState: AppState) {
         when (activeTab) {
             0 -> if (hasAddTime) {
                 Div {
-                    Div({ 
-                        style { 
+                    Div({
+                        style {
                             marginBottom(16.px)
                             display(DisplayStyle.Flex)
-                        } 
+                        }
                     }) {
                         PrimaryButton("Добавить занятие") {
                             selectedLesson = null
@@ -61,13 +61,14 @@ fun TodayPage(appState: AppState) {
                     }
                 }
             }
+
             1 -> if (hasAddPayment) {
                 Div {
-                    Div({ 
-                        style { 
+                    Div({
+                        style {
                             marginBottom(16.px)
                             display(DisplayStyle.Flex)
-                        } 
+                        }
                     }) {
                         PrimaryButton("Добавить оплату") {
                             selectedPayment = null
@@ -193,6 +194,22 @@ fun ReportsPage(appState: AppState) {
 
     val scope = rememberCoroutineScope()
 
+    // Получаем список предметов для выбранного преподавателя
+    val availableSubjects = remember(selectedTutor, appState.tutors, appState.subjects) {
+        if (appState.isAdmin && selectedTutor != null) {
+            appState.tutors.find { it.id == selectedTutor }?.subjects ?: emptyList()
+        } else {
+            appState.subjects
+        }
+    }
+
+    // Сбрасываем выбранный предмет, если его нет в доступных для нового преподавателя
+    LaunchedEffect(availableSubjects) {
+        if (selectedSubject != null && availableSubjects.none { it.id == selectedSubject }) {
+            selectedSubject = null
+        }
+    }
+
     LaunchedEffect(selectedSubject, selectedPeriod, selectedTutor) {
         if (selectedSubject != null) {
             isLoading = true
@@ -214,7 +231,7 @@ fun ReportsPage(appState: AppState) {
         FormGroup("Предмет") {
             SelectInput(
                 value = selectedSubject?.toString() ?: "",
-                options = listOf("" to "Выберите предмет") + appState.subjects.map { it.id.toString() to it.name },
+                options = listOf("" to "Выберите предмет") + availableSubjects.map { it.id.toString() to it.name },
                 onValueChange = { selectedSubject = it.toLongOrNull() }
             )
         }
@@ -255,6 +272,22 @@ fun StatisticsPage(appState: AppState) {
 
     val scope = rememberCoroutineScope()
 
+    // Получаем список предметов для выбранного преподавателя
+    val availableSubjects = remember(selectedTutor, appState.tutors, appState.subjects) {
+        if (appState.isAdmin && selectedTutor != null) {
+            appState.tutors.find { it.id == selectedTutor }?.subjects ?: emptyList()
+        } else {
+            appState.subjects
+        }
+    }
+
+    // Сбрасываем выбранный предмет, если его нет в доступных для нового преподавателя
+    LaunchedEffect(availableSubjects) {
+        if (selectedSubject != null && availableSubjects.none { it.name == selectedSubject }) {
+            selectedSubject = null
+        }
+    }
+
     LaunchedEffect(selectedPeriod, selectedSubject, selectedTutor) {
         isLoading = true
         try {
@@ -282,7 +315,7 @@ fun StatisticsPage(appState: AppState) {
         FormGroup("Предмет") {
             SelectInput(
                 value = selectedSubject ?: "all",
-                options = listOf("all" to "Все предметы") + appState.subjects.map { it.name to it.name },
+                options = listOf("all" to "Все предметы") + availableSubjects.map { it.name to it.name },
                 onValueChange = { selectedSubject = if (it == "all") null else it }
             )
         }
@@ -310,21 +343,20 @@ fun StudentsPage(appState: AppState) {
     var searchQuery by remember { mutableStateOf("") }
     var students by remember { mutableStateOf<List<StudentDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var isModalOpen by remember { mutableStateOf(false) }
+    var selectedStudent by remember { mutableStateOf<StudentDto?>(null) }
 
     val scope = rememberCoroutineScope()
 
+    // Load students when search query changes or on initialization
     LaunchedEffect(searchQuery) {
-        if (searchQuery.isNotEmpty()) {
-            isLoading = true
-            try {
-                students = ApiClient.searchStudents(searchQuery)
-            } catch (e: Exception) {
-                console.log("Error searching students: ${e.message}")
-            } finally {
-                isLoading = false
-            }
-        } else {
-            students = emptyList()
+        isLoading = true
+        try {
+            students = ApiClient.searchStudents(searchQuery)
+        } catch (e: Exception) {
+            console.log("Error loading students: ${e.message}")
+        } finally {
+            isLoading = false
         }
     }
 
@@ -342,16 +374,42 @@ fun StudentsPage(appState: AppState) {
         }
 
         if (isLoading) {
-            P { Text("Поиск...") }
+            P { Text("Загрузка...") }
         } else if (students.isNotEmpty()) {
             students.forEach { student ->
-                StudentCard(student)
+                StudentCard(student) {
+                    selectedStudent = student
+                    isModalOpen = true
+                }
             }
         } else if (searchQuery.isNotEmpty()) {
             P({ style { color(Color("#718096")) } }) {
                 Text("Ничего не найдено")
             }
         }
+    }
+
+    if (isModalOpen && selectedStudent != null) {
+        StudentModal(
+            student = selectedStudent,
+            onClose = { isModalOpen = false },
+            onUpdate = { request ->
+                scope.launch {
+                    try {
+                        ApiClient.updateStudent(selectedStudent!!.id.toLong(), request)
+                        // Reload students list after update
+                        students = if (searchQuery.isEmpty()) {
+                            ApiClient.searchStudents("")
+                        } else {
+                            ApiClient.searchStudents(searchQuery)
+                        }
+                        isModalOpen = false
+                    } catch (e: Exception) {
+                        console.log("Error updating student: ${e.message}")
+                    }
+                }
+            }
+        )
     }
 }
 
