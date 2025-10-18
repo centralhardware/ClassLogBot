@@ -43,18 +43,7 @@ fun TodayPage(appState: AppState) {
                     }
 
                     if (lessons.isEmpty()) {
-                        Div({
-                            style {
-                                property("text-align", "center")
-                                padding(40.px, 20.px)
-                                color(Color("#718096"))
-                            }
-                        }) {
-                            Div({ style { fontSize(48.px); marginBottom(12.px); opacity(0.3) } }) {
-                                Text("📚")
-                            }
-                            P { Text("Нет занятий на сегодня") }
-                        }
+                        EmptyState("📚", "Нет занятий на сегодня")
                     } else {
                         lessons.forEach { lesson ->
                             LessonCard(lesson) {
@@ -73,18 +62,7 @@ fun TodayPage(appState: AppState) {
                     }
 
                     if (payments.isEmpty()) {
-                        Div({
-                            style {
-                                property("text-align", "center")
-                                padding(40.px, 20.px)
-                                color(Color("#718096"))
-                            }
-                        }) {
-                            Div({ style { fontSize(48.px); marginBottom(12.px); opacity(0.3) } }) {
-                                Text("💰")
-                            }
-                            P { Text("Нет оплат на сегодня") }
-                        }
+                        EmptyState("💰", "Нет оплат на сегодня")
                     } else {
                         payments.forEach { payment ->
                             PaymentCard(payment) {

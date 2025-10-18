@@ -88,22 +88,15 @@ fun LessonModal(
             }
         }
 
-        FormGroup("Фото отчета") {
-            FileInput(
-                selectedFile = selectedFile,
-                previewUrl = previewUrl,
-                onFileSelected = { file ->
-                    selectedFile = file
-                    // Create preview URL
-                    val reader = org.w3c.files.FileReader()
-                    reader.onload = { event ->
-                        previewUrl = event.target.asDynamic().result as String
-                    }
-                    reader.readAsDataURL(file)
-                },
-                required = true
-            )
-        }
+        PhotoUploadField(
+            selectedFile = selectedFile,
+            previewUrl = previewUrl,
+            onFileChange = { file, url ->
+                selectedFile = file
+                previewUrl = url
+            },
+            required = true
+        )
 
         if (isUploading) {
             Div({
@@ -258,22 +251,15 @@ fun PaymentModal(
             )
         }
 
-        FormGroup("Фото отчета") {
-            FileInput(
-                selectedFile = selectedFile,
-                previewUrl = previewUrl,
-                onFileSelected = { file ->
-                    selectedFile = file
-                    // Create preview URL
-                    val reader = org.w3c.files.FileReader()
-                    reader.onload = { event ->
-                        previewUrl = event.target.asDynamic().result as String
-                    }
-                    reader.readAsDataURL(file)
-                },
-                required = true
-            )
-        }
+        PhotoUploadField(
+            selectedFile = selectedFile,
+            previewUrl = previewUrl,
+            onFileChange = { file, url ->
+                selectedFile = file
+                previewUrl = url
+            },
+            required = true
+        )
 
         if (isUploading) {
             Div({

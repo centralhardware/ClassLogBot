@@ -468,6 +468,47 @@ fun FileInput(
 }
 
 @Composable
+fun PhotoUploadField(
+    selectedFile: org.w3c.files.File?,
+    previewUrl: String?,
+    onFileChange: (org.w3c.files.File, String) -> Unit,
+    required: Boolean = true
+) {
+    FormGroup("Фото отчета") {
+        FileInput(
+            selectedFile = selectedFile,
+            previewUrl = previewUrl,
+            onFileSelected = { file ->
+                // Create preview URL
+                val reader = org.w3c.files.FileReader()
+                reader.onload = { event ->
+                    val url = event.target.asDynamic().result as String
+                    onFileChange(file, url)
+                }
+                reader.readAsDataURL(file)
+            },
+            required = required
+        )
+    }
+}
+
+@Composable
+fun EmptyState(icon: String, message: String) {
+    Div({
+        style {
+            property("text-align", "center")
+            padding(40.px, 20.px)
+            color(Color("#718096"))
+        }
+    }) {
+        Div({ style { fontSize(48.px); marginBottom(12.px); opacity(0.3) } }) {
+            Text(icon)
+        }
+        P { Text(message) }
+    }
+}
+
+@Composable
 fun StudentSelector(
     selectedStudents: List<me.centralhardware.znatoki.telegram.statistic.dto.StudentDto>,
     onStudentsChange: (List<me.centralhardware.znatoki.telegram.statistic.dto.StudentDto>) -> Unit,
