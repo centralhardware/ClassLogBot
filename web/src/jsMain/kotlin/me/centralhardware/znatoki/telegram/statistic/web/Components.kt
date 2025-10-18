@@ -612,7 +612,8 @@ fun StudentSelector(
                                         backgroundColor(Color("#e6f7ff"))
                                     }
                                 }
-                                onClick {
+                                onMouseDown { event ->
+                                    event.preventDefault() // Prevent input from losing focus
                                     if (multiple) {
                                         if (isSelected) {
                                             onStudentsChange(selectedStudents.filter { it.id != student.id })
