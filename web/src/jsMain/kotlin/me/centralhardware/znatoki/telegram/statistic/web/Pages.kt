@@ -37,9 +37,16 @@ fun TodayPage(appState: AppState) {
         when (activeTab) {
             0 -> if (hasAddTime) {
                 Div {
-                    PrimaryButton("Добавить занятие") {
-                        selectedLesson = null
-                        isLessonModalOpen = true
+                    Div({ 
+                        style { 
+                            marginBottom(16.px)
+                            display(DisplayStyle.Flex)
+                        } 
+                    }) {
+                        PrimaryButton("Добавить занятие") {
+                            selectedLesson = null
+                            isLessonModalOpen = true
+                        }
                     }
 
                     if (lessons.isEmpty()) {
@@ -56,9 +63,16 @@ fun TodayPage(appState: AppState) {
             }
             1 -> if (hasAddPayment) {
                 Div {
-                    PrimaryButton("Добавить оплату") {
-                        selectedPayment = null
-                        isPaymentModalOpen = true
+                    Div({ 
+                        style { 
+                            marginBottom(16.px)
+                            display(DisplayStyle.Flex)
+                        } 
+                    }) {
+                        PrimaryButton("Добавить оплату") {
+                            selectedPayment = null
+                            isPaymentModalOpen = true
+                        }
                     }
 
                     if (payments.isEmpty()) {
