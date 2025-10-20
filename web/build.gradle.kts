@@ -110,19 +110,19 @@ tasks.named<Jar>("jvmJar") {
     enabled = false // Disable default JAR, use shadow JAR instead
 }
 
-tasks.register<ShadowJar>("shadowJar") {
+tasks.named<ShadowJar>("shadowJar") {
     group = "shadow"
     dependsOn("copyJsToResources", ":common:jar")
     archiveClassifier.set("")
     archiveBaseName.set("web-jvm")
-    
+
     manifest {
         attributes["Main-Class"] = "me.centralhardware.znatoki.telegram.statistic.web.WebMainKt"
     }
-    
+
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     mergeServiceFiles() // Properly merge META-INF/services files for SPI
-    
+
     val jvmMainCompilation = kotlin.targets.getByName("jvm").compilations.getByName("main")
     from(jvmMainCompilation.output.classesDirs)
     from(jvmMainCompilation.output.resourcesDir)
