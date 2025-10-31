@@ -42,7 +42,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.sta
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.searchStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.studentInfoCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.fsm.Storage
+
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
 import me.centralhardware.znatoki.telegram.statistic.runMigrations
 import me.centralhardware.znatoki.telegram.statistic.extensions.user
@@ -119,11 +119,6 @@ suspend fun main() {
         }
 
         startCommand()
-
-        onContentMessage({
-            Storage.contain(it.userId()) &&
-                    !(it.content is TextContent && it.text == "/reset")
-        }) { Storage.process(it) }
 
         initContext({ it.hasClientPermission() }) {
             addStudentCommand()

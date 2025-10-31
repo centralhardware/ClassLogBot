@@ -5,7 +5,6 @@ plugins {
 }
 
 val ktgbotapiVersion: String by rootProject.extra
-val kstatemachineVersion: String by rootProject.extra
 
 dependencies {
     implementation(project(":common"))
@@ -14,10 +13,6 @@ dependencies {
     implementation("dev.inmo:tgbotapi:$ktgbotapiVersion")
     implementation("com.github.centralhardware:ktgbotapi-commons:$ktgbotapiVersion")
     implementation("com.github.centralhardware.ktgbotapi-middlewars:ktgbotapi-restrict-access-middleware:$ktgbotapiVersion")
-
-    // State Machine
-    implementation("io.github.nsk90:kstatemachine:$kstatemachineVersion")
-    implementation("io.github.nsk90:kstatemachine-coroutines:$kstatemachineVersion")
 }
 
 jib {
