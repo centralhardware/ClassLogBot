@@ -32,6 +32,7 @@ dependencies {
     api("org.apache.lucene:lucene-core:$luceneVersion")
     api("org.apache.lucene:lucene-queryparser:$luceneVersion")
     api("org.apache.lucene:lucene-backward-codecs:$luceneVersion")
+    api("org.apache.lucene:lucene-codecs:$luceneVersion")
 
     // Scheduling
     api("dev.inmo:krontab:2.7.2")
