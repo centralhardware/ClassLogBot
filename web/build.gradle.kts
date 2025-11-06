@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
 
 plugins {
     kotlin("multiplatform")
@@ -121,7 +122,9 @@ tasks.named<ShadowJar>("shadowJar") {
     }
 
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
-    mergeServiceFiles() // Properly merge META-INF/services files for SPI
+    
+    // Use ServiceFileTransformer to properly merge all SPI service files
+    transform(ServiceFileTransformer::class.java)
 
     val jvmMainCompilation = kotlin.targets.getByName("jvm").compilations.getByName("main")
     from(jvmMainCompilation.output.classesDirs)
@@ -129,6 +132,28 @@ tasks.named<ShadowJar>("shadowJar") {
     configurations = listOf(jvmMainCompilation.runtimeDependencyConfigurationName?.let { project.configurations.getByName(it) })
         .filterNotNull()
         .toMutableList()
+}
+
+// Fix Lucene codec SPI file after shadow JAR is created  
+tasks.register<Exec>("fixLuceneCodecs") {
+    dependsOn("shadowJar")
+    workingDir = projectDir
+    val jarPath = layout.buildDirectory.file("libs/web-jvm.jar").get().asFile.absolutePath
+    commandLine("sh", "-c", """
+        mkdir -p build/tmp/jar-fix
+        cd build/tmp/jar-fix
+        jar xf $jarPath META-INF/services/org.apache.lucene.codecs.Codec
+        if ! grep -q "Lucene103Codec" META-INF/services/org.apache.lucene.codecs.Codec; then
+            # Add newline if file doesn't end with one, then add Lucene103Codec
+            if [ -n "${'$'}(tail -c 1 META-INF/services/org.apache.lucene.codecs.Codec)" ]; then
+                echo "" >> META-INF/services/org.apache.lucene.codecs.Codec
+            fi
+            echo "org.apache.lucene.codecs.lucene103.Lucene103Codec" >> META-INF/services/org.apache.lucene.codecs.Codec
+            jar uf $jarPath META-INF/services/org.apache.lucene.codecs.Codec
+        fi
+        cd ../..
+        rm -rf build/tmp/jar-fix
+    """.trimIndent())
 }
 
 // Ensure all JavaExec tasks (including IDE run configurations) depend on copyJsToResources
@@ -140,7 +165,7 @@ tasks.withType<JavaExec> {
 tasks.register<Exec>("dockerBuild") {
     group = "docker"
     description = "Build Docker image for web module"
-    dependsOn("shadowJar", "copyJsToResources")
+    dependsOn("fixLuceneCodecs", "copyJsToResources")
 
     val repoLower = System.getenv("GITHUB_REPOSITORY")?.lowercase() ?: "local/classlogbot"
     val tag = System.getenv("GITHUB_SHA")?.take(7) ?: "dev"
