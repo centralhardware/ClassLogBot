@@ -44,7 +44,7 @@ dependencies {
     api("dev.inmo:tgbotapi:$ktgbotapiVersion")
 
     // Test dependencies
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.0")
     testImplementation("org.testcontainers:postgresql:1.21.3")
     testImplementation("org.testcontainers:junit-jupiter:1.21.3")
