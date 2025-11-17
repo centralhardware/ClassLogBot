@@ -41,7 +41,7 @@ suspend fun BehaviourContext.createPayment(
         sendTextMessage(chatId, "Начало создания оплаты. Используйте $CANCEL для отмены в любой момент.")
         
         // Step 1: Select tutor (if allowed)
-        if (canAddForOthers) {
+        val targetTutor = if (canAddForOthers) {
             val tutorText = waitValidatedText(
                 chatId = chatId,
                 userId = userId,
@@ -50,9 +50,13 @@ suspend fun BehaviourContext.createPayment(
                 inlineSearchType = InlineSearchType.TUTOR,
                 validator = { text -> text.validateTutor().map { } }
             )
-            builder.tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
+            val tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
+            builder.tutorId = tutorId
+            TutorMapper.findByIdOrNull(tutorId) ?: data.user
+        } else {
+            data.user
         }
-        
+
         // Step 2: Enter student FIO
         val fioText = waitValidatedText(
             chatId = chatId,
@@ -62,9 +66,9 @@ suspend fun BehaviourContext.createPayment(
             validator = { text -> text.validateFio().map { } }
         )
         builder.studentId = fioText!!.split(" ")[0].toInt().toStudentId()
-        
+
         // Step 3: Select subject
-        val options = data.user.subjects.map { SubjectMapper.getNameById(it) }
+        val options = targetTutor.subjects.map { SubjectMapper.getNameById(it) }
         val subjectName = waitEnum(
             chatId = chatId,
             userId = userId,

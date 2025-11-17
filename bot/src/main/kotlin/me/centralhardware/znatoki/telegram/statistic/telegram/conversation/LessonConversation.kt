@@ -38,7 +38,7 @@ suspend fun BehaviourContext.createLesson(
         sendTextMessage(chatId, "Начало создания занятия. Используйте $CANCEL для отмены в любой момент.")
         
         // Step 1: Select tutor (if allowed)
-        if (canAddForOthers) {
+        val targetTutor = if (canAddForOthers) {
             val tutorText = waitValidatedText(
                 chatId = chatId,
                 userId = userId,
@@ -47,16 +47,19 @@ suspend fun BehaviourContext.createLesson(
                 inlineSearchType = InlineSearchType.TUTOR,
                 validator = { text -> text.validateTutor().map { } }
             )
-            builder.tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
+            val tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
+            builder.tutorId = tutorId
+            TutorMapper.findByIdOrNull(tutorId) ?: data.user
         } else {
             builder.tutorId = message.tutorId()
+            data.user
         }
         
         // Step 2: Select subject (if user has multiple subjects)
-        if (data.user.subjects.size == 1) {
-            builder.subjectId = data.user.subjects.first()
+        if (targetTutor.subjects.size == 1) {
+            builder.subjectId = targetTutor.subjects.first()
         } else {
-            val options = data.user.subjects.map { SubjectMapper.getNameById(it) }
+            val options = targetTutor.subjects.map { SubjectMapper.getNameById(it) }
             val subjectName = waitEnum(
                 chatId = chatId,
                 userId = userId,
@@ -138,8 +141,8 @@ suspend fun BehaviourContext.createLesson(
                 lesson
             )
             
-            val allowForceGroup = data.user.hasForceGroup()
-            val allowExtraHalf = data.user.hasExtraHalfHour()
+            val allowForceGroup = targetTutor.hasForceGroup()
+            val allowExtraHalf = targetTutor.hasExtraHalfHour()
             if ((allowForceGroup && services.size == 1) || allowExtraHalf) {
                 runBlocking {
                     sendTextMessage(
