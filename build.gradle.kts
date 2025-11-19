@@ -22,7 +22,7 @@ allprojects {
 // Shared version variables
 extra["ktgbotapiVersion"] = "29.0.0"
 extra["poiVersion"] = "5.5.0"
-extra["luceneVersion"] = "10.3.1"
+extra["luceneVersion"] = "10.3.2"
 extra["ktorVersion"] = "3.3.2"
 extra["composeVersion"] = "1.8.0"
 
