@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCallbackQuery
@@ -61,6 +62,7 @@ private suspend fun BehaviourContext.changeLessonDelete(
             lesson,
             null
         )
+        answerCallbackQuery(query, "Занятие удалено")
     } else {
         AuditLogMapper.log(
             userId = query.user.id.chatId.long,
@@ -72,6 +74,7 @@ private suspend fun BehaviourContext.changeLessonDelete(
             null,
             lesson
         )
+        answerCallbackQuery(query, "Занятие восстановлено")
     }
 
 

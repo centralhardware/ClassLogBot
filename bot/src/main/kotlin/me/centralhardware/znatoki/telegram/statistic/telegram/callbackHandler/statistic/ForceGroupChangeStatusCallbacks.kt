@@ -90,6 +90,12 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
         service,
         current
     )
+
+    if (forceGroup) {
+        answerCallbackQuery(query, "Занятие изменено на групповое")
+    } else {
+        answerCallbackQuery(query, "Занятие изменено на одиночное")
+    }
 }
 
 private fun buildServiceKeyboard(

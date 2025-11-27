@@ -89,6 +89,12 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
         oldEntity = service,
         newEntity = updated
     )
+
+    if (extraHalfHour) {
+        answerCallbackQuery(query, "Занятие изменено на полтора часа")
+    } else {
+        answerCallbackQuery(query, "Занятие изменено на один час")
+    }
 }
 
 private fun buildServiceKeyboard(
