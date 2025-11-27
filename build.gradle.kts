@@ -23,7 +23,7 @@ allprojects {
 extra["ktgbotapiVersion"] = "30.0.2"
 extra["poiVersion"] = "5.5.0"
 extra["luceneVersion"] = "10.3.2"
-extra["ktorVersion"] = "3.3.2"
+extra["ktorVersion"] = "3.3.3"
 extra["composeVersion"] = "1.8.0"
 
 subprojects {
