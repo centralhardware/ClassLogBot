@@ -38,6 +38,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.sta
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addLessonCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addLessonForOtherCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportMonthCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.searchStudentCommand
@@ -158,6 +159,7 @@ suspend fun main() {
 
         initContext({ it.hasAdminPermission() }) {
             dailyReportCommand()
+            reportMonthCommand()
 
             deleteStudentCallback()
 

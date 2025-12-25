@@ -11,6 +11,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.report.MonthReport
 import java.io.File
+import java.time.YearMonth
 
 object ReportService {
 
@@ -20,6 +21,14 @@ object ReportService {
 
     fun getReportPrevious(id: TutorId): List<File> {
         return getReport(LessonMapper::getPrevMonthTimes, PaymentMapper::getPrevMonthPayments, id)
+    }
+
+    fun getReportByMonth(id: TutorId, yearMonth: YearMonth): List<File> {
+        return getReport(
+            { tutorId, subjectId -> LessonMapper.getTimesByMonth(tutorId, subjectId, yearMonth) },
+            { tutorId, subjectId -> PaymentMapper.getPaymentsByMonth(tutorId, subjectId, yearMonth) },
+            id
+        )
     }
 
     private fun getReport(getTime: (TutorId, SubjectId) -> List<Lesson>, getPayments: (TutorId, SubjectId) -> List<Payment>, id: TutorId): List<File> {
