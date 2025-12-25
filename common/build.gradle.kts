@@ -20,6 +20,12 @@ dependencies {
     // Serialization
     api("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
+    // Ktor Client for Firefly III
+    api("io.ktor:ktor-client-core:$ktorVersion")
+    api("io.ktor:ktor-client-cio:$ktorVersion")
+    api("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    api("io.ktor:ktor-client-logging:$ktorVersion")
+
     // Utilities
     api("io.arrow-kt:arrow-core:2.2.1.1")
     api("io.minio:minio:8.6.0")

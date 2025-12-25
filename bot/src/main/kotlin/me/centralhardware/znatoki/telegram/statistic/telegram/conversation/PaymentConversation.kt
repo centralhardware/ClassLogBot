@@ -25,6 +25,9 @@ import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 import me.centralhardware.znatoki.telegram.statistic.validateTutor
+import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyConfig
+import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyService
+import kotlinx.coroutines.launch
 
 /**
  * Creates a new payment using wait-based conversation flow
@@ -112,7 +115,7 @@ suspend fun BehaviourContext.createPayment(
             val payment = builder.build()
             val paymentId = PaymentMapper.insert(payment)
             sendLog(payment, paymentId, addedBy)
-            
+
             AuditLogMapper.log(
                 userId = addedBy.id,
                 action = "CREATE_PAYMENT",
@@ -123,7 +126,21 @@ suspend fun BehaviourContext.createPayment(
                 null,
                 payment
             )
-            
+
+            // Export to Firefly III if enabled
+            if (FireflyConfig.enabled) {
+                launch {
+                    val updatedPayment = payment.copy(id = paymentId)
+                    FireflyService.exportPayment(updatedPayment)
+                        .onFailure { error ->
+                            sendTextMessage(
+                                chatId,
+                                "⚠️ Оплата сохранена, но не удалось экспортировать в Firefly: ${error.message}"
+                            )
+                        }
+                }
+            }
+
             sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
         } else {
             MinioService.delete(builder.photoReport!!).onFailure {
