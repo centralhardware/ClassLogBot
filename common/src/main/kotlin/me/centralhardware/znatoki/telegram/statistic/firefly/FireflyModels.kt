@@ -114,7 +114,8 @@ data class AccountAttributes(
 
 @Serializable
 data class AccountListResponse(
-    val data: List<AccountData>
+    val data: List<AccountData>,
+    val meta: PaginationMeta? = null
 )
 
 @Serializable
@@ -143,7 +144,8 @@ data class CategoryAttributes(
 
 @Serializable
 data class CategoryListResponse(
-    val data: List<CategoryData>
+    val data: List<CategoryData>,
+    val meta: PaginationMeta? = null
 )
 
 @Serializable

@@ -103,13 +103,27 @@ object FireflyApiClient {
             }.handleResponse<AccountResponse>("create account in Firefly")
             response.data.id
         } catch (e: Exception) {
-            // If creation failed, try to find existing account
-            val accounts = client.get("/api/v1/accounts") {
-                parameter("type", type)
-            }.handleResponse<AccountListResponse>("get accounts from Firefly")
+            // If creation failed, try to find existing account by searching all pages
+            var page = 1
+            var accountId: String? = null
 
-            accounts.data.find { it.attributes.name == name }?.id
-                ?: throw IllegalStateException("Failed to create or find account: $name")
+            while (accountId == null) {
+                val accounts = client.get("/api/v1/accounts") {
+                    parameter("type", type)
+                    parameter("page", page)
+                }.handleResponse<AccountListResponse>("get accounts from Firefly")
+
+                accountId = accounts.data.find { it.attributes.name == name }?.id
+
+                // Check if there are more pages
+                val totalPages = accounts.meta?.pagination?.totalPages ?: 1
+                if (page >= totalPages) {
+                    break
+                }
+                page++
+            }
+
+            accountId ?: throw IllegalStateException("Failed to create or find account: $name (searched $page pages)")
         }
     }
 
@@ -123,12 +137,26 @@ object FireflyApiClient {
             }.handleResponse<CategoryResponse>("create category in Firefly")
             response.data.id
         } catch (e: Exception) {
-            // If creation failed, try to find existing category
-            val categories = client.get("/api/v1/categories")
-                .handleResponse<CategoryListResponse>("get categories from Firefly")
+            // If creation failed, try to find existing category by searching all pages
+            var page = 1
+            var categoryId: String? = null
 
-            categories.data.find { it.attributes.name == name }?.id
-                ?: throw IllegalStateException("Failed to create or find category: $name")
+            while (categoryId == null) {
+                val categories = client.get("/api/v1/categories") {
+                    parameter("page", page)
+                }.handleResponse<CategoryListResponse>("get categories from Firefly")
+
+                categoryId = categories.data.find { it.attributes.name == name }?.id
+
+                // Check if there are more pages
+                val totalPages = categories.meta?.pagination?.totalPages ?: 1
+                if (page >= totalPages) {
+                    break
+                }
+                page++
+            }
+
+            categoryId ?: throw IllegalStateException("Failed to create or find category: $name (searched $page pages)")
         }
     }
 
