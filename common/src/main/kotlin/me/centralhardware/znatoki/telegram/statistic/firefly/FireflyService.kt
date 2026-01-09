@@ -10,6 +10,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 object FireflyService {
@@ -19,16 +20,18 @@ object FireflyService {
         .credentials(Config.Minio.accessKey, Config.Minio.secretKey)
         .build()
 
-    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private val novosibirskZone = ZoneId.of("Asia/Novosibirsk")
+    private val dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
     private val accountCache = mutableMapOf<String, String>()
     private val categoryCache = mutableMapOf<String, String>()
     private val exportedPaymentsCache = mutableSetOf<String>()
 
     /**
      * Export a single payment to Firefly III
-     * Creates accounts for tutor (source) and student (destination)
+     * Creates main account (source) and student account (destination)
      * Creates category for subject
      * Attaches payment screenshot if available
+     * Tags: tutor name and subject name
      */
     suspend fun exportPayment(payment: Payment): Result<String> = runCatching {
         if (!FireflyConfig.enabled) {
@@ -53,9 +56,12 @@ object FireflyService {
         val subjectName = SubjectMapper.getNameById(payment.subjectId)
 
         // Create or get accounts
-        // For deposit: source = revenue (ученик), destination = asset (преподаватель)
+        // For deposit: source = asset (main account), destination = revenue (student)
+        getOrCreateAccount("main", "asset", "defaultAsset")
         getOrCreateAccount(studentAccountName, "revenue", null)
-        getOrCreateAccount(tutor.name, "asset", "defaultAsset")
+
+        // Create tag: tutor name
+        val tutorTag = tutor.name.replace(" ", "_")
 
         // Create transaction
         val transaction = TransactionRequest(
@@ -63,13 +69,14 @@ object FireflyService {
             transactions = listOf(
                 TransactionSplit(
                     type = "deposit",
-                    date = payment.dateTime.format(dateFormatter),
+                    date = payment.dateTime.atZone(novosibirskZone).format(dateTimeFormatter),
                     amount = payment.amount.amount.toString(),
-                    description = "${tutor.name} $subjectName $studentFio",
+                    description = "Оплата: $studentFio - $subjectName (${tutor.name})",
                     sourceName = studentAccountName,
-                    destinationName = tutor.name,
+                    destinationName = "main",
                     currencyCode = "RUB",
                     categoryName = subjectName,
+                    tags = listOf(tutorTag),
                     externalId = payment.id?.id?.toString()
                 )
             )
