@@ -44,7 +44,7 @@ fun runMigrations(): MigrateResult {
             .dataSource(dataSource)
             .locations("classpath:migrations")
             .cleanDisabled(true)
-            .baselineOnMigrate(true)  // Automatically baseline for existing databases
+            .baselineOnMigrate(true)
             .baselineVersion("000")
             .baselineDescription("Initial schema from existing database")
             .load()
