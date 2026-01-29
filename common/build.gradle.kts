@@ -14,8 +14,8 @@ dependencies {
     api("com.github.seratch:kotliquery:1.9.1")
     api("org.postgresql:postgresql:42.7.9")
     api("com.zaxxer:HikariCP:7.0.2")
-    api("org.flywaydb:flyway-core:11.20.3")
-    api("org.flywaydb:flyway-database-postgresql:11.20.3")
+    api("org.flywaydb:flyway-core:12.0.0")
+    api("org.flywaydb:flyway-database-postgresql:12.0.0")
 
     // Serialization
     api("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
