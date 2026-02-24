@@ -32,27 +32,29 @@ object MinioService {
     fun upload(file: File, dateTime: LocalDateTime): Result<String> = runCatching {
         KSLog.info { "Uploading file=${file.name}, size=${file.length()} to MinIO at $dateTime" }
 
-        val fileNew =
+        val objectKey = "${dateTime.year}/${dateTime.month}/${dateTime.dayOfMonth}/${dateTime.hour}:${dateTime.minute}=${UUID.randomUUID()}.jpg"
+
+        val localFile =
             Paths.get(
-                "${Config.Minio.basePath}/${dateTime.year}/${dateTime.month}/${dateTime.dayOfMonth}/${dateTime.hour}:${dateTime.minute}=${UUID.randomUUID()}.jpg"
+                "${Config.Minio.basePath}/$objectKey"
             )
 
-        Files.createParentDirs(fileNew.toFile())
-        Files.touch(fileNew.toFile())
-        Files.move(file, fileNew.toFile())
+        Files.createParentDirs(localFile.toFile())
+        Files.touch(localFile.toFile())
+        Files.move(file, localFile.toFile())
 
         minioClient.uploadObject(
             UploadObjectArgs.builder()
                 .bucket(Config.Minio.bucket)
-                .filename(fileNew.toFile().absolutePath)
-                .`object`(fileNew.toFile().absolutePath)
+                .filename(localFile.toFile().absolutePath)
+                .`object`(objectKey)
                 .build()
         )
 
-        fileNew.toFile().delete()
+        localFile.toFile().delete()
 
-        KSLog.info { "Successfully uploaded file to MinIO: ${fileNew.toFile().absolutePath}" }
-        fileNew.toFile().absolutePath
+        KSLog.info { "Successfully uploaded file to MinIO: $objectKey" }
+        objectKey
     }.onFailure { KSLog.error(it) }
 
     fun delete(file: String): Result<Unit> = runCatching {
