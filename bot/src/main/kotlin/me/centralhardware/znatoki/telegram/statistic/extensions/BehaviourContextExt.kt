@@ -11,6 +11,7 @@ var BehaviourContextData.user: Tutor
     get() = get("user") as Tutor
     set(value) = set("user", value)
 
+
 suspend fun BehaviourContext.initContext(filter: (Tutor?) -> Boolean, block: BehaviourContext.() -> Unit) = createSubContextAndDoAsynchronouslyWithUpdatesFilter(
     updatesUpstreamFlow = allUpdatesFlow.filter {
         runCatching {
