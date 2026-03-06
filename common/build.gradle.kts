@@ -27,7 +27,7 @@ dependencies {
     api("io.ktor:ktor-client-logging:$ktorVersion")
 
     // Utilities
-    api("io.arrow-kt:arrow-core:2.2.1.1")
+    api("io.arrow-kt:arrow-core:2.2.2")
     api("io.minio:minio:8.6.0")
 
     // Excel
