@@ -41,7 +41,7 @@ dependencies {
     api("org.apache.lucene:lucene-codecs:$luceneVersion")
 
     // Scheduling
-    api("dev.inmo:krontab:2.7.2")
+    api("dev.inmo:krontab:2.8.0")
 
     // Diff library
     api("de.danielbechler:java-object-diff:0.95")
