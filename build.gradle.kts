@@ -1,11 +1,7 @@
 plugins {
     kotlin("jvm") version "2.3.20" apply false
     kotlin("plugin.serialization") version "2.3.10" apply false
-    kotlin("multiplatform") version "2.3.10" apply false
-    id("org.jetbrains.compose") version "1.10.2" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.10" apply false
     id("com.google.cloud.tools.jib") version "3.5.3" apply false
-    id("com.gradleup.shadow") version "9.3.2" apply false
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
@@ -23,14 +19,9 @@ allprojects {
 extra["ktgbotapiVersion"] = "30.0.2"
 extra["poiVersion"] = "5.5.1"
 extra["luceneVersion"] = "10.4.0"
-extra["ktorVersion"] = "3.4.1"
-extra["composeVersion"] = "1.8.0"
 
 subprojects {
-    // Don't apply JVM plugin to web module as it uses multiplatform
-    if (name != "web") {
-        apply(plugin = "org.jetbrains.kotlin.jvm")
-    }
+    apply(plugin = "org.jetbrains.kotlin.jvm")
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
