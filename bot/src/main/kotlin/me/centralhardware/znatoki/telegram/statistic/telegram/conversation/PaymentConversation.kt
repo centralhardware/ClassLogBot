@@ -99,7 +99,7 @@ suspend fun BehaviourContext.createPayment(
         
         // Step 6: Confirm and save
         val confirmPrompt = """
-            ФИО: ${StudentMapper.findById(builder.studentId!!)?.fio()}
+            ФИО: ${StudentMapper.findById(builder.studentId!!).fio()}
             Оплата: ${builder.amount?.amount}
         """.trimIndent()
         

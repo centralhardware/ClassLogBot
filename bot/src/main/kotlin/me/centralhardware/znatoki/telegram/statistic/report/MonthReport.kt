@@ -33,7 +33,7 @@ class MonthReport(
     }
 
     fun generate(times: List<Lesson>, payments: List<Payment>): File? {
-        val serviceName = SubjectMapper.getNameById(subjectId)!!
+        val serviceName = SubjectMapper.getNameById(subjectId)
 
         if (times.isEmpty() && payments.isEmpty()) {
             return null
@@ -110,7 +110,7 @@ class MonthReport(
                                 PaymentMapper.getPaymentsSumForStudent(
                                     tutorId,
                                     fioTimes.first().subjectId,
-                                    client.id!!,
+                                    client.id,
                                     dateTime,
                                 )
                             )

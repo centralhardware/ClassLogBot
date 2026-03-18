@@ -76,8 +76,8 @@ fun BehaviourContext.processInline() = onBaseInlineQuery {
     answerInlineQuery(it, results = articles, isPersonal = true, cachedTime = 0)
 }
 
-private fun getStudentFio(student: Student): String = "${student.id?.id} ${student.fio()}"
+private fun getStudentFio(student: Student): String = "${student.id.id} ${student.fio()}"
 private fun getStudentBio(student: Student): String = "${student.schoolClass?.value?: ""} класс"
 
-private fun getTutorFio(tutor: Tutor): String = "${tutor.id?.id} ${tutor.name}"
+private fun getTutorFio(tutor: Tutor): String = "${tutor.id.id} ${tutor.name}"
 private fun getTutorBio(tutor: Tutor): String = "Репетитор"

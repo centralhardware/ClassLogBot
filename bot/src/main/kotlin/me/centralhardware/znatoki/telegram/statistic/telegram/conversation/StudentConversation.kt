@@ -126,7 +126,7 @@ suspend fun BehaviourContext.createStudent(message: CommonMessage<MessageContent
         sendTextMessage(
             message.chat,
             client.getInfo(
-                LessonMapper.getSubjectIdsForStudent(client.id!!).map {
+                LessonMapper.getSubjectIdsForStudent(client.id).map {
                     SubjectMapper.getNameById(it)
                 }
             ),
@@ -140,7 +140,7 @@ suspend fun BehaviourContext.createStudent(message: CommonMessage<MessageContent
             #ученик
             ${
                 client.getInfo(
-                    LessonMapper.getSubjectIdsForStudent(client.id!!)
+                    LessonMapper.getSubjectIdsForStudent(client.id)
                         .map { SubjectMapper.getNameById(it) }
                 )
             }

@@ -11,11 +11,11 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
 fun BehaviourContext.studentInfoCommand() = onCommandWithArgs("i") { message, args ->
-    StudentMapper.findById(args.first().toInt().toStudentId())?.let { client ->
+    StudentMapper.findById(args.first().toInt().toStudentId()).let { client ->
         sendMessage(
             message.chat,
             client.getInfo(
-                LessonMapper.getSubjectIdsForStudent(client.id!!)
+                LessonMapper.getSubjectIdsForStudent(client.id)
                     .map { SubjectMapper.getNameById(it) }
                     .toList()
             ),

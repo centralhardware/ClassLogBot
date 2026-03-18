@@ -33,17 +33,17 @@ fun BehaviourContext.searchStudentCommand() = onCommandWithArgs("s") { message, 
             "${client.name} ${client.secondName} ${client.lastName}",
             replyMarkup =
                 inlineKeyboard {
-                    row { dataButton("информация", "user_info${client.id?.id}") }
+                    row { dataButton("информация", "user_info${client.id.id}") }
                     if (data.user.hasClientPermission()) {
                         row {
                             webAppButton(
                                 "Редактировать",
-                                WebAppInfo("$webAppUrl?student_id=${client.id?.id}")
+                                WebAppInfo("$webAppUrl?student_id=${client.id.id}")
                             )
                         }
                     }
                     if (data.user.hasAdminPermission()) {
-                        row { dataButton("удалить", "delete_user${client.id?.id}") }
+                        row { dataButton("удалить", "delete_user${client.id.id}") }
                     }
                 },
         )

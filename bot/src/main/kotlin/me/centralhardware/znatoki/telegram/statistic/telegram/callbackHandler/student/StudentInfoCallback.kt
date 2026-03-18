@@ -14,7 +14,7 @@ fun BehaviourContext.studentInfoCallback() = onDataCallbackQuery(Regex("user_inf
     StudentMapper.findById(it.data.replace("user_info", "").toInt().toStudentId()).let { client ->
         val info =
             client.getInfo(
-                LessonMapper.getSubjectIdsForStudent(client.id!!)
+                LessonMapper.getSubjectIdsForStudent(client.id)
                     .map { subjectId -> SubjectMapper.getNameById(subjectId) }
                     .toList()
             )

@@ -46,7 +46,7 @@ object FireflyService {
             return@runCatching "cached_$paymentId"
         }
 
-        KSLog.info { "Exporting payment ${payment.id?.id} to Firefly" }
+        KSLog.info { "Exporting payment ${payment.id.id} to Firefly" }
 
         // Get tutor, student, and subject details
         val tutor = TutorMapper.findByIdOrNull(payment.tutorId)
@@ -77,7 +77,7 @@ object FireflyService {
                     currencyCode = "RUB",
                     categoryName = subjectName,
                     tags = listOf(tutorTag),
-                    externalId = payment.id?.id?.toString()
+                    externalId = payment.id.id.toString()
                 )
             )
         )
@@ -88,7 +88,7 @@ object FireflyService {
             // If error is about duplicate, it's ok - transaction already exists
             if (e.message?.contains("duplicate", ignoreCase = true) == true ||
                 e.message?.contains("Duplicate of transaction", ignoreCase = true) == true) {
-                KSLog.info { "Payment ${payment.id?.id} already exists in Firefly (duplicate), skipping" }
+                KSLog.info { "Payment ${payment.id.id} already exists in Firefly (duplicate), skipping" }
                 exportedPaymentsCache.add(paymentId)
                 return@runCatching "existing_duplicate_$paymentId"
             }
@@ -105,7 +105,7 @@ object FireflyService {
 
         // Attach screenshot if available
         if (payment.photoReport != null) {
-            attachScreenshot(transactionJournalId, payment.photoReport, payment.id?.id ?: 0)
+            attachScreenshot(transactionJournalId, payment.photoReport, payment.id.id)
         }
 
         response.data.id
