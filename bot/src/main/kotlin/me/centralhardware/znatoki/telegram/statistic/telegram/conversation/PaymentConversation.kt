@@ -116,17 +116,6 @@ suspend fun BehaviourContext.createPayment(
             val paymentId = PaymentMapper.insert(payment)
             sendLog(payment, paymentId, addedBy)
 
-            AuditLogMapper.log(
-                userId = addedBy.id,
-                action = "CREATE_PAYMENT",
-                entityType = "payment",
-                entityId = paymentId.id.toString(),
-                studentId = payment.studentId.id,
-                subjectId = payment.subjectId.id.toInt(),
-                null,
-                payment
-            )
-
             // Export to Firefly III if enabled
             if (FireflyConfig.enabled) {
                 launch {

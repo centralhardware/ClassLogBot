@@ -17,7 +17,6 @@ import me.centralhardware.znatoki.telegram.statistic.entity.SourceOption
 import me.centralhardware.znatoki.telegram.statistic.entity.getInfo
 import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
-import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
@@ -146,17 +145,6 @@ suspend fun BehaviourContext.createStudent(message: CommonMessage<MessageContent
             }
             """.trimIndent(),
             parseMode = MarkdownParseMode,
-        )
-        
-        AuditLogMapper.log(
-            userId = message.tutorId().id,
-            action = "CREATE_STUDENT",
-            entityType = "student",
-            entityId = client.id.id.toString(),
-            studentId = client.id.id,
-            subjectId = null,
-            null,
-            client
         )
         
         sendTextMessage(message.chat, "Создание ученика закончено")

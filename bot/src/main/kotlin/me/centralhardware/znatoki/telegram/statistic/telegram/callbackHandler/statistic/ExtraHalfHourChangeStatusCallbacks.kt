@@ -16,7 +16,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.hasForceGroup
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 
@@ -78,17 +77,6 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
 
     query.messageDataCallbackQueryOrNull()
         ?.let { edit(it.message, replyMarkup = keyboard) }
-
-    AuditLogMapper.log(
-        userId = query.user.id.chatId.long,
-        action = "UPDATE_LESSON",
-        entityType = "lesson",
-        entityId = service.id.id.toString(),
-        studentId = service.studentId.id,
-        subjectId = service.subjectId.id.toInt(),
-        oldEntity = service,
-        newEntity = updated
-    )
 
     if (extraHalfHour) {
         answerCallbackQuery(query, "Занятие изменено на полтора часа")

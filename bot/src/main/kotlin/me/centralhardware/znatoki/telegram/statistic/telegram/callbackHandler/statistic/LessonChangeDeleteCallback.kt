@@ -12,7 +12,7 @@ import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+
 
 private const val ACTION_DELETE = "timeDelete"
 private const val ACTION_RESTORE = "timeRestore"
@@ -52,28 +52,8 @@ private suspend fun BehaviourContext.changeLessonDelete(
     }
 
     if (deleted) {
-        AuditLogMapper.log(
-            userId = query.user.id.chatId.long,
-            action = "DELETE_LESSON",
-            entityType = "lesson",
-            entityId = lesson.id.id.toString(),
-            studentId = lesson.studentId.id,
-            subjectId = lesson.subjectId.id.toInt(),
-            lesson,
-            null
-        )
         answerCallbackQuery(query, "Занятие удалено")
     } else {
-        AuditLogMapper.log(
-            userId = query.user.id.chatId.long,
-            action = "RESTORE_LESSON",
-            entityType = "lesson",
-            entityId = lesson.id.id.toString(),
-            studentId = lesson.studentId.id,
-            subjectId = lesson.subjectId.id.toInt(),
-            null,
-            lesson
-        )
         answerCallbackQuery(query, "Занятие восстановлено")
     }
 

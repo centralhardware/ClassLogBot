@@ -11,7 +11,7 @@ import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentId
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
+
 
 private const val ACTION_DELETE = "paymentDelete"
 private const val ACTION_RESTORE = "paymentRestore"
@@ -42,28 +42,8 @@ private suspend fun BehaviourContext.changePaymentDelete(
         edit(msg, replyMarkup = paymentKeyboard(id = id, deleted = delete))
     }
     if (delete) {
-        AuditLogMapper.log(
-            userId = query.user.id.chatId.long,
-            action = "DELETE_PAYMENT",
-            entityType = "payment",
-            entityId = id.id.toString(),
-            studentId = payment.studentId.id,
-            subjectId = payment.subjectId.id.toInt(),
-            payment,
-            null
-        )
         answerCallbackQuery(query, "Платеж удален")
     } else {
-        AuditLogMapper.log(
-            userId = query.user.id.chatId.long,
-            action = "RESTORE_PAYMENT",
-            entityType = "payment",
-            entityId = id.id.toString(),
-            studentId = payment.studentId.id,
-            subjectId = payment.subjectId.id.toInt(),
-            null,
-            payment
-        )
         answerCallbackQuery(query, "Платеж восстановлен")
     }
 

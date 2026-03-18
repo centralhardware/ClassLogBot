@@ -50,11 +50,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.user
 import me.centralhardware.znatoki.telegram.statistic.extensions.initContext
 import restrictAccess
 
-/**
- * Main entry point for the Telegram bot.
- * Initializes the bot, configures user permissions, registers command handlers,
- * and starts scheduled reporting tasks.
- */
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
 suspend fun main() {

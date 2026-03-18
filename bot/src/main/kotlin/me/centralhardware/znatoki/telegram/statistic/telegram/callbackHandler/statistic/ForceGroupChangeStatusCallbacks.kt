@@ -17,7 +17,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
-import me.centralhardware.znatoki.telegram.statistic.mapper.AuditLogMapper
 import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 
@@ -79,17 +78,6 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
 
     query.messageDataCallbackQueryOrNull()
         ?.let { edit(it.message, replyMarkup = keyboard) }
-
-    AuditLogMapper.log(
-        userId = query.user.id.chatId.long,
-        action = "UPDATE_LESSON",
-        entityType = "lesson",
-        entityId = service.id.id.toString(),
-        studentId = service.studentId.id,
-        subjectId = service.subjectId.id.toInt(),
-        service,
-        current
-    )
 
     if (forceGroup) {
         answerCallbackQuery(query, "Занятие изменено на групповое")

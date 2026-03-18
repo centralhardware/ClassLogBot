@@ -128,19 +128,6 @@ suspend fun BehaviourContext.createLesson(
             services.forEach { LessonMapper.insert(it) }
             sendLog(services, message.userId(), addedBy)
             
-            val lesson = services.first()
-            
-            AuditLogMapper.log(
-                userId = addedBy.id,
-                action = "CREATE_LESSON",
-                entityType = "lesson",
-                entityId = lesson.id.id.toString(),
-                studentId = lesson.studentId.id,
-                subjectId = lesson.subjectId.id.toInt(),
-                null,
-                lesson
-            )
-            
             val allowForceGroup = targetTutor.hasForceGroup()
             val allowExtraHalf = targetTutor.hasExtraHalfHour()
             if ((allowForceGroup && services.size == 1) || allowExtraHalf) {

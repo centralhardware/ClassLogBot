@@ -43,9 +43,6 @@ dependencies {
     // Scheduling
     api("dev.inmo:krontab:2.8.0")
 
-    // Diff library
-    api("de.danielbechler:java-object-diff:0.95")
-
     // TgBotAPI (minimal - only needed for entity Tutor - includes kslog transitively)
     api("dev.inmo:tgbotapi:$ktgbotapiVersion")
 
