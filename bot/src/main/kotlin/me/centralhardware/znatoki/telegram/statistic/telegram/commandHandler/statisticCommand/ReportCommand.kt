@@ -9,11 +9,11 @@ import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.toChatId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.user
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 
-import me.centralhardware.znatoki.telegram.statistic.user
 import java.io.File
 
 private suspend fun BehaviourContext.createReport(

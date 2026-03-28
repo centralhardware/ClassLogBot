@@ -11,8 +11,8 @@ import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasClientPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.user
 import me.centralhardware.znatoki.telegram.statistic.service.StudentService
-import me.centralhardware.znatoki.telegram.statistic.user
 import org.apache.commons.collections4.CollectionUtils
 
 fun BehaviourContext.searchStudentCommand() = onCommandWithArgs("s") { message, args ->

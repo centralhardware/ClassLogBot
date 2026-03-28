@@ -18,7 +18,6 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.*
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.telegram.*
-import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 import me.centralhardware.znatoki.telegram.statistic.validateTutor

@@ -15,8 +15,8 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermissi
 import me.centralhardware.znatoki.telegram.statistic.extensions.hasForceGroup
 import me.centralhardware.znatoki.telegram.statistic.extensions.isDm
 import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
+import me.centralhardware.znatoki.telegram.statistic.extensions.user
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
-import me.centralhardware.znatoki.telegram.statistic.user
 import java.time.LocalDateTime
 
 private const val ACTION_ADD = "extraHalfHourAdd"

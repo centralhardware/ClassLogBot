@@ -21,13 +21,13 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import me.centralhardware.znatoki.telegram.statistic.telegram.*
-import me.centralhardware.znatoki.telegram.statistic.user
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 import me.centralhardware.znatoki.telegram.statistic.validateTutor
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyConfig
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyService
 import kotlinx.coroutines.launch
+import me.centralhardware.znatoki.telegram.statistic.extensions.user
 
 /**
  * Creates a new payment using wait-based conversation flow
