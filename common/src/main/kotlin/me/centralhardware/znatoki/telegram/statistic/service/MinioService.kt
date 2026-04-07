@@ -11,7 +11,7 @@ import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioClient
 import io.minio.RemoveObjectArgs
 import io.minio.UploadObjectArgs
-import io.minio.http.Method
+import io.minio.Http
 import korlibs.time.seconds
 import java.io.File
 import java.nio.file.Paths
@@ -79,7 +79,7 @@ object MinioService {
         KSLog.info { "Generating presigned link for file=$file, expire=${expire.inWholeSeconds}s" }
         minioClient.getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
-                .method(Method.GET)
+                .method(Http.Method.GET)
                 .bucket(Config.Minio.bucket)
                 .`object`(file)
                 .expiry(expire.seconds.toInt(), TimeUnit.SECONDS)
