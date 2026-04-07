@@ -28,7 +28,7 @@ dependencies {
 
     // Utilities
     api("io.arrow-kt:arrow-core:2.2.2.1")
-    api("io.minio:minio:8.6.0")
+    api("io.minio:minio:9.0.0")
 
     // Excel
     api("org.apache.poi:poi:$poiVersion")
