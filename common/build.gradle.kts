@@ -41,7 +41,7 @@ dependencies {
     api("org.apache.lucene:lucene-codecs:$luceneVersion")
 
     // Scheduling
-    api("dev.inmo:krontab:2.8.0")
+    api("dev.inmo:krontab:2.9.0")
 
     // TgBotAPI (minimal - only needed for entity Tutor - includes kslog transitively)
     api("dev.inmo:tgbotapi:$ktgbotapiVersion")
