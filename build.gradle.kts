@@ -19,7 +19,7 @@ allprojects {
 extra["ktgbotapiVersion"] = "33.0.0"
 extra["poiVersion"] = "5.5.1"
 extra["luceneVersion"] = "10.4.0"
-extra["ktorVersion"] = "3.4.2"
+extra["ktorVersion"] = "3.4.3"
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
