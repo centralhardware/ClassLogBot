@@ -36,7 +36,8 @@ suspend fun main() {
     runMigrations()
     StudentService.init()
 
-    longPolling("ZnatokiStatistic") (
+    longPolling (
+        "ZnatokiStatistic",
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->
                 runCatching {
