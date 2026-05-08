@@ -4,27 +4,17 @@ import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.warning
 import dev.inmo.micro_utils.common.Warning
-import dev.inmo.tgbotapi.AppConfig
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
-import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
-import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextData
 import dev.inmo.tgbotapi.extensions.behaviour_builder.buildSubcontextInitialAction
-import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
-import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
-import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
 import dev.inmo.tgbotapi.longPolling
 import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.commands.BotCommandScopeChat
-import dev.inmo.tgbotapi.types.message.content.TextContent
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
-import me.centralhardware.znatoki.telegram.statistic.extensions.canAddPaymentForOthers
-import me.centralhardware.znatoki.telegram.statistic.extensions.canAddTimeForOthers
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.report.dailyReport
 import me.centralhardware.znatoki.telegram.statistic.report.monthReport
+import me.centralhardware.znatoki.telegram.statistic.runMigrations
 import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import me.centralhardware.znatoki.telegram.statistic.telegram.UserExistChecker
 import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic.*
@@ -33,32 +23,20 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.st
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.debug.dailyReportCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.resetCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.startCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addPaymentForOtherCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addLessonCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.addLessonForOtherCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportMonthCommand
-import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.reportPreviousCommand
+import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand.*
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.addStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.searchStudentCommand
 import me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand.studentInfoCommand
-
 import me.centralhardware.znatoki.telegram.statistic.telegram.processInline
-import me.centralhardware.znatoki.telegram.statistic.runMigrations
-import me.centralhardware.znatoki.telegram.statistic.extensions.user
-import me.centralhardware.znatoki.telegram.statistic.extensions.initContext
 import restrictAccess
 
 @OptIn(Warning::class)
 @Suppress("DeferredResultUnused")
 suspend fun main() {
-    AppConfig.init("ZnatokiStatistic")
-
     runMigrations()
     StudentService.init()
 
-    longPolling(
+    longPolling("ZnatokiStatistic") (
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->
                 runCatching {
