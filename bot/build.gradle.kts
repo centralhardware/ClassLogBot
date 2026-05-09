@@ -11,7 +11,7 @@ dependencies {
 
     // Telegram Bot API
     implementation("dev.inmo:tgbotapi:$ktgbotapiVersion")
-    implementation("com.github.centralhardware:ktgbotapi-commons:b16dff76")
+    implementation("com.github.centralhardware:ktgbotapi-commons:$ktgbotapiVersion")
 }
 
 jib {
