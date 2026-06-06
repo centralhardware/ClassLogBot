@@ -1,14 +1,18 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
-import arrow.core.left
-import arrow.core.right
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
 import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
-import kotlinx.coroutines.runBlocking
+import me.centralhardware.telegram.conversation.CANCEL
+import me.centralhardware.telegram.conversation.ConversationCancelledException
+import me.centralhardware.telegram.conversation.SKIP
+import me.centralhardware.telegram.conversation.waitEnum
+import me.centralhardware.telegram.conversation.waitInt
+import me.centralhardware.telegram.conversation.waitParsed
+import me.centralhardware.telegram.conversation.waitValidatedText
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.PhoneNumber
@@ -20,97 +24,67 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
-import me.centralhardware.znatoki.telegram.statistic.telegram.SKIP
-import me.centralhardware.znatoki.telegram.statistic.telegram.*
+import me.centralhardware.znatoki.telegram.statistic.telegram.parseDateInput
+import me.centralhardware.znatoki.telegram.statistic.telegram.parseFio
+import me.centralhardware.znatoki.telegram.statistic.telegram.parsePhone
 
 /**
  * Creates a new student using wait-based conversation flow
  */
 suspend fun BehaviourContext.createStudent(message: CommonMessage<MessageContent>) {
     val chatId = message.chat.id
-    val userId = message.userId()
     val builder = ClientBuilder()
-    
+
     try {
         sendTextMessage(chatId, "Начало создания ученика. Используйте $CANCEL для отмены в любой момент.")
-        
+
         // Step 1: Enter FIO
-        val fio = waitValidatedFio(
-            chatId = chatId,
-            userId = userId,
-            prompt = "Ведите ФИО в формате: фамилия имя [отчество].",
-            duplicateCheck = {
-                StudentMapper.findAllByFio(it.first, it.second, it.third).isEmpty()
-            }
-        )
+        val fio = waitParsed(chatId, "Ведите ФИО в формате: фамилия имя [отчество].") { text ->
+            parseFio(text) { StudentMapper.findAllByFio(it.first, it.second, it.third).isEmpty() }
+        }
         builder.name = fio!!.first
         builder.secondName = fio.second
         builder.lastName = fio.third
-        
+
         // Step 2: Enter school class (optional)
-        val schoolClass = waitValidatedInt(
+        val schoolClass = waitInt(
             chatId = chatId,
-            userId = userId,
             prompt = "Введите класс $SKIP для пропуска.",
             allowSkip = true,
-            validator = {
-                if (SchoolClass.validate(it)) {
-                    Unit.right()
-                } else {
-                    "Введите класс".left()
-                }
-            }
+            validate = { if (SchoolClass.validate(it)) null else "Введите класс" }
         )
         schoolClass?.let { builder.schoolClass = SchoolClass(it) }
-        
+
         // Step 3: Enter record date
-        val recordDate = waitValidatedDate(
-            chatId = chatId,
-            userId = userId,
-            prompt = "Введите дату записи дд ММ гггг"
-        )
-        builder.recordDate = recordDate
-        
+        builder.recordDate = waitParsed(chatId, "Введите дату записи дд ММ гггг") { parseDateInput(it) }
+
         // Step 4: Enter birth date
-        val birthDate = waitValidatedDate(
-            chatId = chatId,
-            userId = userId,
-            prompt = "Введите дату рождения дд ММ гггг"
-        )
-        builder.birthDate = birthDate
-        
+        builder.birthDate = waitParsed(chatId, "Введите дату рождения дд ММ гггг") { parseDateInput(it) }
+
         // Step 5: Select source (how they learned about us)
         val source = waitEnum(
             chatId = chatId,
-            userId = userId,
             prompt = "Введите как узнал",
             options = SourceOption.options(),
             allowSkip = true
         )
         source?.let { builder.source = SourceOption.fromTitle(it) }
-        
+
         // Step 6: Enter phone (optional)
-        val phone = waitValidatedPhone(
-            chatId = chatId,
-            userId = userId,
-            prompt = "Введите телефон $SKIP для пропуска.",
-            allowSkip = true
-        )
+        val phone = waitParsed(chatId, "Введите телефон $SKIP для пропуска.", allowSkip = true) { parsePhone(it) }
         phone?.let { builder.phone = PhoneNumber(it) }
-        
+
         // Step 7: Enter responsible person's phone (optional)
-        val responsiblePhone = waitValidatedPhone(
-            chatId = chatId,
-            userId = userId,
-            prompt = "Введите телефон ответственного $SKIP для пропуска.",
+        val responsiblePhone = waitParsed(
+            chatId,
+            "Введите телефон ответственного $SKIP для пропуска.",
             allowSkip = true
-        )
+        ) { parsePhone(it) }
         responsiblePhone?.let { builder.responsiblePhone = PhoneNumber(it) }
-        
+
         // Step 8: Enter mother's FIO (optional)
         val motherFio = waitValidatedText(
             chatId = chatId,
-            userId = userId,
             prompt = "Введите ФИО матери $SKIP для пропуска.",
             allowSkip = true
         )

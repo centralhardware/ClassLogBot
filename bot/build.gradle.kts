@@ -4,14 +4,10 @@ plugins {
     id("com.google.cloud.tools.jib")
 }
 
-val ktgbotapiVersion: String by rootProject.extra
-
 dependencies {
     implementation(project(":common"))
 
-    // Telegram Bot API
-    implementation("dev.inmo:tgbotapi:$ktgbotapiVersion")
-    implementation("com.github.centralhardware:ktgbotapi-commons:8b9e69dd")
+    implementation("com.github.centralhardware:ktgbotapi-commons:bf997d37")
 }
 
 jib {

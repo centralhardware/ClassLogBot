@@ -7,8 +7,6 @@ val poiVersion: String by rootProject.extra
 val luceneVersion: String by rootProject.extra
 val ktorVersion: String by rootProject.extra
 
-val ktgbotapiVersion: String by rootProject.extra
-
 dependencies {
     // Database
     api("com.github.seratch:kotliquery:1.9.1")
@@ -43,8 +41,8 @@ dependencies {
     // Scheduling
     api("dev.inmo:krontab:2.9.0")
 
-    // TgBotAPI (minimal - only needed for entity Tutor - includes kslog transitively)
-    api("dev.inmo:tgbotapi:$ktgbotapiVersion")
+    // Telegram (brings tgbotapi + kslog transitively)
+    api("com.github.centralhardware:ktgbotapi-commons:bf997d37")
 
     // Test dependencies
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.0")

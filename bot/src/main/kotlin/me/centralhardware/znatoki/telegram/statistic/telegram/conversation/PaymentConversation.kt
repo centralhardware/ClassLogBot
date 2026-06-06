@@ -20,7 +20,15 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.tutorId
 import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.*
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
-import me.centralhardware.znatoki.telegram.statistic.telegram.*
+import me.centralhardware.telegram.conversation.CANCEL
+import me.centralhardware.telegram.conversation.ConversationCancelledException
+import me.centralhardware.telegram.conversation.waitConfirmation
+import me.centralhardware.telegram.conversation.waitEnum
+import me.centralhardware.telegram.conversation.waitInlineSearch
+import me.centralhardware.telegram.conversation.waitInt
+import me.centralhardware.telegram.conversation.waitPhoto
+import me.centralhardware.znatoki.telegram.statistic.extensions.extract
+import me.centralhardware.znatoki.telegram.statistic.telegram.errorOrNull
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 import me.centralhardware.znatoki.telegram.statistic.validateTutor
@@ -37,21 +45,19 @@ suspend fun BehaviourContext.createPayment(
     canAddForOthers: Boolean = false
 ) {
     val chatId = message.chat.id
-    val userId = message.userId()
     val builder = PaymentBuilder()
-    
+
     try {
         sendTextMessage(chatId, "Начало создания оплаты. Используйте $CANCEL для отмены в любой момент.")
-        
+
         // Step 1: Select tutor (if allowed)
         val targetTutor = if (canAddForOthers) {
-            val tutorText = waitValidatedText(
+            val tutorText = waitInlineSearch(
                 chatId = chatId,
-                userId = userId,
                 prompt = "Выберите репетитора",
-                useInline = true,
-                inlineSearchType = InlineSearchType.TUTOR,
-                validator = { text -> text.validateTutor().map { } }
+                query = "t: ",
+                buttonText = "Поиск",
+                validate = { it.validateTutor().errorOrNull() }
             )
             val tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
             builder.tutorId = tutorId
@@ -61,12 +67,12 @@ suspend fun BehaviourContext.createPayment(
         }
 
         // Step 2: Enter student FIO
-        val fioText = waitValidatedText(
+        val fioText = waitInlineSearch(
             chatId = chatId,
-            userId = userId,
             prompt = "Введите фио. \nнажмите для поиска фио",
-            useInline = true,
-            validator = { text -> text.validateFio().map { } }
+            query = "s: ",
+            buttonText = "Поиск",
+            validate = { it.validateFio().errorOrNull() }
         )
         builder.studentId = fioText!!.split(" ")[0].toInt().toStudentId()
 
@@ -74,36 +80,29 @@ suspend fun BehaviourContext.createPayment(
         val options = targetTutor.subjects.map { SubjectMapper.getNameById(it) }
         val subjectName = waitEnum(
             chatId = chatId,
-            userId = userId,
             prompt = "Выберите предмет",
             options = options
         )
         builder.subjectId = SubjectMapper.getIdByName(subjectName!!)
-        
+
         // Step 4: Enter payment amount
-        val amount = waitValidatedInt(
+        val amount = waitInt(
             chatId = chatId,
-            userId = userId,
             prompt = "Введите сумму оплаты",
-            validator = { it.validateAmount() }
+            validate = { it.validateAmount().errorOrNull() }
         )
         builder.amount = amount!!.toAmount()
-        
+
         // Step 5: Upload photo report
-        val photoKey = waitValidatedPhoto(
-            chatId = chatId,
-            userId = userId,
-            prompt = "Введите фото отчетности"
-        )
-        builder.photoReport = photoKey
-        
+        builder.photoReport = waitPhoto(chatId, "Введите фото отчетности")!!.extract()
+
         // Step 6: Confirm and save
         val confirmPrompt = """
             ФИО: ${StudentMapper.findById(builder.studentId!!).fio()}
             Оплата: ${builder.amount?.amount}
         """.trimIndent()
-        
-        val confirmed = waitConfirmation(chatId, userId, confirmPrompt)
+
+        val confirmed = waitConfirmation(chatId, confirmPrompt)
         
         if (confirmed) {
             val addedBy = message.tutorId()
