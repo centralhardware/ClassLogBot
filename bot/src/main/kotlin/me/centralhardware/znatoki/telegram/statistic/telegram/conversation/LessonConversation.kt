@@ -8,7 +8,7 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
-import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.abstracts.ChatContentMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.coroutines.runBlocking
@@ -37,7 +37,7 @@ import me.centralhardware.znatoki.telegram.statistic.validateTutor
  * Creates a new lesson using wait-based conversation flow
  */
 suspend fun BehaviourContext.createLesson(
-    message: CommonMessage<MessageContent>,
+    message: ChatContentMessage<MessageContent>,
     canAddForOthers: Boolean = false
 ) {
     val chatId = message.chat.id
