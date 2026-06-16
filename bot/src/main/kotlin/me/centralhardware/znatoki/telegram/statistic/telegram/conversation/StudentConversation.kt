@@ -4,7 +4,7 @@ import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
-import dev.inmo.tgbotapi.types.message.abstracts.CommonMessage
+import dev.inmo.tgbotapi.types.message.abstracts.ChatContentMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import me.centralhardware.telegram.conversation.CANCEL
 import me.centralhardware.telegram.conversation.ConversationCancelledException
@@ -31,7 +31,7 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.parsePhone
 /**
  * Creates a new student using wait-based conversation flow
  */
-suspend fun BehaviourContext.createStudent(message: CommonMessage<MessageContent>) {
+suspend fun BehaviourContext.createStudent(message: ChatContentMessage<MessageContent>) {
     val chatId = message.chat.id
     val builder = ClientBuilder()
 
