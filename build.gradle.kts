@@ -17,7 +17,7 @@ allprojects {
 
 // Shared version variables
 extra["poiVersion"] = "5.5.1"
-extra["luceneVersion"] = "10.4.0"
+extra["luceneVersion"] = "10.5.0"
 extra["ktorVersion"] = "3.5.0"
 
 subprojects {
