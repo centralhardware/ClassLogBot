@@ -7,7 +7,7 @@ plugins {
 dependencies {
     implementation(project(":common"))
 
-    implementation("com.github.centralhardware:ktgbotapi-commons:eb3d7671")
+    implementation("com.github.centralhardware:ktgbotapi-commons:3b24b76e")
 }
 
 jib {
