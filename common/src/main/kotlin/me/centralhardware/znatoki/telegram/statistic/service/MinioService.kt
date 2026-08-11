@@ -14,6 +14,8 @@ import io.minio.UploadObjectArgs
 import io.minio.Http
 import korlibs.time.seconds
 import java.io.File
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util.*
@@ -33,7 +35,7 @@ object MinioService {
     fun upload(file: File, dateTime: LocalDateTime): Result<String> = runCatching {
         KSLog.info { "Uploading file=${file.name}, size=${file.length()} to MinIO at $dateTime" }
 
-        val objectKey = "${dateTime.year}/${dateTime.month}/${dateTime.dayOfMonth}/${dateTime.hour}:${dateTime.minute}=${UUID.randomUUID()}.jpg"
+        val objectKey = "${dateTime.year}/${dateTime.month}/${dateTime.dayOfMonth}/${dateTime.hour}-${dateTime.minute}-${UUID.randomUUID()}.jpg"
 
         val localFile =
             Paths.get(
@@ -78,7 +80,7 @@ object MinioService {
 
     fun getLink(file: String, expire: Duration): Result<String> = runCatching {
         KSLog.info { "Generating presigned link for file=$file, expire=${expire.inWholeSeconds}s" }
-        minioClient.getPresignedObjectUrl(
+        val url = minioClient.getPresignedObjectUrl(
             GetPresignedObjectUrlArgs.builder()
                 .method(Http.Method.GET)
                 .bucket(Config.Minio.bucket)
@@ -86,5 +88,25 @@ object MinioService {
                 .expiry(expire.seconds.toInt(), TimeUnit.SECONDS)
                 .build()
         )
+        withEncodedObjectPath(url, file)
     }.onFailure { KSLog.error(it) }
+
+    /**
+     * The signature covers the percent-encoded object key, but the URL built by minio-java keeps
+     * reserved characters such as ':' and '=' literal in the path. S3 implementations that verify
+     * against the path exactly as received then reject the link with "Invalid signature", so the
+     * path is rewritten here to the form that was actually signed.
+     */
+    private fun withEncodedObjectPath(url: String, key: String): String {
+        val encoded = encodeObjectKey(key)
+        return if (encoded == key) url else url.replaceFirst("/$key", "/$encoded")
+    }
+
+    private fun encodeObjectKey(key: String): String =
+        key.split("/").joinToString("/") { segment ->
+            URLEncoder.encode(segment, StandardCharsets.UTF_8)
+                .replace("+", "%20")
+                .replace("*", "%2A")
+                .replace("%7E", "~")
+        }
 }
