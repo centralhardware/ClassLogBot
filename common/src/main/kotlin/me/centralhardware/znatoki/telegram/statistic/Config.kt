@@ -7,6 +7,9 @@ object Config {
     private fun getEnvOrThrow(name: String): String =
         System.getenv(name) ?: System.getProperty(name) ?: throw IllegalStateException("Environment variable '$name' is required but not set")
 
+    private fun getEnvOrDefault(name: String, default: String): String =
+        System.getenv(name) ?: System.getProperty(name) ?: default
+
     fun getString(name: String): String = getEnvOrThrow(name)
 
     object Minio {
@@ -15,6 +18,7 @@ object Config {
         val accessKey: String   by lazy { getEnvOrThrow("MINIO_ACCESS_KEY") }
         val secretKey: String   by lazy { getEnvOrThrow("MINIO_SECRET_KEY") }
         val basePath: String    by lazy { getEnvOrThrow("BASE_PATH") }
+        val region: String      by lazy { getEnvOrDefault("MINIO_REGION", "us-east-1") }
     }
 
     object Datasource {
