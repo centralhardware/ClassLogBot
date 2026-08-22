@@ -42,7 +42,7 @@ dependencies {
     api("dev.inmo:krontab:2.10.0")
 
     // Telegram (brings tgbotapi + kslog transitively)
-    api("com.github.centralhardware:ktgbotapi-commons:c045846b")
+    api("com.github.centralhardware:ktgbotapi-commons:5100234f")
 
     // Test dependencies
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
