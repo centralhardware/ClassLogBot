@@ -21,6 +21,8 @@ jib {
     }
     container {
         mainClass = "me.centralhardware.znatoki.telegram.statistic.bot.BotMainKt"
+        // /health, served by ktgbotapi-commons
+        ports = listOf("8081")
         jvmFlags = listOf(
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-modules=jdk.incubator.vector"
