@@ -78,6 +78,15 @@ object MinioService {
         input
     }.onFailure { KSLog.error(it) }
 
+    fun getBytes(file: String): Result<ByteArray> = runCatching {
+        KSLog.info { "Getting file from MinIO: $file" }
+        val bytes = minioClient
+            .getObject(GetObjectArgs.builder().bucket(Config.Minio.bucket).`object`(file).build())
+            .readAllBytes()
+        KSLog.info { "Successfully fetched file from MinIO: $file" }
+        bytes
+    }.onFailure { KSLog.error(it) }
+
     fun getLink(file: String, expire: Duration): Result<String> = runCatching {
         KSLog.info { "Generating presigned link for file=$file, expire=${expire.inWholeSeconds}s" }
         val url = minioClient.getPresignedObjectUrl(

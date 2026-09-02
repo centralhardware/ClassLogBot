@@ -3,22 +3,15 @@ package me.centralhardware.znatoki.telegram.statistic.firefly
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.info
-import io.minio.GetObjectArgs
-import io.minio.MinioClient
-import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
+import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 object FireflyService {
-
-    private val minioClient = MinioClient.builder()
-        .endpoint(Config.Minio.url)
-        .credentials(Config.Minio.accessKey, Config.Minio.secretKey)
-        .build()
 
     private val novosibirskZone = ZoneId.of("Asia/Novosibirsk")
     private val dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
@@ -172,12 +165,7 @@ object FireflyService {
         try {
             KSLog.info { "Attaching screenshot for payment $paymentId from MinIO: $photoPath" }
 
-            val fileBytes = minioClient.getObject(
-                GetObjectArgs.builder()
-                    .bucket(Config.Minio.bucket)
-                    .`object`(photoPath)
-                    .build()
-            ).readAllBytes()
+            val fileBytes = MinioService.getBytes(photoPath).getOrThrow()
 
             val filename = photoPath.substringAfterLast('/')
 
