@@ -145,7 +145,7 @@ suspend fun BehaviourContext.createLesson(
                             if (allowExtraHalf) row {
                                 dataButton(
                                     "Сделать полтора часа",
-                                    "addExtraHalfHour-${builder.id.id}"
+                                    "extraHalfHourAdd-${builder.id.id}"
                                 )
                             }
                         }
