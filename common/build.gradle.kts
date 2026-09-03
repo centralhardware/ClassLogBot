@@ -39,7 +39,7 @@ dependencies {
     api("org.apache.lucene:lucene-codecs:$luceneVersion")
 
     // Scheduling
-    api("dev.inmo:krontab:2.10.0")
+    api("dev.inmo:krontab:3.0.0")
 
     // Telegram (brings tgbotapi + kslog transitively)
     api("com.github.centralhardware:ktgbotapi-commons:07ee206f")
