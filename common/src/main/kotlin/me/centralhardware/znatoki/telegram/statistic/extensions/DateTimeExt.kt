@@ -9,10 +9,10 @@ import java.time.temporal.TemporalAdjusters
 fun LocalDateTime.startOfDay(): LocalDateTime = with(LocalTime.MIN)
 
 fun LocalDateTime.startOfMonth(): LocalDateTime =
-    with(TemporalAdjusters.firstDayOfMonth()).withHour(0).withMinute(0)
+    with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN)
 
-fun LocalDateTime.endOfMonth(): LocalDateTime =
-    with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59)
+/** Exclusive upper bound of this month: midnight on the 1st of the next month. */
+fun LocalDateTime.startOfNextMonth(): LocalDateTime = startOfMonth().plusMonths(1)
 
 fun LocalDateTime.prevMonth(): LocalDateTime = minusMonths(1)
 
