@@ -2,14 +2,15 @@ package me.centralhardware.znatoki.telegram.statistic.service
 
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
-import java.io.IOException
+import dev.inmo.kslog.common.error
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.fixedRateTimer
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
-import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
+import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.TextField
 import org.apache.lucene.index.*
 import org.apache.lucene.search.*
@@ -17,39 +18,38 @@ import org.apache.lucene.store.ByteBuffersDirectory
 
 /**
  * Lucene-based student search service.
- * Maintains an in-memory index rebuilt every 60 seconds for fast fuzzy search
+ * Maintains an in-memory index rebuilt every 60 seconds (and on [refresh]) for fast fuzzy search
  * across student names, supporting partial matches and typo tolerance.
  */
 object StudentService {
 
-    private var directory: ByteBuffersDirectory? = null
+    /** The index and the students it was built from, swapped atomically on every rebuild. */
+    private class Snapshot(val directory: ByteBuffersDirectory, val students: Map<Int, Student>)
+
+    private val snapshot = AtomicReference<Snapshot?>(null)
 
     fun init() {
         fixedRateTimer(name = "updateLucene", period = 60000L) {
-            val index = ByteBuffersDirectory()
-            val analyzer = StandardAnalyzer()
-            val indexWriterConfig = IndexWriterConfig(analyzer)
-            val writer = IndexWriter(index, indexWriterConfig)
-
-            StudentMapper.findAll().forEach { client ->
-                try {
-                    val document = Document()
-                    document.add(TextField("name", client.name.lowercase(), Field.Store.YES))
-                    document.add(
-                        TextField("lastName", client.lastName.lowercase(), Field.Store.YES)
-                    )
-                    document.add(
-                        TextField("secondName", client.secondName.lowercase(), Field.Store.YES)
-                    )
-                    document.add(TextField("id", client.id.id.toString(), Field.Store.YES))
-                    writer.addDocument(document)
-                } catch (e: IOException) {
-                    throw java.lang.RuntimeException(e)
-                }
-            }
-            writer.close()
-            directory = index
+            runCatching { refresh() }.onFailure { KSLog.error("StudentService: index rebuild failed", it) }
         }
+    }
+
+    /** Rebuilds the index now, e.g. right after a student was added, so it is searchable immediately. */
+    @Synchronized
+    fun refresh() {
+        val students = StudentMapper.findAll()
+        val index = ByteBuffersDirectory()
+        IndexWriter(index, IndexWriterConfig(StandardAnalyzer())).use { writer ->
+            students.forEach { client ->
+                val document = Document()
+                document.add(TextField("name", client.name.lowercase(), Field.Store.NO))
+                document.add(TextField("lastName", client.lastName.lowercase(), Field.Store.NO))
+                document.add(TextField("secondName", client.secondName.lowercase(), Field.Store.NO))
+                document.add(StoredField("id", client.id.id))
+                writer.addDocument(document)
+            }
+        }
+        snapshot.set(Snapshot(index, students.associateBy { it.id.id }))
     }
 
     fun getAllActive(): List<Student> {
@@ -59,37 +59,31 @@ object StudentService {
     }
 
     fun search(fio: String): List<Student> {
-        if (directory == null) {
-            KSLog.info("StudentService.search('$fio'): directory is null")
+        val current = snapshot.get()
+        if (current == null) {
+            KSLog.info("StudentService.search('$fio'): index not built yet")
             return emptyList()
         }
 
         return try {
-            val queries =
-                fio.split(" ").flatMap { word ->
-                    listOf(
-                        FuzzyQuery(Term("name", word), 2),
-                        FuzzyQuery(Term("secondName", word), 2),
-                        FuzzyQuery(Term("lastName", word), 2),
-                    )
-                }
-
             val combinedQuery = BooleanQuery.Builder()
-            queries.forEach { query -> combinedQuery.add(query, BooleanClause.Occur.SHOULD) }
+            fio.lowercase().split(" ").filter { it.isNotBlank() }.forEach { word ->
+                listOf("name", "secondName", "lastName").forEach { field ->
+                    combinedQuery.add(FuzzyQuery(Term(field, word), 2), BooleanClause.Occur.SHOULD)
+                }
+            }
 
-            val indexReader: IndexReader = DirectoryReader.open(directory)
-            val searcher = IndexSearcher(indexReader)
-            val topDocs = searcher.search(combinedQuery.build(), 10)
-            val results = topDocs.scoreDocs
-                .sortedBy { it.score }
-                .reversed()
-                .map { searcher.storedFields().document(it.doc) }
-                .mapNotNull { it: Document -> StudentMapper.findById(it["id"].toInt().toStudentId()) }
-                .toList()
+            val results = DirectoryReader.open(current.directory).use { reader ->
+                val searcher = IndexSearcher(reader)
+                val storedFields = searcher.storedFields()
+                searcher.search(combinedQuery.build(), 10).scoreDocs
+                    .sortedByDescending { it.score }
+                    .mapNotNull { current.students[storedFields.document(it.doc).getField("id").numericValue().toInt()] }
+            }
             KSLog.info("StudentService.search('$fio'): found ${results.size} students")
             results
         } catch (e: Exception) {
-            KSLog.info("StudentService.search('$fio'): exception - ${e.message}")
+            KSLog.error("StudentService.search('$fio') failed", e)
             emptyList()
         }
     }
