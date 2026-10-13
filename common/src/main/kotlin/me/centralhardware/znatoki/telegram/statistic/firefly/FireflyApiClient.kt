@@ -13,6 +13,14 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyApiClient.handleResponse
 
+class FireflyApiException(operation: String, val status: Int, val body: String) :
+    RuntimeException("Failed to $operation: HTTP $status. Response: $body") {
+
+    /** Firefly rejects a transaction with `error_if_duplicate_hash` as 422 "Duplicate of transaction #…". */
+    val isDuplicateTransaction: Boolean
+        get() = status == 422 && body.contains("Duplicate of transaction", ignoreCase = true)
+}
+
 object FireflyApiClient {
 
     private val client = HttpClient(CIO) {
@@ -42,7 +50,7 @@ object FireflyApiClient {
     private suspend inline fun <reified T> HttpResponse.handleResponse(operationName: String): T {
         if (!status.isSuccess()) {
             val errorBody = bodyAsText()
-            throw RuntimeException("Failed to $operationName: ${status}. Response: $errorBody")
+            throw FireflyApiException(operationName, status.value, errorBody)
         }
         return body()
     }
@@ -50,7 +58,7 @@ object FireflyApiClient {
     private suspend fun HttpResponse.handleResponseUnit(operationName: String) {
         if (!status.isSuccess()) {
             val errorBody = bodyAsText()
-            throw RuntimeException("Failed to $operationName: ${status}. Response: $errorBody")
+            throw FireflyApiException(operationName, status.value, errorBody)
         }
     }
 

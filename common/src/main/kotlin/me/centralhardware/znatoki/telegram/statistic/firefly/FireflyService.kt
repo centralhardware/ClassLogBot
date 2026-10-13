@@ -9,15 +9,17 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
 import java.time.ZoneId
+import java.util.concurrent.ConcurrentHashMap
 import java.time.format.DateTimeFormatter
 
 object FireflyService {
 
     private val novosibirskZone = ZoneId.of("Asia/Novosibirsk")
     private val dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-    private val accountCache = mutableMapOf<String, String>()
-    private val categoryCache = mutableMapOf<String, String>()
-    private val exportedPaymentsCache = mutableSetOf<String>()
+    // Exports run concurrently from several conversations, so the caches must be thread-safe.
+    private val accountCache = ConcurrentHashMap<String, String>()
+    private val categoryCache = ConcurrentHashMap<String, String>()
+    private val exportedPaymentsCache: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     /**
      * Export a single payment to Firefly III
@@ -79,8 +81,7 @@ object FireflyService {
             FireflyApiClient.createTransaction(transaction)
         } catch (e: Exception) {
             // If error is about duplicate, it's ok - transaction already exists
-            if (e.message?.contains("duplicate", ignoreCase = true) == true ||
-                e.message?.contains("Duplicate of transaction", ignoreCase = true) == true) {
+            if (e is FireflyApiException && e.isDuplicateTransaction) {
                 KSLog.info { "Payment ${payment.id.id} already exists in Firefly (duplicate), skipping" }
                 exportedPaymentsCache.add(paymentId)
                 return@runCatching "existing_duplicate_$paymentId"
