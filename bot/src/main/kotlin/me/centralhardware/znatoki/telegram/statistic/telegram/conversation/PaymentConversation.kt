@@ -1,5 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
+import dev.inmo.kslog.common.error
+import dev.inmo.kslog.common.KSLog
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
@@ -11,7 +14,6 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.ChatContentMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
-import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
@@ -46,6 +48,8 @@ suspend fun BehaviourContext.createPayment(
 ) {
     val chatId = message.chat.id
     val builder = PaymentBuilder()
+
+    var saved = false
 
     try {
         sendTextMessage(chatId, "Начало создания оплаты. Используйте $CANCEL для отмены в любой момент.")
@@ -113,6 +117,7 @@ suspend fun BehaviourContext.createPayment(
             builder.dataSource = DataSource.BOT
             val payment = builder.build()
             val paymentId = PaymentMapper.insert(payment)
+            saved = true
             sendLog(payment, paymentId, addedBy)
 
             // Export to Firefly III if enabled
@@ -140,18 +145,19 @@ suspend fun BehaviourContext.createPayment(
         // Clean up photo if uploaded
         builder.photoReport?.let { key ->
             MinioService.delete(key).onFailure {
-                runBlocking { sendTextMessage(chatId, "Ошибка при удалении фотографии") }
+                sendTextMessage(chatId, "Ошибка при удалении фотографии")
             }
         }
         sendTextMessage(chatId, "Создание оплаты отменено", replyMarkup = ReplyKeyboardRemove())
     } catch (e: Exception) {
-        // Clean up photo if uploaded
-        builder.photoReport?.let { key ->
+        // Clean up photo if uploaded and not referenced by a saved record
+        builder.photoReport?.takeUnless { saved }?.let { key ->
             MinioService.delete(key).onFailure {
-                runBlocking { sendTextMessage(chatId, "Ошибка при удалении фотографии") }
+                sendTextMessage(chatId, "Ошибка при удалении фотографии")
             }
         }
-        sendTextMessage(chatId, "Операция отменена: ${e.message}", replyMarkup = ReplyKeyboardRemove())
+        KSLog.error("createPayment failed", e)
+        sendTextMessage(chatId, "Произошла ошибка, операция отменена", replyMarkup = ReplyKeyboardRemove())
     }
 }
 
@@ -178,20 +184,12 @@ private suspend fun BehaviourContext.sendLog(
         }
     }.trimEnd()
     sendActionUploadPhoto(Config.logChat())
+    val photo = MinioService.getBytes(payment.photoReport!!)
+        .onFailure { sendTextMessage(Config.logChat(), "Ошибка во время отправки лога") }
+        .getOrThrow()
     sendPhoto(
         Config.logChat(),
-        InputFile.fromInput("") {
-            MinioService.get(payment.photoReport!!)
-                .onFailure {
-                    runBlocking {
-                        sendTextMessage(
-                            Config.logChat(),
-                            "Ошибка во время отправки лога",
-                        )
-                    }
-                }
-                .getOrThrow()
-        },
+        photo.asMultipartFile("Отчёт"),
         replyMarkup = keyboard,
         text = text,
     )

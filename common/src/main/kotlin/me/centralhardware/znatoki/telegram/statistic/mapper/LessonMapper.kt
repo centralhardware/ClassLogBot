@@ -12,6 +12,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
 import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.execute
+import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.update
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfDay
@@ -20,47 +21,52 @@ import java.time.YearMonth
 
 object LessonMapper {
 
-    fun insert(lesson: Lesson) =
-        execute(
-            queryOf(
-                """
-                INSERT INTO lessons (
-                    date_time,
-                    update_time,
-                    id,
-                    tutor_id,
-                    subject_id,
-                    amount,
-                    student_id,
-                    photo_report,
-                    added_by_tutor_id,
-                    data_source
-                ) VALUES (
-                    :dateTime,
-                    :updateTime,
-                    :id,
-                    :tutorId,
-                    :subjectId,
-                    :amount,
-                    :studentId,
-                    :photo_report,
-                    :addedByTutorId,
-                    :dataSource
-                )
-                """,
-                mapOf(
-                    "dateTime" to lesson.dateTime,
-                    "updateTime" to lesson.updateTime,
-                    "id" to lesson.id.id,
-                    "tutorId" to lesson.tutorId.id,
-                    "subjectId" to lesson.subjectId.id,
-                    "amount" to lesson.amount,
-                    "studentId" to lesson.studentId.id,
-                    "photo_report" to lesson.photoReport,
-                    "addedByTutorId" to lesson.addedByTutorId?.id,
-                    "dataSource" to lesson.dataSource?.value,
-                ),
+    fun insert(lesson: Lesson) = execute(insertQuery(lesson))
+
+    /** Inserts all rows of a (group) lesson atomically. */
+    fun insertAll(lessons: List<Lesson>) = transaction { tx ->
+        lessons.forEach { tx.execute(insertQuery(it)) }
+    }
+
+    private fun insertQuery(lesson: Lesson) =
+        queryOf(
+            """
+            INSERT INTO lessons (
+                date_time,
+                update_time,
+                id,
+                tutor_id,
+                subject_id,
+                amount,
+                student_id,
+                photo_report,
+                added_by_tutor_id,
+                data_source
+            ) VALUES (
+                :dateTime,
+                :updateTime,
+                :id,
+                :tutorId,
+                :subjectId,
+                :amount,
+                :studentId,
+                :photo_report,
+                :addedByTutorId,
+                :dataSource
             )
+            """,
+            mapOf(
+                "dateTime" to lesson.dateTime,
+                "updateTime" to lesson.updateTime,
+                "id" to lesson.id.id,
+                "tutorId" to lesson.tutorId.id,
+                "subjectId" to lesson.subjectId.id,
+                "amount" to lesson.amount,
+                "studentId" to lesson.studentId.id,
+                "photo_report" to lesson.photoReport,
+                "addedByTutorId" to lesson.addedByTutorId?.id,
+                "dataSource" to lesson.dataSource?.value,
+            ),
         )
 
     private fun findAllByTutorId(

@@ -1,5 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
+import dev.inmo.kslog.common.error
+import dev.inmo.kslog.common.KSLog
 import dev.inmo.tgbotapi.extensions.api.deleteMessage
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
@@ -11,7 +14,6 @@ import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.ChatContentMessage
 import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.utils.row
-import kotlinx.coroutines.runBlocking
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.*
 import me.centralhardware.znatoki.telegram.statistic.extensions.*
@@ -42,6 +44,8 @@ suspend fun BehaviourContext.createLesson(
 ) {
     val chatId = message.chat.id
     val builder = ServiceBuilder()
+
+    var saved = false
 
     try {
         sendTextMessage(chatId, "Начало создания занятия. Используйте $CANCEL для отмены в любой момент.")
@@ -125,47 +129,44 @@ suspend fun BehaviourContext.createLesson(
             builder.addedByTutorId = if (addedBy != builder.tutorId) addedBy else null
             builder.dataSource = DataSource.BOT
             val services = builder.build()
-            services.forEach { LessonMapper.insert(it) }
+            LessonMapper.insertAll(services)
+            saved = true
             sendLog(services, message.userId(), addedBy)
             
             val allowForceGroup = targetTutor.hasForceGroup()
             val allowExtraHalf = targetTutor.hasExtraHalfHour()
             if ((allowForceGroup && services.size == 1) || allowExtraHalf) {
-                runBlocking {
-                    sendTextMessage(
-                        message.chat,
-                        "Сохранено",
-                        replyMarkup = inlineKeyboard {
-                            if (allowForceGroup) row {
-                                dataButton(
-                                    "Сделать групповым занятием",
-                                    "forceGroupAdd-${builder.id.id}"
-                                )
-                            }
-                            if (allowExtraHalf) row {
-                                dataButton(
-                                    "Сделать полтора часа",
-                                    "extraHalfHourAdd-${builder.id.id}"
-                                )
-                            }
+                sendTextMessage(
+                    message.chat,
+                    "Сохранено",
+                    replyMarkup = inlineKeyboard {
+                        if (allowForceGroup) row {
+                            dataButton(
+                                "Сделать групповым занятием",
+                                "forceGroupAdd-${builder.id.id}"
+                            )
                         }
-                    )
-                    val tmp = sendTextMessage(message.chat, "temp", replyMarkup = ReplyKeyboardRemove())
-                    deleteMessage(tmp.chat, tmp.messageId)
-                }
+                        if (allowExtraHalf) row {
+                            dataButton(
+                                "Сделать полтора часа",
+                                "extraHalfHourAdd-${builder.id.id}"
+                            )
+                        }
+                    }
+                )
+                val tmp = sendTextMessage(message.chat, "temp", replyMarkup = ReplyKeyboardRemove())
+                deleteMessage(tmp.chat, tmp.messageId)
             } else {
-                runBlocking {
-                    sendTextMessage(
-                        message.chat,
-                        "Сохранено",
-                        replyMarkup = ReplyKeyboardRemove()
-                    )
-                }
+                sendTextMessage(
+                    message.chat,
+                    "Сохранено",
+                    replyMarkup = ReplyKeyboardRemove()
+                )
             }
         } else {
             builder.photoReport?.let { key ->
                 MinioService.delete(key).onFailure {
-                    runBlocking { sendTextMessage(builder.tutorId!!.toChatId(), "Ошибка при удалении фотографии") }
+                    sendTextMessage(builder.tutorId!!.toChatId(), "Ошибка при удалении фотографии")
                 }
             }
             sendTextMessage(
@@ -178,18 +179,19 @@ suspend fun BehaviourContext.createLesson(
         // Clean up photo if uploaded
         builder.photoReport?.let { key ->
             MinioService.delete(key).onFailure {
-                runBlocking { sendTextMessage(chatId, "Ошибка при удалении фотографии") }
+                sendTextMessage(chatId, "Ошибка при удалении фотографии")
             }
         }
         sendTextMessage(chatId, "Создание занятия отменено", replyMarkup = ReplyKeyboardRemove())
     } catch (e: Exception) {
-        // Clean up photo if uploaded
-        builder.photoReport?.let { key ->
+        // Clean up photo if uploaded and not referenced by a saved record
+        builder.photoReport?.takeUnless { saved }?.let { key ->
             MinioService.delete(key).onFailure {
-                runBlocking { sendTextMessage(chatId, "Ошибка при удалении фотографии") }
+                sendTextMessage(chatId, "Ошибка при удалении фотографии")
             }
         }
-        sendTextMessage(chatId, "Операция отменена: ${e.message}", replyMarkup = ReplyKeyboardRemove())
+        KSLog.error("createLesson failed", e)
+        sendTextMessage(chatId, "Произошла ошибка, операция отменена", replyMarkup = ReplyKeyboardRemove())
     }
 }
 
@@ -218,13 +220,12 @@ private suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long
         }
     }.trimIndent()
 
+    val photo = MinioService.getBytes(service.photoReport!!)
+        .onFailure { sendTextMessage(Config.logChat(), "Ошибка во время отправки лога") }
+        .getOrThrow()
     sendPhoto(
         Config.logChat(),
-        InputFile.fromInput("Отчёт") {
-            MinioService.get(service.photoReport!!)
-                .onFailure { runBlocking { sendTextMessage(Config.logChat(), "Ошибка во время отправки лога") } }
-                .getOrThrow()
-        },
+        photo.asMultipartFile("Отчёт"),
         replyMarkup = keyboard,
         text = log
     )
