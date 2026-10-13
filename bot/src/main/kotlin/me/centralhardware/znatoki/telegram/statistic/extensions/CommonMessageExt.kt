@@ -1,8 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.extensions
 
-import dev.inmo.tgbotapi.AppConfig
+import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.files.downloadFile
-import dev.inmo.tgbotapi.extensions.api.telegramBot
 import dev.inmo.tgbotapi.extensions.utils.asPhotoContent
 import dev.inmo.tgbotapi.extensions.utils.asTextContent
 import dev.inmo.tgbotapi.types.message.abstracts.ChatContentMessage
@@ -14,9 +13,10 @@ import java.time.LocalDateTime
 fun ChatContentMessage<MessageContent>.userId(): Long = chat.id.chatId.long
 fun ChatContentMessage<MessageContent>.tutorId(): TutorId = TutorId(this.userId())
 
-suspend fun ChatContentMessage<MessageContent>.extract(): String {
+/** Downloads the photo with the running [bot] and stores it in MinIO; returns the object key. */
+suspend fun ChatContentMessage<MessageContent>.extract(bot: TelegramBot): String {
     val photo = this.content.asPhotoContent()!!.media
-    val bytes = telegramBot(AppConfig.botToken()).downloadFile(photo)
+    val bytes = bot.downloadFile(photo)
     return MinioService.upload(bytes, LocalDateTime.now()).getOrThrow()
 }
 
