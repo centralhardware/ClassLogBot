@@ -11,7 +11,12 @@ import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.toLessonId
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
+import me.centralhardware.znatoki.telegram.statistic.extensions.user
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
+import java.time.LocalDateTime
 
 
 private const val ACTION_DELETE = "timeDelete"
@@ -35,7 +40,20 @@ private suspend fun BehaviourContext.changeLessonDelete(
     query: DataCallbackQuery
 ) {
     val lessons = LessonMapper.findById(id)
-    val lesson = lessons.firstOrNull() ?: return
+    val lesson = lessons.firstOrNull()
+        ?: run {
+            answerCallbackQuery(query, "Запись не найдена", showAlert = true)
+            return
+        }
+
+    if (!data.user.hasAdminPermission() && lesson.tutorId.id != query.userId()) {
+        answerCallbackQuery(query, "Доступ запрещён", showAlert = true)
+        return
+    }
+    if (!lesson.dateTime.isInSameMonthAs(LocalDateTime.now())) {
+        answerCallbackQuery(query, "Нельзя модифицировать запись после окончания месяца", showAlert = true)
+        return
+    }
 
     LessonMapper.setDeleted(id, deleted)
 
