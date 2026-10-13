@@ -142,6 +142,19 @@ object StudentMapper {
             )
         ) { it.parseStudent() } ?: throw IllegalArgumentException("No client with id $id found")
 
+    /** Like [findById] but only for students that weren't deleted; use it on user-facing lookups. */
+    fun findActiveByIdOrNull(id: StudentId): Student? =
+        runSingle(
+            queryOf(
+                """
+                SELECT s.*
+                FROM students s
+                WHERE id = :id AND deleted = false
+                """,
+                mapOf("id" to id.id),
+            )
+        ) { it.parseStudent() }
+
     fun findAll(): List<Student> =
         runList(
             queryOf(
@@ -160,6 +173,7 @@ object StudentMapper {
                 SELECT s.*
                 FROM students s
                 WHERE name = :name AND second_name = :secondName AND last_name = :lastName
+                  AND deleted = false
                 """,
                 mapOf("name" to name, "secondName" to secondName, "lastName" to lastName),
             )

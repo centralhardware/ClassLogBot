@@ -11,7 +11,8 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
 fun BehaviourContext.studentInfoCommand() = onCommandWithArgs("i") { message, args ->
-    StudentMapper.findById(args.first().toInt().toStudentId()).let { client ->
+    val id = args.firstOrNull()?.toIntOrNull()?.toStudentId()
+    id?.let { StudentMapper.findActiveByIdOrNull(it) }?.let { client ->
         sendMessage(
             message.chat,
             client.getInfo(

@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student
 
+import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCallbackQuery
@@ -11,7 +12,13 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
 fun BehaviourContext.studentInfoCallback() = onDataCallbackQuery(Regex("user_info\\d+$")) {
-    StudentMapper.findById(it.data.replace("user_info", "").toInt().toStudentId()).let { client ->
+    val client = StudentMapper.findActiveByIdOrNull(it.data.replace("user_info", "").toInt().toStudentId())
+    if (client == null) {
+        answerCallbackQuery(it, "Ученик не найден", showAlert = true)
+        return@onDataCallbackQuery
+    }
+    answerCallbackQuery(it)
+    client.let { client ->
         val info =
             client.getInfo(
                 LessonMapper.getSubjectIdsForStudent(client.id)
