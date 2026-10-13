@@ -25,5 +25,9 @@ subprojects {
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
+        // Show each test's outcome in CI logs, so a skipped Testcontainers test is visible.
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
     }
 }
