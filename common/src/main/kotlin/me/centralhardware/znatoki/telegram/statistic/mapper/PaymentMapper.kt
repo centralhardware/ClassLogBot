@@ -8,7 +8,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parsePayment
-import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.startOfNextMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
@@ -81,7 +81,7 @@ object PaymentMapper {
                 WHERE tutor_id = :tutor_id
                     AND subject_id = :subject_id
                     AND student_id = :student_id
-                    AND date_time between :startDate and :endDate
+                    AND date_time >= :startDate AND date_time < :endDate
                     AND photo_report IS NOT NULL
                     AND is_deleted = false
                 """,
@@ -90,7 +90,7 @@ object PaymentMapper {
                     "subject_id" to subjectId.id,
                     "student_id" to studentId.id,
                     "startDate" to date.startOfMonth(),
-                    "endDate" to date.endOfMonth(),
+                    "endDate" to date.startOfNextMonth(),
                 ),
             )
         ) { row -> row.longOrNull("sum") }?: 0
@@ -103,14 +103,14 @@ object PaymentMapper {
                 FROM payment
                 WHERE tutor_id = :tutor_id
                     AND subject_id = :subject_id
-                    AND date_time between :startDate and :endDate
+                    AND date_time >= :startDate AND date_time < :endDate
                     AND is_deleted = false
                 """,
                 mapOf(
                     "tutor_id" to tutorId.id,
                     "subject_id" to subjectId.id,
                     "startDate" to date.startOfMonth(),
-                    "endDate" to date.endOfMonth(),
+                    "endDate" to date.startOfNextMonth(),
                 ),
             )
         ) { row -> row.longOrNull("sum") }?: 0
@@ -136,7 +136,7 @@ object PaymentMapper {
             FROM payment p
             WHERE p.tutor_id = :tutor_id
                 AND p.subject_id = :subject_id
-                AND p.date_time between :start_date and :end_date
+                AND p.date_time >= :start_date AND p.date_time < :end_date
                 AND p.is_deleted=false
             """, mapOf(
                 "tutor_id" to tutorId.id,
@@ -149,23 +149,24 @@ object PaymentMapper {
         tutorId,
         subjectId,
         LocalDateTime.now().startOfMonth(),
-        LocalDateTime.now().endOfMonth(),
+        LocalDateTime.now().startOfNextMonth(),
     )
 
     fun getPrevMonthPayments(tutorId: TutorId, subjectId: SubjectId) = getPayments(
         tutorId,
         subjectId,
         LocalDateTime.now().prevMonth().startOfMonth(),
-        LocalDateTime.now().prevMonth().endOfMonth(),
+        LocalDateTime.now().prevMonth().startOfNextMonth(),
     )
 
     fun getPaymentsByMonth(tutorId: TutorId, subjectId: SubjectId, yearMonth: YearMonth) = getPayments(
         tutorId,
         subjectId,
         yearMonth.atDay(1).atStartOfDay(),
-        yearMonth.atEndOfMonth().atTime(23, 59, 59),
+        yearMonth.plusMonths(1).atDay(1).atStartOfDay(),
     )
 
+    /** [startDate, endDate) — endDate is exclusive. */
     fun getPaymentsByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime) = getPayments(
         tutorId,
         subjectId,
@@ -173,6 +174,7 @@ object PaymentMapper {
         endDate,
     )
 
+    /** [startDate, endDate) — endDate is exclusive. */
     fun getPaymentsSumByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime): Long =
         runSingle(
             queryOf(
@@ -181,7 +183,7 @@ object PaymentMapper {
                 FROM payment
                 WHERE tutor_id = :tutor_id
                     AND subject_id = :subject_id
-                    AND date_time between :startDate and :endDate
+                    AND date_time >= :startDate AND date_time < :endDate
                     AND is_deleted = false
                 """,
                 mapOf(
@@ -212,7 +214,7 @@ object PaymentMapper {
                    p.data_source
             FROM payment p
             WHERE p.tutor_id = :tutor_id
-                AND p.date_time between :start_date and :end_date
+                AND p.date_time >= :start_date AND p.date_time < :end_date
                 AND p.is_deleted=false
             """, mapOf(
                 "tutor_id" to tutorId.id,

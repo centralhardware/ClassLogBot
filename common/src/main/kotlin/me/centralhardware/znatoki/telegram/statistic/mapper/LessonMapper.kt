@@ -9,7 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseTime
 import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
-import me.centralhardware.znatoki.telegram.statistic.extensions.endOfMonth
+import me.centralhardware.znatoki.telegram.statistic.extensions.startOfNextMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.prevMonth
 import me.centralhardware.znatoki.telegram.statistic.extensions.execute
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
@@ -88,7 +88,7 @@ object LessonMapper {
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
                     AND l.subject_id = :subjectId
-                    AND l.date_time between :startDate and :endDate
+                    AND l.date_time >= :startDate AND l.date_time < :endDate
                     AND l.is_deleted=false
                 """,
                     mapOf("tutorId" to tutorId.id,"subjectId" to subjectId.id, "startDate" to startDate, "endDate" to endDate),
@@ -118,7 +118,7 @@ object LessonMapper {
                        l.data_source
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
-                    AND l.date_time between :startDate and :endDate
+                    AND l.date_time >= :startDate AND l.date_time < :endDate
                     AND l.is_deleted=false
                 """,
                 mapOf("tutorId" to tutorId.id, "startDate" to startDate, "endDate" to endDate),
@@ -156,23 +156,24 @@ object LessonMapper {
         tutorId,
         subjectId,
         LocalDateTime.now().startOfMonth(),
-        LocalDateTime.now().endOfMonth(),
+        LocalDateTime.now().startOfNextMonth(),
     )
 
     fun getPrevMonthTimes(tutorId: TutorId, subjectId: SubjectId): List<Lesson> = findAllByTutorId(
         tutorId,
         subjectId,
         LocalDateTime.now().prevMonth().startOfMonth(),
-        LocalDateTime.now().prevMonth().endOfMonth(),
+        LocalDateTime.now().prevMonth().startOfNextMonth(),
     )
 
     fun getTimesByMonth(tutorId: TutorId, subjectId: SubjectId, yearMonth: YearMonth): List<Lesson> = findAllByTutorId(
         tutorId,
         subjectId,
         yearMonth.atDay(1).atStartOfDay(),
-        yearMonth.atEndOfMonth().atTime(23, 59, 59),
+        yearMonth.plusMonths(1).atDay(1).atStartOfDay(),
     )
 
+    /** [startDate, endDate) — endDate is exclusive. */
     fun getTimesByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime): List<Lesson> = findAllByTutorId(
         tutorId,
         subjectId,
