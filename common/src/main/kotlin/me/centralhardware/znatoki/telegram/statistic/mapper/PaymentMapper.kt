@@ -16,6 +16,9 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.update
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 import java.time.YearMonth
 
+private const val PAYMENT_COLUMNS =
+    "id, date_time, tutor_id, student_id, amount, subject_id, is_deleted, photo_report, added_by_tutor_id, data_source"
+
 object PaymentMapper {
 
     fun insert(payment: Payment): PaymentId =
@@ -123,16 +126,7 @@ object PaymentMapper {
     ) = runList(
         queryOf(
             """
-            SELECT p.id,
-                   p.date_time,
-                   p.tutor_id,
-                   p.student_id,
-                   p.amount,
-                   p.subject_id,
-                   p.is_deleted,
-                   p.photo_report,
-                   p.added_by_tutor_id,
-                   p.data_source
+            SELECT $PAYMENT_COLUMNS
             FROM payment p
             WHERE p.tutor_id = :tutor_id
                 AND p.subject_id = :subject_id
@@ -202,16 +196,7 @@ object PaymentMapper {
     ) = runList(
         queryOf(
             """
-            SELECT p.id,
-                   p.date_time,
-                   p.tutor_id,
-                   p.student_id,
-                   p.amount,
-                   p.subject_id,
-                   p.is_deleted,
-                   p.photo_report,
-                   p.added_by_tutor_id,
-                   p.data_source
+            SELECT $PAYMENT_COLUMNS
             FROM payment p
             WHERE p.tutor_id = :tutor_id
                 AND p.date_time >= :start_date AND p.date_time < :end_date
@@ -231,16 +216,7 @@ object PaymentMapper {
     fun findById(id: PaymentId): Payment? = runSingle(
         queryOf(
             """
-            SELECT p.id,
-                   p.date_time,
-                   p.tutor_id,
-                   p.student_id,
-                   p.amount,
-                   p.subject_id,
-                   p.is_deleted,
-                   p.photo_report,
-                   p.added_by_tutor_id,
-                   p.data_source
+            SELECT $PAYMENT_COLUMNS
             FROM payment p
             WHERE p.id = :id
                 AND p.is_deleted=false
@@ -251,16 +227,7 @@ object PaymentMapper {
     fun findByIdIncludingDeleted(id: PaymentId): Payment? = runSingle(
         queryOf(
             """
-            SELECT p.id,
-                   p.date_time,
-                   p.tutor_id,
-                   p.student_id,
-                   p.amount,
-                   p.subject_id,
-                   p.is_deleted,
-                   p.photo_report,
-                   p.added_by_tutor_id,
-                   p.data_source
+            SELECT $PAYMENT_COLUMNS
             FROM payment p
             WHERE p.id = :id
             """, mapOf("id" to id.id)
@@ -295,16 +262,7 @@ object PaymentMapper {
         runList(
             queryOf(
                 """
-                SELECT p.id,
-                       p.date_time,
-                       p.tutor_id,
-                       p.student_id,
-                       p.amount,
-                       p.subject_id,
-                       p.is_deleted,
-                       p.photo_report,
-                       p.added_by_tutor_id,
-                       p.data_source
+                SELECT $PAYMENT_COLUMNS
                 FROM payment p
                 WHERE p.student_id = :studentId AND p.is_deleted = false
                 ORDER BY p.date_time DESC

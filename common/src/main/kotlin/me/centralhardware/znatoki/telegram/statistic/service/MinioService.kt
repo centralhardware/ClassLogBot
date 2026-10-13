@@ -1,6 +1,5 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
-import com.google.common.io.Files
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.info
@@ -9,14 +8,13 @@ import io.ktor.utils.io.core.*
 import io.minio.GetObjectArgs
 import io.minio.GetPresignedObjectUrlArgs
 import io.minio.MinioClient
+import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
-import io.minio.UploadObjectArgs
 import io.minio.Http
 import korlibs.time.seconds
-import java.io.File
+import java.io.ByteArrayInputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.util.*
 import me.centralhardware.znatoki.telegram.statistic.Config
@@ -32,29 +30,20 @@ object MinioService {
             .credentials(Config.Minio.accessKey, Config.Minio.secretKey)
             .build()
 
-    fun upload(file: File, dateTime: LocalDateTime): Result<String> = runCatching {
-        KSLog.info { "Uploading file=${file.name}, size=${file.length()} to MinIO at $dateTime" }
+    /** Telegram always delivers photos as JPEG, hence the fixed extension and content type. */
+    fun upload(bytes: ByteArray, dateTime: LocalDateTime): Result<String> = runCatching {
+        KSLog.info { "Uploading ${bytes.size} bytes to MinIO at $dateTime" }
 
         val objectKey = "${dateTime.year}/${dateTime.month}/${dateTime.dayOfMonth}/${dateTime.hour}-${dateTime.minute}-${UUID.randomUUID()}.jpg"
 
-        val localFile =
-            Paths.get(
-                "${Config.Minio.basePath}/$objectKey"
-            )
-
-        Files.createParentDirs(localFile.toFile())
-        Files.touch(localFile.toFile())
-        Files.move(file, localFile.toFile())
-
-        minioClient.uploadObject(
-            UploadObjectArgs.builder()
+        minioClient.putObject(
+            PutObjectArgs.builder()
                 .bucket(Config.Minio.bucket)
-                .filename(localFile.toFile().absolutePath)
                 .`object`(objectKey)
+                .stream(ByteArrayInputStream(bytes), bytes.size.toLong(), -1)
+                .contentType("image/jpeg")
                 .build()
         )
-
-        localFile.toFile().delete()
 
         KSLog.info { "Successfully uploaded file to MinIO: $objectKey" }
         objectKey

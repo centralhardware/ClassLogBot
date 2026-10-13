@@ -17,7 +17,6 @@ object Config {
         val bucket: String      by lazy { getEnvOrThrow("MINIO_BUCKET") }
         val accessKey: String   by lazy { getEnvOrThrow("MINIO_ACCESS_KEY") }
         val secretKey: String   by lazy { getEnvOrThrow("MINIO_SECRET_KEY") }
-        val basePath: String    by lazy { getEnvOrThrow("BASE_PATH") }
         val region: String      by lazy { getEnvOrDefault("MINIO_REGION", "us-east-1") }
     }
 
