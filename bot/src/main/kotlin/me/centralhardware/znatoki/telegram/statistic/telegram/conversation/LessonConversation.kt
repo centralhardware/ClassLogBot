@@ -111,7 +111,7 @@ suspend fun BehaviourContext.createLesson(
         builder.amount = amount!!.toAmount()
 
         // Step 5: Upload photo report
-        builder.photoReport = waitPhoto(chatId, "Загрузите фото отчётности")!!.extract()
+        builder.photoReport = waitPhoto(chatId, "Загрузите фото отчётности")!!.extract(bot)
 
         // Step 6: Confirm and save
         val confirmPrompt = """

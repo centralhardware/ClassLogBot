@@ -36,7 +36,7 @@ suspend fun main() {
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->
                 runCatching {
-                    TutorMapper.findByIdOrNull(update.tutorId())?.let { user -> data.user = user }
+                    update.tutorId()?.let { TutorMapper.findByIdOrNull(it) }?.let { user -> data.user = user }
                 }
             }
         },
