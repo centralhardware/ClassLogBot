@@ -13,6 +13,7 @@ import me.centralhardware.telegram.conversation.waitEnum
 import me.centralhardware.telegram.conversation.waitInt
 import me.centralhardware.telegram.conversation.waitParsed
 import me.centralhardware.telegram.conversation.waitValidatedText
+import me.centralhardware.znatoki.telegram.statistic.service.StudentService
 import me.centralhardware.znatoki.telegram.statistic.Config
 import me.centralhardware.znatoki.telegram.statistic.entity.ClientBuilder
 import me.centralhardware.znatoki.telegram.statistic.entity.PhoneNumber
@@ -95,6 +96,7 @@ suspend fun BehaviourContext.createStudent(message: ChatContentMessage<MessageCo
         
         val client = builder.build()
         client.id = StudentMapper.save(client)
+        runCatching { StudentService.refresh() }
         
         sendTextMessage(
             message.chat,
