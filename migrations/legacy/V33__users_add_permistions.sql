@@ -1,1 +1,0 @@
-alter table telegram_users add column permissions text[]

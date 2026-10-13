@@ -19,6 +19,9 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.startOfDay
 import me.centralhardware.znatoki.telegram.statistic.extensions.startOfMonth
 import java.time.YearMonth
 
+private const val LESSON_COLUMNS =
+    "id, date_time, update_time, tutor_id, subject_id, student_id, amount, force_group, extra_half_hour, photo_report, is_deleted, added_by_tutor_id, data_source"
+
 object LessonMapper {
 
     fun insert(lesson: Lesson) = execute(insertQuery(lesson))
@@ -78,19 +81,7 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-                SELECT l.id,
-                       l.date_time,
-                       l.update_time,
-                       l.tutor_id,
-                       l.subject_id,
-                       l.student_id,
-                       l.amount,
-                       l.force_group,
-                       l.extra_half_hour,
-                       l.photo_report,
-                       l.is_deleted,
-                       l.added_by_tutor_id,
-                       l.data_source
+                SELECT $LESSON_COLUMNS
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
                     AND l.subject_id = :subjectId
@@ -109,19 +100,7 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-                SELECT l.id,
-                       l.date_time,
-                       l.update_time,
-                       l.tutor_id,
-                       l.subject_id,
-                       l.student_id,
-                       l.amount,
-                       l.force_group,
-                       l.extra_half_hour,
-                       l.photo_report,
-                       l.is_deleted,
-                       l.added_by_tutor_id,
-                       l.data_source
+                SELECT $LESSON_COLUMNS
                 FROM lessons l
                 WHERE l.tutor_id = :tutorId
                     AND l.date_time >= :startDate AND l.date_time < :endDate
@@ -135,19 +114,7 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-                SELECT id,
-                       date_time,
-                       update_time,
-                       tutor_id,
-                       subject_id,
-                       student_id,
-                       amount,
-                       photo_report,
-                       force_group,
-                       extra_half_hour,
-                       is_deleted,
-                       added_by_tutor_id,
-                       data_source
+                SELECT $LESSON_COLUMNS
                 FROM lessons
                 WHERE id = :id
                 """,
@@ -245,19 +212,7 @@ object LessonMapper {
         runList(
             queryOf(
                 """
-                SELECT id,
-                       date_time,
-                       update_time,
-                       tutor_id,
-                       subject_id,
-                       student_id,
-                       amount,
-                       photo_report,
-                       force_group,
-                       extra_half_hour,
-                       is_deleted,
-                       added_by_tutor_id,
-                       data_source
+                SELECT $LESSON_COLUMNS
                 FROM lessons
                 WHERE student_id = :studentId AND is_deleted = false
                 ORDER BY date_time DESC

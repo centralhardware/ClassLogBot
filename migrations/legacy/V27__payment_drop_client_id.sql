@@ -1,1 +1,0 @@
-alter table payment drop column time_id
