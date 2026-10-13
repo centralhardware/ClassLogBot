@@ -64,7 +64,7 @@ jobs:
         uses: gradle/actions/wrapper-validation@v4
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Compute image name and tags
         id: meta
@@ -151,10 +151,10 @@ jobs:
           cache: gradle
 
       - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v4
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build and test all modules on PRs (no push)
         run: ./gradlew --no-daemon build
