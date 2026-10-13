@@ -8,6 +8,9 @@ dependencies {
     implementation(project(":common"))
 
     implementation("com.github.centralhardware:ktgbotapi-commons:3f5a8ba0")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
 }
 
 jib {
