@@ -1,7 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.Lesson
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
@@ -15,15 +16,15 @@ import java.time.YearMonth
 
 object ReportService {
 
-    fun getReportsCurrent(id: TutorId): List<File> {
+    suspend fun getReportsCurrent(id: TutorId): List<File> {
         return getReport(LessonMapper::getCurrentMontTimes, PaymentMapper::getCurrentMonthPayments, id)
     }
 
-    fun getReportPrevious(id: TutorId): List<File> {
+    suspend fun getReportPrevious(id: TutorId): List<File> {
         return getReport(LessonMapper::getPrevMonthTimes, PaymentMapper::getPrevMonthPayments, id)
     }
 
-    fun getReportByMonth(id: TutorId, yearMonth: YearMonth): List<File> {
+    suspend fun getReportByMonth(id: TutorId, yearMonth: YearMonth): List<File> {
         return getReport(
             { tutorId, subjectId -> LessonMapper.getTimesByMonth(tutorId, subjectId, yearMonth) },
             { tutorId, subjectId -> PaymentMapper.getPaymentsByMonth(tutorId, subjectId, yearMonth) },
@@ -31,22 +32,24 @@ object ReportService {
         )
     }
 
-    private fun getReport(getTime: (TutorId, SubjectId) -> List<Lesson>, getPayments: (TutorId, SubjectId) -> List<Payment>, id: TutorId): List<File> {
-        val user =
-            TutorMapper.findByIdOrNull(id)?.let { user ->
-                user.subjects.mapNotNull { subjectId ->
-                    runBlocking {
-                        val times = async { getTime.invoke(id, subjectId) }
-                        val payments = async { getPayments.invoke(id, subjectId) }
+    /** One report file per subject that has lessons; the DB reads and Excel generation run on [Dispatchers.IO]. */
+    private suspend fun getReport(
+        getTime: (TutorId, SubjectId) -> List<Lesson>,
+        getPayments: (TutorId, SubjectId) -> List<Payment>,
+        id: TutorId,
+    ): List<File> = withContext(Dispatchers.IO) {
+        val user = TutorMapper.findByIdOrNull(id) ?: return@withContext emptyList()
+        user.subjects.mapNotNull { subjectId ->
+            val times = async { getTime(id, subjectId) }
+            val payments = async { getPayments(id, subjectId) }
 
-                        val service = times.await().firstOrNull { time -> time.subjectId == subjectId }
-                        if (service == null) return@runBlocking null
-
-                        MonthReport(user.name, subjectId, id).generate(times.await(), payments.await())
-                    }
-                }
+            val lessons = times.await()
+            if (lessons.none { it.subjectId == subjectId }) {
+                payments.cancel()
+                return@mapNotNull null
             }
 
-        return user ?: emptyList()
+            MonthReport(user.name, subjectId, id).generate(lessons, payments.await())
+        }
     }
 }
