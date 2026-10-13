@@ -10,7 +10,12 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.utils.row
 import me.centralhardware.znatoki.telegram.statistic.entity.PaymentId
+import me.centralhardware.znatoki.telegram.statistic.extensions.hasAdminPermission
+import me.centralhardware.znatoki.telegram.statistic.extensions.isInSameMonthAs
+import me.centralhardware.znatoki.telegram.statistic.extensions.user
+import me.centralhardware.znatoki.telegram.statistic.extensions.userId
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
+import java.time.LocalDateTime
 
 
 private const val ACTION_DELETE = "paymentDelete"
@@ -34,7 +39,20 @@ private suspend fun BehaviourContext.changePaymentDelete(
     delete: Boolean,
     query: DataCallbackQuery
 ) {
-    val payment = PaymentMapper.findByIdIncludingDeleted(id) ?: return
+    val payment = PaymentMapper.findByIdIncludingDeleted(id)
+        ?: run {
+            answerCallbackQuery(query, "Запись не найдена", showAlert = true)
+            return
+        }
+
+    if (!data.user.hasAdminPermission() && payment.tutorId.id != query.userId()) {
+        answerCallbackQuery(query, "Доступ запрещён", showAlert = true)
+        return
+    }
+    if (!payment.dateTime.isInSameMonthAs(LocalDateTime.now())) {
+        answerCallbackQuery(query, "Нельзя модифицировать запись после окончания месяца", showAlert = true)
+        return
+    }
 
     PaymentMapper.setDelete(id, delete)
 
