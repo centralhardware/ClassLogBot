@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS employ_name (
+    chat_id BIGINT PRIMARY KEY,
+    fio TEXT NOT NULL
+)

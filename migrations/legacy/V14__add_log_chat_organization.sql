@@ -1,0 +1,1 @@
+ALTER TABLE organization ADD COLUMN log_chat_id BIGINT

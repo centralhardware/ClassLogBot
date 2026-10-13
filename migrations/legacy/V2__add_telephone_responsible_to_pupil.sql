@@ -1,0 +1,1 @@
+ALTER TABLE pupil ADD COLUMN telephone_responsible varchar(11)
