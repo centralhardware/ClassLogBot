@@ -1,8 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import java.time.LocalDateTime
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.parseStudent
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
@@ -83,13 +85,15 @@ object StudentMapper {
         it.int("id").toStudentId()
     }!!
 
-    fun delete(id: StudentId) = update(queryOf(
+    fun delete(id: StudentId, deletedBy: TutorId) = update(queryOf(
         """
         UPDATE students
-        SET deleted = true
+        SET deleted = true,
+            modify_date = :modify_date,
+            update_by = :update_by
         WHERE id = :id
         """,
-        mapOf("id" to id.id),
+        mapOf("id" to id.id, "modify_date" to LocalDateTime.now(), "update_by" to deletedBy.id),
     ))
 
     fun update(student: Student) = update(queryOf(
