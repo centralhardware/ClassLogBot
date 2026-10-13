@@ -26,3 +26,8 @@ fun update(q: Query): Int =
         session.update(q)
     }
 
+
+fun <T> transaction(block: (kotliquery.TransactionalSession) -> T): T =
+    sessionOf(dataSource).use { session ->
+        session.transaction(block)
+    }

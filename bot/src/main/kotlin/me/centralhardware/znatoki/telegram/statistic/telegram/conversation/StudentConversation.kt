@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import dev.inmo.kslog.common.error
+import dev.inmo.kslog.common.KSLog
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
@@ -128,6 +130,7 @@ suspend fun BehaviourContext.createStudent(message: ChatContentMessage<MessageCo
     } catch (e: ConversationCancelledException) {
         sendTextMessage(chatId, "Создание ученика отменено", replyMarkup = ReplyKeyboardRemove())
     } catch (e: Exception) {
-        sendTextMessage(chatId, "Операция отменена: ${e.message}", replyMarkup = ReplyKeyboardRemove())
+        KSLog.error("createStudent failed", e)
+        sendTextMessage(chatId, "Произошла ошибка, операция отменена", replyMarkup = ReplyKeyboardRemove())
     }
 }
