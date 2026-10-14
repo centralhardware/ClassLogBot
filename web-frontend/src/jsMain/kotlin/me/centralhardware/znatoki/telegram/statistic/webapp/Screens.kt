@@ -40,7 +40,8 @@ fun MonthBar() {
     Box("monthbar") {
         Btn("‹", "iconbtn", enabled = i > 0) { App.month = ms[i - 1] }
         B { Text(monthName(App.month)) }
-        Btn("›", "iconbtn", enabled = i in 0 until ms.size - 1) { App.month = ms[i + 1] }
+        // Hidden rather than removed on the current month, so the title stays centred.
+        Btn("›", "iconbtn", enabled = i in 0 until ms.size - 1, css = "visibility:hidden".takeIf { App.month == App.currentMonth }) { App.month = ms[i + 1] }
     }
 }
 
