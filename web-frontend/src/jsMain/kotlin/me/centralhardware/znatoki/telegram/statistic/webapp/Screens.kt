@@ -566,7 +566,7 @@ fun StatsScreen() {
         Sec("По предметам")
         Box("card hbars") {
             if (subjTot.isEmpty()) Empty("Занятий нет.")
-            App.b.subjects.filter { subjTot[it.id.toString()] != null }.forEach { sb ->
+            App.b.subjects.filter { subjTot[it.id.toString()] != null }.sortedByDescending { subjTot[it.id.toString()] }.forEach { sb ->
                 val v = subjTot[sb.id.toString()]!!
                 Box("r") { Span { Text(sb.name) }; Span({ classes("num") }) { Text(v.toString()) }; Box("bar") { I({ style("width:${v * 100.0 / subjMax}%") }) {} } }
             }
