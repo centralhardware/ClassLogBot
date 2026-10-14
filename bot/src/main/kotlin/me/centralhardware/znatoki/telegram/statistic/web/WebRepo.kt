@@ -9,10 +9,8 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-private val HM = DateTimeFormatter.ofPattern("HH:mm")
 
 /** Billed price of one lessons row: the stored amount, ×1.5 for an extra half hour. */
 const val PRICE_SQL = "(CASE WHEN extra_half_hour THEN amount * 1.5 ELSE amount END)"
@@ -62,6 +60,9 @@ data class PaymentRow(
 ) {
     val month: YearMonth get() = YearMonth.from(dateTime)
 }
+
+/** Subject names by id. */
+fun subjectNames() = WebRepo.subjects().associate { it.id to it.name }
 
 object WebRepo {
 

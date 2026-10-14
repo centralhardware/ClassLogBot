@@ -9,59 +9,89 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.createRouteScopedPlugin
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.http.content.staticResources
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.request.header
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import io.ktor.util.AttributeKey
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
-import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.AuditService
+import me.centralhardware.znatoki.telegram.statistic.web.http.HttpError
+import me.centralhardware.znatoki.telegram.statistic.web.http.InitDataAuth
+import me.centralhardware.znatoki.telegram.statistic.web.http.notFound
+import me.centralhardware.znatoki.telegram.statistic.web.routes.*
+import me.centralhardware.znatoki.telegram.statistic.web.service.AuditAlerts
+import me.centralhardware.znatoki.telegram.statistic.web.service.Notifications
+import me.centralhardware.znatoki.telegram.statistic.web.service.Reminders
 import java.io.File
 import java.time.LocalDateTime
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-/** An expected failure with a message the app shows to the user as is. */
-class HttpError(val status: HttpStatusCode, override val message: String, val code: String? = null) : RuntimeException(message)
+/** The Mini App's server: static frontend from /web, the API under /api, run inside the bot process. */
+object WebServer {
 
-fun badRequest(message: String): Nothing = throw HttpError(HttpStatusCode.BadRequest, message)
-fun forbidden(message: String = "Недостаточно прав."): Nothing = throw HttpError(HttpStatusCode.Forbidden, message)
-fun notFound(message: String = "Запись не найдена."): Nothing = throw HttpError(HttpStatusCode.NotFound, message)
+    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
 
-private val CallerKey = AttributeKey<Caller>("Caller")
-val ApplicationCall.caller: Caller get() = attributes[CallerKey]
+    fun start(bot: TelegramBot) {
+        if (!WebConfig.enabled) {
+            KSLog.info("WebServer: disabled by WEB_ENABLED=false")
+            return
+        }
+        Notifications.bot = bot
+        AuditService.listener = AuditAlerts
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { Reminders.run() }
+        embeddedServer(CIO, port = WebConfig.port) { module() }.start(wait = false)
+        KSLog.info("WebServer: listening on :${WebConfig.port}")
+    }
 
-/**
- * Every request carries the Mini App's initData (`Authorization: tma <initData>`, or `?tma=` for
- * <img> links); it is checked against the bot token each time and the tutor must have WEB_INTERFACE.
- */
-private val InitDataAuth = createRouteScopedPlugin("InitDataAuth") {
-    onCall { call ->
-        val raw = call.request.header(HttpHeaders.Authorization)?.takeIf { it.startsWith("tma ") }?.removePrefix("tma ")
-            ?: call.request.queryParameters["tma"]
-        val data = raw?.let { InitDataValidator.validate(it) }
-            ?: throw HttpError(HttpStatusCode.Unauthorized, "Откройте приложение из Telegram-бота.", "auth")
-        val caller = Caller.load(data.user.id)
-            ?: throw HttpError(HttpStatusCode.Forbidden, "Нет доступа к веб-интерфейсу.", if (TutorMapper.findByIdOrNull(TutorId(data.user.id)) == null) "unknown" else "no_web")
-        call.attributes.put(CallerKey, caller)
+    private fun Application.module() {
+        install(ContentNegotiation) { json(json) }
+        install(StatusPages) {
+            exception<HttpError> { call, e -> call.respond(e.status, ErrorDto(e.message, e.code)) }
+            exception<SerializationException> { call, e -> call.respond(HttpStatusCode.BadRequest, ErrorDto("Некорректный запрос: ${e.message}")) }
+            exception<BadRequestException> { call, e -> call.respond(HttpStatusCode.BadRequest, ErrorDto("Некорректный запрос: ${e.message}")) }
+            exception<Throwable> { call, e ->
+                KSLog.error("WebServer: ${call.request.local.uri} failed", e)
+                call.respond(HttpStatusCode.InternalServerError, ErrorDto("Ошибка на сервере. Попробуйте ещё раз."))
+            }
+        }
+        routing {
+            publicRoutes()
+            route("/api") {
+                install(InitDataAuth)
+                appRoutes()
+                lessonRoutes()
+                paymentRoutes()
+                studentRoutes()
+                scheduleRoutes()
+                reportRoutes()
+                statsRoutes()
+                teamRoutes()
+                auditRoutes()
+            }
+            staticResources("/", "web") {
+                modify { _, call -> call.response.header(HttpHeaders.CacheControl, "no-cache") }
+            }
+        }
     }
 }
 
-/** Files generated for one download; Telegram's downloadFile fetches them without our auth header. */
+/** Files generated for one download; Telegram's downloadFile fetches them without the auth header. */
 object Downloads {
     private class Entry(val file: File, val name: String, val type: ContentType, val expires: LocalDateTime)
 
@@ -84,65 +114,3 @@ object Downloads {
         call.respondFile(e.file)
     }
 }
-
-class WebContext(val bot: TelegramBot) {
-    val notifier = WebNotifier(bot)
-    val alerts = AuditAlerts(notifier)
-}
-
-object WebServer {
-
-    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
-
-    fun start(bot: TelegramBot) {
-        if (!WebConfig.enabled) {
-            KSLog.info("WebServer: disabled by WEB_ENABLED=false")
-            return
-        }
-        val ctx = WebContext(bot)
-        AuditService.listener = ctx.alerts
-
-        embeddedServer(CIO, port = WebConfig.port) {
-            install(ContentNegotiation) { json(json) }
-            install(StatusPages) {
-                exception<HttpError> { call, e -> call.respond(e.status, ErrorDto(e.message, e.code)) }
-                exception<kotlinx.serialization.SerializationException> { call, e ->
-                    call.respond(HttpStatusCode.BadRequest, ErrorDto("Некорректный запрос: ${e.message}"))
-                }
-                exception<io.ktor.server.plugins.BadRequestException> { call, e ->
-                    call.respond(HttpStatusCode.BadRequest, ErrorDto("Некорректный запрос: ${e.message}"))
-                }
-                exception<Throwable> { call, e ->
-                    KSLog.error("WebServer: ${call.request.local.uri} failed", e)
-                    call.respond(HttpStatusCode.InternalServerError, ErrorDto("Ошибка на сервере. Попробуйте ещё раз."))
-                }
-            }
-            routing {
-                authRoutes(ctx)
-                get("/dl/{token}") { Downloads.serve(call, call.parameters["token"]!!) }
-                route("/api") {
-                    install(InitDataAuth)
-                    bootRoutes()
-                    lessonRoutes(ctx)
-                    paymentRoutes(ctx)
-                    studentRoutes()
-                    scheduleRoutes()
-                    reportRoutes(ctx)
-                    statsRoutes()
-                    tutorRoutes()
-                    auditRoutes(ctx)
-                    photoRoutes()
-                }
-                staticResources("/", "web") {
-                    modify { _, call -> call.response.header(HttpHeaders.CacheControl, "no-cache") }
-                }
-            }
-        }.start(wait = false)
-        ctx.notifier.launch { scheduleReminders() }
-        KSLog.info("WebServer: listening on :${WebConfig.port}")
-    }
-}
-
-/** Routes that need the signed-in caller live under /api; this helper keeps the handlers short. */
-fun Route.apiGet(path: String, body: suspend io.ktor.server.routing.RoutingContext.(Caller) -> Unit) =
-    get(path) { body(call.caller) }

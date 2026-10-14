@@ -355,3 +355,23 @@ data class SearchDto(val students: List<StudentRowDto>, val lessons: List<Lesson
 
 @Serializable
 data class OkDto(val ok: Boolean = true, val id: String? = null)
+
+@Serializable
+data class LessonInput(
+    val tutor: Long? = null,
+    val subject: Long,
+    val students: List<Int>,
+    val amount: Int,
+    val date: String? = null,
+    val time: String? = null,
+    val slot: Int? = null,
+)
+
+@Serializable
+data class PaymentInput(val tutor: Long? = null, val student: Int, val subject: Long, val amount: Int)
+
+@Serializable
+data class LastPriceDto(val amount: String? = null, val date: String? = null)
+
+@Serializable
+data class ChangedDto(val changed: Int)
