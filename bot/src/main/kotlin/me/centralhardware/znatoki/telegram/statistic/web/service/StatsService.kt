@@ -79,9 +79,6 @@ object StatsService {
             paused = students.count { it.status == "paused" },
             left = left.size,
             reasons = left.groupingBy { it.reason ?: "Не указана" }.eachCount(),
-            sources = students.filter { !it.source.isNullOrBlank() }.groupBy { it.source!!.trim() }
-                .map { (src, list) -> SourceStatDto(src, list.size, list.count { it.status != "left" }) }
-                .sortedByDescending { it.n },
         )
     }
 

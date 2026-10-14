@@ -294,9 +294,6 @@ data class DebtDto(val id: Int, val fio: String, val owe: Double)
 data class TutorStatDto(val tutor: Long, val n: Int, val np: Int, val billed: Double, val received: Long, val slots: Int)
 
 @Serializable
-data class SourceStatDto(val source: String, val n: Int, val stay: Int)
-
-@Serializable
 data class StatsAdminDto(
     val perTutor: List<TutorStatDto>,
     val forecastDone: Double,
@@ -306,7 +303,6 @@ data class StatsAdminDto(
     val paused: Int,
     val left: Int,
     val reasons: Map<String, Int>,
-    val sources: List<SourceStatDto>,
 )
 
 @Serializable

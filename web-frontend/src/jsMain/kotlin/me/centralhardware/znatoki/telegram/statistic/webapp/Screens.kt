@@ -618,11 +618,6 @@ fun StatsScreen() {
                 if (a.reasons.isEmpty()) Text("—")
                 a.reasons.forEach { (r, c) -> Div({ style("display:flex;justify-content:space-between;font-size:13px;padding:3px 0") }) { Span { Text(r) }; Span({ classes("num") }) { Text(c.toString()) } } }
             }
-            Sec("Какие источники приводят тех, кто остаётся")
-            Box("card hbars") {
-                if (a.sources.isEmpty()) Text("—")
-                a.sources.forEach { r -> Box("r") { Span { Text(r.source) }; Span({ classes("num") }) { Text("${r.stay} из ${r.n}") }; Box("bar") { I({ style("width:${r.stay * 100.0 / r.n}%") }) {} } } }
-            }
         }
     }
 }
