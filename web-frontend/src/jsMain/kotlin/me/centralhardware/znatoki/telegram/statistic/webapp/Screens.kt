@@ -88,8 +88,9 @@ fun TodayScreen() {
     Show(remote(m, who) { loadLessons(m, who) }) { all ->
         val todays = if (isCur) all.filter { it.date == App.today }.sortedBy { it.time } else emptyList()
         val live = all.filterNot { it.deleted }
-        Box("stats", if (App.money) null else "grid-template-columns:repeat(2,1fr)") {
-            StatCard(todays.count { !it.deleted }.toString(), "занятий сегодня")
+        val cards = listOf(isCur, true, App.money).count { it }
+        Box("stats", if (cards == 3) null else "grid-template-columns:repeat($cards,1fr)") {
+            if (isCur) StatCard(todays.count { !it.deleted }.toString(), "занятий сегодня")
             StatCard(live.size.toString(), "за месяц")
             if (App.money) StatCard(k1(live.sumOf { price(it) * it.students.size }), "₽ начислено", true)
         }
