@@ -24,11 +24,14 @@ import org.w3c.dom.HTMLElement
 
 fun AttrsScope<*>.style(css: String) = attr("style", css)
 
+/** Space-separated classes; empty tokens are dropped, since Safari's classList.add("") throws. */
+fun AttrsScope<*>.classList(cls: String) = classes(*cls.split(" ").filter { it.isNotEmpty() }.toTypedArray())
+
 @Composable fun Box(cls: String, css: String? = null, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) =
-    Div({ classes(*cls.split(" ").filter { it.isNotEmpty() }.toTypedArray()); css?.let { style(it) }; onClick?.let { f -> onClick { f() }; attr("role", "button"); attr("tabindex", "0") } }) { content() }
+    Div({ classList(cls); css?.let { style(it) }; onClick?.let { f -> onClick { f() }; attr("role", "button"); attr("tabindex", "0") } }) { content() }
 
 @Composable fun T(text: String, cls: String? = null, css: String? = null) =
-    if (cls == null && css == null) Text(text) else Span({ cls?.let { classes(*it.split(" ").toTypedArray()) }; css?.let { style(it) } }) { Text(text) }
+    if (cls == null && css == null) Text(text) else Span({ cls?.let { classList(it) }; css?.let { style(it) } }) { Text(text) }
 
 /** A Telegram user's name that opens their profile; it doesn't trigger the row it sits in. */
 @Composable fun UserLink(id: Long, text: String) =
@@ -38,7 +41,7 @@ fun AttrsScope<*>.style(css: String) = attr("style", css)
 @Composable fun Sec(text: String) = Box("sec") { Text(text) }
 @Composable fun Lock(text: String) = Box("lock") { Text(text) }
 @Composable fun Empty(text: String) = Box("empty") { Text(text) }
-@Composable fun Chip(text: String, kind: String = "") = Span({ classes(*("chip $kind").trim().split(" ").toTypedArray()) }) { Text(text) }
+@Composable fun Chip(text: String, kind: String = "") = Span({ classList("chip $kind") }) { Text(text) }
 @Composable fun Spinner() = Box("spin") {}
 
 @Composable fun ErrorBox(e: Throwable) = Box("err") {
@@ -47,7 +50,7 @@ fun AttrsScope<*>.style(css: String) = attr("style", css)
 }
 
 @Composable fun Btn(label: String, cls: String = "secondary", enabled: Boolean = true, css: String? = null, onClick: () -> Unit) =
-    Button({ classes(*cls.split(" ").toTypedArray()); css?.let { style(it) }; if (!enabled) disabled(); onClick { onClick() } }) { Text(label) }
+    Button({ classList(cls); css?.let { style(it) }; if (!enabled) disabled(); onClick { onClick() } }) { Text(label) }
 
 @Composable fun Actions(content: @Composable () -> Unit) = Box("actions") { content() }
 
@@ -62,7 +65,7 @@ fun AttrsScope<*>.style(css: String) = attr("style", css)
 
 @Composable fun TextField(value: String, placeholder: String = "", type: InputType<String> = InputType.Text, cls: String = "field", css: String? = null, readOnly: Boolean = false, onChange: (String) -> Unit) =
     Input(type) {
-        classes(*cls.split(" ").toTypedArray()); value(value); placeholder(placeholder); attr("autocomplete", "off")
+        classList(cls); value(value); placeholder(placeholder); attr("autocomplete", "off")
         css?.let { style(it) }; if (readOnly) attr("readonly", "")
         onInput { onChange(it.value) }
     }
@@ -78,7 +81,7 @@ fun AttrsScope<*>.style(css: String) = attr("style", css)
 
 @Composable fun <V> Dropdown(options: List<Pair<V, String>>, value: V?, enabled: Boolean = true, css: String? = null, cls: String = "field", onPick: (V) -> Unit) =
     Select({
-        classes(*cls.split(" ").toTypedArray()); css?.let { style(it) }; if (!enabled) disabled()
+        classList(cls); css?.let { style(it) }; if (!enabled) disabled()
         onChange { e -> e.value?.toIntOrNull()?.let { onPick(options[it].first) } }
     }) { options.forEachIndexed { i, (v, t) -> Option(i.toString(), { if (v == value) selected() }) { Text(t) } } }
 
