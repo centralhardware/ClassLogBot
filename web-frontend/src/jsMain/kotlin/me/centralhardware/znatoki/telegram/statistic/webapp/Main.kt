@@ -58,9 +58,9 @@ fun main() {
 
 private val TAB_ICONS = mapOf(
     "today" to """<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>""",
+    "payments" to """<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18M7 15h4"/>""",
     "schedule" to """<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>""",
     "students" to """<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.6"/><path d="M16.5 14.6c2.6.2 4.4 1.9 5 4.9"/>""",
-    "payments" to """<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18M7 15h4"/>""",
     "tutors" to """<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/><path d="M18.5 4.5l1.5 1.5-1.5 1.5M5.5 4.5L4 6l1.5 1.5"/>""",
     "report" to """<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>""",
     "audit" to """<path d="M12 7v5l3 2"/><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/>""",
