@@ -255,7 +255,6 @@ object LessonService {
             l.id to listOfNotNull(
                 "дубль".takeIf { l.id in duplicates },
                 "необычная цена".takeIf { med != null && med > 0 && (l.amount >= med * 2 || l.amount <= med / 2) },
-                "воскресенье".takeIf { WebRepo.isSunday(l.dateTime) },
             )
         }.filterValues { it.isNotEmpty() }
     }

@@ -40,7 +40,8 @@ fun MonthBar() {
     Box("monthbar") {
         Btn("‹", "iconbtn", enabled = i > 0) { App.month = ms[i - 1] }
         B { Text(monthName(App.month)) }
-        Btn("›", "iconbtn", enabled = i in 0 until ms.size - 1) { App.month = ms[i + 1] }
+        // Hidden rather than removed on the current month, so the title stays centred.
+        Btn("›", "iconbtn", enabled = i in 0 until ms.size - 1, css = "visibility:hidden".takeIf { App.month == App.currentMonth }) { App.month = ms[i + 1] }
     }
 }
 
@@ -88,8 +89,9 @@ fun TodayScreen() {
     Show(remote(m, who) { loadLessons(m, who) }) { all ->
         val todays = if (isCur) all.filter { it.date == App.today }.sortedBy { it.time } else emptyList()
         val live = all.filterNot { it.deleted }
-        Box("stats", if (App.money) null else "grid-template-columns:repeat(2,1fr)") {
-            StatCard(todays.count { !it.deleted }.toString(), "занятий сегодня")
+        val cards = listOf(isCur, true, App.money).count { it }
+        Box("stats", if (cards == 3) null else "grid-template-columns:repeat($cards,1fr)") {
+            if (isCur) StatCard(todays.count { !it.deleted }.toString(), "занятий сегодня")
             StatCard(live.size.toString(), "за месяц")
             if (App.money) StatCard(k1(live.sumOf { price(it) * it.students.size }), "₽ начислено", true)
         }
@@ -141,7 +143,8 @@ fun ManageScreen() {
                 when (TodayView.fStatus) { "live" -> !l.deleted; "deleted" -> l.deleted; "flag" -> l.flags.isNotEmpty(); else -> true } &&
                 (q.isEmpty() || l.students.any { it.fio.lowercase().contains(q) })
         }
-        TodayView.selected.retainAll(list.map { it.id }.toSet())
+        // Selection outside the filter is ignored here, not pruned: writing state during composition re-triggers it forever.
+        val chosen = list.filter { it.id in TodayView.selected }
         val live = list.filterNot { it.deleted }
         Box("stats") {
             StatCard(list.size.toString(), "найдено")
@@ -150,14 +153,13 @@ fun ManageScreen() {
         }
         if (list.isNotEmpty()) Box("sec", "display:flex;justify-content:space-between;align-items:center") {
             Span { Text("Занятия") }
-            Btn(if (TodayView.selected.size == list.size) "Снять выбор" else "Выбрать все", "iconbtn", css = "text-transform:none;letter-spacing:0") {
-                if (TodayView.selected.size == list.size) TodayView.selected.clear() else { TodayView.selected.clear(); TodayView.selected.addAll(list.map { it.id }) }
+            Btn(if (chosen.size == list.size) "Снять выбор" else "Выбрать все", "iconbtn", css = "text-transform:none;letter-spacing:0") {
+                if (chosen.size == list.size) TodayView.selected.clear() else { TodayView.selected.clear(); TodayView.selected.addAll(list.map { it.id }) }
             }
         }
         if (list.isEmpty()) Empty("Под фильтр ничего не подходит.")
         list.groupBy { it.date }.entries.sortedByDescending { it.key }.forEach { (d, ls) -> Sec(dayMonth(d)); Box("group") { ls.forEach { LessonRow(it, true) } } }
         if (m != App.currentMonth) Lock("Закрытый месяц: правки попадут в журнал и в уже сданный отчёт.")
-        val chosen = list.filter { it.id in TodayView.selected }
         if (chosen.isNotEmpty()) Box("bulk") {
             B { Text("Выбрано: ${chosen.size}") }
             Box("acts") {
@@ -565,7 +567,7 @@ fun StatsScreen() {
         Sec("По предметам")
         Box("card hbars") {
             if (subjTot.isEmpty()) Empty("Занятий нет.")
-            App.b.subjects.filter { subjTot[it.id.toString()] != null }.forEach { sb ->
+            App.b.subjects.filter { subjTot[it.id.toString()] != null }.sortedByDescending { subjTot[it.id.toString()] }.forEach { sb ->
                 val v = subjTot[sb.id.toString()]!!
                 Box("r") { Span { Text(sb.name) }; Span({ classes("num") }) { Text(v.toString()) }; Box("bar") { I({ style("width:${v * 100.0 / subjMax}%") }) {} } }
             }
@@ -616,11 +618,6 @@ fun StatsScreen() {
                 Box("meta", "font-size:12px;color:var(--hint);margin-bottom:4px") { Text("Причины ухода") }
                 if (a.reasons.isEmpty()) Text("—")
                 a.reasons.forEach { (r, c) -> Div({ style("display:flex;justify-content:space-between;font-size:13px;padding:3px 0") }) { Span { Text(r) }; Span({ classes("num") }) { Text(c.toString()) } } }
-            }
-            Sec("Какие источники приводят тех, кто остаётся")
-            Box("card hbars") {
-                if (a.sources.isEmpty()) Text("—")
-                a.sources.forEach { r -> Box("r") { Span { Text(r.source) }; Span({ classes("num") }) { Text("${r.stay} из ${r.n}") }; Box("bar") { I({ style("width:${r.stay * 100.0 / r.n}%") }) {} } } }
             }
         }
     }
@@ -712,7 +709,11 @@ fun TutorsScreen() {
                             Box("av", "background:${PALETTE[(t.id % PALETTE.size).toInt()]}") { Text(t.name.split(" ").mapNotNull { it.firstOrNull() }.take(2).joinToString("")) }
                             Box("main") {
                                 Box("name") { Text(t.name + if (t.id == App.me) " (вы)" else "") }
-                                Box("meta") { Text((if (t.subjects.isNotEmpty()) t.subjects.joinToString(", ") { App.subj(it).name } else "без предметов") + " · TG ${t.id}" + (t.rate?.let { " · ставка $it%" } ?: "")) }
+                                Box("meta") {
+                                    Text((if (t.subjects.isNotEmpty()) t.subjects.joinToString(", ") { App.subj(it).name } else "без предметов") + " · ")
+                                    UserLink(t.id, "Telegram")
+                                    t.rate?.let { Text(" · ставка $it%") }
+                                }
                                 PermChips(t.perms)
                             }
                         }

@@ -870,7 +870,7 @@ fun openAudit(e: AuditDto) = Sheets.open { close ->
     Box("sec", "margin-top:0") { Text(dateTime(e.at) + " · " + if (e.source == "BOT") "через бота" else "через веб") }
     Title("${e.action}: ${(ETYPES[e.type] ?: e.type).lowercase()}")
     Box("summary") {
-        Box("row") { Box("main") { Text("Кто") }; Div { Text(e.actorName + " "); T("TG ${e.actor}", "meta", "color:var(--hint)") } }
+        Box("row") { Box("main") { Text("Кто") }; Div { UserLink(e.actor, e.actorName) } }
         Box("row") { Box("main") { Text("Запись") }; Box("right", "max-width:62%") { Text(e.title) } }
         SummaryRow("ID", "${e.type} #${e.id}", true)
     }

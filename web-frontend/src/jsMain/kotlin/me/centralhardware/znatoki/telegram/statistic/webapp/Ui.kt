@@ -30,6 +30,10 @@ fun AttrsScope<*>.style(css: String) = attr("style", css)
 @Composable fun T(text: String, cls: String? = null, css: String? = null) =
     if (cls == null && css == null) Text(text) else Span({ cls?.let { classes(*it.split(" ").toTypedArray()) }; css?.let { style(it) } }) { Text(text) }
 
+/** A Telegram user's name that opens their profile; it doesn't trigger the row it sits in. */
+@Composable fun UserLink(id: Long, text: String) =
+    org.jetbrains.compose.web.dom.A("tg://user?id=$id", { onClick { it.stopPropagation() } }) { Text(text) }
+
 @Composable fun Title(text: String) = H2 { Text(text) }
 @Composable fun Sec(text: String) = Box("sec") { Text(text) }
 @Composable fun Lock(text: String) = Box("lock") { Text(text) }
