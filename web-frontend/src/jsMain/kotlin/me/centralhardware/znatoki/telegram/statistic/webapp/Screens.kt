@@ -712,7 +712,11 @@ fun TutorsScreen() {
                             Box("av", "background:${PALETTE[(t.id % PALETTE.size).toInt()]}") { Text(t.name.split(" ").mapNotNull { it.firstOrNull() }.take(2).joinToString("")) }
                             Box("main") {
                                 Box("name") { Text(t.name + if (t.id == App.me) " (вы)" else "") }
-                                Box("meta") { Text((if (t.subjects.isNotEmpty()) t.subjects.joinToString(", ") { App.subj(it).name } else "без предметов") + " · TG ${t.id}" + (t.rate?.let { " · ставка $it%" } ?: "")) }
+                                Box("meta") {
+                                    Text((if (t.subjects.isNotEmpty()) t.subjects.joinToString(", ") { App.subj(it).name } else "без предметов") + " · ")
+                                    UserLink(t.id, "Telegram")
+                                    t.rate?.let { Text(" · ставка $it%") }
+                                }
                                 PermChips(t.perms)
                             }
                         }
