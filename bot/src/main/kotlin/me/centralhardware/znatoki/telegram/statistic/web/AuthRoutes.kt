@@ -48,11 +48,9 @@ fun deviceName(platform: String?, userAgent: String?): String {
     return "$hw · $app"
 }
 
-/** The client address with the last part hidden, like 85.140.12.x. */
-fun ApplicationCall.maskedIp(): String {
-    val ip = request.header("X-Forwarded-For")?.substringBefore(',')?.trim() ?: request.origin.remoteHost
-    return if (ip.count { it == '.' } == 3) ip.substringBeforeLast('.') + ".x" else ip.substringBeforeLast(':') + ":x"
-}
+/** The client address; behind the proxy it is the first X-Forwarded-For entry. */
+fun ApplicationCall.clientIp(): String =
+    request.header("X-Forwarded-For")?.substringBefore(',')?.trim() ?: request.origin.remoteHost
 
 fun bootFor(caller: Caller): BootDto {
     val t = caller.tutor
@@ -96,7 +94,7 @@ fun Route.authRoutes(ctx: WebContext) {
         val data = InitDataValidator.validate(req.initData)
             ?: throw HttpError(HttpStatusCode.Unauthorized, "Не удалось подтвердить вход через Telegram. Откройте приложение из бота.", "auth")
         val device = deviceName(req.platform, call.request.header("User-Agent"))
-        val ip = call.maskedIp()
+        val ip = call.clientIp()
         val tutor = TutorMapper.findByIdOrNull(TutorId(data.user.id))
         if (tutor == null || Permissions.WEB_INTERFACE !in tutor.permissions) {
             AuditService.log(
