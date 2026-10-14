@@ -5,7 +5,6 @@ import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 import me.centralhardware.znatoki.telegram.statistic.extensions.update
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -510,5 +509,4 @@ object WebRepo {
         )
     )
 
-    fun isSunday(d: LocalDateTime) = d.dayOfWeek == DayOfWeek.SUNDAY
 }
