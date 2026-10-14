@@ -21,13 +21,10 @@ import org.jetbrains.compose.web.renderComposable
 /** Why the app can't open: no Telegram, failed check, or no WEB_INTERFACE. */
 private var blocked by mutableStateOf<ApiError?>(null)
 
+/** Loads who the user is and what they may do; the initData itself is the credential. */
 suspend fun signIn() {
-    val t = tg
-    val initData = t?.initData.orEmpty()
-    if (initData.isEmpty()) throw ApiError("Откройте приложение из Telegram-бота.", 401, "no_telegram")
-    Api.token = null
-    val boot: BootDto = Api.post("/auth", AuthRequest(initData, t?.platform))
-    Api.token = boot.token
+    if (Api.initData.isEmpty()) throw ApiError("Откройте приложение из Telegram-бота.", 401, "auth")
+    val boot: BootDto = Api.get("/api/boot")
     App.boot = boot
     if (App.month.isEmpty()) App.month = boot.today.substring(0, 7)
     if (App.who == "me" && boot.caps.seesAll) App.who = "all"
@@ -53,7 +50,6 @@ fun main() {
     tg?.BackButton?.onClick { Sheets.closeTop() }
     if (tg?.colorScheme == "dark") document.documentElement?.setAttribute("data-theme", "dark")
     else if (tg != null) document.documentElement?.setAttribute("data-theme", "light")
-    Api.onReauth = { signIn() }
     App.scope.launch {
         try { signIn(); applyHash() } catch (e: ApiError) { blocked = e } catch (e: Throwable) { blocked = ApiError(e.message ?: "Ошибка", 0) }
     }
@@ -144,7 +140,7 @@ private fun NoAccess(e: ApiError) {
                             .onFailure { Toasts.show(it.message ?: "Ошибка") }
                     }
                 }
-            } else if (e.code == "revoked" || e.code == "auth") {
+            } else if (e.code == "auth") {
                 Btn("Закрыть", "primary", css = "border:0;border-radius:12px;padding:12px 18px;font:700 14px var(--body)") { tg?.close() }
             }
         }

@@ -140,65 +140,66 @@ fun Route.lessonRoutes(ctx: WebContext) {
         call.respond(l.toDto(WebRepo.studentNames(), flags))
     }
 
-    post("/lessons") {
-        val c = call.caller
-        if (!c.canTime) forbidden("Нет права вносить занятия.")
-        val (raw, photo) = call.receiveForm()
-        val input = WebServer.json.decodeFromString<LessonInput>(raw)
-        photo ?: badRequest("Приложите фото отчётности.")
+    requires(Access.TIME) {
+        post("/lessons") {
+            val c = call.caller
+            val (raw, photo) = call.receiveForm()
+            val input = WebServer.json.decodeFromString<LessonInput>(raw)
+            photo ?: badRequest("Приложите фото отчётности.")
 
-        val tutorId = input.tutor?.takeIf { it != c.id }?.also { if (!c.canTimeForOthers) forbidden("Нет права вносить занятия за других.") } ?: c.id
-        val tutor = TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: badRequest("Репетитор не найден.")
-        val subjects = WebRepo.subjects().associateBy { it.id }
-        val subject = subjects[input.subject] ?: badRequest("Предмет не найден.")
-        if (!c.isAdmin && tutor.subjects.isNotEmpty() && SubjectId(subject.id) !in tutor.subjects) badRequest("Этот предмет не закреплён за репетитором.")
-        if (input.students.isEmpty()) badRequest("Выберите ученика.")
-        if (input.students.size > 1 && !subject.group) badRequest("${subject.name}: только индивидуальные занятия.")
-        if (!Amount.validate(input.amount)) badRequest("Стоимость должна быть больше нуля.")
-        val names = WebRepo.studentNames()
-        input.students.forEach { if (names[it]?.deleted != false) badRequest("Ученик не найден или удалён.") }
+            val tutorId = input.tutor?.takeIf { it != c.id }?.also { if (!c.canTimeForOthers) forbidden("Нет права вносить занятия за других.") } ?: c.id
+            val tutor = TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: badRequest("Репетитор не найден.")
+            val subjects = WebRepo.subjects().associateBy { it.id }
+            val subject = subjects[input.subject] ?: badRequest("Предмет не найден.")
+            if (!c.isAdmin && tutor.subjects.isNotEmpty() && SubjectId(subject.id) !in tutor.subjects) badRequest("Этот предмет не закреплён за репетитором.")
+            if (input.students.isEmpty()) badRequest("Выберите ученика.")
+            if (input.students.size > 1 && !subject.group) badRequest("${subject.name}: только индивидуальные занятия.")
+            if (!Amount.validate(input.amount)) badRequest("Стоимость должна быть больше нуля.")
+            val names = WebRepo.studentNames()
+            input.students.forEach { if (names[it]?.deleted != false) badRequest("Ученик не найден или удалён.") }
 
-        val slot = input.slot?.let { WebRepo.slot(it, names) }?.also { if (it.tutor != c.id && !c.isAdmin) forbidden() }
-        val now = LocalDateTime.now()
-        val dateTime = when {
-            c.isAdmin && input.date != null -> {
-                val d = runCatching { LocalDate.parse(input.date) }.getOrNull() ?: badRequest("Неверная дата.")
-                if (d.isAfter(LocalDate.now())) badRequest("Дата не может быть в будущем.")
-                d.atTime(parseTime(input.time) ?: now.toLocalTime().withSecond(0).withNano(0))
+            val slot = input.slot?.let { WebRepo.slot(it, names) }?.also { if (it.tutor != c.id && !c.isAdmin) forbidden() }
+            val now = LocalDateTime.now()
+            val dateTime = when {
+                c.isAdmin && input.date != null -> {
+                    val d = runCatching { LocalDate.parse(input.date) }.getOrNull() ?: badRequest("Неверная дата.")
+                    if (d.isAfter(LocalDate.now())) badRequest("Дата не может быть в будущем.")
+                    d.atTime(parseTime(input.time) ?: now.toLocalTime().withSecond(0).withNano(0))
+                }
+                slot != null -> LocalDate.now().atTime(parseTime(slot.time) ?: now.toLocalTime())
+                else -> now
             }
-            slot != null -> LocalDate.now().atTime(parseTime(slot.time) ?: now.toLocalTime())
-            else -> now
-        }
 
-        val key = MinioService.upload(photo, now).getOrElse { throw HttpError(io.ktor.http.HttpStatusCode.BadGateway, "Не удалось сохранить фото. Попробуйте ещё раз.") }
-        val id = LessonId.random()
-        val rows = input.students.distinct().map {
-            Lesson(
-                id = id, dateTime = dateTime, updateTime = now, tutorId = TutorId(tutorId), subjectId = SubjectId(subject.id),
-                studentId = it.toStudentId(), _amount = Amount(input.amount), photoReport = key,
-                addedByTutorId = if (tutorId != c.id) c.tutorId else null, dataSource = DataSource.WEB,
+            val key = MinioService.upload(photo, now).getOrElse { throw HttpError(io.ktor.http.HttpStatusCode.BadGateway, "Не удалось сохранить фото. Попробуйте ещё раз.") }
+            val id = LessonId.random()
+            val rows = input.students.distinct().map {
+                Lesson(
+                    id = id, dateTime = dateTime, updateTime = now, tutorId = TutorId(tutorId), subjectId = SubjectId(subject.id),
+                    studentId = it.toStudentId(), _amount = Amount(input.amount), photoReport = key,
+                    addedByTutorId = if (tutorId != c.id) c.tutorId else null, dataSource = DataSource.WEB,
+                )
+            }
+            runCatching { LessonMapper.insertAll(rows) }.onFailure { MinioService.delete(key); throw it }
+            slot?.let { WebRepo.setMark(it.id, LocalDate.now(), "done", id.id) }
+
+            val group = WebRepo.lesson(id.id)!!
+            val title = lessonTitle(group, names, subjects.mapValues { it.value.name })
+            AuditService.log(
+                c.id, "Создано", "lesson", id.id, title,
+                listOfNotNull(
+                    Change("стоимость", null, input.amount), Change("учеников", null, rows.size),
+                    Change("репетитор", null, tutor.name).takeIf { tutorId != c.id },
+                    Change("из расписания", null, slot?.let { "${it.time}" }).takeIf { slot != null },
+                    Change("дата", null, ruDay(dateTime.toLocalDate()) + " " + dateTime.toLocalTime().format(HM)).takeIf { c.isAdmin && input.date != null },
+                ),
+                DataSource.WEB, input.students.first(), subject.id,
             )
+            if (c.isAdmin && YearMonth.from(dateTime) != YearMonth.now()) {
+                ctx.alerts.closedMonthEdit(c.id, c.tutor.name, "добавлено занятие $title", YearMonth.from(dateTime).toString())
+            }
+            ctx.notifier.launch { sendWebLessonLog(rows, if (tutorId != c.id) c.tutorId else null) }
+            call.respond(group.toDto(names))
         }
-        runCatching { LessonMapper.insertAll(rows) }.onFailure { MinioService.delete(key); throw it }
-        slot?.let { WebRepo.setMark(it.id, LocalDate.now(), "done", id.id) }
-
-        val group = WebRepo.lesson(id.id)!!
-        val title = lessonTitle(group, names, subjects.mapValues { it.value.name })
-        AuditService.log(
-            c.id, "Создано", "lesson", id.id, title,
-            listOfNotNull(
-                Change("стоимость", null, input.amount), Change("учеников", null, rows.size),
-                Change("репетитор", null, tutor.name).takeIf { tutorId != c.id },
-                Change("из расписания", null, slot?.let { "${it.time}" }).takeIf { slot != null },
-                Change("дата", null, ruDay(dateTime.toLocalDate()) + " " + dateTime.toLocalTime().format(HM)).takeIf { c.isAdmin && input.date != null },
-            ),
-            DataSource.WEB, input.students.first(), subject.id,
-        )
-        if (c.isAdmin && YearMonth.from(dateTime) != YearMonth.now()) {
-            ctx.alerts.closedMonthEdit(c.id, c.tutor.name, "добавлено занятие $title", YearMonth.from(dateTime).toString())
-        }
-        ctx.notifier.launch { sendWebLessonLog(rows, if (tutorId != c.id) c.tutorId else null) }
-        call.respond(group.toDto(names))
     }
 
     patch("/lessons/{id}") {
@@ -262,50 +263,51 @@ fun Route.lessonRoutes(ctx: WebContext) {
         call.respond(WebRepo.lesson(l.id)!!.toDto(names))
     }
 
-    /** Admin "Управление": delete, restore, re-assign, re-price or move several lessons at once. */
-    post("/lessons/bulk") {
-        val c = call.caller
-        if (!c.isAdmin) forbidden("Массовые действия доступны только админу.")
-        val input = call.receive<BulkInput>()
-        val names = WebRepo.studentNames()
-        val subjects = subjectNames()
-        val tutorNames = TutorMapper.getAll().associate { it.id.id to it.name }
-        val lessons = input.ids.mapNotNull { WebRepo.lesson(uuidParam(it)) }
-        var changed = 0
-        lessons.forEach { l ->
-            val change: Change? = when (input.action) {
-                "delete", "restore" -> {
-                    val v = input.action == "delete"
-                    if (l.deleted == v) null else { WebRepo.setLessonDeleted(l.id, v); Change("удалено", l.deleted, v) }
+    requires(Access.ADMIN) {
+        /** Admin "Управление": delete, restore, re-assign, re-price or move several lessons at once. */
+        post("/lessons/bulk") {
+            val c = call.caller
+            val input = call.receive<BulkInput>()
+            val names = WebRepo.studentNames()
+            val subjects = subjectNames()
+            val tutorNames = TutorMapper.getAll().associate { it.id.id to it.name }
+            val lessons = input.ids.mapNotNull { WebRepo.lesson(uuidParam(it)) }
+            var changed = 0
+            lessons.forEach { l ->
+                val change: Change? = when (input.action) {
+                    "delete", "restore" -> {
+                        val v = input.action == "delete"
+                        if (l.deleted == v) null else { WebRepo.setLessonDeleted(l.id, v); Change("удалено", l.deleted, v) }
+                    }
+                    "tutor" -> {
+                        val t = input.value?.toLongOrNull()?.takeIf { it in tutorNames } ?: badRequest("Репетитор не найден.")
+                        if (t == l.tutor) null else { WebRepo.setLessonFields(l.id, mapOf("tutor_id" to t)); Change("репетитор", tutorNames[l.tutor], tutorNames[t]) }
+                    }
+                    "price" -> {
+                        val a = input.value?.toIntOrNull()?.takeIf { Amount.validate(it) } ?: badRequest("Стоимость должна быть больше нуля.")
+                        if (a == l.amount) null else { WebRepo.setLessonFields(l.id, mapOf("amount" to a)); Change("стоимость", l.amount, a) }
+                    }
+                    "day" -> {
+                        val day = input.value?.toIntOrNull() ?: badRequest("Укажите день.")
+                        val m = l.month
+                        if (day !in 1..m.lengthOfMonth()) badRequest("День от 1 до ${m.lengthOfMonth()}.")
+                        val d = m.atDay(day)
+                        if (d.isAfter(LocalDate.now())) badRequest("Дата не может быть в будущем.")
+                        if (d == l.dateTime.toLocalDate()) null
+                        else { WebRepo.setLessonFields(l.id, mapOf("date_time" to d.atTime(l.dateTime.toLocalTime()))); Change("дата", ruDay(l.dateTime.toLocalDate()), ruDay(d)) }
+                    }
+                    else -> badRequest("Неизвестное действие.")
                 }
-                "tutor" -> {
-                    val t = input.value?.toLongOrNull()?.takeIf { it in tutorNames } ?: badRequest("Репетитор не найден.")
-                    if (t == l.tutor) null else { WebRepo.setLessonFields(l.id, mapOf("tutor_id" to t)); Change("репетитор", tutorNames[l.tutor], tutorNames[t]) }
+                if (change != null) {
+                    changed++
+                    val action = when (input.action) { "delete" -> "Удалено"; "restore" -> "Восстановлено"; else -> "Изменено" }
+                    AuditService.log(c.id, action, "lesson", l.id, lessonTitle(l, names, subjects), listOf(change), DataSource.WEB, l.students.first(), l.subject)
                 }
-                "price" -> {
-                    val a = input.value?.toIntOrNull()?.takeIf { Amount.validate(it) } ?: badRequest("Стоимость должна быть больше нуля.")
-                    if (a == l.amount) null else { WebRepo.setLessonFields(l.id, mapOf("amount" to a)); Change("стоимость", l.amount, a) }
-                }
-                "day" -> {
-                    val day = input.value?.toIntOrNull() ?: badRequest("Укажите день.")
-                    val m = l.month
-                    if (day !in 1..m.lengthOfMonth()) badRequest("День от 1 до ${m.lengthOfMonth()}.")
-                    val d = m.atDay(day)
-                    if (d.isAfter(LocalDate.now())) badRequest("Дата не может быть в будущем.")
-                    if (d == l.dateTime.toLocalDate()) null
-                    else { WebRepo.setLessonFields(l.id, mapOf("date_time" to d.atTime(l.dateTime.toLocalTime()))); Change("дата", ruDay(l.dateTime.toLocalDate()), ruDay(d)) }
-                }
-                else -> badRequest("Неизвестное действие.")
             }
-            if (change != null) {
-                changed++
-                val action = when (input.action) { "delete" -> "Удалено"; "restore" -> "Восстановлено"; else -> "Изменено" }
-                AuditService.log(c.id, action, "lesson", l.id, lessonTitle(l, names, subjects), listOf(change), DataSource.WEB, l.students.first(), l.subject)
+            lessons.map { it.month }.distinct().filter { it != YearMonth.now() }.forEach {
+                ctx.alerts.closedMonthEdit(c.id, c.tutor.name, "массовое изменение занятий ($changed)", it.toString())
             }
+            call.respond(mapOf("changed" to changed))
         }
-        lessons.map { it.month }.distinct().filter { it != YearMonth.now() }.forEach {
-            ctx.alerts.closedMonthEdit(c.id, c.tutor.name, "массовое изменение занятий ($changed)", it.toString())
-        }
-        call.respond(mapOf("changed" to changed))
     }
 }

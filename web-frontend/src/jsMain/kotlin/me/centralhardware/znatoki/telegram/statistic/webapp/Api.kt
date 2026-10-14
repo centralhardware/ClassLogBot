@@ -48,18 +48,18 @@ val tg: TgWebApp? get() = window.asDynamic().Telegram?.WebApp.unsafeCast<TgWebAp
 
 class ApiError(message: String, val status: Int, val code: String? = null) : Exception(message)
 
-/** The app's REST client: JSON in and out, the session as a bearer token, one silent re-login on expiry. */
+/** The app's REST client: JSON in and out, Telegram's initData as the credential on every request. */
 object Api {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
     private val client = HttpClient { install(ContentNegotiation) { json(json) }; expectSuccess = false }
-    var token: String? = null
-    var onReauth: (suspend () -> Unit)? = null
+    /** Telegram's signed launch data; the server checks it on every request. */
+    val initData: String get() = tg?.initData.orEmpty()
 
-    suspend fun send(method: HttpMethod, path: String, retried: Boolean = false, configure: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
+    suspend fun send(method: HttpMethod, path: String, configure: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
         val res = try {
             client.request(path) {
                 this.method = method
-                token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
+                header(HttpHeaders.Authorization, "tma $initData")
                 configure(this)
             }
         } catch (e: Throwable) {
@@ -67,10 +67,6 @@ object Api {
         }
         if (!res.status.isSuccess()) {
             val err = runCatching { res.body<ErrorDto>() }.getOrNull()
-            if (res.status.value == 401 && err?.code == "auth" && !retried && onReauth != null) {
-                onReauth!!.invoke()
-                return send(method, path, true, configure)
-            }
             throw ApiError(err?.error ?: "Ошибка ${res.status.value}", res.status.value, err?.code)
         }
         return res
@@ -95,7 +91,7 @@ object Api {
                         append(HttpHeaders.ContentDisposition, "filename=\"photo.jpg\"")
                     })
                 },
-            ) { token?.let { header(HttpHeaders.Authorization, "Bearer $it") } }
+            ) { header(HttpHeaders.Authorization, "tma $initData") }
         } catch (e: Throwable) {
             throw ApiError("Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.", 0)
         }
@@ -104,7 +100,7 @@ object Api {
     }
 }
 
-fun photoUrl(kind: String, id: String) = "/api/photo/$kind/$id?t=${Api.token}"
+fun photoUrl(kind: String, id: String) = "/api/photo/$kind/$id?tma=" + js("encodeURIComponent")(Api.initData) as String
 
 /** Opens a generated file: Telegram's downloadFile where available, the browser otherwise. */
 fun download(d: DownloadDto) {

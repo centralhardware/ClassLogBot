@@ -32,18 +32,8 @@ import java.util.UUID
 private val TUTOR_PRESET = listOf("ADD_TIME", "ADD_PAYMENT", "ADD_CLIENT", "FORCE_GROUP", "EXTRA_HALF_HOUR", "WEB_INTERFACE")
 private val TS = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
 
-private fun Caller.requireManager() { if (!canManageTutors) forbidden("Управлять командой могут админ и те, у кого есть MANAGE_TUTORS.") }
 
-private fun Tutor.toDto(currentSession: UUID?) = TutorDto(
-    id = id.id,
-    name = name,
-    perms = permissions.map { it.name },
-    subjects = subjects.map { it.id },
-    rate = rate,
-    lastLogin = SessionStore.lastLogin(id.id)?.createdAt?.toString(),
-    lastDevice = SessionStore.lastLogin(id.id)?.device,
-    sessions = SessionStore.active(id.id).map { SessionDto(it.id.toString(), it.device, it.ip, it.lastSeenAt.toString(), it.id == currentSession) },
-)
+private fun Tutor.toDto() = TutorDto(id.id, name, permissions.map { it.name }, subjects.map { it.id }, rate)
 
 private fun subjectList(ids: List<Long>, names: Map<Long, String>) = ids.mapNotNull { names[it] }.joinToString(", ")
 
@@ -67,80 +57,67 @@ private fun Caller.checkPermissionChange(target: Tutor?, input: TutorInput) {
 }
 
 fun Route.tutorRoutes() {
-    apiGet("/tutors") { c ->
-        c.requireManager()
-        call.respond(TutorMapper.getAll().sortedBy { it.name }.map { it.toDto(c.session.id) })
-    }
-
-    post("/tutors") {
-        val c = call.caller
-        c.requireManager()
-        val input = call.receive<TutorInput>()
-        if (input.name.isBlank()) badRequest("Введите имя преподавателя.")
-        if (input.id !in 10_000L..999_999_999_999_999L) badRequest("Telegram ID — это число, например 428100231. Его можно узнать у @userinfobot.")
-        if (TutorMapper.findByIdOrNull(TutorId(input.id)) != null) badRequest("Преподаватель с таким Telegram ID уже есть.")
-        c.checkPermissionChange(null, input)
-        WebRepo.insertTutor(input.copy(name = input.name.trim()))
-        val subjects = subjectNames()
-        AuditService.log(
-            c.id, "Добавлен", "tutor", input.id, input.name.trim(),
-            listOf(Change("Telegram ID", null, input.id), Change("права", null, input.perms.joinToString(", ")), Change("предметы", null, subjectList(input.subjects, subjects))),
-            DataSource.WEB,
-        )
-        call.respond(TutorMapper.findByIdOrNull(TutorId(input.id))!!.toDto(null))
-    }
-
-    put("/tutors/{id}") {
-        val c = call.caller
-        c.requireManager()
-        val target = TutorMapper.findByIdOrNull(TutorId(call.parameters["id"]?.toLongOrNull() ?: notFound())) ?: notFound()
-        val input = call.receive<TutorInput>().copy(id = target.id.id)
-        if (input.name.isBlank()) badRequest("Введите имя преподавателя.")
-        c.checkPermissionChange(target, input)
-        WebRepo.updateTutor(input.copy(name = input.name.trim()))
-        val subjects = subjectList(target.subjects.map { it.id }, subjectNames()) to subjectList(input.subjects, subjectNames())
-        val changes = listOf(
-            Change("имя", target.name, input.name.trim()),
-            Change("права", target.permissions.joinToString(", ") { it.name }, input.perms.joinToString(", ")),
-            Change("предметы", subjects.first, subjects.second),
-            Change("ставка", target.rate?.let { "$it%" }, input.rate?.let { "$it%" }),
-        ).filter { it.old != it.new }
-        if (changes.isNotEmpty()) AuditService.log(c.id, "Права изменены", "tutor", target.id.id, input.name.trim(), changes, DataSource.WEB)
-        call.respond(TutorMapper.findByIdOrNull(target.id)!!.toDto(c.session.id))
-    }
-
-    post("/tutors/{id}/{action}") {
-        val c = call.caller
-        c.requireManager()
-        val target = TutorMapper.findByIdOrNull(TutorId(call.parameters["id"]?.toLongOrNull() ?: notFound())) ?: notFound()
-        when (call.parameters["action"]) {
-            "disable" -> {
-                if (target.id.id == c.id) badRequest("Нельзя отключить самого себя.")
-                if (!c.isAdmin && Permissions.ADMIN in target.permissions) forbidden("Отключить админа может только админ.")
-                WebRepo.updateTutor(TutorInput(target.id.id, target.name, emptyList(), target.subjects.map { it.id }, target.rate))
-                SessionStore.revokeAll(target.id.id)
-                AuditService.log(c.id, "Доступ отключён", "tutor", target.id.id, target.name,
-                    listOf(Change("права", target.permissions.joinToString(", ") { it.name }, "—")), DataSource.WEB)
-            }
-            "enable" -> {
-                WebRepo.updateTutor(TutorInput(target.id.id, target.name, TUTOR_PRESET, target.subjects.map { it.id }, target.rate))
-                AuditService.log(c.id, "Доступ возвращён", "tutor", target.id.id, target.name,
-                    listOf(Change("права", "—", TUTOR_PRESET.joinToString(", "))), DataSource.WEB)
-            }
-            else -> notFound()
+    requires(Access.MANAGE_TUTORS) {
+        apiGet("/tutors") { c ->
+            call.respond(TutorMapper.getAll().sortedBy { it.name }.map { it.toDto() })
         }
-        call.respond(TutorMapper.findByIdOrNull(target.id)!!.toDto(c.session.id))
+        post("/tutors") {
+            val c = call.caller
+            val input = call.receive<TutorInput>()
+            if (input.name.isBlank()) badRequest("Введите имя преподавателя.")
+            if (input.id !in 10_000L..999_999_999_999_999L) badRequest("Telegram ID — это число, например 428100231. Его можно узнать у @userinfobot.")
+            if (TutorMapper.findByIdOrNull(TutorId(input.id)) != null) badRequest("Преподаватель с таким Telegram ID уже есть.")
+            c.checkPermissionChange(null, input)
+            WebRepo.insertTutor(input.copy(name = input.name.trim()))
+            val subjects = subjectNames()
+            AuditService.log(
+                c.id, "Добавлен", "tutor", input.id, input.name.trim(),
+                listOf(Change("Telegram ID", null, input.id), Change("права", null, input.perms.joinToString(", ")), Change("предметы", null, subjectList(input.subjects, subjects))),
+                DataSource.WEB,
+            )
+            call.respond(TutorMapper.findByIdOrNull(TutorId(input.id))!!.toDto())
+        }
+        put("/tutors/{id}") {
+            val c = call.caller
+            val target = TutorMapper.findByIdOrNull(TutorId(call.parameters["id"]?.toLongOrNull() ?: notFound())) ?: notFound()
+            val input = call.receive<TutorInput>().copy(id = target.id.id)
+            if (input.name.isBlank()) badRequest("Введите имя преподавателя.")
+            c.checkPermissionChange(target, input)
+            WebRepo.updateTutor(input.copy(name = input.name.trim()))
+            val subjects = subjectList(target.subjects.map { it.id }, subjectNames()) to subjectList(input.subjects, subjectNames())
+            val changes = listOf(
+                Change("имя", target.name, input.name.trim()),
+                Change("права", target.permissions.joinToString(", ") { it.name }, input.perms.joinToString(", ")),
+                Change("предметы", subjects.first, subjects.second),
+                Change("ставка", target.rate?.let { "$it%" }, input.rate?.let { "$it%" }),
+            ).filter { it.old != it.new }
+            if (changes.isNotEmpty()) AuditService.log(c.id, "Права изменены", "tutor", target.id.id, input.name.trim(), changes, DataSource.WEB)
+            call.respond(TutorMapper.findByIdOrNull(target.id)!!.toDto())
+        }
+        post("/tutors/{id}/{action}") {
+            val c = call.caller
+            val target = TutorMapper.findByIdOrNull(TutorId(call.parameters["id"]?.toLongOrNull() ?: notFound())) ?: notFound()
+            when (call.parameters["action"]) {
+                "disable" -> {
+                    if (target.id.id == c.id) badRequest("Нельзя отключить самого себя.")
+                    if (!c.isAdmin && Permissions.ADMIN in target.permissions) forbidden("Отключить админа может только админ.")
+                    WebRepo.updateTutor(TutorInput(target.id.id, target.name, emptyList(), target.subjects.map { it.id }, target.rate))
+                    AuditService.log(c.id, "Доступ отключён", "tutor", target.id.id, target.name,
+                        listOf(Change("права", target.permissions.joinToString(", ") { it.name }, "—")), DataSource.WEB)
+                }
+                "enable" -> {
+                    WebRepo.updateTutor(TutorInput(target.id.id, target.name, TUTOR_PRESET, target.subjects.map { it.id }, target.rate))
+                    AuditService.log(c.id, "Доступ возвращён", "tutor", target.id.id, target.name,
+                        listOf(Change("права", "—", TUTOR_PRESET.joinToString(", "))), DataSource.WEB)
+                }
+                else -> notFound()
+            }
+            call.respond(TutorMapper.findByIdOrNull(target.id)!!.toDto())
+        }
     }
 
-    delete("/sessions/{id}") {
-        val c = call.caller
-        val s = SessionStore.find(runCatching { UUID.fromString(call.parameters["id"]) }.getOrNull() ?: notFound()) ?: notFound()
-        if (s.tutorId != c.id) c.requireManager()
-        SessionStore.revoke(s.id)
-        val name = TutorMapper.findByIdOrNull(TutorId(s.tutorId))?.name ?: s.tutorId.toString()
-        AuditService.log(c.id, "Сеанс завершён", "session", s.tutorId, name, listOf(Change("устройство", s.device, null)), DataSource.WEB)
-        call.respond(OkDto())
-    }
+
+
 }
 
 private fun auditWhere(type: String?, q: String?, rtype: String?, rid: String?): Pair<String, Map<String, Any?>> {
@@ -188,36 +165,35 @@ fun auditCsv(type: String?): File {
 }
 
 fun Route.auditRoutes(ctx: WebContext) {
-    apiGet("/audit") { c ->
-        if (!c.isAdmin) forbidden("Журнал видит только админ.")
-        val q = call.request.queryParameters
-        val (where, params) = auditWhere(q["type"], q["q"], q["rtype"], q["rid"])
-        val limit = (q["limit"]?.toIntOrNull() ?: 25).coerceIn(1, 200)
-        val offset = (q["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
-        val total = runSingle(
-            queryOf("SELECT count(*) AS n FROM audit_log a LEFT JOIN tutors t ON t.id = a.user_id WHERE $where", params)
-        ) { it.int("n") } ?: 0
-        val items = runList(
-            queryOf(
-                "SELECT a.*, t.name AS actor FROM audit_log a LEFT JOIN tutors t ON t.id = a.user_id WHERE $where ORDER BY a.id DESC LIMIT $limit OFFSET $offset",
-                params,
-            )
-        ) { it.toAudit() }
-        call.respond(AuditPageDto(total, items))
+    requires(Access.ADMIN) {
+        apiGet("/audit") { c ->
+            val q = call.request.queryParameters
+            val (where, params) = auditWhere(q["type"], q["q"], q["rtype"], q["rid"])
+            val limit = (q["limit"]?.toIntOrNull() ?: 25).coerceIn(1, 200)
+            val offset = (q["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
+            val total = runSingle(
+                queryOf("SELECT count(*) AS n FROM audit_log a LEFT JOIN tutors t ON t.id = a.user_id WHERE $where", params)
+            ) { it.int("n") } ?: 0
+            val items = runList(
+                queryOf(
+                    "SELECT a.*, t.name AS actor FROM audit_log a LEFT JOIN tutors t ON t.id = a.user_id WHERE $where ORDER BY a.id DESC LIMIT $limit OFFSET $offset",
+                    params,
+                )
+            ) { it.toAudit() }
+            call.respond(AuditPageDto(total, items))
+        }
+        apiGet("/alerts") { c ->
+            call.respond(ctx.alerts.settings())
+        }
+        put("/alerts") {
+            val c = call.caller
+            val a = call.receive<AlertsDto>()
+            ctx.alerts.save(a)
+            call.respond(a)
+        }
     }
 
-    apiGet("/alerts") { c ->
-        if (!c.isAdmin) forbidden()
-        call.respond(ctx.alerts.settings())
-    }
 
-    put("/alerts") {
-        val c = call.caller
-        if (!c.isAdmin) forbidden()
-        val a = call.receive<AlertsDto>()
-        ctx.alerts.save(a)
-        call.respond(a)
-    }
 }
 
 fun Route.photoRoutes() {

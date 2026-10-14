@@ -24,34 +24,6 @@ val STATUS_REASONS = listOf("Каникулы", "Болезнь", "Переез�
 
 private val accessRequests = ConcurrentHashMap<Long, LocalDateTime>()
 
-/** "iPhone · Telegram iOS", from the platform Telegram reports plus the browser's user agent. */
-fun deviceName(platform: String?, userAgent: String?): String {
-    val ua = userAgent.orEmpty()
-    val hw = when {
-        "iPad" in ua -> "iPad"
-        "iPhone" in ua -> "iPhone"
-        "Android" in ua -> "Android"
-        "Windows" in ua -> "Windows"
-        "Mac OS" in ua || "Macintosh" in ua -> "Mac"
-        "Linux" in ua -> "Linux"
-        else -> "Устройство"
-    }
-    val app = when (platform) {
-        "ios" -> "Telegram iOS"
-        "android", "android_x" -> "Telegram Android"
-        "tdesktop" -> "Telegram Desktop"
-        "macos" -> "Telegram macOS"
-        "weba", "webk", "web" -> "Telegram Web"
-        null, "", "unknown" -> "браузер"
-        else -> "Telegram $platform"
-    }
-    return "$hw · $app"
-}
-
-/** The client address; behind the proxy it is the first X-Forwarded-For entry. */
-fun ApplicationCall.clientIp(): String =
-    request.header("X-Forwarded-For")?.substringBefore(',')?.trim() ?: request.origin.remoteHost
-
 fun bootFor(caller: Caller): BootDto {
     val t = caller.tutor
     val first = WebRepo.firstMonth() ?: YearMonth.now()
@@ -62,7 +34,6 @@ fun bootFor(caller: Caller): BootDto {
         TutorBriefDto(it.id.id, it.name, it.subjects.map { s -> s.id }, teaching, it.permissions.isNotEmpty())
     }.sortedBy { it.name }
     return BootDto(
-        token = caller.session.id.toString(),
         me = MeDto(t.id.id, t.name, t.permissions.map { it.name }, t.subjects.map { it.id }),
         caps = CapsDto(
             time = caller.canTime,
@@ -88,43 +59,6 @@ fun bootFor(caller: Caller): BootDto {
 }
 
 fun Route.authRoutes(ctx: WebContext) {
-    /** Opens a session from Telegram's signed initData; the app calls it on every launch. */
-    post("/auth") {
-        val req = call.receive<AuthRequest>()
-        val data = InitDataValidator.validate(req.initData)
-            ?: throw HttpError(HttpStatusCode.Unauthorized, "Не удалось подтвердить вход через Telegram. Откройте приложение из бота.", "auth")
-        val device = deviceName(req.platform, call.request.header("User-Agent"))
-        val ip = call.clientIp()
-        val tutor = TutorMapper.findByIdOrNull(TutorId(data.user.id))
-        if (tutor == null || Permissions.WEB_INTERFACE !in tutor.permissions) {
-            AuditService.log(
-                data.user.id, "Нет доступа", "session", data.user.id, tutor?.name ?: data.user.displayName,
-                listOf(
-                    Change("причина", null, if (tutor == null) "нет в списке преподавателей" else "нет права WEB_INTERFACE"),
-                    Change("устройство", null, device), Change("IP", null, ip),
-                ),
-                DataSource.WEB,
-            )
-            throw HttpError(HttpStatusCode.Forbidden, "Нет доступа к веб-интерфейсу.", if (tutor == null) "unknown" else "no_web")
-        }
-
-        val existing = SessionStore.findByInitData(data.hash)
-        if (existing != null && existing.tutorId == tutor.id.id && existing.revoked) {
-            throw HttpError(HttpStatusCode.Unauthorized, "Сеанс завершён. Закройте и откройте приложение заново.", "revoked")
-        }
-        val session = if (existing != null && existing.tutorId == tutor.id.id && SessionStore.isUsable(existing)) {
-            existing
-        } else {
-            val knownDevice = SessionStore.knownDevice(tutor.id.id, device)
-            SessionStore.create(tutor.id.id, data.hash, device, ip).also {
-                AuditService.log(tutor.id.id, "Вход", "session", tutor.id.id, tutor.name,
-                    listOf(Change("устройство", null, device), Change("IP", null, ip)), DataSource.WEB)
-                if (!knownDevice) ctx.alerts.newDevice(tutor.id.id, tutor.name, device, ip)
-            }
-        }
-        call.respond(bootFor(Caller(tutor, session)))
-    }
-
     /** "Запросить доступ" on the no-access screen: tells the admins who is asking. */
     post("/auth/access-request") {
         val req = call.receive<AuthRequest>()

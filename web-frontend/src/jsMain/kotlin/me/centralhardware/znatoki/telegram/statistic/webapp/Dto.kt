@@ -38,7 +38,6 @@ data class TutorBriefDto(val id: Long, val name: String, val subjects: List<Long
 
 @Serializable
 data class BootDto(
-    val token: String,
     val me: MeDto,
     val caps: CapsDto,
     val today: String,
@@ -322,18 +321,12 @@ data class StatsDto(
 )
 
 @Serializable
-data class SessionDto(val id: String, val device: String?, val ip: String?, val lastSeen: String, val current: Boolean = false)
-
-@Serializable
 data class TutorDto(
     val id: Long,
     val name: String,
     val perms: List<String>,
     val subjects: List<Long>,
     val rate: Int?,
-    val lastLogin: String? = null,
-    val lastDevice: String? = null,
-    val sessions: List<SessionDto> = emptyList(),
 )
 
 @Serializable
@@ -357,7 +350,7 @@ data class AuditDto(
 data class AuditPageDto(val total: Int, val items: List<AuditDto>)
 
 @Serializable
-data class AlertsDto(val mass: Boolean = true, val night: Boolean = true, val closed: Boolean = true, val newdev: Boolean = false)
+data class AlertsDto(val mass: Boolean = true, val night: Boolean = true, val closed: Boolean = true)
 
 @Serializable
 data class SearchDto(val students: List<StudentRowDto>, val lessons: List<LessonDto>, val payments: List<PaymentDto>)

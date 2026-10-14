@@ -27,6 +27,8 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.util.AttributeKey
 import kotlinx.serialization.json.Json
+import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
+import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.AuditService
 import java.io.File
 import java.time.LocalDateTime
@@ -43,17 +45,18 @@ fun notFound(message: String = "Запись не найдена."): Nothing = t
 private val CallerKey = AttributeKey<Caller>("Caller")
 val ApplicationCall.caller: Caller get() = attributes[CallerKey]
 
-/** Accepts `Authorization: Bearer <session>` or, for <img> and download links, `?t=<session>`. */
-private val SessionAuth = createRouteScopedPlugin("SessionAuth") {
+/**
+ * Every request carries the Mini App's initData (`Authorization: tma <initData>`, or `?tma=` for
+ * <img> links); it is checked against the bot token each time and the tutor must have WEB_INTERFACE.
+ */
+private val InitDataAuth = createRouteScopedPlugin("InitDataAuth") {
     onCall { call ->
-        val token = call.request.header(HttpHeaders.Authorization)?.removePrefix("Bearer ")?.trim()
-            ?: call.request.queryParameters["t"]
-        val id = token?.let { runCatching { UUID.fromString(it) }.getOrNull() }
-            ?: throw HttpError(HttpStatusCode.Unauthorized, "Нужно войти заново.", "auth")
-        val session = SessionStore.find(id)?.takeIf { SessionStore.isUsable(it) }
-            ?: throw HttpError(HttpStatusCode.Unauthorized, "Сеанс завершён. Закройте и откройте приложение заново.", "auth")
-        val caller = Caller.load(session) ?: throw HttpError(HttpStatusCode.Forbidden, "Нет доступа к веб-интерфейсу.", "no_web")
-        if (session.lastSeenAt.isBefore(LocalDateTime.now().minusMinutes(1))) SessionStore.touch(session.id)
+        val raw = call.request.header(HttpHeaders.Authorization)?.takeIf { it.startsWith("tma ") }?.removePrefix("tma ")
+            ?: call.request.queryParameters["tma"]
+        val data = raw?.let { InitDataValidator.validate(it) }
+            ?: throw HttpError(HttpStatusCode.Unauthorized, "Откройте приложение из Telegram-бота.", "auth")
+        val caller = Caller.load(data.user.id)
+            ?: throw HttpError(HttpStatusCode.Forbidden, "Нет доступа к веб-интерфейсу.", if (TutorMapper.findByIdOrNull(TutorId(data.user.id)) == null) "unknown" else "no_web")
         call.attributes.put(CallerKey, caller)
     }
 }
@@ -118,7 +121,7 @@ object WebServer {
                 authRoutes(ctx)
                 get("/dl/{token}") { Downloads.serve(call, call.parameters["token"]!!) }
                 route("/api") {
-                    install(SessionAuth)
+                    install(InitDataAuth)
                     bootRoutes()
                     lessonRoutes(ctx)
                     paymentRoutes(ctx)
@@ -136,7 +139,7 @@ object WebServer {
             }
         }.start(wait = false)
         ctx.notifier.launch { scheduleReminders() }
-        KSLog.info("WebServer: listening on :${WebConfig.port}, app url ${WebConfig.appUrl ?: "(WEB_APP_URL not set)"}")
+        KSLog.info("WebServer: listening on :${WebConfig.port}")
     }
 }
 

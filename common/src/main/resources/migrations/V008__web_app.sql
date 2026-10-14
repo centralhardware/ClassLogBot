@@ -63,19 +63,6 @@ CREATE TABLE IF NOT EXISTS report_submissions (
     PRIMARY KEY (tutor_id, month)
 );
 
--- One row per Mini App sign-in; revoking it signs that device out.
-CREATE TABLE IF NOT EXISTS web_sessions (
-    id             UUID PRIMARY KEY,
-    tutor_id       BIGINT    NOT NULL,
-    init_data_hash TEXT      NOT NULL,
-    device         TEXT,
-    ip             TEXT,
-    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_seen_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    revoked        BOOLEAN   NOT NULL DEFAULT false
-);
-CREATE INDEX IF NOT EXISTS idx_web_sessions_tutor ON web_sessions(tutor_id);
-
 -- Small key/value settings, e.g. which audit alerts admins get.
 CREATE TABLE IF NOT EXISTS app_settings (
     key   TEXT PRIMARY KEY,

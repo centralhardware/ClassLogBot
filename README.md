@@ -31,8 +31,7 @@ reports (with hand-in to the director), stats, team and permissions, and an audi
 
 | Variable | Meaning | Default |
 |---|---|---|
-| `WEB_APP_URL` | Public https address of the app, used in the bot's message buttons | — |
 | `WEB_PORT` | Port of the web server | `8080` |
 | `WEB_ENABLED` | `false` runs the bot only | `true` |
 
-To open the app from the bot, set the menu button in BotFather (Bot Settings → Menu Button) to `WEB_APP_URL`.
+Set the bot's menu button in BotFather (Bot Settings → Menu Button) to the app's https address. That opens the app, and the web server reads the same address for the buttons in its messages.

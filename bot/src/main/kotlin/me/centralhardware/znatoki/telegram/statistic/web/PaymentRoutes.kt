@@ -46,53 +46,54 @@ fun PaymentRow.toDto(names: Map<Int, StudentName>) = PaymentDto(
 fun paymentTitle(p: PaymentRow, names: Map<Int, StudentName>) = (names[p.student]?.short ?: "#${p.student}") + " · " + rub(p.amount)
 
 fun Route.paymentRoutes(ctx: WebContext) {
-    apiGet("/payments") { c ->
-        if (!c.readsPayments) forbidden("Нет доступа к оплатам.")
-        val month = c.monthParam(call.request.queryParameters["month"])
-        val names = WebRepo.studentNames()
-        call.respond(WebRepo.payments(month.start(), month.end(), c.tutorFilter(call.request.queryParameters["tutor"])).map { it.toDto(names) })
-    }
-
-    apiGet("/payments/{id}") { c ->
-        if (!c.readsPayments) forbidden("Нет доступа к оплатам.")
-        val p = WebRepo.payment(call.parameters["id"]?.toIntOrNull() ?: notFound()) ?: notFound()
-        if (!c.seesAll && p.tutor != c.id) forbidden()
-        call.respond(p.toDto(WebRepo.studentNames()))
-    }
-
-    post("/payments") {
-        val c = call.caller
-        if (!c.canPayment) forbidden("Нет права вносить оплаты.")
-        val (raw, photo) = call.receiveForm()
-        val input = WebServer.json.decodeFromString<PaymentInput>(raw)
-        photo ?: badRequest("Приложите чек.")
-        val tutorId = input.tutor?.takeIf { it != c.id }?.also { if (!c.canPaymentForOthers) forbidden("Нет права вносить оплаты за других.") } ?: c.id
-        TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: badRequest("Репетитор не найден.")
-        val subjects = subjectNames()
-        if (input.subject !in subjects) badRequest("Предмет не найден.")
-        if (!Amount.validate(input.amount)) badRequest("Сумма должна быть больше нуля.")
-        val names = WebRepo.studentNames()
-        if (names[input.student]?.deleted != false) badRequest("Ученик не найден или удалён.")
-
-        val now = LocalDateTime.now()
-        val key = MinioService.upload(photo, now).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить чек. Попробуйте ещё раз.") }
-        val payment = Payment(
-            dateTime = now, tutorId = TutorId(tutorId), studentId = input.student.toStudentId(), amount = Amount(input.amount),
-            subjectId = SubjectId(input.subject), photoReport = key,
-            addedByTutorId = if (tutorId != c.id) c.tutorId else null, dataSource = DataSource.WEB,
-        )
-        val id = runCatching { PaymentMapper.insert(payment) }.onFailure { MinioService.delete(key) }.getOrThrow()
-        val row = WebRepo.payment(id.id)!!
-        AuditService.log(
-            c.id, "Создано", "payment", id.id, paymentTitle(row, names),
-            listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")),
-            DataSource.WEB, input.student, input.subject,
-        )
-        ctx.notifier.launch {
-            sendWebPaymentLog(payment, id, if (tutorId != c.id) c.tutorId else null)
-            if (FireflyConfig.enabled) FireflyService.exportPayment(payment.copy(id = id))
+    requires(Access.READ_PAYMENTS) {
+        apiGet("/payments") { c ->
+            val month = c.monthParam(call.request.queryParameters["month"])
+            val names = WebRepo.studentNames()
+            call.respond(WebRepo.payments(month.start(), month.end(), c.tutorFilter(call.request.queryParameters["tutor"])).map { it.toDto(names) })
         }
-        call.respond(row.toDto(names))
+        apiGet("/payments/{id}") { c ->
+            val p = WebRepo.payment(call.parameters["id"]?.toIntOrNull() ?: notFound()) ?: notFound()
+            if (!c.seesAll && p.tutor != c.id) forbidden()
+            call.respond(p.toDto(WebRepo.studentNames()))
+        }
+    }
+
+
+    requires(Access.PAYMENT) {
+        post("/payments") {
+            val c = call.caller
+            val (raw, photo) = call.receiveForm()
+            val input = WebServer.json.decodeFromString<PaymentInput>(raw)
+            photo ?: badRequest("Приложите чек.")
+            val tutorId = input.tutor?.takeIf { it != c.id }?.also { if (!c.canPaymentForOthers) forbidden("Нет права вносить оплаты за других.") } ?: c.id
+            TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: badRequest("Репетитор не найден.")
+            val subjects = subjectNames()
+            if (input.subject !in subjects) badRequest("Предмет не найден.")
+            if (!Amount.validate(input.amount)) badRequest("Сумма должна быть больше нуля.")
+            val names = WebRepo.studentNames()
+            if (names[input.student]?.deleted != false) badRequest("Ученик не найден или удалён.")
+
+            val now = LocalDateTime.now()
+            val key = MinioService.upload(photo, now).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить чек. Попробуйте ещё раз.") }
+            val payment = Payment(
+                dateTime = now, tutorId = TutorId(tutorId), studentId = input.student.toStudentId(), amount = Amount(input.amount),
+                subjectId = SubjectId(input.subject), photoReport = key,
+                addedByTutorId = if (tutorId != c.id) c.tutorId else null, dataSource = DataSource.WEB,
+            )
+            val id = runCatching { PaymentMapper.insert(payment) }.onFailure { MinioService.delete(key) }.getOrThrow()
+            val row = WebRepo.payment(id.id)!!
+            AuditService.log(
+                c.id, "Создано", "payment", id.id, paymentTitle(row, names),
+                listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")),
+                DataSource.WEB, input.student, input.subject,
+            )
+            ctx.notifier.launch {
+                sendWebPaymentLog(payment, id, if (tutorId != c.id) c.tutorId else null)
+                if (FireflyConfig.enabled) FireflyService.exportPayment(payment.copy(id = id))
+            }
+            call.respond(row.toDto(names))
+        }
     }
 
     patch("/payments/{id}") {

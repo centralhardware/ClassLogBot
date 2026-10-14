@@ -3,6 +3,7 @@ package me.centralhardware.znatoki.telegram.statistic.web
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.warning
 import dev.inmo.tgbotapi.bot.TelegramBot
+import dev.inmo.tgbotapi.extensions.api.chat.get.getDefaultChatMenuButton
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
@@ -25,6 +26,23 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * The Mini App's address, as set for the bot's menu button in BotFather; message buttons that open
+ * the app use it. Re-read hourly, so changing it in BotFather needs no restart.
+ */
+object AppUrl {
+    private var cached: String? = null
+    private var readAt = java.time.LocalDateTime.MIN
+
+    suspend fun get(bot: TelegramBot): String? {
+        if (readAt.isAfter(java.time.LocalDateTime.now().minusHours(1))) return cached
+        cached = runCatching { (bot.getDefaultChatMenuButton() as? dev.inmo.tgbotapi.types.MenuButton.WebApp)?.webApp?.url?.trimEnd('/') }
+            .onFailure { KSLog.warning("AppUrl: cannot read the menu button", it) }.getOrNull()
+        readAt = java.time.LocalDateTime.now()
+        return cached
+    }
+}
+
 /** Telegram messages the web app sends: access requests, report reviews, admin alerts, files. */
 class WebNotifier(private val bot: TelegramBot) {
 
@@ -34,7 +52,7 @@ class WebNotifier(private val bot: TelegramBot) {
     fun send(chatId: Long, text: String, appButton: Pair<String, String>? = null) {
         scope.launch {
             runCatching {
-                val url = appButton?.let { (_, path) -> WebConfig.appUrl?.let { it + path } }
+                val url = appButton?.let { (_, path) -> AppUrl.get(bot)?.let { it + path } }
                 sendTextMessage(chatId, text, url?.let { u -> inlineKeyboard { row { webAppButton(appButton.first, u) } } })
             }.onFailure { KSLog.warning("WebNotifier: failed to message $chatId", it) }
         }
@@ -61,7 +79,7 @@ class WebNotifier(private val bot: TelegramBot) {
 
 /**
  * Watches the audit log and messages admins about the patterns they asked for in "Оповещения":
- * mass deletion, night-time edits, edits of a closed month and sign-ins from a new device.
+ * mass deletion, night-time edits and edits of a closed month.
  */
 class AuditAlerts(private val notifier: WebNotifier) : AuditListener {
 
@@ -99,11 +117,6 @@ class AuditAlerts(private val notifier: WebNotifier) : AuditListener {
     fun closedMonthEdit(actorId: Long, actorName: String, what: String, month: String) {
         if (!settings().closed) return
         alert(actorId, "🔒 $actorName изменил(а) запись закрытого месяца ($month): $what.")
-    }
-
-    fun newDevice(actorId: Long, actorName: String, device: String, ip: String) {
-        if (!settings().newdev) return
-        alert(actorId, "📱 $actorName вошёл(ла) в веб-интерфейс с нового устройства: $device, $ip.")
     }
 
     private fun alert(actorId: Long, text: String) =

@@ -750,7 +750,7 @@ fun AuditScreen() {
     val rec = AuditView.record
     if (rec != null) Box("status") { Box("line") { B { Text("${ETYPES[rec.first] ?: rec.first}: ${rec.third}") }; Btn("Все записи", "iconbtn") { AuditView.record = null } } }
     else {
-        Seg(listOf("all" to "Все", "lesson" to "Занятия", "payment" to "Оплаты", "student" to "Ученики", "slot" to "График", "tutor" to "Команда", "report" to "Отчёты", "session" to "Входы"), AuditView.type, "grid-auto-columns:max-content;overflow-x:auto") { AuditView.type = it; AuditView.limit = 25 }
+        Seg(listOf("all" to "Все", "lesson" to "Занятия", "payment" to "Оплаты", "student" to "Ученики", "slot" to "График", "tutor" to "Команда", "report" to "Отчёты"), AuditView.type, "grid-auto-columns:max-content;overflow-x:auto") { AuditView.type = it; AuditView.limit = 25 }
         TextField(AuditView.query, "Ученик, преподаватель или действие", InputType.Search, cls = "search") { AuditView.query = it; AuditView.limit = 25 }
     }
     val url = buildString {

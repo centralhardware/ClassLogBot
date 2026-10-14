@@ -167,71 +167,72 @@ fun Route.reportRoutes(ctx: WebContext) {
         }
     }
 
-    /** Director's inbox: every teaching tutor's month with the submission status. */
-    apiGet("/report/inbox") { c ->
-        if (!c.seesAll) forbidden()
-        val month = c.reportMonth(call.request.queryParameters["month"])
-        val subs = WebRepo.submissions(month.toString()).associateBy { it.tutor }
-        val rows = TutorMapper.getAll()
-            .filter { (it.permissions.isNotEmpty() && (it.subjects.isNotEmpty() || Permissions.ADD_TIME in it.permissions)) || it.id.id in subs }
-            .map { InboxRowDto(it.id.id, WebRepo.monthTotals(it.id.id, month), subs[it.id.id]) }
-        call.respond(rows)
-    }
-
-    post("/report/submit") {
-        val c = call.caller
-        if (!c.canTime) forbidden()
-        val input = call.receive<SubmitInput>()
-        val month = parseMonth(input.month) ?: badRequest("Неверный месяц.")
-        val prev = WebRepo.submission(c.id, month.toString())
-        if (prev != null && prev.status != "returned") badRequest("Отчёт уже сдан.")
-        val s = SubmissionDto(c.id, month.toString(), "submitted", input.note?.trim()?.takeIf { it.isNotEmpty() }, null, LocalDateTime.now().toString())
-        WebRepo.saveSubmission(s, null)
-        AuditService.log(c.id, "Отчёт сдан", "report", "${c.id}-$month", "${c.tutor.name} · ${monthTitle(month)}",
-            listOf(Change("статус", if (prev == null) "черновик" else STATUS_TITLE[prev.status], "на проверке")), DataSource.WEB)
-        ctx.notifier.toPermission(
-            Permissions.DIRECTOR,
-            "📄 ${c.tutor.name} сдал(а) отчёт за ${monthTitle(month).lowercase()}." + (s.note?.let { "\nКомментарий: $it" } ?: ""),
-            "Открыть отчёты" to "/#tab=report&month=$month",
-        )
-        call.respond(s)
-    }
-
-    post("/report/{tutor}/{month}/{action}") {
-        val c = call.caller
-        if (!c.seesAll) forbidden("Проверять отчёты может директор.")
-        val tutorId = call.parameters["tutor"]?.toLongOrNull() ?: notFound()
-        val month = parseMonth(call.parameters["month"]) ?: notFound()
-        val tutor = TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: notFound()
-        val prev = WebRepo.submission(tutorId, month.toString())
-        val now = LocalDateTime.now().toString()
-        val title = "${tutor.name} · ${monthTitle(month)}"
-        val oldStatus = prev?.status?.let { STATUS_TITLE[it] } ?: "не сдан"
-        val next = when (call.parameters["action"]) {
-            "accept" -> {
-                if (prev?.status == "accepted") badRequest("Отчёт уже принят.")
-                AuditService.log(c.id, "Отчёт принят", "report", "$tutorId-$month", title, listOf(Change("статус", oldStatus, "принят")), DataSource.WEB)
-                ctx.notifier.send(tutorId, "✅ Отчёт за ${monthTitle(month).lowercase()} принят.", "Открыть отчёт" to "/#tab=report")
-                (prev ?: SubmissionDto(tutorId, month.toString(), "accepted")).copy(status = "accepted", decidedAt = now, selfAccepted = prev?.status != "submitted")
-            }
-            "return" -> {
-                val comment = call.receive<ReturnInput>().comment.trim()
-                if (comment.isEmpty()) badRequest("Напишите, что исправить: репетитор увидит этот текст.")
-                AuditService.log(c.id, "Отчёт возвращён", "report", "$tutorId-$month", title,
-                    listOf(Change("статус", oldStatus, "возвращён"), Change("комментарий", null, comment)), DataSource.WEB)
-                ctx.notifier.send(tutorId, "↩️ Отчёт за ${monthTitle(month).lowercase()} возвращён на доработку:\n«$comment»", "Открыть отчёт" to "/#tab=report")
-                (prev ?: SubmissionDto(tutorId, month.toString(), "returned")).copy(status = "returned", comment = comment, decidedAt = now)
-            }
-            "reopen" -> {
-                if (prev?.status != "accepted") badRequest("Отчёт не принят.")
-                AuditService.log(c.id, "Отметка снята", "report", "$tutorId-$month", title, listOf(Change("статус", "принят", "на проверке")), DataSource.WEB)
-                prev.copy(status = "submitted", decidedAt = null, selfAccepted = false)
-            }
-            else -> notFound()
+    requires(Access.SEES_ALL) {
+        /** Director's inbox: every teaching tutor's month with the submission status. */
+        apiGet("/report/inbox") { c ->
+            val month = c.reportMonth(call.request.queryParameters["month"])
+            val subs = WebRepo.submissions(month.toString()).associateBy { it.tutor }
+            val rows = TutorMapper.getAll()
+                .filter { (it.permissions.isNotEmpty() && (it.subjects.isNotEmpty() || Permissions.ADD_TIME in it.permissions)) || it.id.id in subs }
+                .map { InboxRowDto(it.id.id, WebRepo.monthTotals(it.id.id, month), subs[it.id.id]) }
+            call.respond(rows)
         }
-        WebRepo.saveSubmission(next, c.id)
-        call.respond(next)
+        post("/report/{tutor}/{month}/{action}") {
+            val c = call.caller
+            val tutorId = call.parameters["tutor"]?.toLongOrNull() ?: notFound()
+            val month = parseMonth(call.parameters["month"]) ?: notFound()
+            val tutor = TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: notFound()
+            val prev = WebRepo.submission(tutorId, month.toString())
+            val now = LocalDateTime.now().toString()
+            val title = "${tutor.name} · ${monthTitle(month)}"
+            val oldStatus = prev?.status?.let { STATUS_TITLE[it] } ?: "не сдан"
+            val next = when (call.parameters["action"]) {
+                "accept" -> {
+                    if (prev?.status == "accepted") badRequest("Отчёт уже принят.")
+                    AuditService.log(c.id, "Отчёт принят", "report", "$tutorId-$month", title, listOf(Change("статус", oldStatus, "принят")), DataSource.WEB)
+                    ctx.notifier.send(tutorId, "✅ Отчёт за ${monthTitle(month).lowercase()} принят.", "Открыть отчёт" to "/#tab=report")
+                    (prev ?: SubmissionDto(tutorId, month.toString(), "accepted")).copy(status = "accepted", decidedAt = now, selfAccepted = prev?.status != "submitted")
+                }
+                "return" -> {
+                    val comment = call.receive<ReturnInput>().comment.trim()
+                    if (comment.isEmpty()) badRequest("Напишите, что исправить: репетитор увидит этот текст.")
+                    AuditService.log(c.id, "Отчёт возвращён", "report", "$tutorId-$month", title,
+                        listOf(Change("статус", oldStatus, "возвращён"), Change("комментарий", null, comment)), DataSource.WEB)
+                    ctx.notifier.send(tutorId, "↩️ Отчёт за ${monthTitle(month).lowercase()} возвращён на доработку:\n«$comment»", "Открыть отчёт" to "/#tab=report")
+                    (prev ?: SubmissionDto(tutorId, month.toString(), "returned")).copy(status = "returned", comment = comment, decidedAt = now)
+                }
+                "reopen" -> {
+                    if (prev?.status != "accepted") badRequest("Отчёт не принят.")
+                    AuditService.log(c.id, "Отметка снята", "report", "$tutorId-$month", title, listOf(Change("статус", "принят", "на проверке")), DataSource.WEB)
+                    prev.copy(status = "submitted", decidedAt = null, selfAccepted = false)
+                }
+                else -> notFound()
+            }
+            WebRepo.saveSubmission(next, c.id)
+            call.respond(next)
+        }
     }
+
+    requires(Access.TIME) {
+        post("/report/submit") {
+            val c = call.caller
+            val input = call.receive<SubmitInput>()
+            val month = parseMonth(input.month) ?: badRequest("Неверный месяц.")
+            val prev = WebRepo.submission(c.id, month.toString())
+            if (prev != null && prev.status != "returned") badRequest("Отчёт уже сдан.")
+            val s = SubmissionDto(c.id, month.toString(), "submitted", input.note?.trim()?.takeIf { it.isNotEmpty() }, null, LocalDateTime.now().toString())
+            WebRepo.saveSubmission(s, null)
+            AuditService.log(c.id, "Отчёт сдан", "report", "${c.id}-$month", "${c.tutor.name} · ${monthTitle(month)}",
+                listOf(Change("статус", if (prev == null) "черновик" else STATUS_TITLE[prev.status], "на проверке")), DataSource.WEB)
+            ctx.notifier.toPermission(
+                Permissions.DIRECTOR,
+                "📄 ${c.tutor.name} сдал(а) отчёт за ${monthTitle(month).lowercase()}." + (s.note?.let { "\nКомментарий: $it" } ?: ""),
+                "Открыть отчёты" to "/#tab=report&month=$month",
+            )
+            call.respond(s)
+        }
+    }
+
 }
 
 private fun monthFiles(tutor: Tutor, month: YearMonth, subjectFilter: List<Long>): List<File> {

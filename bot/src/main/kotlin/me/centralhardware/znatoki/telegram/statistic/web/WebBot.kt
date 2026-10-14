@@ -34,7 +34,7 @@ private suspend fun TelegramBot.sendReminders(hour: Int) {
     val today = LocalDate.now()
     val names = WebRepo.studentNames()
     val subjects = subjectNames()
-    val url = WebConfig.appUrl
+    val url = AppUrl.get(this)
     val allSlots = WebRepo.slots(null, names)
     val marks = WebRepo.marks(today, today, allSlots.map { it.id }).map { it.slot }.toSet()
 

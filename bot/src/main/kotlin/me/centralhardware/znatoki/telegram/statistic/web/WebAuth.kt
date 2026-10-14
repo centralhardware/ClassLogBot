@@ -24,14 +24,11 @@ import javax.crypto.spec.SecretKeySpec
 object WebConfig {
     val port: Int by lazy { System.getenv("WEB_PORT")?.toIntOrNull() ?: 8080 }
 
-    /** Public https address of the Mini App; without it the bot shows no app buttons. */
-    val appUrl: String? by lazy { System.getenv("WEB_APP_URL")?.trimEnd('/')?.takeIf { it.isNotBlank() } }
-
     val enabled: Boolean by lazy { System.getenv("WEB_ENABLED")?.lowercase() != "false" }
 
     val botToken: String by lazy { System.getenv("BOT_TOKEN") ?: error("BOT_TOKEN is not set") }
 
-    /** How old Telegram's initData may be when a new session is opened from it. */
+    /** How old Telegram's initData may be; the app is reopened from the bot after that. */
     const val INIT_DATA_MAX_AGE_SECONDS = 24 * 60 * 60L
 }
 
@@ -86,79 +83,11 @@ object InitDataValidator {
     private fun ByteArray.toHex() = joinToString("") { "%02x".format(it) }
 }
 
-data class WebSession(
-    val id: UUID,
-    val tutorId: Long,
-    val device: String?,
-    val ip: String?,
-    val createdAt: LocalDateTime,
-    val lastSeenAt: LocalDateTime,
-    val revoked: Boolean,
-)
-
-object SessionStore {
-
-    private fun kotliquery.Row.toSession() = WebSession(
-        uuid("id"), long("tutor_id"), stringOrNull("device"), stringOrNull("ip"),
-        localDateTime("created_at"), localDateTime("last_seen_at"), boolean("revoked"),
-    )
-
-    fun findByInitData(hash: String): WebSession? = runSingle(
-        queryOf("SELECT * FROM web_sessions WHERE init_data_hash = :p_h ORDER BY created_at DESC LIMIT 1", mapOf("p_h" to hash))
-    ) { it.toSession() }
-
-    fun create(tutorId: Long, initDataHash: String, device: String, ip: String): WebSession {
-        val id = UUID.randomUUID()
-        update(
-            queryOf(
-                """
-                INSERT INTO web_sessions (id, tutor_id, init_data_hash, device, ip)
-                VALUES (:id, :tutor, :hash, :device, :ip)
-                """,
-                mapOf("id" to id, "tutor" to tutorId, "hash" to initDataHash, "device" to device, "ip" to ip),
-            )
-        )
-        return find(id)!!
-    }
-
-    fun find(id: UUID): WebSession? =
-        runSingle(queryOf("SELECT * FROM web_sessions WHERE id = :id", mapOf("id" to id))) { it.toSession() }
-
-    fun touch(id: UUID) = update(queryOf("UPDATE web_sessions SET last_seen_at = now() WHERE id = :id", mapOf("id" to id)))
-
-    fun active(tutorId: Long): List<WebSession> = runList(
-        queryOf(
-            """
-            SELECT * FROM web_sessions
-            WHERE tutor_id = :p_t AND NOT revoked AND last_seen_at > now() - interval '7 days'
-            ORDER BY last_seen_at DESC
-            """,
-            mapOf("p_t" to tutorId),
-        )
-    ) { it.toSession() }
-
-    fun knownDevice(tutorId: Long, device: String): Boolean = runSingle(
-        queryOf("SELECT EXISTS(SELECT 1 FROM web_sessions WHERE tutor_id = :p_t AND device = :p_d) AS e", mapOf("p_t" to tutorId, "p_d" to device))
-    ) { it.boolean("e") } ?: false
-
-    fun lastLogin(tutorId: Long): WebSession? = runSingle(
-        queryOf("SELECT * FROM web_sessions WHERE tutor_id = :p_t ORDER BY created_at DESC LIMIT 1", mapOf("p_t" to tutorId))
-    ) { it.toSession() }
-
-    fun revoke(id: UUID) = update(queryOf("UPDATE web_sessions SET revoked = true WHERE id = :id", mapOf("id" to id)))
-
-    fun revokeAll(tutorId: Long): Int =
-        update(queryOf("UPDATE web_sessions SET revoked = true WHERE tutor_id = :p_t AND NOT revoked", mapOf("p_t" to tutorId)))
-
-    /** Sessions are valid for a week of inactivity; the app then opens a new one from fresh initData. */
-    fun isUsable(s: WebSession) = !s.revoked && s.lastSeenAt.isAfter(LocalDateTime.now().minusDays(7))
-}
-
 /**
  * The signed-in tutor of a request, with the screen-level capabilities derived from tutors.permissions,
  * mirroring UserExt.kt (hasTimePermission() = ADD_TIME or ADMIN, and so on).
  */
-class Caller(val tutor: Tutor, val session: WebSession) {
+class Caller(val tutor: Tutor) {
     val id: Long get() = tutor.id.id
     val tutorId: TutorId get() = tutor.id
     private val perms = tutor.permissions.toSet()
@@ -189,9 +118,10 @@ class Caller(val tutor: Tutor, val session: WebSession) {
     }
 
     companion object {
-        fun load(session: WebSession): Caller? =
-            TutorMapper.findByIdOrNull(TutorId(session.tutorId))
+        /** The tutor behind validated initData, or null without WEB_INTERFACE. */
+        fun load(userId: Long): Caller? =
+            TutorMapper.findByIdOrNull(TutorId(userId))
                 ?.takeIf { Permissions.WEB_INTERFACE in it.permissions }
-                ?.let { Caller(it, session) }
+                ?.let { Caller(it) }
     }
 }

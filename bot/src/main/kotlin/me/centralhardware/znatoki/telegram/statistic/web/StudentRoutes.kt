@@ -41,121 +41,122 @@ private fun validate(input: StudentInput, except: Int?) {
 }
 
 fun Route.studentRoutes() {
-    apiGet("/students") { c ->
-        if (!c.seesStudents) forbidden()
-        call.respond(WebRepo.studentRows(includeDeleted = c.isAdmin, withBalance = c.seesAll))
-    }
-
-    apiGet("/students/{id}") { c ->
-        if (!c.seesStudents) forbidden()
-        val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
-        val row = WebRepo.studentRow(id, c.seesAll)?.takeIf { !it.deleted || c.isAdmin } ?: notFound("Ученик не найден.")
-        val s = StudentMapper.findById(id.toStudentId())
-        val (count, recent) = WebRepo.studentLessonStats(id, if (c.seesAll) null else c.id)
-        call.respond(
-            StudentDetailDto(
-                row = row,
-                phone = s.phone?.value,
-                parent = s.responsiblePhone?.value,
-                motherFio = s.motherFio,
-                birthDate = s.birthDate?.toString(),
-                recordDate = s.recordDate?.toString(),
-                notes = WebRepo.notes(id),
-                lessons = count,
-                paid = if (c.seesAll) WebRepo.paidTotal(id) else null,
-                recent = recent,
-            )
-        )
-    }
-
-    post("/students") {
-        val c = call.caller
-        if (!c.canClient) forbidden("Нет права добавлять учеников.")
-        val input = call.receive<StudentInput>()
-        validate(input, null)
-        val id = WebRepo.insertStudent(input.copy(last = input.last.trim(), first = input.first.trim(), middle = input.middle.trim()),
-            normalizePhone(input.phone)?.value, normalizePhone(input.parent)?.value, c.id).toStudentId()
-        StudentService.refresh()
-        AuditService.log(
-            c.id, "Создано", "student", id.id, "${input.last.trim()} ${input.first.trim()}",
-            listOfNotNull(Change("класс", null, input.cls), input.source?.takeIf { it.isNotBlank() }?.let { Change("источник", null, it) }),
-            DataSource.WEB, id.id,
-        )
-        call.respond(WebRepo.studentRow(id.id, c.seesAll)!!)
-    }
-
-    put("/students/{id}") {
-        val c = call.caller
-        if (!c.canClient) forbidden("Изменять учеников могут те, у кого есть право ADD_CLIENT.")
-        val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
-        val input = call.receive<StudentInput>()
-        validate(input, id)
-        val old = StudentMapper.findById(id.toStudentId())
-        val phone = normalizePhone(input.phone)?.value
-        val parent = normalizePhone(input.parent)?.value
-        val source = input.source?.trim()?.takeIf { it.isNotEmpty() }
-        val oldSource = WebRepo.studentRow(id, false)?.source
-        WebRepo.updateStudent(id, input.copy(last = input.last.trim(), first = input.first.trim(), middle = input.middle.trim()), phone, parent, c.id)
-        StudentService.refresh()
-        val changes = listOf(
-            Change("фамилия", old.secondName, input.last.trim()),
-            Change("имя", old.name, input.first.trim()),
-            Change("отчество", old.lastName, input.middle.trim()),
-            Change("класс", old.schoolClass?.value, input.cls),
-            Change("телефон", fmtPhone(old.phone?.value), fmtPhone(phone)),
-            Change("телефон родителя", fmtPhone(old.responsiblePhone?.value), fmtPhone(parent)),
-            Change("источник", oldSource, source),
-        ).filter { (it.old?.toString() ?: "") != (it.new?.toString() ?: "") }
-        if (changes.isNotEmpty()) {
-            AuditService.log(c.id, "Изменено", "student", id, "${input.last.trim()} ${input.first.trim()}", changes, DataSource.WEB, id)
+    requires(Access.STUDENTS) {
+        apiGet("/students") { c ->
+            call.respond(WebRepo.studentRows(includeDeleted = c.isAdmin, withBalance = c.seesAll))
         }
-        call.respond(WebRepo.studentRow(id, c.seesAll)!!)
+        apiGet("/students/{id}") { c ->
+            val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
+            val row = WebRepo.studentRow(id, c.seesAll)?.takeIf { !it.deleted || c.isAdmin } ?: notFound("Ученик не найден.")
+            val s = StudentMapper.findById(id.toStudentId())
+            val (count, recent) = WebRepo.studentLessonStats(id, if (c.seesAll) null else c.id)
+            call.respond(
+                StudentDetailDto(
+                    row = row,
+                    phone = s.phone?.value,
+                    parent = s.responsiblePhone?.value,
+                    motherFio = s.motherFio,
+                    birthDate = s.birthDate?.toString(),
+                    recordDate = s.recordDate?.toString(),
+                    notes = WebRepo.notes(id),
+                    lessons = count,
+                    paid = if (c.seesAll) WebRepo.paidTotal(id) else null,
+                    recent = recent,
+                )
+            )
+        }
     }
 
-    post("/students/{id}/status") {
-        val c = call.caller
-        if (!c.canClient) forbidden()
-        val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
-        val input = call.receive<StatusInput>()
-        val title = STATUS_TITLES[input.status] ?: badRequest("Неизвестный статус.")
-        val old = WebRepo.studentRow(id, false) ?: notFound()
-        val reason = if (input.status == "active") null else input.reason?.takeIf { it in STATUS_REASONS } ?: "Другое"
-        WebRepo.setStudentStatus(id, input.status, reason, c.id)
-        AuditService.log(
-            c.id, "Статус", "student", id, "${old.last} ${old.first}",
-            listOf(Change("статус", STATUS_TITLES[old.status], title + (reason?.let { " · $it" } ?: ""))),
-            DataSource.WEB, id,
-        )
-        call.respond(WebRepo.studentRow(id, c.seesAll)!!)
+
+    requires(Access.CLIENT) {
+        post("/students") {
+            val c = call.caller
+            val input = call.receive<StudentInput>()
+            validate(input, null)
+            val id = WebRepo.insertStudent(input.copy(last = input.last.trim(), first = input.first.trim(), middle = input.middle.trim()),
+                normalizePhone(input.phone)?.value, normalizePhone(input.parent)?.value, c.id).toStudentId()
+            StudentService.refresh()
+            AuditService.log(
+                c.id, "Создано", "student", id.id, "${input.last.trim()} ${input.first.trim()}",
+                listOfNotNull(Change("класс", null, input.cls), input.source?.takeIf { it.isNotBlank() }?.let { Change("источник", null, it) }),
+                DataSource.WEB, id.id,
+            )
+            call.respond(WebRepo.studentRow(id.id, c.seesAll)!!)
+        }
+        put("/students/{id}") {
+            val c = call.caller
+            val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
+            val input = call.receive<StudentInput>()
+            validate(input, id)
+            val old = StudentMapper.findById(id.toStudentId())
+            val phone = normalizePhone(input.phone)?.value
+            val parent = normalizePhone(input.parent)?.value
+            val source = input.source?.trim()?.takeIf { it.isNotEmpty() }
+            val oldSource = WebRepo.studentRow(id, false)?.source
+            WebRepo.updateStudent(id, input.copy(last = input.last.trim(), first = input.first.trim(), middle = input.middle.trim()), phone, parent, c.id)
+            StudentService.refresh()
+            val changes = listOf(
+                Change("фамилия", old.secondName, input.last.trim()),
+                Change("имя", old.name, input.first.trim()),
+                Change("отчество", old.lastName, input.middle.trim()),
+                Change("класс", old.schoolClass?.value, input.cls),
+                Change("телефон", fmtPhone(old.phone?.value), fmtPhone(phone)),
+                Change("телефон родителя", fmtPhone(old.responsiblePhone?.value), fmtPhone(parent)),
+                Change("источник", oldSource, source),
+            ).filter { (it.old?.toString() ?: "") != (it.new?.toString() ?: "") }
+            if (changes.isNotEmpty()) {
+                AuditService.log(c.id, "Изменено", "student", id, "${input.last.trim()} ${input.first.trim()}", changes, DataSource.WEB, id)
+            }
+            call.respond(WebRepo.studentRow(id, c.seesAll)!!)
+        }
+        post("/students/{id}/status") {
+            val c = call.caller
+            val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
+            val input = call.receive<StatusInput>()
+            val title = STATUS_TITLES[input.status] ?: badRequest("Неизвестный статус.")
+            val old = WebRepo.studentRow(id, false) ?: notFound()
+            val reason = if (input.status == "active") null else input.reason?.takeIf { it in STATUS_REASONS } ?: "Другое"
+            WebRepo.setStudentStatus(id, input.status, reason, c.id)
+            AuditService.log(
+                c.id, "Статус", "student", id, "${old.last} ${old.first}",
+                listOf(Change("статус", STATUS_TITLES[old.status], title + (reason?.let { " · $it" } ?: ""))),
+                DataSource.WEB, id,
+            )
+            call.respond(WebRepo.studentRow(id, c.seesAll)!!)
+        }
     }
 
-    post("/students/{id}/notes") {
-        val c = call.caller
-        if (!c.canTime && !c.canClient) forbidden()
-        val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
-        val text = call.receive<TextInput>().text.trim().take(2000)
-        if (text.isEmpty()) badRequest("Пустая заметка.")
-        val row = WebRepo.studentRow(id, false) ?: notFound()
-        WebRepo.addNote(id, c.id, text)
-        AuditService.log(
-            c.id, "Заметка", "student", id, "${row.last} ${row.first}",
-            listOf(Change("заметка", null, if (text.length > 40) text.take(40) + "…" else text)), DataSource.WEB, id,
-        )
-        call.respond(WebRepo.notes(id))
+
+
+    requires(Access.NOTES) {
+        post("/students/{id}/notes") {
+            val c = call.caller
+            val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
+            val text = call.receive<TextInput>().text.trim().take(2000)
+            if (text.isEmpty()) badRequest("Пустая заметка.")
+            val row = WebRepo.studentRow(id, false) ?: notFound()
+            WebRepo.addNote(id, c.id, text)
+            AuditService.log(
+                c.id, "Заметка", "student", id, "${row.last} ${row.first}",
+                listOf(Change("заметка", null, if (text.length > 40) text.take(40) + "…" else text)), DataSource.WEB, id,
+            )
+            call.respond(WebRepo.notes(id))
+        }
     }
 
-    post("/students/{id}/{action}") {
-        val c = call.caller
-        if (!c.isAdmin) forbidden("Удалить ученика может только админ.")
-        val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
-        val deleted = when (call.parameters["action"]) { "delete" -> true; "restore" -> false; else -> notFound() }
-        val row = WebRepo.studentRow(id, false) ?: notFound()
-        WebRepo.setStudentDeleted(id, deleted, c.id)
-        StudentService.refresh()
-        AuditService.log(
-            c.id, if (deleted) "Удалено" else "Восстановлено", "student", id, "${row.last} ${row.first}",
-            listOf(Change("удалён", row.deleted, deleted)), DataSource.WEB, id,
-        )
-        call.respond(WebRepo.studentRow(id, c.seesAll)!!)
+    requires(Access.ADMIN) {
+        post("/students/{id}/{action}") {
+            val c = call.caller
+            val id = call.parameters["id"]?.toIntOrNull() ?: notFound()
+            val deleted = when (call.parameters["action"]) { "delete" -> true; "restore" -> false; else -> notFound() }
+            val row = WebRepo.studentRow(id, false) ?: notFound()
+            WebRepo.setStudentDeleted(id, deleted, c.id)
+            StudentService.refresh()
+            AuditService.log(
+                c.id, if (deleted) "Удалено" else "Восстановлено", "student", id, "${row.last} ${row.first}",
+                listOf(Change("удалён", row.deleted, deleted)), DataSource.WEB, id,
+            )
+            call.respond(WebRepo.studentRow(id, c.seesAll)!!)
+        }
     }
 }

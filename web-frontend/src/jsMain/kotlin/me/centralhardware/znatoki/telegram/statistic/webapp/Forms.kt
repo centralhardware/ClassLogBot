@@ -803,7 +803,7 @@ fun openTutor(orig: TutorDto?) = Sheets.open { close ->
     var confirmOff by remember { mutableStateOf(false) }
     if (confirmOff && orig != null) {
         Title("Отключить: ${orig.name}?")
-        org.jetbrains.compose.web.dom.P({ style("color:var(--hint);line-height:1.5") }) { Text("Все права будут сняты: бот и веб-интерфейс перестанут отвечать этому человеку, его сеансы завершатся. Занятия и оплаты останутся в отчётах.") }
+        org.jetbrains.compose.web.dom.P({ style("color:var(--hint);line-height:1.5") }) { Text("Все права будут сняты: бот и веб-интерфейс перестанут отвечать этому человеку. Занятия и оплаты останутся в отчётах.") }
         Actions {
             Btn("Отмена") { confirmOff = false }
             Btn("Отключить", "danger") { App.act("Доступ отключён, история занятий сохранена") { Api.postEmpty<TutorDto>("/api/tutors/${orig.id}/disable"); close() } }
@@ -820,21 +820,6 @@ fun openTutor(orig: TutorDto?) = Sheets.open { close ->
         FieldLabel("Имя"); TextField(name, "Фамилия Имя") { name = it }
         FieldLabel("Telegram ID"); TextField(tgId, "428100231", cls = "field num", readOnly = orig != null) { tgId = it }
         FieldLabel("Ставка, % от начисленного"); NumberField(rate) { rate = it }
-    }
-    if (orig != null) {
-        Box("lock", "padding-top:8px") { Text(orig.lastLogin?.let { "Последний вход: ${dateTime(it)}" + (orig.lastDevice?.let { d -> " · $d" } ?: "") } ?: "Ещё ни разу не входил в веб-интерфейс.") }
-        if (orig.perms.isNotEmpty()) {
-            Sec("Активные сеансы")
-            Box("group") {
-                if (orig.sessions.isEmpty()) Box("row") { Box("main meta", "color:var(--hint)") { Text("Нет активных сеансов") } }
-                orig.sessions.forEach { s ->
-                    Box("row") {
-                        Box("main") { Box("name") { Text(s.device ?: "Устройство") }; Box("meta") { Text("${s.ip ?: ""} · ${dateTime(s.lastSeen)}" + if (s.current) " · это вы" else "") } }
-                        Btn("Завершить", "mini ghost") { App.act("Сеанс завершён") { Api.postEmpty<OkDto>("/api/sessions/${s.id}", HttpMethod.Delete); close() } }
-                    }
-                }
-            }
-        }
     }
     Sec("Предметы")
     Box("opts") { App.b.subjects.forEach { s -> Opt(s.name, s.id in subjects) { subjects = if (s.id in subjects) subjects - s.id else subjects + s.id } } }
@@ -912,7 +897,6 @@ fun openAlerts() = Sheets.open { close ->
             Toggle("Массовое удаление", "5 и больше удалений за 10 минут одним человеком", a.mass) { a = a.copy(mass = it) }
             Toggle("Правки ночью", "изменения с 00:00 до 07:00", a.night) { a = a.copy(night = it) }
             Toggle("Правки закрытого месяца", "любое изменение после того, как месяц закрыт", a.closed) { a = a.copy(closed = it) }
-            Toggle("Вход с нового устройства", "первый вход с телефона или компьютера", a.newdev) { a = a.copy(newdev = it) }
         }
         Lock("Приходит в личку администраторам, кнопка открывает журнал.")
         Actions { Btn("Готово", "primary") { App.act("Оповещения сохранены") { Api.post<AlertsDto, AlertsDto>("/api/alerts", a, HttpMethod.Put); close() } } }
