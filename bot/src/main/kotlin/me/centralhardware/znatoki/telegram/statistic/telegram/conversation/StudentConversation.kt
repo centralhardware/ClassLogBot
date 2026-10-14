@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.tgbotapi.extensions.api.send.sendTextMessage
@@ -98,6 +100,7 @@ suspend fun BehaviourContext.createStudent(message: ChatContentMessage<MessageCo
         
         val client = builder.build()
         client.id = StudentMapper.save(client)
+        BotAudit.student(message.tutorId().id, "Создано", client.id, listOf(Change("класс", null, client.schoolClass?.value)))
         runCatching { StudentService.refresh() }
         
         sendTextMessage(

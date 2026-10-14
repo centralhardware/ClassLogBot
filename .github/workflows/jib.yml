@@ -37,6 +37,7 @@ jobs:
             bot:
               - 'bot/**'
               - 'common/**'
+              - 'web-frontend/**'
               - 'Dockerfile'
               - 'build.gradle.kts'
               - 'settings.gradle.kts'

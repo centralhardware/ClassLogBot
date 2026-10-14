@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -62,6 +64,7 @@ private suspend fun BehaviourContext.changeForceGroupStatus(
     }
 
     LessonMapper.setForceGroup(id, forceGroup)
+    BotAudit.lesson(query.from.id.chatId.long, "Тип занятия", id, listOf(Change("групповое", !forceGroup, forceGroup)))
 
     val after = LessonMapper.findById(id)
     val current = after.firstOrNull() ?: service

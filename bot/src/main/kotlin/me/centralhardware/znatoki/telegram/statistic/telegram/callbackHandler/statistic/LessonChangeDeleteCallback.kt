@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -56,6 +58,7 @@ private suspend fun BehaviourContext.changeLessonDelete(
     }
 
     LessonMapper.setDeleted(id, deleted)
+    BotAudit.lesson(query.userId(), if (deleted) "Удалено" else "Восстановлено", id, listOf(Change("удалено", !deleted, deleted)))
 
     query.messageDataCallbackQueryOrNull()?.message?.let {
         edit(

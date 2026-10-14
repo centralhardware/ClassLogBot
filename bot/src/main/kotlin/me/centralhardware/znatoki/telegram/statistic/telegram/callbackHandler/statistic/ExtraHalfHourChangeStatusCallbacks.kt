@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -61,6 +63,7 @@ private suspend fun BehaviourContext.changeExtraHalfHour(
     }
 
     LessonMapper.setExtraHalfHour(id, extraHalfHour)
+    BotAudit.lesson(chatId, "Полтора часа", id, listOf(Change("полтора часа", !extraHalfHour, extraHalfHour)))
 
     val historyAfter = LessonMapper.findById(id)
     val updated = historyAfter.firstOrNull() ?: service

@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.KSLog
@@ -130,6 +132,7 @@ suspend fun BehaviourContext.createLesson(
             builder.dataSource = DataSource.BOT
             val services = builder.build()
             LessonMapper.insertAll(services)
+            BotAudit.lesson(message.tutorId().id, "Создано", builder.id, listOf(Change("стоимость", null, builder.amount?.amount), Change("учеников", null, services.size)))
             saved = true
             sendLog(services, message.userId(), addedBy)
             
