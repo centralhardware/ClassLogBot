@@ -14,8 +14,7 @@ import java.nio.file.Files
 data class AuditFilter(val type: String? = null, val query: String? = null, val recordType: String? = null, val recordId: String? = null) {
 
     fun where(): Pair<String, Map<String, Any?>> {
-        // Entries from before the web app have no source and render badly, so they are left out.
-        val clauses = mutableListOf("a.source IS NOT NULL")
+        val clauses = mutableListOf("true")
         val params = mutableMapOf<String, Any?>()
         if (recordType != null && recordId != null) {
             clauses += "a.entity_type = :rtype AND a.entity_id = :rid"; params["rtype"] = recordType; params["rid"] = recordId
@@ -63,7 +62,7 @@ object AuditLogService {
         at = localDateTime("timestamp").toString(),
         actor = long("user_id"),
         actorName = stringOrNull("actor") ?: long("user_id").toString(),
-        source = string("source"),
+        source = stringOrNull("source") ?: "BOT",
         action = string("action"),
         type = stringOrNull("entity_type") ?: "",
         id = stringOrNull("entity_id") ?: "",
