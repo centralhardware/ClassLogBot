@@ -173,7 +173,7 @@ fun Route.reportRoutes(ctx: WebContext) {
         val month = c.reportMonth(call.request.queryParameters["month"])
         val subs = WebRepo.submissions(month.toString()).associateBy { it.tutor }
         val rows = TutorMapper.getAll()
-            .filter { it.subjects.isNotEmpty() || Permissions.ADD_TIME in it.permissions || it.id.id in subs }
+            .filter { (it.permissions.isNotEmpty() && (it.subjects.isNotEmpty() || Permissions.ADD_TIME in it.permissions)) || it.id.id in subs }
             .map { InboxRowDto(it.id.id, WebRepo.monthTotals(it.id.id, month), subs[it.id.id]) }
         call.respond(rows)
     }

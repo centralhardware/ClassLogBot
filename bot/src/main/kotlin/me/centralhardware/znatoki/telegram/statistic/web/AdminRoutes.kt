@@ -153,10 +153,10 @@ private fun auditWhere(type: String?, q: String?, rtype: String?, rid: String?):
     if (rtype != null && rid != null) {
         clauses += "a.entity_type = :rt AND a.entity_id = :rid"; params["rt"] = rtype; params["rid"] = rid
     } else if (type != null && type != "all") {
-        clauses += "a.entity_type = :t"; params["t"] = type
+        clauses += "a.entity_type = :p_t"; params["p_t"] = type
     }
     if (!q.isNullOrBlank()) {
-        clauses += "(coalesce(a.title, '') || ' ' || coalesce(t.name, '') || ' ' || a.action) ILIKE :q"; params["q"] = "%${q.trim()}%"
+        clauses += "(coalesce(a.title, '') || ' ' || coalesce(t.name, '') || ' ' || a.action) ILIKE :p_q"; params["p_q"] = "%${q.trim()}%"
     }
     return clauses.joinToString(" AND ") to params
 }

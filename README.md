@@ -16,3 +16,23 @@ I’ll be glad to hear your questions, suggestions, or feedback.
 - student management  
 - lesson tracking  
 - payment tracking  
+
+---
+
+### Web app (Telegram Mini App)
+
+The image also serves a Telegram Mini App: lessons, schedule, students, payments, monthly
+reports (with hand-in to the director), stats, team and permissions, and an audit log.
+
+- `web-frontend/` — the UI, Compose HTML (Kotlin/JS). Its build is packed into the bot jar under `/web`.
+- `bot/.../web/` — the Ktor API (`/auth`, `/api/**`) and static hosting, started by `AppMain` before the bot.
+- Sign-in uses Telegram's `initData` (HMAC-checked with `BOT_TOKEN`); access needs `WEB_INTERFACE`.
+- New permissions: `DIRECTOR` (reviews reports, read-only) and `MANAGE_TUTORS`.
+
+| Variable | Meaning | Default |
+|---|---|---|
+| `WEB_APP_URL` | Public https address of the app, used in the bot's message buttons | — |
+| `WEB_PORT` | Port of the web server | `8080` |
+| `WEB_ENABLED` | `false` runs the bot only | `true` |
+
+To open the app from the bot, set the menu button in BotFather (Bot Settings → Menu Button) to `WEB_APP_URL`.

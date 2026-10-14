@@ -104,7 +104,7 @@ object SessionStore {
     )
 
     fun findByInitData(hash: String): WebSession? = runSingle(
-        queryOf("SELECT * FROM web_sessions WHERE init_data_hash = :h ORDER BY created_at DESC LIMIT 1", mapOf("h" to hash))
+        queryOf("SELECT * FROM web_sessions WHERE init_data_hash = :p_h ORDER BY created_at DESC LIMIT 1", mapOf("p_h" to hash))
     ) { it.toSession() }
 
     fun create(tutorId: Long, initDataHash: String, device: String, ip: String): WebSession {
@@ -130,25 +130,25 @@ object SessionStore {
         queryOf(
             """
             SELECT * FROM web_sessions
-            WHERE tutor_id = :t AND NOT revoked AND last_seen_at > now() - interval '7 days'
+            WHERE tutor_id = :p_t AND NOT revoked AND last_seen_at > now() - interval '7 days'
             ORDER BY last_seen_at DESC
             """,
-            mapOf("t" to tutorId),
+            mapOf("p_t" to tutorId),
         )
     ) { it.toSession() }
 
     fun knownDevice(tutorId: Long, device: String): Boolean = runSingle(
-        queryOf("SELECT EXISTS(SELECT 1 FROM web_sessions WHERE tutor_id = :t AND device = :d) AS e", mapOf("t" to tutorId, "d" to device))
+        queryOf("SELECT EXISTS(SELECT 1 FROM web_sessions WHERE tutor_id = :p_t AND device = :p_d) AS e", mapOf("p_t" to tutorId, "p_d" to device))
     ) { it.boolean("e") } ?: false
 
     fun lastLogin(tutorId: Long): WebSession? = runSingle(
-        queryOf("SELECT * FROM web_sessions WHERE tutor_id = :t ORDER BY created_at DESC LIMIT 1", mapOf("t" to tutorId))
+        queryOf("SELECT * FROM web_sessions WHERE tutor_id = :p_t ORDER BY created_at DESC LIMIT 1", mapOf("p_t" to tutorId))
     ) { it.toSession() }
 
     fun revoke(id: UUID) = update(queryOf("UPDATE web_sessions SET revoked = true WHERE id = :id", mapOf("id" to id)))
 
     fun revokeAll(tutorId: Long): Int =
-        update(queryOf("UPDATE web_sessions SET revoked = true WHERE tutor_id = :t AND NOT revoked", mapOf("t" to tutorId)))
+        update(queryOf("UPDATE web_sessions SET revoked = true WHERE tutor_id = :p_t AND NOT revoked", mapOf("p_t" to tutorId)))
 
     /** Sessions are valid for a week of inactivity; the app then opens a new one from fresh initData. */
     fun isUsable(s: WebSession) = !s.revoked && s.lastSeenAt.isAfter(LocalDateTime.now().minusDays(7))
