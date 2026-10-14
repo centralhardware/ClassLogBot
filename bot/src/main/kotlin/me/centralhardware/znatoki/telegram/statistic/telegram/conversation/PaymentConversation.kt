@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.KSLog
@@ -117,6 +119,7 @@ suspend fun BehaviourContext.createPayment(
             builder.dataSource = DataSource.BOT
             val payment = builder.build()
             val paymentId = PaymentMapper.insert(payment)
+            BotAudit.payment(addedBy.id, "Создано", paymentId, payment, listOf(Change("сумма", null, "${payment.amount.amount} ₽")))
             saved = true
             sendLog(payment, paymentId, addedBy)
 

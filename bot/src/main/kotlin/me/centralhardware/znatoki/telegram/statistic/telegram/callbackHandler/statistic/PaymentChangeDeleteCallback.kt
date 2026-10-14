@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -55,6 +57,7 @@ private suspend fun BehaviourContext.changePaymentDelete(
     }
 
     PaymentMapper.setDelete(id, delete)
+    BotAudit.payment(query.userId(), if (delete) "Удалено" else "Восстановлено", id, payment, listOf(Change("удалена", !delete, delete)))
 
     query.messageDataCallbackQueryOrNull()?.message?.let { msg ->
         edit(msg, replyMarkup = paymentKeyboard(id = id, deleted = delete))

@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student
 
+import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
@@ -37,6 +39,7 @@ fun BehaviourContext.deleteStudentCallback() {
     onDataCallbackQuery(confirmRegex) { query ->
         val id = confirmRegex.matchEntire(query.data)!!.groupValues[1].toInt().toStudentId()
         StudentMapper.delete(id, TutorId(query.userId()))
+        BotAudit.student(query.userId(), "Удалено", id, listOf(Change("удалён", false, true)))
         answerCallbackQuery(query, "Ученик удален")
         query.messageDataCallbackQueryOrNull()?.message?.let { edit(it, replyMarkup = null) }
     }
