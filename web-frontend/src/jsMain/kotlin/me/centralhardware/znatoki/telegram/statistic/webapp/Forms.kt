@@ -834,7 +834,6 @@ fun openTutor(orig: TutorDto?) = Sheets.open { close ->
                     }
                 }
             }
-            if (orig.sessions.size > 1) Actions { Btn("Выйти на всех устройствах", "danger") { App.act("Сеансы завершены") { Api.postEmpty<TutorDto>("/api/tutors/${orig.id}/logout"); close() } } }
         }
     }
     Sec("Предметы")

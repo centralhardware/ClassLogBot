@@ -127,10 +127,6 @@ fun Route.tutorRoutes() {
                 AuditService.log(c.id, "Доступ возвращён", "tutor", target.id.id, target.name,
                     listOf(Change("права", "—", TUTOR_PRESET.joinToString(", "))), DataSource.WEB)
             }
-            "logout" -> {
-                val n = SessionStore.revokeAll(target.id.id)
-                AuditService.log(c.id, "Выход на всех устройствах", "session", target.id.id, target.name, listOf(Change("сеансов", n, 0)), DataSource.WEB)
-            }
             else -> notFound()
         }
         call.respond(TutorMapper.findByIdOrNull(target.id)!!.toDto(c.session.id))
