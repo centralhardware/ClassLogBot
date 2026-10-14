@@ -143,7 +143,8 @@ fun ManageScreen() {
                 when (TodayView.fStatus) { "live" -> !l.deleted; "deleted" -> l.deleted; "flag" -> l.flags.isNotEmpty(); else -> true } &&
                 (q.isEmpty() || l.students.any { it.fio.lowercase().contains(q) })
         }
-        TodayView.selected.retainAll(list.map { it.id }.toSet())
+        // Selection outside the filter is ignored here, not pruned: writing state during composition re-triggers it forever.
+        val chosen = list.filter { it.id in TodayView.selected }
         val live = list.filterNot { it.deleted }
         Box("stats") {
             StatCard(list.size.toString(), "найдено")
@@ -152,14 +153,13 @@ fun ManageScreen() {
         }
         if (list.isNotEmpty()) Box("sec", "display:flex;justify-content:space-between;align-items:center") {
             Span { Text("Занятия") }
-            Btn(if (TodayView.selected.size == list.size) "Снять выбор" else "Выбрать все", "iconbtn", css = "text-transform:none;letter-spacing:0") {
-                if (TodayView.selected.size == list.size) TodayView.selected.clear() else { TodayView.selected.clear(); TodayView.selected.addAll(list.map { it.id }) }
+            Btn(if (chosen.size == list.size) "Снять выбор" else "Выбрать все", "iconbtn", css = "text-transform:none;letter-spacing:0") {
+                if (chosen.size == list.size) TodayView.selected.clear() else { TodayView.selected.clear(); TodayView.selected.addAll(list.map { it.id }) }
             }
         }
         if (list.isEmpty()) Empty("Под фильтр ничего не подходит.")
         list.groupBy { it.date }.entries.sortedByDescending { it.key }.forEach { (d, ls) -> Sec(dayMonth(d)); Box("group") { ls.forEach { LessonRow(it, true) } } }
         if (m != App.currentMonth) Lock("Закрытый месяц: правки попадут в журнал и в уже сданный отчёт.")
-        val chosen = list.filter { it.id in TodayView.selected }
         if (chosen.isNotEmpty()) Box("bulk") {
             B { Text("Выбрано: ${chosen.size}") }
             Box("acts") {
