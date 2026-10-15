@@ -94,6 +94,12 @@ object WebRepo {
         )
     ) { it.string("source") }
 
+    private fun tutorFilter(tutor: Long?, withAdded: Boolean) = when {
+        tutor == null -> ""
+        withAdded -> "AND (tutor_id = :p_t OR added_by_tutor_id = :p_t)"
+        else -> "AND tutor_id = :p_t"
+    }
+
     // ---------- lessons ----------
 
     private fun Row.toLessonGroup(): LessonGroup {
@@ -116,9 +122,10 @@ object WebRepo {
         FROM lessons
     """
 
-    fun lessons(from: LocalDateTime, to: LocalDateTime, tutor: Long?): List<LessonGroup> = runList(
+    /** [withAdded] also returns the lessons [tutor] entered on behalf of someone else (feeds, not totals). */
+    fun lessons(from: LocalDateTime, to: LocalDateTime, tutor: Long?, withAdded: Boolean = false): List<LessonGroup> = runList(
         queryOf(
-            "$LESSON_GROUP_SELECT WHERE date_time >= :from AND date_time < :to ${if (tutor != null) "AND tutor_id = :p_t" else ""} GROUP BY id ORDER BY dt DESC",
+            "$LESSON_GROUP_SELECT WHERE date_time >= :from AND date_time < :to ${tutorFilter(tutor, withAdded)} GROUP BY id ORDER BY dt DESC",
             mapOf("from" to from, "to" to to, "p_t" to tutor),
         )
     ) { it.toLessonGroup() }
@@ -183,9 +190,10 @@ object WebRepo {
         FROM payment
     """
 
-    fun payments(from: LocalDateTime, to: LocalDateTime, tutor: Long?): List<PaymentRow> = runList(
+    /** [withAdded] also returns the payments [tutor] entered on behalf of someone else (feeds, not totals). */
+    fun payments(from: LocalDateTime, to: LocalDateTime, tutor: Long?, withAdded: Boolean = false): List<PaymentRow> = runList(
         queryOf(
-            "$PAYMENT_SELECT WHERE date_time >= :from AND date_time < :to ${if (tutor != null) "AND tutor_id = :p_t" else ""} ORDER BY date_time DESC",
+            "$PAYMENT_SELECT WHERE date_time >= :from AND date_time < :to ${tutorFilter(tutor, withAdded)} ORDER BY date_time DESC",
             mapOf("from" to from, "to" to to, "p_t" to tutor),
         )
     ) { it.toPayment() }

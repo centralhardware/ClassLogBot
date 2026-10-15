@@ -69,10 +69,10 @@ object AppService {
     fun photo(c: Caller, kind: String, id: String): ByteArray {
         val key = when (kind) {
             "lesson" -> WebRepo.lesson(runCatching { UUID.fromString(id) }.getOrNull() ?: notFound())
-                ?.also { if (!c.seesAll && it.tutor != c.id) forbidden() }?.photo
+                ?.also { if (!c.seesAll && it.tutor != c.id && it.addedBy != c.id) forbidden() }?.photo
             "payment" -> {
                 if (!c.readsPayments) forbidden()
-                WebRepo.payment(id.toIntOrNull() ?: notFound())?.also { if (!c.seesAll && it.tutor != c.id) forbidden() }?.photo
+                WebRepo.payment(id.toIntOrNull() ?: notFound())?.also { if (!c.seesAll && it.tutor != c.id && it.addedBy != c.id) forbidden() }?.photo
             }
             else -> null
         } ?: notFound("Фото нет.")
