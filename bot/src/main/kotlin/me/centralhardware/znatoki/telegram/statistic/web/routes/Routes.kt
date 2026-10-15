@@ -62,7 +62,7 @@ fun Route.lessonRoutes() = route("/lessons") {
 
 fun Route.paymentRoutes() = route("/payments") {
     requires(Access.READ_PAYMENTS) {
-        get { call.respond(PaymentService.list(call.visibleMonth(), call.tutorScope())) }
+        get { call.respond(PaymentService.list(call.caller, call.visibleMonth(), call.tutorScope())) }
         get("/{id}") { call.respond(PaymentService.get(call.caller, call.pathInt())) }
     }
     requires(Access.PAYMENT) {

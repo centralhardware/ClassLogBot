@@ -25,14 +25,14 @@ import java.time.YearMonth
 /** Payments: the month list, the payment card with its edits, and the add-payment form. */
 object PaymentService {
 
-    fun list(month: YearMonth, tutor: Long?): List<PaymentDto> {
+    fun list(c: Caller, month: YearMonth, tutor: Long?): List<PaymentDto> {
         val names = WebRepo.studentNames()
-        return WebRepo.payments(month.start(), month.end(), tutor).map { it.toDto(names) }
+        return WebRepo.payments(month.start(), month.end(), tutor, withAdded = !c.seesAll).map { it.toDto(names) }
     }
 
     fun get(c: Caller, id: Int): PaymentDto {
         val p = WebRepo.payment(id) ?: notFound()
-        if (!c.seesAll && p.tutor != c.id) forbidden()
+        if (!c.seesAll && p.tutor != c.id && p.addedBy != c.id) forbidden()
         return p.toDto(WebRepo.studentNames())
     }
 

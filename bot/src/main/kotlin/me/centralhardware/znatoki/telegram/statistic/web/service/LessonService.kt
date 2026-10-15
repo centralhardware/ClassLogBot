@@ -29,7 +29,7 @@ import java.util.UUID
 object LessonService {
 
     fun list(c: Caller, month: YearMonth, tutor: Long?): List<LessonDto> {
-        val list = WebRepo.lessons(month.start(), month.end(), tutor)
+        val list = WebRepo.lessons(month.start(), month.end(), tutor, withAdded = !c.seesAll)
         val flags = if (c.seesAll) anomalies(list) else emptyMap()
         val names = WebRepo.studentNames()
         return list.map { it.toDto(names, flags[it.id].orEmpty()) }
@@ -173,7 +173,7 @@ object LessonService {
     // ---------- update ----------
 
     private fun visible(c: Caller, id: UUID): LessonGroup =
-        (WebRepo.lesson(id) ?: notFound()).also { if (!c.seesAll && it.tutor != c.id) forbidden() }
+        (WebRepo.lesson(id) ?: notFound()).also { if (!c.seesAll && it.tutor != c.id && it.addedBy != c.id) forbidden() }
 
     private fun setHalf(c: Caller, l: LessonGroup, value: Boolean): Change {
         if (!c.canExtraHalfHour) forbidden("Нет права ставить полтора часа.")
