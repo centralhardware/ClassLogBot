@@ -309,7 +309,7 @@ private fun ScheduleList(s: ScheduleDto) {
 
 // ---------- Ученики ----------
 object StudentsView { var query by mutableStateOf(""); var filter by mutableStateOf("active") }
-const val LONG = 14
+const val LONG = 182 // half a year
 
 fun lastAgo(s: StudentRowDto) = s.lastDate?.let { daysBetween(it, App.today) }
 fun isLong(s: StudentRowDto) = s.status == "active" && (lastAgo(s) ?: Int.MAX_VALUE) >= LONG
@@ -354,7 +354,7 @@ fun StudentsScreen() {
             v to "$t " + when (v) { "all" -> live.size; "long" -> longN; else -> live.count { it.status == v } }
         }, f) { StudentsView.filter = it }
         if (f != "long" && longN > 0) Box("card", "margin-top:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-left:3px solid var(--warn)", onClick = { StudentsView.filter = "long" }) {
-            Span { Text("Давно не было занятий: "); B { Text(longN.toString()) } }; Chip("$LONG+ дней", "half")
+            Span { Text("Давно не было занятий: "); B { Text(longN.toString()) } }; Chip("полгода+", "half")
         }
         var list = live.filter { f == "all" || (if (f == "long") isLong(it) else it.status == f) }
         if (f == "long") list = list.sortedByDescending { lastAgo(it) ?: Int.MAX_VALUE }
