@@ -239,7 +239,12 @@ private fun AddLesson(pre: LessonPrefill?, close: () -> Unit) {
             Title(if (sb.group) "Кто был на занятии?" else "Какой ученик?")
             TextField(q, "Фильтр по ФИО") { q = it }
             Show(remote("students") { loadStudents() }) { all ->
-                val list = all.filter { !it.deleted && it.status == "active" && (q.isBlank() || sFio(it).lowercase().contains(q.lowercase())) }
+                // A restored draft or a repeated lesson can carry a student who is no longer active: drop them, or they
+                // count towards "Выбрано" without ever showing as ticked.
+                val active = all.filter { !it.deleted && it.status == "active" }
+                val kept = studentsSel.distinct().filter { id -> active.any { it.id == id } }
+                if (kept != studentsSel) studentsSel = kept
+                val list = active.filter { q.isBlank() || sFio(it).lowercase().contains(q.lowercase()) }
                 Box("group", "margin-top:8px") {
                     if (list.isEmpty()) Empty("Никого не нашлось.")
                     list.forEach { s ->

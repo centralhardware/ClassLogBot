@@ -88,10 +88,12 @@ fun TodayScreen() {
     val who = if (App.seesAll) App.who else "me"
     Show(remote(m, who) { loadLessons(m, who) }) { all ->
         val todays = if (isCur) all.filter { it.date == App.today }.sortedBy { it.time } else emptyList()
-        val live = all.filterNot { it.deleted }
+        // The feed also shows lessons the tutor entered for others; the counters are only their own, as in the report.
+        val own = { l: LessonDto -> who != "me" || l.tutor == App.me }
+        val live = all.filter { !it.deleted && own(it) }
         val cards = listOf(isCur, true, App.money).count { it }
         Box("stats", if (cards == 3) null else "grid-template-columns:repeat($cards,1fr)") {
-            if (isCur) StatCard(todays.count { !it.deleted }.toString(), "занятий сегодня")
+            if (isCur) StatCard(todays.count { !it.deleted && own(it) }.toString(), "занятий сегодня")
             StatCard(live.size.toString(), "за месяц")
             if (App.money) StatCard(k1(live.sumOf { price(it) * it.students.size }), "₽ начислено", true)
         }
