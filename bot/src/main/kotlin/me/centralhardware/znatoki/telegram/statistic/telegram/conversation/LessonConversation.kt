@@ -1,9 +1,10 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
-import me.centralhardware.znatoki.telegram.statistic.web.sendLessonLog
-import me.centralhardware.znatoki.telegram.statistic.service.Change
-import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
+import me.centralhardware.znatoki.telegram.statistic.service.InvalidRecord
+import me.centralhardware.znatoki.telegram.statistic.service.LessonCreator
+import me.centralhardware.znatoki.telegram.statistic.service.NewLesson
+import java.time.LocalDateTime
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.KSLog
@@ -130,19 +131,20 @@ suspend fun BehaviourContext.createLesson(
         val confirmed = waitConfirmation(chatId, confirmPrompt)
         
         if (confirmed) {
-            builder.id = LessonId.random()
-            val addedBy = message.tutorId()
-            builder.addedByTutorId = if (addedBy != builder.tutorId) addedBy else null
-            builder.dataSource = DataSource.BOT
-            val services = builder.build()
-            db {
-                transaction {
-                    LessonMapper.insertAll(services)
-                    BotAudit.lesson(message.tutorId().id, "Создано", builder.id, listOf(Change("стоимость", null, builder.amount?.amount), Change("учеников", null, services.size)))
-                }
-            }
+            val new = NewLesson(
+                tutor = targetTutor, subject = builder.subjectId!!, students = builder.studentIds.map { it.id },
+                amount = builder.amount!!.amount, dateTime = LocalDateTime.now(), photoKey = builder.photoReport!!,
+                enteredBy = message.tutorId(), byAdmin = data.user.hasAdminPermission(), source = DataSource.BOT,
+            )
+            // The creator removes the photo itself when the save fails.
             saved = true
-            db { sendLessonLog(services, addedBy, DataSource.BOT) }
+            val services = try {
+                db { LessonCreator.create(bot, new) }
+            } catch (e: InvalidRecord) {
+                sendTextMessage(chatId, "${e.message} Занятие не сохранено.", replyMarkup = ReplyKeyboardRemove())
+                return
+            }
+            builder.id = services.first().id
             
             val allowForceGroup = targetTutor.hasForceGroup()
             val allowExtraHalf = targetTutor.hasExtraHalfHour()
