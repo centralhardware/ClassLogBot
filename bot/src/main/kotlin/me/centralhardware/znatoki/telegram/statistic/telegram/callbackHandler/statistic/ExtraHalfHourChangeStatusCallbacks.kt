@@ -34,7 +34,7 @@ private val toggleRegex = Regex("($ACTION_ADD|$ACTION_REMOVE)-($UUID_REGEX)")
  * Единый хендлер двух действий: extraHalfHourAdd / extraHalfHourRemove
  */
 fun BehaviourContext.registerExtraHalfHourHandlers() = onDataCallbackQuery(toggleRegex) { query -> db {
-    val (action, idStr) = toggleRegex.matchEntire(query.data)!!.destructured
+    val (action, idStr) = toggleRegex.matchEntire(query.data)?.destructured ?: return@onDataCallbackQuery
     changeExtraHalfHour(
         idStr.toLessonId(),
         action == ACTION_ADD,

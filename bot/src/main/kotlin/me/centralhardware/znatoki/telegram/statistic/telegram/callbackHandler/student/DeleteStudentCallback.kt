@@ -23,7 +23,7 @@ private const val CANCEL = "delete_user_cancel"
 
 fun BehaviourContext.deleteStudentCallback() {
     onDataCallbackQuery(askRegex) { query -> db {
-        val id = askRegex.matchEntire(query.data)!!.groupValues[1].toInt().toStudentId()
+        val id = askRegex.matchEntire(query.data)?.groupValues?.get(1)?.toIntOrNull()?.toStudentId() ?: return@onDataCallbackQuery
         answerCallbackQuery(query)
         sendMessage(
             query.from,
@@ -38,7 +38,7 @@ fun BehaviourContext.deleteStudentCallback() {
     } }
 
     onDataCallbackQuery(confirmRegex) { query -> db {
-        val id = confirmRegex.matchEntire(query.data)!!.groupValues[1].toInt().toStudentId()
+        val id = confirmRegex.matchEntire(query.data)?.groupValues?.get(1)?.toIntOrNull()?.toStudentId() ?: return@onDataCallbackQuery
         StudentMapper.delete(id, TutorId(query.userId()))
         BotAudit.student(query.userId(), "Удалено", id, listOf(Change("удалён", false, true)))
         answerCallbackQuery(query, "Ученик удален")

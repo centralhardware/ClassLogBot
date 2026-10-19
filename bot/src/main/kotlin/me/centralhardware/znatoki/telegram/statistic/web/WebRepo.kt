@@ -305,7 +305,7 @@ object WebRepo {
             mapOf("first" to input.first, "last" to input.last, "middle" to input.middle, "cls" to input.cls,
                 "src" to input.source?.trim()?.takeIf { it.isNotEmpty() }, "phone" to phone, "parent" to parent, "by" to by),
         )
-    ) { it.int("id") }!!
+    ) { it.int("id") } ?: error("INSERT … RETURNING id returned no row")
 
     context(_: Session)
     fun updateStudent(id: Int, input: StudentInput, phone: String?, parent: String?, by: Long) = update(
@@ -426,7 +426,7 @@ object WebRepo {
                 "p_d" to input.date?.let { LocalDate.parse(it) }, "time" to input.time, "p_a" to input.amount,
             ),
         )
-    ) { it.int("id") }!!
+    ) { it.int("id") } ?: error("INSERT … RETURNING id returned no row")
 
     context(_: Session)
     fun setSlotDeleted(id: Int, deleted: Boolean) =

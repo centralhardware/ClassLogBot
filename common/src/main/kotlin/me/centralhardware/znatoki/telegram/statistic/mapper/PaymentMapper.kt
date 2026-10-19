@@ -58,7 +58,7 @@ object PaymentMapper {
                     "dataSource" to payment.dataSource?.value,
                 ),
             )
-        ) { row -> PaymentId(row.int("id")) }!!
+        ) { row -> PaymentId(row.int("id")) } ?: error("INSERT INTO payment returned no id")
 
     context(_: Session)
     fun setDelete(id: PaymentId, isDelete: Boolean) =

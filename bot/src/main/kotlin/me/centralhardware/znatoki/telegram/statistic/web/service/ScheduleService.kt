@@ -25,7 +25,7 @@ object ScheduleService {
     context(_: Session)
     fun add(c: Caller, input: SlotInput): SlotDto {
         validate(input)
-        val slot = WebRepo.slot(WebRepo.addSlot(c.id, input), WebRepo.studentNames())!!
+        val slot = WebRepo.slot(WebRepo.addSlot(c.id, input), WebRepo.studentNames()) ?: notFound()
         log(c, "Создано", slot, listOf(
             Change("слот", null, (if (slot.onceDate != null) "разово, " else "каждую неделю, ") + "${slotWhen(slot)} ${slot.time}"),
             Change("ученик", null, slot.students.joinToString(", ") { it.fio }),

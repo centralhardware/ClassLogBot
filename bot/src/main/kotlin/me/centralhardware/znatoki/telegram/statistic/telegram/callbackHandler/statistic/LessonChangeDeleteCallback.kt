@@ -30,7 +30,7 @@ private const val UUID_REGEX =
 private val timeToggleRegex = Regex("($ACTION_DELETE|$ACTION_RESTORE)-($UUID_REGEX)")
 
 fun BehaviourContext.registerLessonChangeDeleteCallback() = onDataCallbackQuery(timeToggleRegex) { query -> db {
-    val (action, idStr) = timeToggleRegex.matchEntire(query.data)!!.destructured
+    val (action, idStr) = timeToggleRegex.matchEntire(query.data)?.destructured ?: return@onDataCallbackQuery
     changeLessonDelete(
         idStr.toLessonId(),
         action == ACTION_DELETE,

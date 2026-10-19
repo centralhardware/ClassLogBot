@@ -27,7 +27,7 @@ import me.centralhardware.znatoki.telegram.statistic.web.service.*
 /** Unauthenticated: the no-access screen's "Запросить доступ" signs its request with initData itself. */
 fun Route.publicRoutes() {
     post("/auth/access-request") { db { call.respond(AppService.requestAccess(call.receive<AuthRequest>().initData)) } }
-    get("/dl/{token}") { Downloads.serve(call, call.parameters["token"]!!) }
+    get("/dl/{token}") { Downloads.serve(call, call.parameters["token"] ?: notFound()) }
 }
 
 fun Route.appRoutes() {
@@ -35,7 +35,7 @@ fun Route.appRoutes() {
     get("/search") { db { call.respond(AppService.search(call.caller, call.query("q"))) } }
     get("/photo/{kind}/{id}") { db {
         call.response.header(HttpHeaders.CacheControl, "private, max-age=3600")
-        call.respondBytes(AppService.photo(call.caller, call.parameters["kind"]!!, call.parameters["id"]!!), ContentType.Image.JPEG)
+        call.respondBytes(AppService.photo(call.caller, call.parameters["kind"] ?: notFound(), call.parameters["id"] ?: notFound()), ContentType.Image.JPEG)
     } }
 }
 

@@ -15,7 +15,7 @@ fun ChatContentMessage<MessageContent>.tutorId(): TutorId = TutorId(this.userId(
 
 /** Downloads the photo with the running [bot] and stores it in MinIO; returns the object key. */
 suspend fun ChatContentMessage<MessageContent>.extract(bot: TelegramBot): String {
-    val photo = this.content.asPhotoContent()!!.media
+    val photo = requireNotNull(this.content.asPhotoContent()) { "message ${messageId.long} has no photo" }.media
     val bytes = bot.downloadFile(photo)
     return MinioService.upload(bytes, LocalDateTime.now()).getOrThrow()
 }

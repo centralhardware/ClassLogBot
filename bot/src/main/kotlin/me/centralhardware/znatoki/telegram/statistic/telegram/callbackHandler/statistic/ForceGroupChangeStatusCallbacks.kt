@@ -31,7 +31,7 @@ private const val UUID_REGEX =
 private val toggleRegex = Regex("($ACTION_ADD|$ACTION_REMOVE)-($UUID_REGEX)")
 
 fun BehaviourContext.registerForceGroupHandlers() = onDataCallbackQuery(toggleRegex) { query -> db {
-    val (action, idStr) = toggleRegex.matchEntire(query.data)!!.destructured
+    val (action, idStr) = toggleRegex.matchEntire(query.data)?.destructured ?: return@onDataCallbackQuery
     changeForceGroupStatus(
         idStr.toLessonId(),
         action == ACTION_ADD,

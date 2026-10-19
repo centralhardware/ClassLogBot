@@ -164,9 +164,9 @@ class ClientBuilder {
     fun build(): Student =
         Student(
             id = StudentId.None,
-            name = name!!,
-            secondName = secondName!!,
-            lastName = lastName!!,
+            name = checkNotNull(name) { "student without name" },
+            secondName = checkNotNull(secondName) { "student without second name" },
+            lastName = checkNotNull(lastName) { "student without last name" },
             schoolClass = schoolClass,
             recordDate = recordDate,
             birthDate = birthDate,
@@ -174,7 +174,7 @@ class ClientBuilder {
             phone = phone,
             responsiblePhone = responsiblePhone,
             motherFio = motherFio,
-            createdBy = createdBy!!,
+            createdBy = checkNotNull(createdBy) { "student without creator" },
             updateBy = createdBy,
         )
 }
