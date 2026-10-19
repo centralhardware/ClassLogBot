@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
 import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.extensions.required
 import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
 import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
@@ -48,8 +49,8 @@ suspend fun BehaviourContext.createStudent(message: ChatContentMessage<MessageCo
         // Step 1: Enter FIO
         val fio = waitParsed(chatId, "Ведите ФИО в формате: фамилия имя [отчество].") { text ->
             parseFio(text) { db { StudentMapper.findAllByFio(it.first, it.second, it.third).isEmpty() } }
-        }
-        builder.name = fio!!.first
+        }.required()
+        builder.name = fio.first
         builder.secondName = fio.second
         builder.lastName = fio.third
 

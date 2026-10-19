@@ -81,7 +81,7 @@ object LessonService {
                 alsoInTransaction = { rows -> slot?.let { WebRepo.setMark(it.id, LocalDate.now(), "done", rows.first().id.id) } },
             )
         }
-        val lesson = WebRepo.lesson(rows.first().id.id)!!
+        val lesson = WebRepo.lesson(rows.first().id.id) ?: notFound()
         val title = lessonTitle(lesson, names, subjectNames())
         if (lesson.month != YearMonth.now()) AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "добавлено занятие $title", lesson.month)
         return lesson.toDto(names)
@@ -103,7 +103,7 @@ object LessonService {
             if (!c.isAdmin) forbidden("Изменять занятие может только админ.")
             changes += adminEdit(l, p)
         }
-        val after = WebRepo.lesson(l.id)!!
+        val after = WebRepo.lesson(l.id) ?: notFound()
         val names = WebRepo.studentNames()
         if (changes.isNotEmpty()) {
             val title = lessonTitle(after, names, subjectNames())

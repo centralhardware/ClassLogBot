@@ -64,7 +64,7 @@ suspend fun BehaviourContext.createLesson(
                 buttonText = "Поиск",
                 validate = { it.validateTutor().errorOrNull() }
             )
-            val tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
+            val tutorId = TutorId(tutorText.required().split(" ")[0].toLong())
             builder.tutorId = tutorId
             db { TutorMapper.findByIdOrNull(tutorId) } ?: data.user
         } else {
@@ -73,8 +73,8 @@ suspend fun BehaviourContext.createLesson(
         }
 
         // Step 2: Select subject (if user has multiple subjects)
-        if (targetTutor.subjects.size == 1) {
-            builder.subjectId = targetTutor.subjects.first()
+        val subjectId = if (targetTutor.subjects.size == 1) {
+            targetTutor.subjects.first()
         } else {
             val options = db { targetTutor.subjects.map { SubjectMapper.getNameById(it) } }
             val subjectName = waitEnum(
@@ -82,11 +82,12 @@ suspend fun BehaviourContext.createLesson(
                 prompt = "Выберите предмет",
                 options = options
             )
-            builder.subjectId = db { SubjectMapper.getIdByName(subjectName!!) }
+            db { SubjectMapper.getIdByName(subjectName.required()) }
         }
+        builder.subjectId = subjectId
 
         // Step 3: Collect student FIOs
-        val groupAllowed = builder.subjectId?.let { db { SubjectMapper.isAllowGroup(it) } } ?: false
+        val groupAllowed = db { SubjectMapper.isAllowGroup(subjectId) }
 
         val students = if (groupAllowed) {
             waitMultiple(
@@ -103,7 +104,7 @@ suspend fun BehaviourContext.createLesson(
                 buttonText = "Поиск",
                 validate = { it.validateFio().errorOrNull() }
             )
-            setOf(fioText!!.split(" ")[0].toInt().toStudentId())
+            setOf(fioText.required().split(" ")[0].toInt().toStudentId())
         }
         builder.studentIds = students
 
@@ -112,18 +113,19 @@ suspend fun BehaviourContext.createLesson(
             chatId = chatId,
             prompt = "Введите стоимость занятия",
             validate = { it.validateAmount().errorOrNull() }
-        )
-        builder.amount = amount!!.toAmount()
+        ).required()
+        builder.amount = amount.toAmount()
 
         // Step 5: Upload photo report
-        builder.photoReport = waitPhoto(chatId, "Загрузите фото отчётности")!!.extract(bot)
+        val photoKey = waitPhoto(chatId, "Загрузите фото отчётности").required().extract(bot)
+        builder.photoReport = photoKey
 
         // Step 6: Confirm and save
         val confirmPrompt = db {
             """
-            предмет: ${SubjectMapper.getNameById(builder.subjectId!!)}
+            предмет: ${SubjectMapper.getNameById(subjectId)}
             ФИО: ${builder.studentIds.joinToString(";") { StudentMapper.getFioById(it) }}
-            стоимость: ${builder.amount?.amount}
+            стоимость: ${amount}
             Сохранить?
             """.trimIndent()
         }
@@ -132,8 +134,8 @@ suspend fun BehaviourContext.createLesson(
         
         if (confirmed) {
             val new = NewLesson(
-                tutor = targetTutor, subject = builder.subjectId!!, students = builder.studentIds.map { it.id },
-                amount = builder.amount!!.amount, dateTime = LocalDateTime.now(), photoKey = builder.photoReport!!,
+                tutor = targetTutor, subject = subjectId, students = students.map { it.id },
+                amount = amount, dateTime = LocalDateTime.now(), photoKey = photoKey,
                 enteredBy = message.tutorId(), byAdmin = data.user.hasAdminPermission(), source = DataSource.BOT,
             )
             // The creator removes the photo itself when the save fails.
