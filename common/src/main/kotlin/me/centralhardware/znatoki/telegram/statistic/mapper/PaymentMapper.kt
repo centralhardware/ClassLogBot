@@ -224,6 +224,23 @@ object PaymentMapper {
         )
     ) { it.parsePayment() }
 
+    fun markFireflyExported(id: PaymentId) =
+        update(queryOf("UPDATE payment SET firefly_exported_at = now() WHERE id = :id", mapOf("id" to id.id)))
+
+    /** Live payments whose Firefly export has not succeeded yet, oldest first. */
+    fun findFireflyPending(limit: Int = 50): List<Payment> = runList(
+        queryOf(
+            """
+            SELECT $PAYMENT_COLUMNS
+            FROM payment p
+            WHERE p.firefly_exported_at IS NULL
+                AND p.is_deleted=false
+            ORDER BY p.id
+            LIMIT :limit
+            """, mapOf("limit" to limit)
+        )
+    ) { it.parsePayment() }
+
     fun findByIdIncludingDeleted(id: PaymentId): Payment? = runSingle(
         queryOf(
             """

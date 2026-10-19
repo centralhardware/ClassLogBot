@@ -4,6 +4,7 @@ import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.info
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
+import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
@@ -38,6 +39,7 @@ object FireflyService {
         // Check if already exported (use cache or search in Firefly)
         if (exportedPaymentsCache.contains(paymentId)) {
             KSLog.info { "Payment $paymentId already in cache, skipping" }
+            PaymentMapper.markFireflyExported(payment.id)
             return@runCatching "cached_$paymentId"
         }
 
@@ -84,6 +86,7 @@ object FireflyService {
             if (e is FireflyApiException && e.isDuplicateTransaction) {
                 KSLog.info { "Payment ${payment.id.id} already exists in Firefly (duplicate), skipping" }
                 exportedPaymentsCache.add(paymentId)
+                PaymentMapper.markFireflyExported(payment.id)
                 return@runCatching "existing_duplicate_$paymentId"
             }
             throw e
@@ -96,6 +99,7 @@ object FireflyService {
 
         // Add to cache
         exportedPaymentsCache.add(paymentId)
+        PaymentMapper.markFireflyExported(payment.id)
 
         // Attach screenshot if available
         if (payment.photoReport != null) {
@@ -183,6 +187,17 @@ object FireflyService {
             KSLog.error { "Failed to attach screenshot for payment $paymentId: ${e.message}" }
             KSLog.error(e)
         }
+    }
+
+    /**
+     * Exports the payments whose export has not succeeded yet (Firefly down, timeout, restart before the
+     * background export ran). Runs every 10 minutes; a payment stays pending until Firefly accepts it.
+     */
+    suspend fun retryPending() {
+        val pending = PaymentMapper.findFireflyPending()
+        if (pending.isEmpty()) return
+        KSLog.info { "Firefly: retrying ${pending.size} pending payment exports" }
+        pending.forEach { exportPayment(it) }
     }
 
     fun clearCache() {
