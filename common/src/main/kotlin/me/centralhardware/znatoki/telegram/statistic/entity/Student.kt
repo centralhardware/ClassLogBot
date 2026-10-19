@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.entity
 
+import kotliquery.Session
 import kotliquery.Row
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDate
 import me.centralhardware.znatoki.telegram.statistic.extensions.formatDateTime
@@ -93,6 +94,7 @@ class Student(
     }
 }
 
+context(_: Session)
 fun Student.getInfo(subjects: List<String>): String {
     val createdByName = TutorMapper.findByIdOrNull(createdBy)?.name ?: "Unknown (${createdBy.id})"
     val updatedByName = updateBy?.let { TutorMapper.findByIdOrNull(it)?.name ?: "Unknown (${it.id})" } ?: ""

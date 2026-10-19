@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web
 
+import kotliquery.Session
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -119,6 +120,7 @@ class Caller(val tutor: Tutor) {
 
     companion object {
         /** The tutor behind validated initData, or null without WEB_INTERFACE. */
+        context(_: Session)
         fun load(userId: Long): Caller? =
             TutorMapper.findByIdOrNull(TutorId(userId))
                 ?.takeIf { Permissions.WEB_INTERFACE in it.permissions }

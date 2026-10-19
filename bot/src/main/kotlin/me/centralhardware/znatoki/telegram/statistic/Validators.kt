@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic
 
 import arrow.core.Either
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import arrow.core.left
 import arrow.core.right
 import dev.inmo.tgbotapi.extensions.utils.extensions.raw.text
@@ -21,7 +22,7 @@ import java.time.LocalDate
 import kotlin.collections.contains
 
 fun String.validateFio(): Either<String, StudentId> =
-    if (StudentMapper.existsByFio(this)) {
+    if (db { StudentMapper.existsByFio(this) }) {
         Either.Right(this.split(" ")[0].toInt().toStudentId())
     } else {
         Either.Left("ФИО не найдено")
@@ -29,7 +30,7 @@ fun String.validateFio(): Either<String, StudentId> =
 
 fun String.validateTutor(): Either<String, String> =
     split(" ").firstOrNull()?.toLongOrNull()?.let {
-        if (TutorMapper.findByIdOrNull(TutorId(it)) != null) {
+        if (db { TutorMapper.findByIdOrNull(TutorId(it)) } != null) {
             Either.Right(this)
         } else {
             Either.Left("Репетитор с таким ID не найден")

@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import io.ktor.http.ContentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,6 +30,7 @@ private val XLSX = ContentType("application", "vnd.openxmlformats-officedocument
 object ExportService {
 
     /** "В чат": the bot sends the files to the caller, as /report does. */
+    context(_: Session)
     suspend fun toChat(c: Caller, input: ExportInput, month: YearMonth): SentDto {
         val files = files(c, input, month)
         files.forEach { Notifications.sendFile(c.id, it); it.delete() }
@@ -36,6 +38,7 @@ object ExportService {
     }
 
     /** "Скачать": one file as is, several in a .zip, behind a short-lived download link. */
+    context(_: Session)
     suspend fun toDownload(c: Caller, input: ExportInput, month: YearMonth): DownloadDto {
         val files = files(c, input, month)
         val (file, type) = when {
@@ -46,10 +49,12 @@ object ExportService {
         return DownloadDto(Downloads.register(file, file.name, type), file.name, files.size)
     }
 
+    context(_: Session)
     private suspend fun files(c: Caller, input: ExportInput, month: YearMonth): List<File> =
         withContext(Dispatchers.IO) { build(c, input, month) }
             .ifEmpty { badRequest("За ${monthTitle(month).lowercase()} по выбранным предметам занятий нет.") }
 
+    context(_: Session)
     private fun build(c: Caller, input: ExportInput, month: YearMonth): List<File> = when (input.kind) {
         "month" -> tutorsFor(c, input.tutor).flatMap { monthFiles(it, month, input.subjects) }
         "payments" -> { if (!c.readsPayments) forbidden("Нет доступа к оплатам."); listOf(paymentsFile(c, month)) }
@@ -59,6 +64,7 @@ object ExportService {
     }
 
     /** "me", "all" (admins) or one tutor's id (admins and the director). */
+    context(_: Session)
     private fun tutorsFor(c: Caller, who: String): List<Tutor> = when {
         who == "all" && c.seesAll -> TutorMapper.getAll()
         who.toLongOrNull() != null && c.seesAll -> listOfNotNull(TutorMapper.findByIdOrNull(TutorId(who.toLong())))
@@ -66,6 +72,7 @@ object ExportService {
     }
 
     /** One MonthReport file per subject the tutor had lessons in. */
+    context(_: Session)
     private fun monthFiles(tutor: Tutor, month: YearMonth, subjectFilter: List<Long>): List<File> =
         (tutor.subjects.map { it.id } + WebRepo.lessons(month.start(), month.end(), tutor.id.id).map { it.subject })
             .distinct()
@@ -76,6 +83,7 @@ object ExportService {
                 else MonthReport(tutor.name, SubjectId(s), tutor.id).generate(lessons, PaymentMapper.getPaymentsByMonth(tutor.id, SubjectId(s), month))
             }
 
+    context(_: Session)
     private fun paymentsFile(c: Caller, month: YearMonth): File {
         val names = WebRepo.studentNames()
         val subjects = subjectNames()
@@ -93,6 +101,7 @@ object ExportService {
         }.build("Оплаты ${monthTitle(month)}.xlsx")
     }
 
+    context(_: Session)
     private fun payrollFile(month: YearMonth): File {
         val rows = ReportWebService.payroll(month)
         return excel {

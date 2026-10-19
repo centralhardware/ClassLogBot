@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import kotliquery.Session
+import me.centralhardware.znatoki.telegram.statistic.extensions.update as dbUpdate
 import java.time.LocalDateTime
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
@@ -13,6 +15,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.update
 
 object StudentMapper {
 
+    context(_: Session)
     fun existsByFio(fio: String): Boolean = runSingle(
         queryOf(
             """
@@ -28,6 +31,7 @@ object StudentMapper {
             )
     ) { row -> row.boolean("e") } ?: false
 
+    context(_: Session)
     fun save(student: Student): StudentId = runSingle(
         queryOf(
             """
@@ -85,7 +89,8 @@ object StudentMapper {
         it.int("id").toStudentId()
     }!!
 
-    fun delete(id: StudentId, deletedBy: TutorId) = update(queryOf(
+    context(_: Session)
+    fun delete(id: StudentId, deletedBy: TutorId) = dbUpdate(queryOf(
         """
         UPDATE students
         SET deleted = true,
@@ -96,7 +101,8 @@ object StudentMapper {
         mapOf("id" to id.id, "modify_date" to LocalDateTime.now(), "update_by" to deletedBy.id),
     ))
 
-    fun update(student: Student) = update(queryOf(
+    context(_: Session)
+    fun update(student: Student) = dbUpdate(queryOf(
         """
         UPDATE students
         SET name = :name,
@@ -130,6 +136,7 @@ object StudentMapper {
         )
     ))
 
+    context(_: Session)
     fun findById(id: StudentId): Student =
         runSingle(
             queryOf(
@@ -143,6 +150,7 @@ object StudentMapper {
         ) { it.parseStudent() } ?: throw IllegalArgumentException("No client with id $id found")
 
     /** Like [findById] but only for students that weren't deleted; use it on user-facing lookups. */
+    context(_: Session)
     fun findActiveByIdOrNull(id: StudentId): Student? =
         runSingle(
             queryOf(
@@ -155,6 +163,7 @@ object StudentMapper {
             )
         ) { it.parseStudent() }
 
+    context(_: Session)
     fun findAll(): List<Student> =
         runList(
             queryOf(
@@ -166,6 +175,7 @@ object StudentMapper {
             )
         ) { it.parseStudent() }
 
+    context(_: Session)
     fun findAllByFio(name: String, secondName: String, lastName: String): List<Student> =
         runList(
             queryOf(
@@ -179,6 +189,7 @@ object StudentMapper {
             )
         ) { it.parseStudent() }
 
+    context(_: Session)
     fun getFioById(id: StudentId): String =
         runSingle(
             queryOf(

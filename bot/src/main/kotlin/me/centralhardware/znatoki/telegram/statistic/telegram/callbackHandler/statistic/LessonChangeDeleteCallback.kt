@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
@@ -27,15 +29,16 @@ private const val UUID_REGEX =
     "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 private val timeToggleRegex = Regex("($ACTION_DELETE|$ACTION_RESTORE)-($UUID_REGEX)")
 
-fun BehaviourContext.registerLessonChangeDeleteCallback() = onDataCallbackQuery(timeToggleRegex) { query ->
+fun BehaviourContext.registerLessonChangeDeleteCallback() = onDataCallbackQuery(timeToggleRegex) { query -> db {
     val (action, idStr) = timeToggleRegex.matchEntire(query.data)!!.destructured
     changeLessonDelete(
         idStr.toLessonId(),
         action == ACTION_DELETE,
         query
     )
-}
+} }
 
+context(_: Session)
 private suspend fun BehaviourContext.changeLessonDelete(
     id: LessonId,
     deleted: Boolean,

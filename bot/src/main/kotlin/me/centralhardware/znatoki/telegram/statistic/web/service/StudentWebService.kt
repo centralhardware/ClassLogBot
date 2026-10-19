@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.entity.PhoneNumber
 import me.centralhardware.znatoki.telegram.statistic.entity.SchoolClass
@@ -18,8 +19,10 @@ private val STATUS_TITLES = mapOf("active" to "Занимается", "paused" t
 /** Students: the list, the student card, the add/edit form, status, notes, deleting and restoring. */
 object StudentWebService {
 
+    context(_: Session)
     fun list(c: Caller): List<StudentRowDto> = WebRepo.studentRows(includeDeleted = c.isAdmin, withBalance = c.seesAll)
 
+    context(_: Session)
     fun get(c: Caller, id: Int): StudentDetailDto {
         val row = WebRepo.studentRow(id, c.seesAll)?.takeIf { !it.deleted || c.isAdmin } ?: notFound("Ученик не найден.")
         val s = StudentMapper.findById(id.toStudentId())
@@ -38,6 +41,7 @@ object StudentWebService {
         )
     }
 
+    context(_: Session)
     fun create(c: Caller, raw: StudentInput): StudentRowDto {
         val input = clean(raw)
         validate(input, null)
@@ -50,6 +54,7 @@ object StudentWebService {
         return WebRepo.studentRow(id, c.seesAll)!!
     }
 
+    context(_: Session)
     fun update(c: Caller, id: Int, raw: StudentInput): StudentRowDto {
         val input = clean(raw)
         validate(input, id)
@@ -73,6 +78,7 @@ object StudentWebService {
     }
 
     /** Active, paused or left; a pause or a leave carries one of [STATUS_REASONS]. */
+    context(_: Session)
     fun setStatus(c: Caller, id: Int, input: StatusInput): StudentRowDto {
         val title = STATUS_TITLES[input.status] ?: badRequest("Неизвестный статус.")
         val old = WebRepo.studentRow(id, false) ?: notFound()
@@ -85,6 +91,7 @@ object StudentWebService {
         return WebRepo.studentRow(id, c.seesAll)!!
     }
 
+    context(_: Session)
     fun addNote(c: Caller, id: Int, raw: String): List<NoteDto> {
         val text = raw.trim().take(2000).ifEmpty { badRequest("Пустая заметка.") }
         val row = WebRepo.studentRow(id, false) ?: notFound()
@@ -97,6 +104,7 @@ object StudentWebService {
     }
 
     /** Soft delete: the student leaves search and forms, their lessons stay in the reports. */
+    context(_: Session)
     fun setDeleted(c: Caller, id: Int, deleted: Boolean): StudentRowDto {
         val row = WebRepo.studentRow(id, false) ?: notFound()
         WebRepo.setStudentDeleted(id, deleted, c.id)
@@ -111,6 +119,7 @@ object StudentWebService {
     private fun clean(i: StudentInput) =
         i.copy(last = i.last.trim(), first = i.first.trim(), middle = i.middle.trim(), source = i.source?.trim()?.takeIf { it.isNotEmpty() })
 
+    context(_: Session)
     private fun validate(input: StudentInput, except: Int?) {
         if (input.last.isBlank() || input.first.isBlank()) badRequest("Введите фамилию и имя.")
         if (input.cls == null || !SchoolClass.validate(input.cls)) badRequest("Класс от 1 до 11.")

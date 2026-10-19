@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
+import kotliquery.Session
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
 import kotlinx.serialization.json.JsonArray
@@ -15,7 +16,9 @@ import java.time.LocalDateTime
 data class Change(val field: String, val old: Any?, val new: Any?)
 
 /** Listens to every audit entry as it is written, e.g. to alert admins about suspicious edits. */
-fun interface AuditListener {
+/** Called with the session of the write that produced [entry], inside its transaction if it has one. */
+interface AuditListener {
+    context(_: Session)
     fun onEntry(entry: AuditEntry)
 }
 
@@ -41,6 +44,7 @@ object AuditService {
     @Volatile
     var listener: AuditListener? = null
 
+    context(_: Session)
     fun log(
         userId: Long,
         action: String,

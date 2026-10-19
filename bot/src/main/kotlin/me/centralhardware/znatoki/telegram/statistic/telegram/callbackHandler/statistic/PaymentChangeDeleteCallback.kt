@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
@@ -24,7 +26,7 @@ private const val ACTION_DELETE = "paymentDelete"
 private const val ACTION_RESTORE = "paymentRestore"
 private val paymentRegex = Regex("($ACTION_DELETE|$ACTION_RESTORE)-(\\d+)")
 
-fun BehaviourContext.registerPaymentChangeDeleteCallback() = onDataCallbackQuery(paymentRegex) { query ->
+fun BehaviourContext.registerPaymentChangeDeleteCallback() = onDataCallbackQuery(paymentRegex) { query -> db {
     val match = paymentRegex.matchEntire(query.data) ?: return@onDataCallbackQuery
     val (action, idStr) = match.destructured
     val id = idStr.toIntOrNull()?.let { PaymentId(it) } ?: return@onDataCallbackQuery
@@ -34,8 +36,9 @@ fun BehaviourContext.registerPaymentChangeDeleteCallback() = onDataCallbackQuery
         action == ACTION_DELETE,
         query
     )
-}
+} }
 
+context(_: Session)
 private suspend fun BehaviourContext.changePaymentDelete(
     id: PaymentId,
     delete: Boolean,

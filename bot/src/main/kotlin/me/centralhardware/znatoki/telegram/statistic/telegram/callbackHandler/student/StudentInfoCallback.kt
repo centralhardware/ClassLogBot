@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student
 
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onDataCallbackQuery
@@ -11,7 +12,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
-fun BehaviourContext.studentInfoCallback() = onDataCallbackQuery(Regex("user_info\\d+$")) {
+fun BehaviourContext.studentInfoCallback() = onDataCallbackQuery(Regex("user_info\\d+$")) { db {
     val client = StudentMapper.findActiveByIdOrNull(it.data.replace("user_info", "").toInt().toStudentId())
     if (client == null) {
         answerCallbackQuery(it, "Ученик не найден", showAlert = true)
@@ -27,4 +28,4 @@ fun BehaviourContext.studentInfoCallback() = onDataCallbackQuery(Regex("user_inf
             )
         sendMessage(it.from, info, parseMode = MarkdownParseMode)
     }
-}
+} }

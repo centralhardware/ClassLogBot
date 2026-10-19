@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
+import kotliquery.Session
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.error
@@ -28,6 +29,7 @@ object StudentService {
 
     private val snapshot = AtomicReference<Snapshot?>(null)
 
+    context(_: Session)
     fun init() {
         fixedRateTimer(name = "updateLucene", period = 60000L) {
             runCatching { refresh() }.onFailure { KSLog.error("StudentService: index rebuild failed", it) }
@@ -36,6 +38,7 @@ object StudentService {
 
     /** Rebuilds the index now, e.g. right after a student was added, so it is searchable immediately. */
     @Synchronized
+    context(_: Session)
     fun refresh() {
         val students = StudentMapper.findAll()
         val index = ByteBuffersDirectory()
@@ -52,6 +55,7 @@ object StudentService {
         snapshot.set(Snapshot(index, students.associateBy { it.id.id }))
     }
 
+    context(_: Session)
     fun getAllActive(): List<Student> {
         val students = StudentMapper.findAll()
         KSLog.info("StudentService.getAllActive(): found ${students.size} students")

@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import kotliquery.Session
 import java.time.LocalDateTime
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
@@ -21,6 +22,7 @@ private const val PAYMENT_COLUMNS =
 
 object PaymentMapper {
 
+    context(_: Session)
     fun insert(payment: Payment): PaymentId =
         runSingle(
             queryOf(
@@ -58,6 +60,7 @@ object PaymentMapper {
             )
         ) { row -> PaymentId(row.int("id")) }!!
 
+    context(_: Session)
     fun setDelete(id: PaymentId, isDelete: Boolean) =
         update(
             queryOf(
@@ -70,6 +73,7 @@ object PaymentMapper {
             )
         )
 
+    context(_: Session)
     fun getPaymentsSumForStudent(
         tutorId: TutorId,
         subjectId: SubjectId,
@@ -98,6 +102,7 @@ object PaymentMapper {
             )
         ) { row -> row.longOrNull("sum") }?: 0
 
+    context(_: Session)
     fun getPaymentsSum(tutorId: TutorId, subjectId: SubjectId, date: LocalDateTime): Long =
         runSingle(
             queryOf(
@@ -118,6 +123,7 @@ object PaymentMapper {
             )
         ) { row -> row.longOrNull("sum") }?: 0
 
+    context(_: Session)
     private fun getPayments(
         tutorId: TutorId,
         subjectId: SubjectId,
@@ -139,6 +145,7 @@ object PaymentMapper {
                 "end_date" to endDate)
     )) { it.parsePayment() }
 
+    context(_: Session)
     fun getCurrentMonthPayments(tutorId: TutorId, subjectId: SubjectId) = getPayments(
         tutorId,
         subjectId,
@@ -146,6 +153,7 @@ object PaymentMapper {
         LocalDateTime.now().startOfNextMonth(),
     )
 
+    context(_: Session)
     fun getPrevMonthPayments(tutorId: TutorId, subjectId: SubjectId) = getPayments(
         tutorId,
         subjectId,
@@ -153,6 +161,7 @@ object PaymentMapper {
         LocalDateTime.now().prevMonth().startOfNextMonth(),
     )
 
+    context(_: Session)
     fun getPaymentsByMonth(tutorId: TutorId, subjectId: SubjectId, yearMonth: YearMonth) = getPayments(
         tutorId,
         subjectId,
@@ -161,6 +170,7 @@ object PaymentMapper {
     )
 
     /** [startDate, endDate) — endDate is exclusive. */
+    context(_: Session)
     fun getPaymentsByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime) = getPayments(
         tutorId,
         subjectId,
@@ -169,6 +179,7 @@ object PaymentMapper {
     )
 
     /** [startDate, endDate) — endDate is exclusive. */
+    context(_: Session)
     fun getPaymentsSumByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime): Long =
         runSingle(
             queryOf(
@@ -189,6 +200,7 @@ object PaymentMapper {
             )
         ) { row -> row.longOrNull("sum") }?: 0
 
+    context(_: Session)
     private fun getPaymentsByTutorId(
         tutorId: TutorId,
         startDate: LocalDateTime,
@@ -207,12 +219,14 @@ object PaymentMapper {
                 "end_date" to endDate)
     )) { it.parsePayment() }
 
+    context(_: Session)
     fun getTodayPayments(tutorId: TutorId): List<Payment> {
         val now = LocalDateTime.now()
         val startOfDay = now.toLocalDate().atStartOfDay()
         return getPaymentsByTutorId(tutorId, startOfDay, now)
     }
 
+    context(_: Session)
     fun findById(id: PaymentId): Payment? = runSingle(
         queryOf(
             """
@@ -224,10 +238,12 @@ object PaymentMapper {
         )
     ) { it.parsePayment() }
 
+    context(_: Session)
     fun markFireflyExported(id: PaymentId) =
         update(queryOf("UPDATE payment SET firefly_exported_at = now() WHERE id = :id", mapOf("id" to id.id)))
 
     /** Live payments whose Firefly export has not succeeded yet, oldest first. */
+    context(_: Session)
     fun findFireflyPending(limit: Int = 50): List<Payment> = runList(
         queryOf(
             """
@@ -241,6 +257,7 @@ object PaymentMapper {
         )
     ) { it.parsePayment() }
 
+    context(_: Session)
     fun findByIdIncludingDeleted(id: PaymentId): Payment? = runSingle(
         queryOf(
             """
@@ -251,6 +268,7 @@ object PaymentMapper {
         )
     ) { it.parsePayment() }
 
+    context(_: Session)
     fun updateAmount(id: PaymentId, amount: me.centralhardware.znatoki.telegram.statistic.entity.Amount) =
         update(
             queryOf(
@@ -263,6 +281,7 @@ object PaymentMapper {
             )
         )
 
+    context(_: Session)
     fun setSubjectId(id: PaymentId, subjectId: SubjectId) =
         update(
             queryOf(
@@ -275,6 +294,7 @@ object PaymentMapper {
             )
         )
 
+    context(_: Session)
     fun findAllByStudent(studentId: StudentId): List<Payment> =
         runList(
             queryOf(

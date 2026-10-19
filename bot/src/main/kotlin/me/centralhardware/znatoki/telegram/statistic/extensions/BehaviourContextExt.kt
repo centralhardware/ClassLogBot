@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.extensions
 
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextData
 import dev.inmo.tgbotapi.extensions.behaviour_builder.createSubContextAndDoAsynchronouslyWithUpdatesFilter
 import kotlinx.coroutines.flow.filter
@@ -15,7 +16,7 @@ var BehaviourContextData.user: Tutor
 suspend fun BehaviourContext.initContext(filter: (Tutor?) -> Boolean, block: BehaviourContext.() -> Unit) = createSubContextAndDoAsynchronouslyWithUpdatesFilter(
     updatesUpstreamFlow = allUpdatesFlow.filter {
         runCatching {
-            it.tutorId()?.let { id -> filter.invoke(TutorMapper.findByIdOrNull(id)) } ?: false
+            it.tutorId()?.let { id -> filter.invoke(db { TutorMapper.findByIdOrNull(id) }) } ?: false
         }.getOrDefault(false)
     }
 ) { block() }

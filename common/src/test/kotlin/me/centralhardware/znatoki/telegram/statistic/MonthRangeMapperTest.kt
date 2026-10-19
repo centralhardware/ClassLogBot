@@ -2,6 +2,7 @@ package me.centralhardware.znatoki.telegram.statistic
 
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -61,7 +62,7 @@ class MonthRangeMapperTest {
     fun `lessons by month include both ends of the month and nothing outside`() {
         (inside + outside).forEach { lesson(it) }
 
-        val found = LessonMapper.getTimesByMonth(tutor, subject, october).map { it.dateTime }.sorted()
+        val found = db { LessonMapper.getTimesByMonth(tutor, subject, october).map { it.dateTime }.sorted() }
 
         assertEquals(inside, found)
     }
@@ -71,7 +72,7 @@ class MonthRangeMapperTest {
         lesson(LocalDateTime.of(2026, 10, 10, 10, 0))
         lesson(LocalDateTime.of(2026, 10, 11, 10, 0), deleted = true)
 
-        assertEquals(1, LessonMapper.getTimesByMonth(tutor, subject, october).size)
+        assertEquals(1, db { LessonMapper.getTimesByMonth(tutor, subject, october).size })
     }
 
     @Test
@@ -80,12 +81,14 @@ class MonthRangeMapperTest {
         outside.forEach { payment(it, amount = 10_000) }
         payment(LocalDateTime.of(2026, 10, 20, 9, 0), amount = 5_000, deleted = true)
 
-        assertEquals(3, PaymentMapper.getPaymentsByMonth(tutor, subject, october).size)
+        assertEquals(3, db { PaymentMapper.getPaymentsByMonth(tutor, subject, october).size })
         assertEquals(
             300,
-            PaymentMapper.getPaymentsSumByDateRange(
-                tutor, subject, october.atDay(1).atStartOfDay(), october.plusMonths(1).atDay(1).atStartOfDay(),
-            ),
+            db {
+                PaymentMapper.getPaymentsSumByDateRange(
+                    tutor, subject, october.atDay(1).atStartOfDay(), october.plusMonths(1).atDay(1).atStartOfDay(),
+                )
+            },
         )
     }
 }

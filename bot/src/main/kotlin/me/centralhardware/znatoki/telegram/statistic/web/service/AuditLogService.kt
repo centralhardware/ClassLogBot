@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import kotliquery.Row
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
@@ -33,6 +34,7 @@ object AuditLogService {
 
     private const val FROM = "FROM audit_log a LEFT JOIN tutors t ON t.id = a.user_id"
 
+    context(_: Session)
     fun page(filter: AuditFilter, limit: Int, offset: Int): AuditPageDto {
         val (where, params) = filter.where()
         val total = runSingle(queryOf("SELECT count(*) AS n $FROM WHERE $where", params)) { it.int("n") } ?: 0
@@ -42,6 +44,7 @@ object AuditLogService {
         return AuditPageDto(total, items)
     }
 
+    context(_: Session)
     fun csv(filter: AuditFilter): File {
         val (where, params) = filter.where()
         val rows = runList(queryOf("SELECT a.*, t.name AS actor $FROM WHERE $where ORDER BY a.id DESC", params)) { it.toAudit() }

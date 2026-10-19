@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.firefly
 
+import kotliquery.Session
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.info
@@ -29,6 +30,7 @@ object FireflyService {
      * Attaches payment screenshot if available
      * Tags: tutor name and subject name
      */
+    context(_: Session)
     suspend fun exportPayment(payment: Payment): Result<String> = runCatching {
         if (!FireflyConfig.enabled) {
             throw IllegalStateException("Firefly integration is not enabled. Set FIREFLY_ENABLED=true")
@@ -115,6 +117,7 @@ object FireflyService {
     /**
      * Export all payments to Firefly III
      */
+    context(_: Session)
     suspend fun exportAllPayments(payments: List<Payment>): Result<List<String>> = runCatching {
         if (!FireflyConfig.enabled) {
             throw IllegalStateException("Firefly integration is not enabled. Set FIREFLY_ENABLED=true")
@@ -193,6 +196,7 @@ object FireflyService {
      * Exports the payments whose export has not succeeded yet (Firefly down, timeout, restart before the
      * background export ran). Runs every 10 minutes; a payment stays pending until Firefly accepts it.
      */
+    context(_: Session)
     suspend fun retryPending() {
         val pending = PaymentMapper.findFireflyPending()
         if (pending.isEmpty()) return

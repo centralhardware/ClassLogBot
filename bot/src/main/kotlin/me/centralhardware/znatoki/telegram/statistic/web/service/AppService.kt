@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import io.ktor.http.HttpStatusCode
 import me.centralhardware.znatoki.telegram.statistic.entity.Permissions
 import me.centralhardware.znatoki.telegram.statistic.entity.SourceOption
@@ -23,6 +24,7 @@ object AppService {
     private val accessRequests = ConcurrentHashMap<Long, LocalDateTime>()
 
     /** Who the user is, what they may do, and the reference data every screen needs. */
+    context(_: Session)
     fun boot(c: Caller): BootDto {
         val first = WebRepo.firstMonth() ?: YearMonth.now()
         val now = YearMonth.now()
@@ -46,6 +48,7 @@ object AppService {
     }
 
     /** "Запросить доступ" on the no-access screen: tells the admins who is asking, at most once an hour. */
+    context(_: Session)
     fun requestAccess(initData: String): OkDto {
         val u = InitDataValidator.validate(initData)?.user
             ?: throw HttpError(HttpStatusCode.Unauthorized, "Не удалось подтвердить вход через Telegram.", "auth")
@@ -66,6 +69,7 @@ object AppService {
     }
 
     /** The lesson photo or payment receipt from MinIO, for the record's card. */
+    context(_: Session)
     fun photo(c: Caller, kind: String, id: String): ByteArray {
         val key = when (kind) {
             "lesson" -> WebRepo.lesson(runCatching { UUID.fromString(id) }.getOrNull() ?: notFound())
@@ -80,6 +84,7 @@ object AppService {
     }
 
     /** Global search: students by fuzzy name, plus the lessons and payments the caller may see. */
+    context(_: Session)
     fun search(c: Caller, raw: String?): SearchDto {
         val q = raw?.trim().orEmpty()
         if (q.length < 2) return SearchDto(emptyList(), emptyList(), emptyList())

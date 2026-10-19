@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import kotliquery.Session
 import java.time.LocalDateTime
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
@@ -24,12 +25,13 @@ private const val LESSON_COLUMNS =
 
 object LessonMapper {
 
+    context(_: Session)
     fun insert(lesson: Lesson) = execute(insertQuery(lesson))
 
     /** Inserts all rows of a (group) lesson atomically. */
-    fun insertAll(lessons: List<Lesson>) = transaction { tx ->
-        lessons.forEach { tx.execute(insertQuery(it)) }
-    }
+    /** Several rows share one lesson id; callers run this inside [transaction] so they land together. */
+    context(_: Session)
+    fun insertAll(lessons: List<Lesson>) = lessons.forEach { execute(insertQuery(it)) }
 
     private fun insertQuery(lesson: Lesson) =
         queryOf(
@@ -72,6 +74,7 @@ object LessonMapper {
             ),
         )
 
+    context(_: Session)
     private fun findAllByTutorId(
         tutorId: TutorId,
         subjectId: SubjectId,
@@ -92,6 +95,7 @@ object LessonMapper {
                 )
         ) { it.parseTime() }
 
+    context(_: Session)
     private fun findAllByTutorId(
         tutorId: TutorId,
         startDate: LocalDateTime,
@@ -110,6 +114,7 @@ object LessonMapper {
             )
         ) { it.parseTime() }
 
+    context(_: Session)
     fun findById(id: LessonId): List<Lesson> =
         runList(
             queryOf(
@@ -122,9 +127,11 @@ object LessonMapper {
                 )
         ) { it.parseTime() }
 
+    context(_: Session)
     fun getTodayTimes(tutorId: TutorId): List<Lesson> =
         findAllByTutorId(tutorId, LocalDateTime.now().startOfDay(), LocalDateTime.now())
 
+    context(_: Session)
     fun getCurrentMontTimes(tutorId: TutorId, subjectId: SubjectId): List<Lesson> = findAllByTutorId(
         tutorId,
         subjectId,
@@ -132,6 +139,7 @@ object LessonMapper {
         LocalDateTime.now().startOfNextMonth(),
     )
 
+    context(_: Session)
     fun getPrevMonthTimes(tutorId: TutorId, subjectId: SubjectId): List<Lesson> = findAllByTutorId(
         tutorId,
         subjectId,
@@ -139,6 +147,7 @@ object LessonMapper {
         LocalDateTime.now().prevMonth().startOfNextMonth(),
     )
 
+    context(_: Session)
     fun getTimesByMonth(tutorId: TutorId, subjectId: SubjectId, yearMonth: YearMonth): List<Lesson> = findAllByTutorId(
         tutorId,
         subjectId,
@@ -147,6 +156,7 @@ object LessonMapper {
     )
 
     /** [startDate, endDate) — endDate is exclusive. */
+    context(_: Session)
     fun getTimesByDateRange(tutorId: TutorId, subjectId: SubjectId, startDate: LocalDateTime, endDate: LocalDateTime): List<Lesson> = findAllByTutorId(
         tutorId,
         subjectId,
@@ -154,6 +164,7 @@ object LessonMapper {
         endDate,
     )
 
+    context(_: Session)
     fun getTutorIds(): List<TutorId> =
         runList(
             queryOf(
@@ -167,6 +178,7 @@ object LessonMapper {
             row -> TutorId(row.long("tutor_id"))
         }
 
+    context(_: Session)
     fun setDeleted(lessonId: LessonId, isDeleted: Boolean, studentId: StudentId? = null) =
         update(
             queryOf(
@@ -194,6 +206,7 @@ object LessonMapper {
             )
         )
 
+    context(_: Session)
     fun getSubjectIdsForStudent(id: StudentId): List<SubjectId> =
         runList(
             queryOf(
@@ -208,6 +221,7 @@ object LessonMapper {
             row -> row.long("subject_id").toSubjectId()
         }
 
+    context(_: Session)
     fun findAllByStudent(studentId: StudentId): List<Lesson> =
         runList(
             queryOf(
@@ -221,6 +235,7 @@ object LessonMapper {
             )
         ) { it.parseTime() }
 
+    context(_: Session)
     fun setForceGroup(id: LessonId, forceGroup: Boolean) =
         update(
             queryOf(
@@ -238,6 +253,7 @@ object LessonMapper {
                 )
         )
 
+    context(_: Session)
     fun setExtraHalfHour(id: LessonId, extraHalfHour: Boolean) =
         update(
             queryOf(
@@ -255,6 +271,7 @@ object LessonMapper {
             )
         )
 
+    context(_: Session)
     fun setAmount(id: LessonId, amount: me.centralhardware.znatoki.telegram.statistic.entity.Amount) =
         update(
             queryOf(
@@ -272,6 +289,7 @@ object LessonMapper {
             )
         )
 
+    context(_: Session)
     fun setSubjectId(id: LessonId, subjectId: SubjectId) =
         update(
             queryOf(

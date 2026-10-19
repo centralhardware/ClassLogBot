@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.report
 
+import kotliquery.Session
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import dev.inmo.krontab.buildSchedule
@@ -17,10 +19,11 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
 suspend fun BehaviourContext.dailyReport() {
     buildSchedule("0 0 22 * * *").asTzFlowWithDelays().collect {
-        LessonMapper.getTutorIds().forEach { getReport(it) }
+        db { LessonMapper.getTutorIds().forEach { getReport(it) } }
     }
 }
 
+context(_: Session)
 suspend fun BehaviourContext.getReport(tutorId: TutorId, sendTo: TutorId = tutorId) {
     val lessons = LessonMapper.getTodayTimes(tutorId)
     if (lessons.isEmpty()) return

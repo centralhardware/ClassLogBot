@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
@@ -14,10 +15,12 @@ import me.centralhardware.znatoki.telegram.statistic.service.Change
 /** Audit entries for changes made through the bot, so the web app's journal shows them too. */
 object BotAudit {
 
+    context(_: Session)
     private fun name(id: StudentId) = runCatching {
         StudentMapper.findById(id).let { listOf(it.secondName, it.name).filter(String::isNotBlank).joinToString(" ") }
     }.getOrDefault("#${id.id}")
 
+    context(_: Session)
     fun lesson(userId: Long, action: String, id: LessonId, changes: List<Change>) {
         val lessons = LessonMapper.findById(id).ifEmpty { return }
         val title = lessons.joinToString(", ") { name(it.studentId) } + " · " +
@@ -25,10 +28,12 @@ object BotAudit {
         AuditService.log(userId, action, "lesson", id.id, title, changes, DataSource.BOT, lessons.first().studentId.id, lessons.first().subjectId.id)
     }
 
+    context(_: Session)
     fun payment(userId: Long, action: String, id: PaymentId, payment: Payment, changes: List<Change>) =
         AuditService.log(userId, action, "payment", id.id, "${name(payment.studentId)} · ${payment.amount.amount} ₽", changes, DataSource.BOT,
             payment.studentId.id, payment.subjectId.id)
 
+    context(_: Session)
     fun student(userId: Long, action: String, id: StudentId, changes: List<Change>) =
         AuditService.log(userId, action, "student", id.id, name(id), changes, DataSource.BOT, id.id)
 }

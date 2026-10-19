@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.web.http
 
 import io.ktor.http.HttpHeaders
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -47,9 +48,9 @@ val InitDataAuth = createRouteScopedPlugin("InitDataAuth") {
             ?: call.request.queryParameters["tma"]
         val data = raw?.let { InitDataValidator.validate(it) }
             ?: throw HttpError(HttpStatusCode.Unauthorized, "Откройте приложение из Telegram-бота.", "auth")
-        val caller = Caller.load(data.user.id) ?: throw HttpError(
+        val caller = db { Caller.load(data.user.id) } ?: throw HttpError(
             HttpStatusCode.Forbidden, "Нет доступа к веб-интерфейсу.",
-            if (TutorMapper.findByIdOrNull(TutorId(data.user.id)) == null) "unknown" else "no_web",
+            if (db { TutorMapper.findByIdOrNull(TutorId(data.user.id)) } == null) "unknown" else "no_web",
         )
         call.attributes.put(CallerKey, caller)
     }

@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.studentCommand
 
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommandWithArgs
 import dev.inmo.tgbotapi.types.message.MarkdownParseMode
@@ -10,7 +11,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.SubjectMapper
 
-fun BehaviourContext.studentInfoCommand() = onCommandWithArgs("i") { message, args ->
+fun BehaviourContext.studentInfoCommand() = onCommandWithArgs("i") { message, args -> db {
     val id = args.firstOrNull()?.toIntOrNull()?.toStudentId()
     id?.let { StudentMapper.findActiveByIdOrNull(it) }?.let { client ->
         sendMessage(
@@ -22,4 +23,4 @@ fun BehaviourContext.studentInfoCommand() = onCommandWithArgs("i") { message, ar
             ),
         )
     } ?: sendMessage(message.chat, "Ученик не найден", parseMode = MarkdownParseMode)
-}
+} }
