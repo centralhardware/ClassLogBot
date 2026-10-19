@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
 import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
+import me.centralhardware.znatoki.telegram.statistic.extensions.required
 import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.service.InvalidRecord
@@ -68,7 +69,7 @@ suspend fun BehaviourContext.createPayment(
                 buttonText = "Поиск",
                 validate = { it.validateTutor().errorOrNull() }
             )
-            val tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
+            val tutorId = TutorId(tutorText.required().split(" ")[0].toLong())
             builder.tutorId = tutorId
             db { TutorMapper.findByIdOrNull(tutorId) } ?: data.user
         } else {
@@ -83,7 +84,8 @@ suspend fun BehaviourContext.createPayment(
             buttonText = "Поиск",
             validate = { it.validateFio().errorOrNull() }
         )
-        builder.studentId = fioText!!.split(" ")[0].toInt().toStudentId()
+        val studentId = fioText.required().split(" ")[0].toInt().toStudentId()
+        builder.studentId = studentId
 
         // Step 3: Select subject
         val options = db { targetTutor.subjects.map { SubjectMapper.getNameById(it) } }
@@ -92,31 +94,33 @@ suspend fun BehaviourContext.createPayment(
             prompt = "Выберите предмет",
             options = options
         )
-        builder.subjectId = db { SubjectMapper.getIdByName(subjectName!!) }
+        val subjectId = db { SubjectMapper.getIdByName(subjectName.required()) }
+        builder.subjectId = subjectId
 
         // Step 4: Enter payment amount
         val amount = waitInt(
             chatId = chatId,
             prompt = "Введите сумму оплаты",
             validate = { it.validateAmount().errorOrNull() }
-        )
-        builder.amount = amount!!.toAmount()
+        ).required()
+        builder.amount = amount.toAmount()
 
         // Step 5: Upload photo report
-        builder.photoReport = waitPhoto(chatId, "Введите фото отчетности")!!.extract(bot)
+        val photoKey = waitPhoto(chatId, "Введите фото отчетности").required().extract(bot)
+        builder.photoReport = photoKey
 
         // Step 6: Confirm and save
         val confirmPrompt = """
-            ФИО: ${db { StudentMapper.findById(builder.studentId!!).fio() }}
-            Оплата: ${builder.amount?.amount}
+            ФИО: ${db { StudentMapper.findById(studentId).fio() }}
+            Оплата: ${amount}
         """.trimIndent()
 
         val confirmed = waitConfirmation(chatId, confirmPrompt)
         
         if (confirmed) {
             val new = NewPayment(
-                tutor = builder.tutorId ?: message.tutorId(), student = builder.studentId!!.id, subject = builder.subjectId!!,
-                amount = builder.amount!!.amount, dateTime = LocalDateTime.now(), photoKey = builder.photoReport!!,
+                tutor = builder.tutorId ?: message.tutorId(), student = studentId.id, subject = subjectId,
+                amount = amount, dateTime = LocalDateTime.now(), photoKey = photoKey,
                 enteredBy = message.tutorId(), source = DataSource.BOT,
             )
             // The creator removes the receipt itself when the save fails; Firefly failures are retried later.
@@ -130,7 +134,7 @@ suspend fun BehaviourContext.createPayment(
 
             sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
         } else {
-            MinioService.delete(builder.photoReport!!).onFailure {
+            MinioService.delete(photoKey).onFailure {
                 sendTextMessage(message.chat, "Ошибка при удаление фотографии")
             }
             sendTextMessage(message.chat, "Отменено", replyMarkup = ReplyKeyboardRemove())

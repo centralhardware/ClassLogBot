@@ -55,7 +55,7 @@ object PaymentService {
         invalidAsBadRequest { PaymentCreator.validate(new) }
         val key = MinioService.upload(photo, LocalDateTime.now()).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить чек. Попробуйте ещё раз.") }
         val (id, _) = invalidAsBadRequest { PaymentCreator.create(Notifications.bot, new.copy(photoKey = key)) }
-        return WebRepo.payment(id.id)!!.toDto(WebRepo.studentNames())
+        return (WebRepo.payment(id.id) ?: notFound()).toDto(WebRepo.studentNames())
     }
 
     context(_: Session)
@@ -66,7 +66,7 @@ object PaymentService {
         WebRepo.updatePayment(p.id, fields)
 
         val names = WebRepo.studentNames()
-        val after = WebRepo.payment(p.id)!!
+        val after = WebRepo.payment(p.id) ?: notFound()
         if (changes.isNotEmpty()) {
             val action = when (patch.deleted?.takeIf { it != p.deleted }) { true -> "Удалено"; false -> "Восстановлено"; null -> "Изменено" }
             AuditService.log(c.id, action, "payment", p.id, paymentTitle(after, names), changes, DataSource.WEB, p.student, after.subject)
