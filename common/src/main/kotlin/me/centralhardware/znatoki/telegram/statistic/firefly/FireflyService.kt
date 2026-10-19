@@ -196,6 +196,7 @@ object FireflyService {
      * Exports the payments whose export has not succeeded yet (Firefly down, timeout, restart before the
      * background export ran). Runs every 10 minutes; a payment stays pending until Firefly accepts it.
      */
+    context(_: Session)
     suspend fun retryPending() {
         val pending = PaymentMapper.findFireflyPending()
         if (pending.isEmpty()) return

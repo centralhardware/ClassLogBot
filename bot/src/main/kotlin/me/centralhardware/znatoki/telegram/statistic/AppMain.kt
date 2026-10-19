@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyConfig
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyService
 import me.centralhardware.znatoki.telegram.statistic.web.WebConfig
@@ -25,7 +26,7 @@ suspend fun main() {
     }
     if (FireflyConfig.enabled) CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
         buildSchedule("0 */10 * * * *").asTzFlowWithDelays().collect {
-            runCatching { FireflyService.retryPending() }.onFailure { KSLog.warning("Firefly retry failed", it) }
+            runCatching { db { FireflyService.retryPending() } }.onFailure { KSLog.warning("Firefly retry failed", it) }
         }
     }
     me.centralhardware.znatoki.telegram.statistic.bot.main()
