@@ -29,14 +29,14 @@ import restrictAccess
 @Suppress("DeferredResultUnused")
 suspend fun main() {
     runMigrations()
-    StudentService.init()
+    db { StudentService.init() }
 
     longPolling (
         "ZnatokiStatistic",
         subcontextInitialAction = buildSubcontextInitialAction {
             add { update ->
                 runCatching {
-                    update.tutorId()?.let { TutorMapper.findByIdOrNull(it) }?.let { user -> data.user = user }
+                    update.tutorId()?.let { db { TutorMapper.findByIdOrNull(it) } }?.let { user -> data.user = user }
                 }
             }
         },

@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import kotliquery.Session
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
@@ -10,6 +11,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.update
 
 object TutorMapper {
 
+    context(_: Session)
     fun getAll(): List<Tutor> =
         runList(
             queryOf(
@@ -20,6 +22,7 @@ object TutorMapper {
             )
         ) { it -> it.parseTutor() }
 
+    context(_: Session)
     fun getAdminsId(): List<TutorId> =
         runList(
             queryOf(
@@ -31,6 +34,7 @@ object TutorMapper {
             )
         ) { TutorId(it.long("id")) }
 
+    context(_: Session)
     fun findByIdOrNull(id: TutorId): Tutor? =
         runSingle(
             queryOf(
@@ -43,6 +47,7 @@ object TutorMapper {
                 )
         ) { it.parseTutor() }
 
+    context(_: Session)
     fun search(query: String): List<Tutor> =
         runList(
             queryOf(
@@ -56,6 +61,7 @@ object TutorMapper {
             )
         ) { it.parseTutor() }
 
+    context(_: Session)
     fun updateTutor(id: Long, permissions: List<String>, subjectIds: List<Long>, name: String? = null) {
         val subjectsString = subjectIds.joinToString(":")
         

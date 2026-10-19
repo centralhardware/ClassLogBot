@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
 import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.KSLog
@@ -45,7 +47,7 @@ suspend fun BehaviourContext.createStudent(message: ChatContentMessage<MessageCo
 
         // Step 1: Enter FIO
         val fio = waitParsed(chatId, "Ведите ФИО в формате: фамилия имя [отчество].") { text ->
-            parseFio(text) { StudentMapper.findAllByFio(it.first, it.second, it.third).isEmpty() }
+            parseFio(text) { db { StudentMapper.findAllByFio(it.first, it.second, it.third).isEmpty() } }
         }
         builder.name = fio!!.first
         builder.secondName = fio.second
@@ -98,35 +100,40 @@ suspend fun BehaviourContext.createStudent(message: ChatContentMessage<MessageCo
         // Step 9: Save
         builder.createdBy = message.tutorId()
         
-        val client = builder.build()
-        client.id = StudentMapper.save(client)
-        BotAudit.student(message.tutorId().id, "Создано", client.id, listOf(Change("класс", null, client.schoolClass?.value)))
-        runCatching { StudentService.refresh() }
-        
-        sendTextMessage(
-            message.chat,
-            client.getInfo(
-                LessonMapper.getSubjectIdsForStudent(client.id).map {
-                    SubjectMapper.getNameById(it)
+        db {
+            val client = builder.build()
+            client.id = transaction {
+                StudentMapper.save(client).also {
+                    BotAudit.student(message.tutorId().id, "Создано", it, listOf(Change("класс", null, client.schoolClass?.value)))
                 }
-            ),
-            parseMode = MarkdownParseMode,
-            replyMarkup = ReplyKeyboardRemove()
-        )
-        
-        sendTextMessage(
-            Config.logChat(),
-            """
-            #ученик
-            ${
-                client.getInfo(
-                    LessonMapper.getSubjectIdsForStudent(client.id)
-                        .map { SubjectMapper.getNameById(it) }
-                )
             }
-            """.trimIndent(),
-            parseMode = MarkdownParseMode,
-        )
+            runCatching { StudentService.refresh() }
+        
+            sendTextMessage(
+                message.chat,
+                client.getInfo(
+                    LessonMapper.getSubjectIdsForStudent(client.id).map {
+                        SubjectMapper.getNameById(it)
+                    }
+                ),
+                parseMode = MarkdownParseMode,
+                replyMarkup = ReplyKeyboardRemove()
+            )
+        
+            sendTextMessage(
+                Config.logChat(),
+                """
+                #ученик
+                ${
+                    client.getInfo(
+                        LessonMapper.getSubjectIdsForStudent(client.id)
+                            .map { SubjectMapper.getNameById(it) }
+                    )
+                }
+                """.trimIndent(),
+                parseMode = MarkdownParseMode,
+            )
+        }
         
         sendTextMessage(message.chat, "Создание ученика закончено")
         

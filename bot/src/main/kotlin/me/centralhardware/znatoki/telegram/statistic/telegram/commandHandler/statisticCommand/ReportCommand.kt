@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
+import kotliquery.Session
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.tgbotapi.extensions.api.send.sendActionTyping
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadDocument
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -16,6 +18,7 @@ import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 
 import java.io.File
 
+context(_: Session)
 private suspend fun BehaviourContext.createReport(
     userId: Long,
     genReport: suspend (TutorId) -> List<File>
@@ -39,16 +42,16 @@ suspend fun BehaviourContext.send(userId: Long, file: File) {
     file.delete()
 }
 
-fun BehaviourContext.reportCommand() = onCommand(Regex("report")) {
+fun BehaviourContext.reportCommand() = onCommand(Regex("report")) { db {
     sendActionTyping(it.chat)
     createReport(it.userId()) { tutorId ->
         ReportService.getReportsCurrent(tutorId)
     }
-}
+} }
 
-fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) {
+fun BehaviourContext.reportPreviousCommand() = onCommand(Regex("reportPrevious|reportprevious")) { db {
     sendActionTyping(it.chat)
     createReport(it.userId()) { tutorId ->
         ReportService.getReportPrevious(tutorId)
     }
-}
+} }

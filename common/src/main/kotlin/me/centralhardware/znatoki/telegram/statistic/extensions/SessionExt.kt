@@ -7,24 +7,35 @@ import kotliquery.sessionOf
 import me.centralhardware.znatoki.telegram.statistic.dataSource
 
 /*
- * Each helper runs on [session] when given (an open transaction, so the call joins it) and otherwise
- * on its own auto-commit session.
+ * Every DB function takes the session as a context parameter. Entry points (a route, a bot handler,
+ * a job) open it with [db], and everything called inside runs on it without passing it around;
+ * [transaction] groups some of those calls into one commit.
+ *
+ * A session must not outlive its block: a long wait (a conversation step) or a background launch opens
+ * its own instead of capturing the caller's.
  */
 
-inline fun <T> withSession(session: Session?, block: (Session) -> T): T =
-    session?.let(block) ?: sessionOf(dataSource).use(block)
+inline fun <T> db(block: context(Session) () -> T): T =
+    sessionOf(dataSource).use { block(it) }
 
-inline fun <T> runSingle(q: Query, session: Session? = null, crossinline map: (Row) -> T): T? =
-    withSession(session) { it.run(q.map { row -> map(row) }.asSingle) }
+/**
+ * Runs [block] as one transaction on the caller's session. Its connection is switched to a transaction
+ * for the duration, so every DB call inside (on the same session) commits or rolls back together.
+ */
+context(session: Session)
+inline fun <T> transaction(crossinline block: () -> T): T =
+    session.transaction { block() }
 
-inline fun <T> runList(q: Query, session: Session? = null, crossinline map: (Row) -> T): List<T> =
-    withSession(session) { it.run(q.map { row -> map(row) }.asList) }
+context(session: Session)
+inline fun <T> runSingle(q: Query, crossinline map: (Row) -> T): T? =
+    session.run(q.map { row -> map(row) }.asSingle)
 
-fun execute(q: Query, session: Session? = null): Boolean = withSession(session) { it.execute(q) }
+context(session: Session)
+inline fun <T> runList(q: Query, crossinline map: (Row) -> T): List<T> =
+    session.run(q.map { row -> map(row) }.asList)
 
-fun update(q: Query, session: Session? = null): Int = withSession(session) { it.update(q) }
+context(session: Session)
+fun execute(q: Query): Boolean = session.execute(q)
 
-fun <T> transaction(block: (kotliquery.TransactionalSession) -> T): T =
-    sessionOf(dataSource).use { session ->
-        session.transaction(block)
-    }
+context(session: Session)
+fun update(q: Query): Int = session.update(q)

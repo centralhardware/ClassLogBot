@@ -62,12 +62,14 @@ data class PaymentRow(
 }
 
 /** Subject names by id. */
+context(_: Session)
 fun subjectNames() = WebRepo.subjects().associate { it.id to it.name }
 
 object WebRepo {
 
     // ---------- reference data ----------
 
+    context(_: Session)
     fun studentNames(): Map<Int, StudentName> = runList(
         queryOf("SELECT id, second_name, name, last_name, school_class, coalesce(deleted, false) AS deleted FROM students")
     ) {
@@ -77,14 +79,17 @@ object WebRepo {
         )
     }.associateBy { it.id }
 
+    context(_: Session)
     fun subjects(): List<SubjectDto> = runList(
         queryOf("SELECT id, name, coalesce(allow_multiply_clients, false) AS g FROM subjects ORDER BY name")
     ) { SubjectDto(it.long("id"), it.string("name"), it.boolean("g")) }
 
+    context(_: Session)
     fun firstMonth(): YearMonth? = runSingle(
         queryOf("SELECT min(date_time) AS m FROM lessons")
     ) { it.localDateTimeOrNull("m") }?.let { YearMonth.from(it) }
 
+    context(_: Session)
     fun usedSources(): List<String> = runList(
         queryOf(
             """
@@ -124,6 +129,7 @@ object WebRepo {
     """
 
     /** [withAdded] also returns the lessons [tutor] entered on behalf of someone else (feeds, not totals). */
+    context(_: Session)
     fun lessons(from: LocalDateTime, to: LocalDateTime, tutor: Long?, withAdded: Boolean = false): List<LessonGroup> = runList(
         queryOf(
             "$LESSON_GROUP_SELECT WHERE date_time >= :from AND date_time < :to ${tutorFilter(tutor, withAdded)} GROUP BY id ORDER BY dt DESC",
@@ -131,10 +137,12 @@ object WebRepo {
         )
     ) { it.toLessonGroup() }
 
-    fun lesson(id: UUID, tx: Session? = null): LessonGroup? = runSingle(
-        queryOf("$LESSON_GROUP_SELECT WHERE id = :id GROUP BY id", mapOf("id" to id)), tx,
+    context(_: Session)
+    fun lesson(id: UUID): LessonGroup? = runSingle(
+        queryOf("$LESSON_GROUP_SELECT WHERE id = :id GROUP BY id", mapOf("id" to id))
     ) { it.toLessonGroup() }
 
+    context(_: Session)
     fun lessonsOfStudents(ids: Collection<Int>, tutor: Long?, limit: Int): List<LessonGroup> = if (ids.isEmpty()) emptyList() else runList(
         queryOf(
             """
@@ -148,6 +156,7 @@ object WebRepo {
     ) { it.toLessonGroup() }
 
     /** Median stored amount per subject over the last half year, for the "unusual price" flag. */
+    context(_: Session)
     fun medianAmounts(): Map<Long, Double> = runList(
         queryOf(
             """
@@ -158,6 +167,7 @@ object WebRepo {
         )
     ) { it.long("subject_id") to it.double("med") }.toMap()
 
+    context(_: Session)
     fun lastLessonAmount(student: Int, subject: Long, tutor: Long): Pair<Int, LocalDateTime>? = runSingle(
         queryOf(
             """
@@ -169,14 +179,16 @@ object WebRepo {
         )
     ) { it.int("amount") to it.localDateTime("date_time") }
 
-    fun setLessonFields(id: UUID, fields: Map<String, Any?>, tx: Session? = null) {
+    context(_: Session)
+    fun setLessonFields(id: UUID, fields: Map<String, Any?>) {
         if (fields.isEmpty()) return
         val set = fields.keys.joinToString(", ") { "$it = :$it" }
-        update(queryOf("UPDATE lessons SET $set, update_time = now() WHERE id = :id", fields + ("id" to id)), tx)
+        update(queryOf("UPDATE lessons SET $set, update_time = now() WHERE id = :id", fields + ("id" to id)))
     }
 
-    fun setLessonDeleted(id: UUID, deleted: Boolean, tx: Session? = null) =
-        update(queryOf("UPDATE lessons SET is_deleted = :p_d, update_time = now() WHERE id = :id", mapOf("id" to id, "p_d" to deleted)), tx)
+    context(_: Session)
+    fun setLessonDeleted(id: UUID, deleted: Boolean) =
+        update(queryOf("UPDATE lessons SET is_deleted = :p_d, update_time = now() WHERE id = :id", mapOf("id" to id, "p_d" to deleted)))
 
     // ---------- payments ----------
 
@@ -192,6 +204,7 @@ object WebRepo {
     """
 
     /** [withAdded] also returns the payments [tutor] entered on behalf of someone else (feeds, not totals). */
+    context(_: Session)
     fun payments(from: LocalDateTime, to: LocalDateTime, tutor: Long?, withAdded: Boolean = false): List<PaymentRow> = runList(
         queryOf(
             "$PAYMENT_SELECT WHERE date_time >= :from AND date_time < :to ${tutorFilter(tutor, withAdded)} ORDER BY date_time DESC",
@@ -199,9 +212,11 @@ object WebRepo {
         )
     ) { it.toPayment() }
 
-    fun payment(id: Int, tx: Session? = null): PaymentRow? =
-        runSingle(queryOf("$PAYMENT_SELECT WHERE id = :id", mapOf("id" to id)), tx) { it.toPayment() }
+    context(_: Session)
+    fun payment(id: Int): PaymentRow? =
+        runSingle(queryOf("$PAYMENT_SELECT WHERE id = :id", mapOf("id" to id))) { it.toPayment() }
 
+    context(_: Session)
     fun paymentsOfStudents(ids: Collection<Int>, tutor: Long?, limit: Int): List<PaymentRow> = if (ids.isEmpty()) emptyList() else runList(
         queryOf(
             """
@@ -213,10 +228,11 @@ object WebRepo {
         )
     ) { it.toPayment() }
 
-    fun updatePayment(id: Int, fields: Map<String, Any?>, tx: Session? = null) {
+    context(_: Session)
+    fun updatePayment(id: Int, fields: Map<String, Any?>) {
         if (fields.isEmpty()) return
         val set = fields.keys.joinToString(", ") { "$it = :$it" }
-        update(queryOf("UPDATE payment SET $set WHERE id = :id", fields + ("id" to id)), tx)
+        update(queryOf("UPDATE payment SET $set WHERE id = :id", fields + ("id" to id)))
     }
 
     // ---------- students ----------
@@ -257,6 +273,7 @@ object WebRepo {
         ORDER BY s.second_name, s.name
     """
 
+    context(_: Session)
     fun studentRows(includeDeleted: Boolean, withBalance: Boolean): List<StudentRowDto> {
         val m = YearMonth.now()
         return runList(
@@ -267,6 +284,7 @@ object WebRepo {
         ) { it.toStudentRow(withBalance) }
     }
 
+    context(_: Session)
     fun studentRow(id: Int, withBalance: Boolean): StudentRowDto? {
         val m = YearMonth.now()
         return runSingle(
@@ -275,6 +293,7 @@ object WebRepo {
     }
 
     /** Students are written here rather than through StudentMapper so free-text sources are kept as typed. */
+    context(_: Session)
     fun insertStudent(input: StudentInput, phone: String?, parent: String?, by: Long): Int = runSingle(
         queryOf(
             """
@@ -288,6 +307,7 @@ object WebRepo {
         )
     ) { it.int("id") }!!
 
+    context(_: Session)
     fun updateStudent(id: Int, input: StudentInput, phone: String?, parent: String?, by: Long) = update(
         queryOf(
             """
@@ -300,6 +320,7 @@ object WebRepo {
         )
     )
 
+    context(_: Session)
     fun setStudentStatus(id: Int, status: String, reason: String?, by: Long) = update(
         queryOf(
             """
@@ -310,6 +331,7 @@ object WebRepo {
         )
     )
 
+    context(_: Session)
     fun setStudentDeleted(id: Int, deleted: Boolean, by: Long) = update(
         queryOf(
             "UPDATE students SET deleted = :p_d, modify_date = now(), update_by = :by WHERE id = :id",
@@ -317,6 +339,7 @@ object WebRepo {
         )
     )
 
+    context(_: Session)
     fun notes(student: Int): List<NoteDto> = runList(
         queryOf(
             """
@@ -328,10 +351,12 @@ object WebRepo {
         )
     ) { NoteDto(it.localDateTime("created_at").toString(), it.string("by"), it.string("text")) }
 
+    context(_: Session)
     fun addNote(student: Int, tutor: Long, text: String) = update(
         queryOf("INSERT INTO student_notes (student_id, tutor_id, text) VALUES (:p_s, :p_t, :p_x)", mapOf("p_s" to student, "p_t" to tutor, "p_x" to text))
     )
 
+    context(_: Session)
     fun studentLessonStats(student: Int, tutor: Long?): Pair<Int, List<RecentLessonDto>> {
         val rows = runList(
             queryOf(
@@ -349,6 +374,7 @@ object WebRepo {
         return rows.size to rows.take(3)
     }
 
+    context(_: Session)
     fun paidTotal(student: Int): Long = runSingle(
         queryOf("SELECT coalesce(sum(amount), 0) AS s FROM payment WHERE student_id = :p_s AND NOT coalesce(is_deleted, false)", mapOf("p_s" to student))
     ) { it.long("s") } ?: 0
@@ -366,6 +392,7 @@ object WebRepo {
         tutor = long("tutor_id"),
     )
 
+    context(_: Session)
     fun slots(tutor: Long?, names: Map<Int, StudentName>, includeDeleted: Boolean = false): List<SlotDto> = runList(
         queryOf(
             """
@@ -378,13 +405,16 @@ object WebRepo {
         )
     ) { it.toSlot(names) }
 
+    context(_: Session)
     fun slot(id: Int, names: Map<Int, StudentName>): SlotDto? =
         runSingle(queryOf("SELECT * FROM schedule_slots WHERE id = :id", mapOf("id" to id))) { it.toSlot(names) }
 
+    context(_: Session)
     fun slotDeleted(id: Int): Boolean = runSingle(
         queryOf("SELECT is_deleted FROM schedule_slots WHERE id = :id", mapOf("id" to id))
     ) { it.boolean("is_deleted") } ?: true
 
+    context(_: Session)
     fun addSlot(tutor: Long, input: SlotInput): Int = runSingle(
         queryOf(
             """
@@ -398,9 +428,11 @@ object WebRepo {
         )
     ) { it.int("id") }!!
 
+    context(_: Session)
     fun setSlotDeleted(id: Int, deleted: Boolean) =
         update(queryOf("UPDATE schedule_slots SET is_deleted = :p_d WHERE id = :id", mapOf("id" to id, "p_d" to deleted)))
 
+    context(_: Session)
     fun marks(from: LocalDate, to: LocalDate, slotIds: Collection<Int>): List<SlotMarkDto> = if (slotIds.isEmpty()) emptyList() else runList(
         queryOf(
             "SELECT * FROM schedule_marks WHERE date >= :p_f AND date <= :p_t AND slot_id = ANY(:ids)",
@@ -408,17 +440,18 @@ object WebRepo {
         )
     ) { SlotMarkDto(it.int("slot_id"), it.localDate("date").toString(), it.string("status"), it.uuidOrNull("lesson_id")?.toString()) }
 
-    fun setMark(slot: Int, date: LocalDate, status: String, lesson: UUID?, tx: Session? = null) = update(
+    context(_: Session)
+    fun setMark(slot: Int, date: LocalDate, status: String, lesson: UUID?) = update(
         queryOf(
             """
             INSERT INTO schedule_marks (slot_id, date, status, lesson_id) VALUES (:p_s, :p_d, :st, :p_l)
             ON CONFLICT (slot_id, date) DO UPDATE SET status = excluded.status, lesson_id = excluded.lesson_id
             """,
             mapOf("p_s" to slot, "p_d" to date, "st" to status, "p_l" to lesson),
-        ),
-        tx,
+        )
     )
 
+    context(_: Session)
     fun clearMark(slot: Int, date: LocalDate) =
         update(queryOf("DELETE FROM schedule_marks WHERE slot_id = :p_s AND date = :p_d", mapOf("p_s" to slot, "p_d" to date)))
 
@@ -429,10 +462,12 @@ object WebRepo {
         return all.filter { if (it.onceDate != null) it.onceDate == iso else it.weekday == wd }
     }
 
+    context(_: Session)
     fun reminders(tutor: Long): RemindersDto = runSingle(
         queryOf("SELECT * FROM reminder_settings WHERE tutor_id = :p_t", mapOf("p_t" to tutor))
     ) { RemindersDto(it.boolean("evening"), it.string("at"), it.boolean("month_end")) } ?: RemindersDto(true, "21:00", true)
 
+    context(_: Session)
     fun saveReminders(tutor: Long, r: RemindersDto) = update(
         queryOf(
             """
@@ -450,14 +485,17 @@ object WebRepo {
         localDateTimeOrNull("submitted_at")?.toString(), localDateTimeOrNull("decided_at")?.toString(), boolean("self_accepted"),
     )
 
+    context(_: Session)
     fun submission(tutor: Long, month: String): SubmissionDto? = runSingle(
         queryOf("SELECT * FROM report_submissions WHERE tutor_id = :p_t AND month = :p_m", mapOf("p_t" to tutor, "p_m" to month))
     ) { it.toSubmission() }
 
+    context(_: Session)
     fun submissions(month: String): List<SubmissionDto> = runList(
         queryOf("SELECT * FROM report_submissions WHERE month = :p_m", mapOf("p_m" to month))
     ) { it.toSubmission() }
 
+    context(_: Session)
     fun saveSubmission(s: SubmissionDto, decidedBy: Long?) = update(
         queryOf(
             """
@@ -474,6 +512,7 @@ object WebRepo {
         )
     )
 
+    context(_: Session)
     fun monthTotals(tutor: Long, month: YearMonth): MonthTotalsDto {
         val ls = lessons(month.start(), month.end(), tutor).filterNot { it.deleted }
         val received = runSingle(
@@ -487,9 +526,11 @@ object WebRepo {
 
     // ---------- settings ----------
 
+    context(_: Session)
     fun setting(key: String): String? =
         runSingle(queryOf("SELECT value FROM app_settings WHERE key = :p_k", mapOf("p_k" to key))) { it.string("value") }
 
+    context(_: Session)
     fun saveSetting(key: String, value: String) = update(
         queryOf(
             "INSERT INTO app_settings (key, value) VALUES (:p_k, :p_v) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
@@ -499,6 +540,7 @@ object WebRepo {
 
     // ---------- tutors ----------
 
+    context(_: Session)
     fun insertTutor(input: TutorInput) = update(
         queryOf(
             "INSERT INTO tutors (id, name, permissions, subjects, rate) VALUES (:id, :p_n, CAST(:p_p AS text[]), :p_s, :p_r)",
@@ -509,6 +551,7 @@ object WebRepo {
         )
     )
 
+    context(_: Session)
     fun updateTutor(input: TutorInput) = update(
         queryOf(
             "UPDATE tutors SET name = :p_n, permissions = CAST(:p_p AS text[]), subjects = :p_s, rate = :p_r WHERE id = :id",

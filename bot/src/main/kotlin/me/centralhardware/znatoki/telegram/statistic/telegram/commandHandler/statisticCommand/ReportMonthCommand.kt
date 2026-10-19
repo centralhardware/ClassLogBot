@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.commandHandler.statisticCommand
 
 import dev.inmo.tgbotapi.extensions.api.send.reply
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.tgbotapi.extensions.api.send.sendActionTyping
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onCommandWithArgs
@@ -9,7 +10,7 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 import java.time.YearMonth
 
-fun BehaviourContext.reportMonthCommand() = onCommandWithArgs(Regex("reportMonth|reportmonth")) { message, args ->
+fun BehaviourContext.reportMonthCommand() = onCommandWithArgs(Regex("reportMonth|reportmonth")) { message, args -> db {
     if (args.size != 2) {
         reply(message, "Использование: /reportMonth <год> <месяц>\nПример: /reportMonth 2024 12")
         return@onCommandWithArgs
@@ -32,4 +33,4 @@ fun BehaviourContext.reportMonthCommand() = onCommandWithArgs(Regex("reportMonth
             send(message.userId(), report)
         }
     }
-}
+} }

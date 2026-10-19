@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.statistic
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
@@ -31,15 +33,16 @@ private val toggleRegex = Regex("($ACTION_ADD|$ACTION_REMOVE)-($UUID_REGEX)")
 /**
  * Единый хендлер двух действий: extraHalfHourAdd / extraHalfHourRemove
  */
-fun BehaviourContext.registerExtraHalfHourHandlers() = onDataCallbackQuery(toggleRegex) { query ->
+fun BehaviourContext.registerExtraHalfHourHandlers() = onDataCallbackQuery(toggleRegex) { query -> db {
     val (action, idStr) = toggleRegex.matchEntire(query.data)!!.destructured
     changeExtraHalfHour(
         idStr.toLessonId(),
         action == ACTION_ADD,
         query
     )
-}
+} }
 
+context(_: Session)
 private suspend fun BehaviourContext.changeExtraHalfHour(
     id: LessonId,
     extraHalfHour: Boolean,

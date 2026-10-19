@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.report
 
+import kotliquery.Session
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
@@ -26,12 +27,14 @@ class MonthReport(
 ) {
 
     val clients = mutableMapOf<StudentId, Student>()
+    context(_: Session)
     fun getStudent(id: StudentId): Student {
         if (!clients.contains(id)) clients[id] = StudentMapper.findById(id)
 
         return clients[id]!!
     }
 
+    context(_: Session)
     fun generate(times: List<Lesson>, payments: List<Payment>): File? {
         val serviceName = SubjectMapper.getNameById(subjectId)
 

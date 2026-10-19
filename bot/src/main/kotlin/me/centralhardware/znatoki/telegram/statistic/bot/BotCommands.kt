@@ -65,7 +65,7 @@ suspend fun BehaviourContext.syncBotCommands() {
     while (isActive) {
         runCatching {
             var updated = 0
-            TutorMapper.getAll().forEach { user ->
+            db { TutorMapper.getAll() }.forEach { user ->
                 val commands = commandsFor(user)
                 if (applied[user.id] == commands) return@forEach
                 runCatching {

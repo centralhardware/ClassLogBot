@@ -1,6 +1,8 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import dev.inmo.kslog.common.KSLog
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.kslog.common.warning
 import dev.inmo.krontab.buildSchedule
 import dev.inmo.krontab.utils.asTzFlowWithDelays
@@ -56,6 +58,7 @@ object Notifications {
     }
 
     /** To everyone holding [permission], optionally except the person who caused it. */
+    context(_: Session)
     fun sendTo(permission: Permissions, text: String, link: String? = null, except: Long? = null) =
         TutorMapper.getAll()
             .filter { permission in it.permissions && it.id.id != except }
@@ -97,10 +100,13 @@ object AuditAlerts : AuditListener {
     private val lastAlert = ConcurrentHashMap<String, LocalDateTime>()
     private val fmt = DateTimeFormatter.ofPattern("d.MM, HH:mm")
 
+    context(_: Session)
     fun settings(): AlertsDto = WebRepo.setting(KEY)?.let { runCatching { Json.decodeFromString<AlertsDto>(it) }.getOrNull() } ?: AlertsDto()
 
+    context(_: Session)
     fun save(a: AlertsDto) = WebRepo.saveSetting(KEY, Json.encodeToString(AlertsDto.serializer(), a))
 
+    context(_: Session)
     override fun onEntry(entry: AuditEntry) {
         val s = settings()
         val who = TutorMapper.findByIdOrNull(TutorId(entry.userId))?.name ?: entry.userId.toString()
@@ -116,6 +122,7 @@ object AuditAlerts : AuditListener {
         }
     }
 
+    context(_: Session)
     fun closedMonthEdit(actorId: Long, actorName: String, what: String, month: YearMonth) {
         if (settings().closed) alert(actorId, "🔒 $actorName изменил(а) запись закрытого месяца (${monthTitle(month).lowercase()}): $what.")
     }
@@ -129,6 +136,7 @@ object AuditAlerts : AuditListener {
         }
     }
 
+    context(_: Session)
     private fun alert(actorId: Long, text: String) = Notifications.sendTo(Permissions.ADMIN, text, "tab=audit", except = actorId)
 
     /** True at most once per [minutes] for [key], so a burst of edits makes one alert. */
@@ -148,10 +156,11 @@ object Reminders {
 
     suspend fun run() {
         buildSchedule("0 0 20,21,22 * * *").asTzFlowWithDelays().collect {
-            runCatching { send(LocalTime.now().hour) }.onFailure { KSLog.warning("Reminders failed", it) }
+            runCatching { db { send(LocalTime.now().hour) } }.onFailure { KSLog.warning("Reminders failed", it) }
         }
     }
 
+    context(_: Session)
     private fun send(hour: Int) {
         val at = "%02d:00".format(hour)
         val today = LocalDate.now()

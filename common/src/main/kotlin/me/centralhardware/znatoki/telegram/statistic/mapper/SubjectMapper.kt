@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import kotliquery.Session
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.toSubjectId
@@ -8,6 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 
 object SubjectMapper {
 
+    context(_: Session)
     fun getIdByName(name: String): SubjectId =
         runSingle(
             queryOf(
@@ -22,6 +24,7 @@ object SubjectMapper {
             row -> row.long("id").toSubjectId()
         } ?: throw IllegalArgumentException("No subject with name $name found")
 
+    context(_: Session)
     fun getNameById(id: SubjectId): String =
         runSingle(
             queryOf(
@@ -36,6 +39,7 @@ object SubjectMapper {
             row -> row.string("name")
         } ?: throw IllegalArgumentException("No subject with id $id found")
 
+    context(_: Session)
     fun isAllowGroup(id: SubjectId): Boolean = runSingle(
         queryOf(
             """
@@ -54,6 +58,7 @@ object SubjectMapper {
         val subjectName: String
     )
 
+    context(_: Session)
     fun getAllSubjects(): List<SubjectDto> =
         runList(
             queryOf(

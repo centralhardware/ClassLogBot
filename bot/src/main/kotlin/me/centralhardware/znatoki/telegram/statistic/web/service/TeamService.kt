@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.entity.Permissions
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
@@ -19,8 +20,10 @@ private val PRIVILEGED = setOf(Permissions.ADMIN.name, Permissions.MANAGE_TUTORS
 /** The team: tutors and staff, their permissions, subjects and pay rate; switching access off and on. */
 object TeamService {
 
+    context(_: Session)
     fun list(): List<TutorDto> = TutorMapper.getAll().sortedBy { it.name }.map { it.toDto() }
 
+    context(_: Session)
     fun add(c: Caller, raw: TutorInput): TutorDto {
         val input = raw.copy(name = raw.name.trim())
         if (input.id !in 10_000L..999_999_999_999_999L) badRequest("Telegram ID — это число, например 428100231. Его можно узнать у @userinfobot.")
@@ -39,6 +42,7 @@ object TeamService {
         return find(input.id).toDto()
     }
 
+    context(_: Session)
     fun update(c: Caller, id: Long, raw: TutorInput): TutorDto {
         val target = find(id)
         val input = raw.copy(id = id, name = raw.name.trim())
@@ -55,6 +59,7 @@ object TeamService {
     }
 
     /** Takes every permission away: the bot and the web app stop answering; their records stay. */
+    context(_: Session)
     fun disable(c: Caller, id: Long): TutorDto {
         val target = find(id)
         if (id == c.id) badRequest("Нельзя отключить самого себя.")
@@ -64,6 +69,7 @@ object TeamService {
         return find(id).toDto()
     }
 
+    context(_: Session)
     fun enable(c: Caller, id: Long): TutorDto {
         val target = find(id)
         WebRepo.updateTutor(TutorInput(id, target.name, TUTOR_PRESET, target.subjects.map { it.id }, target.rate))
@@ -71,6 +77,7 @@ object TeamService {
         return find(id).toDto()
     }
 
+    context(_: Session)
     private fun find(id: Long): Tutor = TutorMapper.findByIdOrNull(TutorId(id)) ?: notFound()
 
     /** Only admins hand out or take away ADMIN and MANAGE_TUTORS, and nobody demotes themselves. */
@@ -92,6 +99,7 @@ object TeamService {
         input.rate?.let { if (it !in 0..100) badRequest("Ставка от 0 до 100%.") }
     }
 
+    context(_: Session)
     private fun subjectList(ids: List<Long>) = subjectNames().let { names -> ids.mapNotNull { names[it] }.joinToString(", ") }
 
     private fun Tutor.toDto() = TutorDto(id.id, name, permissions.map { it.name }, subjects.map { it.id }, rate)

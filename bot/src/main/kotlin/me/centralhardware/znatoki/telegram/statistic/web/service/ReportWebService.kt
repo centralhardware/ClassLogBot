@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.entity.Permissions
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
@@ -16,10 +17,12 @@ import java.time.YearMonth
 /** The monthly report tab: the figures of the .xlsx, its preview, and payroll for admins. */
 object ReportWebService {
 
+    context(_: Session)
     fun report(c: Caller, tutor: Long, month: YearMonth): ReportDto =
         ReportDto(tutor, month.toString(), subjects(tutor, month), WebRepo.submission(tutor, month.toString()), if (c.isAdmin) payroll(month) else null)
 
     /** Per subject and student: individual and group lessons, what was billed and what was paid (with a receipt), as in MonthReport. */
+    context(_: Session)
     private fun subjects(tutor: Long, month: YearMonth): List<ReportSubjectDto> {
         val names = WebRepo.studentNames()
         val lessons = WebRepo.lessons(month.start(), month.end(), tutor).filterNot { it.deleted }
@@ -39,12 +42,14 @@ object ReportWebService {
     }
 
     /** Each tutor's share of what they billed this month; tutors without a rate are listed without a sum. */
+    context(_: Session)
     fun payroll(month: YearMonth): List<PayrollRowDto> = TutorMapper.getAll().mapNotNull { t ->
         val billed = WebRepo.lessons(month.start(), month.end(), t.id.id).filterNot { it.deleted }.sumOf { it.price * it.students.size }
         if (billed == 0.0) null else PayrollRowDto(t.id.id, t.rate, billed, t.rate?.let { Math.round(billed * it / 100.0) })
     }
 
     /** The three sheets of the .xlsx for one subject, so the app can show them without a download. */
+    context(_: Session)
     fun preview(c: Caller, tutorId: Long, month: YearMonth, subject: Long): PreviewDto {
         val tutor = TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: notFound()
         val names = WebRepo.studentNames()
@@ -94,6 +99,7 @@ object SubmissionService {
     private val STATUS_TITLE = mapOf("submitted" to "на проверке", "accepted" to "принят", "returned" to "возвращён")
 
     /** Director's inbox: every teaching tutor's month with its submission status. */
+    context(_: Session)
     fun inbox(month: YearMonth): List<InboxRowDto> {
         val subs = WebRepo.submissions(month.toString()).associateBy { it.tutor }
         return TutorMapper.getAll()
@@ -101,6 +107,7 @@ object SubmissionService {
             .map { InboxRowDto(it.id.id, WebRepo.monthTotals(it.id.id, month), subs[it.id.id]) }
     }
 
+    context(_: Session)
     fun submit(c: Caller, input: SubmitInput): SubmissionDto {
         val month = parseMonth(input.month) ?: badRequest("Неверный месяц.")
         val prev = WebRepo.submission(c.id, month.toString())
@@ -117,6 +124,7 @@ object SubmissionService {
     }
 
     /** Accepting works for a report that was never handed in, too ("Отметить как принятый"). */
+    context(_: Session)
     fun accept(c: Caller, tutorId: Long, month: YearMonth): SubmissionDto {
         val (tutorName, prev) = load(tutorId, month)
         if (prev?.status == "accepted") badRequest("Отчёт уже принят.")
@@ -126,6 +134,7 @@ object SubmissionService {
             .copy(status = "accepted", decidedAt = LocalDateTime.now().toString(), selfAccepted = prev?.status != "submitted"))
     }
 
+    context(_: Session)
     fun returnBack(c: Caller, tutorId: Long, month: YearMonth, comment: String): SubmissionDto {
         val (tutorName, prev) = load(tutorId, month)
         val text = comment.trim().ifEmpty { badRequest("Напишите, что исправить: репетитор увидит этот текст.") }
@@ -136,6 +145,7 @@ object SubmissionService {
             .copy(status = "returned", comment = text, decidedAt = LocalDateTime.now().toString()))
     }
 
+    context(_: Session)
     fun reopen(c: Caller, tutorId: Long, month: YearMonth): SubmissionDto {
         val (tutorName, prev) = load(tutorId, month)
         if (prev?.status != "accepted") badRequest("Отчёт не принят.")
@@ -143,11 +153,14 @@ object SubmissionService {
         return save(c, prev.copy(status = "submitted", decidedAt = null, selfAccepted = false))
     }
 
+    context(_: Session)
     private fun load(tutorId: Long, month: YearMonth): Pair<String, SubmissionDto?> =
         (TutorMapper.findByIdOrNull(TutorId(tutorId)) ?: notFound()).name to WebRepo.submission(tutorId, month.toString())
 
+    context(_: Session)
     private fun save(c: Caller, s: SubmissionDto) = s.also { WebRepo.saveSubmission(it, c.id) }
 
+    context(_: Session)
     private fun log(c: Caller, action: String, tutorId: Long, tutorName: String, month: YearMonth, changes: List<Change>) =
         AuditService.log(c.id, action, "report", "$tutorId-$month", "$tutorName · ${monthTitle(month)}", changes, DataSource.WEB)
 }

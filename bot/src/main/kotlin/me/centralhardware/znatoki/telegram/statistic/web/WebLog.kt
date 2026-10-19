@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web
 
+import kotliquery.Session
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.sendActionUploadPhoto
@@ -33,6 +34,7 @@ private fun sourceLine(source: DataSource) = when (source) {
     DataSource.WEB -> "Источник: #веб"
 }
 
+context(_: Session)
 private fun tutorLine(label: String, tutorId: TutorId, addedBy: TutorId?): String {
     val tutorName = TutorMapper.findByIdOrNull(tutorId)?.name?.hashtag()
     return if (addedBy != null && addedBy != tutorId) {
@@ -42,6 +44,7 @@ private fun tutorLine(label: String, tutorId: TutorId, addedBy: TutorId?): Strin
     }
 }
 
+context(_: Session)
 suspend fun TelegramBot.sendLessonLog(lessons: List<Lesson>, addedBy: TutorId?, source: DataSource) {
     val lesson = lessons.first()
     val keyboard = inlineKeyboard {
@@ -65,6 +68,7 @@ suspend fun TelegramBot.sendLessonLog(lessons: List<Lesson>, addedBy: TutorId?, 
     sendPhoto(Config.logChat(), photo.asMultipartFile("Отчёт"), replyMarkup = keyboard, text = text)
 }
 
+context(_: Session)
 suspend fun TelegramBot.sendPaymentLog(payment: Payment, id: PaymentId, addedBy: TutorId?, source: DataSource) {
     val keyboard = inlineKeyboard { row { dataButton("Удалить", "paymentDelete-${id.id}") } }
     val text = buildString {

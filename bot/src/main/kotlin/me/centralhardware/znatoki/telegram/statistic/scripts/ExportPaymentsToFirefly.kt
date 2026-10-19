@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.scripts
 
+import kotliquery.Session
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.info
 import dev.inmo.kslog.common.setDefaultKSLog
@@ -38,7 +40,7 @@ import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyService
  * - MINIO_ACCESS_KEY
  * - MINIO_SECRET_KEY
  */
-fun main(args: Array<String>) = runBlocking {
+fun main(args: Array<String>) = runBlocking { db {
     KSLog.info { "=== Firefly Payment Export Script ===" }
     KSLog.info { "Starting export of all payments to Firefly III" }
 
@@ -52,7 +54,7 @@ fun main(args: Array<String>) = runBlocking {
 
         if (payments.isEmpty()) {
             KSLog.info { "No payments found. Exiting." }
-            return@runBlocking
+            return@db
         }
 
         // Export to Firefly
@@ -72,8 +74,9 @@ fun main(args: Array<String>) = runBlocking {
         e.printStackTrace()
         throw e
     }
-}
+} }
 
+context(_: Session)
 private fun getAllPayments(): List<Payment> {
     return runList(
         queryOf(

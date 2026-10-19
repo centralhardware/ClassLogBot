@@ -65,7 +65,7 @@ suspend fun BehaviourContext.createLesson(
             )
             val tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
             builder.tutorId = tutorId
-            TutorMapper.findByIdOrNull(tutorId) ?: data.user
+            db { TutorMapper.findByIdOrNull(tutorId) } ?: data.user
         } else {
             builder.tutorId = message.tutorId()
             data.user
@@ -75,17 +75,17 @@ suspend fun BehaviourContext.createLesson(
         if (targetTutor.subjects.size == 1) {
             builder.subjectId = targetTutor.subjects.first()
         } else {
-            val options = targetTutor.subjects.map { SubjectMapper.getNameById(it) }
+            val options = db { targetTutor.subjects.map { SubjectMapper.getNameById(it) } }
             val subjectName = waitEnum(
                 chatId = chatId,
                 prompt = "Выберите предмет",
                 options = options
             )
-            builder.subjectId = SubjectMapper.getIdByName(subjectName!!)
+            builder.subjectId = db { SubjectMapper.getIdByName(subjectName!!) }
         }
 
         // Step 3: Collect student FIOs
-        val groupAllowed = builder.subjectId?.let { SubjectMapper.isAllowGroup(it) } ?: false
+        val groupAllowed = builder.subjectId?.let { db { SubjectMapper.isAllowGroup(it) } } ?: false
 
         val students = if (groupAllowed) {
             waitMultiple(
@@ -118,12 +118,14 @@ suspend fun BehaviourContext.createLesson(
         builder.photoReport = waitPhoto(chatId, "Загрузите фото отчётности")!!.extract(bot)
 
         // Step 6: Confirm and save
-        val confirmPrompt = """
+        val confirmPrompt = db {
+            """
             предмет: ${SubjectMapper.getNameById(builder.subjectId!!)}
             ФИО: ${builder.studentIds.joinToString(";") { StudentMapper.getFioById(it) }}
             стоимость: ${builder.amount?.amount}
             Сохранить?
-        """.trimIndent()
+            """.trimIndent()
+        }
 
         val confirmed = waitConfirmation(chatId, confirmPrompt)
         
@@ -133,12 +135,14 @@ suspend fun BehaviourContext.createLesson(
             builder.addedByTutorId = if (addedBy != builder.tutorId) addedBy else null
             builder.dataSource = DataSource.BOT
             val services = builder.build()
-            transaction { tx ->
-                LessonMapper.insertAll(services, tx)
-                BotAudit.lesson(message.tutorId().id, "Создано", builder.id, listOf(Change("стоимость", null, builder.amount?.amount), Change("учеников", null, services.size)), tx)
+            db {
+                transaction {
+                    LessonMapper.insertAll(services)
+                    BotAudit.lesson(message.tutorId().id, "Создано", builder.id, listOf(Change("стоимость", null, builder.amount?.amount), Change("учеников", null, services.size)))
+                }
             }
             saved = true
-            sendLessonLog(services, addedBy, DataSource.BOT)
+            db { sendLessonLog(services, addedBy, DataSource.BOT) }
             
             val allowForceGroup = targetTutor.hasForceGroup()
             val allowExtraHalf = targetTutor.hasExtraHalfHour()

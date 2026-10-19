@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.report
 
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.krontab.buildSchedule
 import dev.inmo.krontab.utils.asTzFlowWithDelays
 import dev.inmo.tgbotapi.extensions.api.send.media.sendDocument
@@ -12,7 +13,7 @@ import me.centralhardware.znatoki.telegram.statistic.service.ReportService
 
 suspend fun BehaviourContext.monthReport() {
     buildSchedule("0 0 10 1 * *").asTzFlowWithDelays().collect {
-        LessonMapper.getTutorIds().forEach {
+        db { LessonMapper.getTutorIds().forEach {
             ReportService.getReportPrevious(it).forEach { file ->
                 sendActionUploadDocument(it.toChatId())
                 sendDocument(it.toChatId(), InputFile(file))
@@ -22,6 +23,6 @@ suspend fun BehaviourContext.monthReport() {
                 }
                 file.delete()
             }
-        }
+        } }
     }
 }

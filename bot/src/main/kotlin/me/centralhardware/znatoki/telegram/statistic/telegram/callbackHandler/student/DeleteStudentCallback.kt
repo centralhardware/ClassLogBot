@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.callbackHandler.student
 
 import me.centralhardware.znatoki.telegram.statistic.service.Change
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.extensions.api.answers.answerCallbackQuery
 import dev.inmo.tgbotapi.extensions.api.edit.edit
@@ -21,7 +22,7 @@ private val confirmRegex = Regex("^delete_user_confirm(\\d+)$")
 private const val CANCEL = "delete_user_cancel"
 
 fun BehaviourContext.deleteStudentCallback() {
-    onDataCallbackQuery(askRegex) { query ->
+    onDataCallbackQuery(askRegex) { query -> db {
         val id = askRegex.matchEntire(query.data)!!.groupValues[1].toInt().toStudentId()
         answerCallbackQuery(query)
         sendMessage(
@@ -34,15 +35,15 @@ fun BehaviourContext.deleteStudentCallback() {
                 }
             }
         )
-    }
+    } }
 
-    onDataCallbackQuery(confirmRegex) { query ->
+    onDataCallbackQuery(confirmRegex) { query -> db {
         val id = confirmRegex.matchEntire(query.data)!!.groupValues[1].toInt().toStudentId()
         StudentMapper.delete(id, TutorId(query.userId()))
         BotAudit.student(query.userId(), "Удалено", id, listOf(Change("удалён", false, true)))
         answerCallbackQuery(query, "Ученик удален")
         query.messageDataCallbackQueryOrNull()?.message?.let { edit(it, replyMarkup = null) }
-    }
+    } }
 
     onDataCallbackQuery(CANCEL) { query ->
         answerCallbackQuery(query, "Отменено")

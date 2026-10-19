@@ -16,7 +16,9 @@ import java.time.LocalDateTime
 data class Change(val field: String, val old: Any?, val new: Any?)
 
 /** Listens to every audit entry as it is written, e.g. to alert admins about suspicious edits. */
-fun interface AuditListener {
+/** Called with the session of the write that produced [entry], inside its transaction if it has one. */
+interface AuditListener {
+    context(_: Session)
     fun onEntry(entry: AuditEntry)
 }
 
@@ -42,6 +44,7 @@ object AuditService {
     @Volatile
     var listener: AuditListener? = null
 
+    context(_: Session)
     fun log(
         userId: Long,
         action: String,
@@ -52,7 +55,6 @@ object AuditService {
         source: DataSource,
         studentId: Int? = null,
         subjectId: Long? = null,
-        tx: Session? = null,
     ) {
         runCatching {
             val now = LocalDateTime.now()
@@ -78,8 +80,7 @@ object AuditService {
                         "title" to title,
                         "changes" to changesJson(changes).toString(),
                     ),
-                ),
-                tx,
+                )
             ) { it.int("id") }!!
             listener?.onEntry(AuditEntry(id, userId, action, entityType, entityId.toString(), title, changes, source, now))
         }.onFailure { KSLog.error("AuditService: failed to write '$action' for $entityType $entityId", it) }

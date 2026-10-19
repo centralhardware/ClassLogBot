@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram
 
 import dev.inmo.kslog.common.KSLog
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import dev.inmo.kslog.common.info
 import dev.inmo.tgbotapi.extensions.api.answers.answerInlineQuery
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
@@ -55,7 +56,7 @@ fun BehaviourContext.processInline() = onBaseInlineQuery {
                 }
             }
             InlineSearchType.TUTOR -> {
-                val searchResults = TutorMapper.search(searchQuery)
+                val searchResults = db { TutorMapper.search(searchQuery) }
                 KSLog.info("Inline search for tutors '$searchQuery': found ${searchResults.size} tutors")
                 searchResults.forEachIndexed { i, tutor ->
                     articles.add(InlineQueryResultArticle(

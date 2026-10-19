@@ -1,6 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
 import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.web.sendPaymentLog
 import me.centralhardware.znatoki.telegram.statistic.service.Change
@@ -70,7 +71,7 @@ suspend fun BehaviourContext.createPayment(
             )
             val tutorId = TutorId(tutorText!!.split(" ")[0].toLong())
             builder.tutorId = tutorId
-            TutorMapper.findByIdOrNull(tutorId) ?: data.user
+            db { TutorMapper.findByIdOrNull(tutorId) } ?: data.user
         } else {
             data.user
         }
@@ -86,13 +87,13 @@ suspend fun BehaviourContext.createPayment(
         builder.studentId = fioText!!.split(" ")[0].toInt().toStudentId()
 
         // Step 3: Select subject
-        val options = targetTutor.subjects.map { SubjectMapper.getNameById(it) }
+        val options = db { targetTutor.subjects.map { SubjectMapper.getNameById(it) } }
         val subjectName = waitEnum(
             chatId = chatId,
             prompt = "Выберите предмет",
             options = options
         )
-        builder.subjectId = SubjectMapper.getIdByName(subjectName!!)
+        builder.subjectId = db { SubjectMapper.getIdByName(subjectName!!) }
 
         // Step 4: Enter payment amount
         val amount = waitInt(
@@ -107,7 +108,7 @@ suspend fun BehaviourContext.createPayment(
 
         // Step 6: Confirm and save
         val confirmPrompt = """
-            ФИО: ${StudentMapper.findById(builder.studentId!!).fio()}
+            ФИО: ${db { StudentMapper.findById(builder.studentId!!).fio() }}
             Оплата: ${builder.amount?.amount}
         """.trimIndent()
 
@@ -121,19 +122,21 @@ suspend fun BehaviourContext.createPayment(
             builder.addedByTutorId = if (addedBy != builder.tutorId) addedBy else null
             builder.dataSource = DataSource.BOT
             val payment = builder.build()
-            val paymentId = transaction { tx ->
-                PaymentMapper.insert(payment, tx).also {
-                    BotAudit.payment(addedBy.id, "Создано", it, payment, listOf(Change("сумма", null, "${payment.amount.amount} ₽")), tx)
+            val paymentId = db {
+                transaction {
+                    PaymentMapper.insert(payment).also {
+                        BotAudit.payment(addedBy.id, "Создано", it, payment, listOf(Change("сумма", null, "${payment.amount.amount} ₽")))
+                    }
                 }
             }
             saved = true
-            sendPaymentLog(payment, paymentId, addedBy, DataSource.BOT)
+            db { sendPaymentLog(payment, paymentId, addedBy, DataSource.BOT) }
 
             // Export to Firefly III if enabled
             if (FireflyConfig.enabled) {
                 launch {
                     val updatedPayment = payment.copy(id = paymentId)
-                    FireflyService.exportPayment(updatedPayment)
+                    db { FireflyService.exportPayment(updatedPayment) }
                         .onFailure { error ->
                             sendTextMessage(
                                 chatId,

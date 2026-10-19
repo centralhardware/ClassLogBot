@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.web.*
 import java.time.LocalDate
@@ -13,6 +14,7 @@ import kotlin.math.roundToLong
  */
 object StatsService {
 
+    context(_: Session)
     fun stats(c: Caller, requestedMonths: Int?): StatsDto {
         val n = if (c.seesAll) (requestedMonths ?: 6).coerceIn(1, 12) else 1
         val scope = if (c.seesAll) null else c.id
@@ -46,6 +48,7 @@ object StatsService {
     }
 
     /** The students with the most lessons this month. */
+    context(_: Session)
     private fun top(current: List<LessonGroup>): List<CountDto> {
         val names = WebRepo.studentNames()
         return current.flatMap { it.students }.groupingBy { it }.eachCount().entries
@@ -54,6 +57,7 @@ object StatsService {
     }
 
     /** This month's billed minus paid, per student, where positive. */
+    context(_: Session)
     private fun debts(current: List<LessonGroup>, paid: List<PaymentRow>): List<DebtDto> {
         val names = WebRepo.studentNames()
         val billed = mutableMapOf<Int, Double>()
@@ -63,6 +67,7 @@ object StatsService {
             .filter { it.owe > 0 }.sortedByDescending { it.owe }.take(5)
     }
 
+    context(_: Session)
     private fun admin(lessons: List<LessonGroup>, payments: List<PaymentRow>, now: YearMonth): StatsAdminDto {
         val slots = WebRepo.slots(null, WebRepo.studentNames())
         val students = WebRepo.studentRows(includeDeleted = false, withBalance = false)
@@ -82,6 +87,7 @@ object StatsService {
         )
     }
 
+    context(_: Session)
     private fun perTutor(lessons: List<LessonGroup>, payments: List<PaymentRow>, slots: List<SlotDto>, now: YearMonth) =
         TutorMapper.getAll().mapNotNull { t ->
             val id = t.id.id
