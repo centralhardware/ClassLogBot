@@ -43,10 +43,10 @@ class PaymentBuilder {
 
     fun build(): Payment =
         Payment(
-            tutorId = tutorId!!,
-            studentId = studentId!!,
-            amount = amount!!,
-            subjectId = subjectId!!,
+            tutorId = checkNotNull(tutorId) { "payment without tutor" },
+            studentId = checkNotNull(studentId) { "payment without student" },
+            amount = checkNotNull(amount) { "payment without amount" },
+            subjectId = checkNotNull(subjectId) { "payment without subject" },
             photoReport = photoReport,
             addedByTutorId = addedByTutorId,
             dataSource = dataSource,

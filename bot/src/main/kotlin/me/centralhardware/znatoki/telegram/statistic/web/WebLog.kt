@@ -62,7 +62,7 @@ suspend fun TelegramBot.sendLessonLog(lessons: List<Lesson>, addedBy: TutorId?, 
         append(sourceLine(source))
     }
     sendActionUploadPhoto(Config.logChat())
-    val photo = MinioService.getBytes(lesson.photoReport!!)
+    val photo = MinioService.getBytes(requireNotNull(lesson.photoReport) { "lesson ${lesson.id.id} has no photo" })
         .onFailure { sendTextMessage(Config.logChat(), "Ошибка во время отправки лога") }
         .getOrThrow()
     sendPhoto(Config.logChat(), photo.asMultipartFile("Отчёт"), replyMarkup = keyboard, text = text)
@@ -81,7 +81,7 @@ suspend fun TelegramBot.sendPaymentLog(payment: Payment, id: PaymentId, addedBy:
         append(sourceLine(source))
     }
     sendActionUploadPhoto(Config.logChat())
-    val photo = MinioService.getBytes(payment.photoReport!!)
+    val photo = MinioService.getBytes(requireNotNull(payment.photoReport) { "payment ${id.id} has no receipt" })
         .onFailure { sendTextMessage(Config.logChat(), "Ошибка во время отправки лога") }
         .getOrThrow()
     sendPhoto(Config.logChat(), photo.asMultipartFile("Отчёт"), replyMarkup = keyboard, text = text)

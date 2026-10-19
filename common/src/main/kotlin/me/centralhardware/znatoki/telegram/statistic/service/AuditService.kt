@@ -81,7 +81,7 @@ object AuditService {
                         "changes" to changesJson(changes).toString(),
                     ),
                 )
-            ) { it.int("id") }!!
+            ) { it.int("id") } ?: error("INSERT INTO audit_log returned no id")
             listener?.onEntry(AuditEntry(id, userId, action, entityType, entityId.toString(), title, changes, source, now))
         }.onFailure { KSLog.error("AuditService: failed to write '$action' for $entityType $entityId", it) }
     }

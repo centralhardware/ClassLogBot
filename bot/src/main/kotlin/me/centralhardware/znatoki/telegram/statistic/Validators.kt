@@ -47,25 +47,19 @@ fun Int?.validateAmount(): Either<String, Unit> {
 
 
 fun ChatContentMessage<MessageContent>.validateText(): Either<String, String> =
-    if (this.content is TextContent && StringUtils.isNotBlank(this.text)) {
-        Either.Right(this.text!!)
-    } else {
-        Either.Left("Введите текст")
-    }
+    this.text?.takeIf { this.content is TextContent && StringUtils.isNotBlank(it) }
+        ?.let { Either.Right(it) }
+        ?: Either.Left("Введите текст")
 
 fun ChatContentMessage<MessageContent>.validateTelephone(): Either<String, String> =
-    if (PhoneNumber.validate(this.text!!)) {
-        Either.Right(this.text!!)
-    } else {
-        Either.Left("Введите номер телефона")
-    }
+    this.text?.takeIf { PhoneNumber.validate(it) }
+        ?.let { Either.Right(it) }
+        ?: Either.Left("Введите номер телефона")
 
 fun ChatContentMessage<MessageContent>.validateEnum(variants: List<String>): Either<String, String> =
-    if (this.content is TextContent && variants.contains(this.text)) {
-        Either.Right(this.text!!)
-    } else {
-        Either.Left("Выберите вариант из кастомный клавиатуры")
-    }
+    this.text?.takeIf { this.content is TextContent && it in variants }
+        ?.let { Either.Right(it) }
+        ?: Either.Left("Выберите вариант из кастомный клавиатуры")
 
 fun ChatContentMessage<MessageContent>.validateDate(): Either<String, LocalDate> =
     this.text.parseDate()

@@ -87,7 +87,7 @@ object StudentMapper {
         )
     ) {
         it.int("id").toStudentId()
-    }!!
+    } ?: error("INSERT INTO students returned no id")
 
     context(_: Session)
     fun delete(id: StudentId, deletedBy: TutorId) = dbUpdate(queryOf(

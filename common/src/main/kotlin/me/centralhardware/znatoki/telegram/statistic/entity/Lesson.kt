@@ -65,10 +65,10 @@ class ServiceBuilder {
         studentIds.map {
             Lesson(
                 id = id,
-                tutorId = tutorId!!,
-                subjectId = subjectId!!,
+                tutorId = checkNotNull(tutorId) { "lesson without tutor" },
+                subjectId = checkNotNull(subjectId) { "lesson without subject" },
                 studentId = it,
-                _amount = amount!!,
+                _amount = checkNotNull(amount) { "lesson without amount" },
                 photoReport = photoReport,
                 addedByTutorId = addedByTutorId,
                 dataSource = dataSource,

@@ -51,7 +51,7 @@ object StudentWebService {
             c.id, "Создано", "student", id, "${input.last} ${input.first}",
             listOfNotNull(Change("класс", null, input.cls), input.source?.let { Change("источник", null, it) }), DataSource.WEB, id,
         )
-        return WebRepo.studentRow(id, c.seesAll)!!
+        return WebRepo.studentRow(id, c.seesAll) ?: notFound()
     }
 
     context(_: Session)
@@ -74,7 +74,7 @@ object StudentWebService {
             Change("источник", oldSource, input.source),
         ).filter { (it.old?.toString() ?: "") != (it.new?.toString() ?: "") }
         if (changes.isNotEmpty()) AuditService.log(c.id, "Изменено", "student", id, "${input.last} ${input.first}", changes, DataSource.WEB, id)
-        return WebRepo.studentRow(id, c.seesAll)!!
+        return WebRepo.studentRow(id, c.seesAll) ?: notFound()
     }
 
     /** Active, paused or left; a pause or a leave carries one of [STATUS_REASONS]. */
@@ -88,7 +88,7 @@ object StudentWebService {
             c.id, "Статус", "student", id, "${old.last} ${old.first}",
             listOf(Change("статус", STATUS_TITLES[old.status], title + (reason?.let { " · $it" } ?: ""))), DataSource.WEB, id,
         )
-        return WebRepo.studentRow(id, c.seesAll)!!
+        return WebRepo.studentRow(id, c.seesAll) ?: notFound()
     }
 
     context(_: Session)
@@ -113,7 +113,7 @@ object StudentWebService {
             c.id, if (deleted) "Удалено" else "Восстановлено", "student", id, "${row.last} ${row.first}",
             listOf(Change("удалён", row.deleted, deleted)), DataSource.WEB, id,
         )
-        return WebRepo.studentRow(id, c.seesAll)!!
+        return WebRepo.studentRow(id, c.seesAll) ?: notFound()
     }
 
     private fun clean(i: StudentInput) =

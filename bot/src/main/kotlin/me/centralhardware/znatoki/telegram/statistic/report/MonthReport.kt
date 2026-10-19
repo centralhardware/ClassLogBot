@@ -29,9 +29,7 @@ class MonthReport(
     val clients = mutableMapOf<StudentId, Student>()
     context(_: Session)
     fun getStudent(id: StudentId): Student {
-        if (!clients.contains(id)) clients[id] = StudentMapper.findById(id)
-
-        return clients[id]!!
+        return clients.getOrPut(id) { StudentMapper.findById(id) }
     }
 
     context(_: Session)
@@ -178,10 +176,9 @@ class MonthReport(
                                 emptyCell()
                             }
                             cell(services.first().extraHalfHour.print())
-                            MinioService.getLink(services.first().photoReport!!, 7.days)
-                                .onSuccess {
-                                    cellHyperlink(it, "отчет")
-                                }
+                            services.first().photoReport?.let { key ->
+                                MinioService.getLink(key, 7.days).onSuccess { cellHyperlink(it, "отчет") }
+                            }
                         }
                     }
                 row {
@@ -213,8 +210,8 @@ class MonthReport(
                         cell(payment.dateTime.formatDateTime())
                         cell(fio, HorizontalAlignment.LEFT)
                         cell(payment.amount.amount)
-                        MinioService.getLink(payment.photoReport!!, 3.hours).onSuccess {
-                            cellHyperlink(it,"отчет")
+                        payment.photoReport?.let { key ->
+                            MinioService.getLink(key, 3.hours).onSuccess { cellHyperlink(it, "отчет") }
                         }
                     }
                 }
