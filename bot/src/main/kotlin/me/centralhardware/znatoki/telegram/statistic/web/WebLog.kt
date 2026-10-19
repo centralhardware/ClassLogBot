@@ -47,7 +47,8 @@ suspend fun TelegramBot.sendWebLessonLog(lessons: List<Lesson>, addedBy: TutorId
         appendLine("Предмет: ${SubjectMapper.getNameById(lesson.subjectId).hashtag()}")
         appendLine("ученик: " + lessons.joinToString(", ") { "#${StudentMapper.getFioById(it.studentId).replace(" ", "_")}" })
         appendLine("Стоимость: ${lesson.amount}")
-        append(tutorLine("Преподаватель", lesson.tutorId, addedBy))
+        appendLine(tutorLine("Преподаватель", lesson.tutorId, addedBy))
+        append("Источник: #веб")
     }
     val photo = MinioService.getBytes(lesson.photoReport!!).getOrThrow()
     sendPhoto(Config.logChat(), photo.asMultipartFile("Отчёт"), replyMarkup = keyboard, text = text)
@@ -61,7 +62,8 @@ suspend fun TelegramBot.sendWebPaymentLog(payment: Payment, id: PaymentId, added
         appendLine("Ученик: ${StudentMapper.findById(payment.studentId).fio().hashtag()}")
         appendLine("Предмет: ${SubjectMapper.getNameById(payment.subjectId)}")
         appendLine("Сумма: ${payment.amount.amount}")
-        append(tutorLine("Оплату принял", payment.tutorId, addedBy))
+        appendLine(tutorLine("Оплату принял", payment.tutorId, addedBy))
+        append("Источник: #веб")
     }
     val photo = MinioService.getBytes(payment.photoReport!!).getOrThrow()
     sendPhoto(Config.logChat(), photo.asMultipartFile("Отчёт"), replyMarkup = keyboard, text = text)

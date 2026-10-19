@@ -181,10 +181,11 @@ private suspend fun BehaviourContext.sendLog(
         val tutorName = TutorMapper.findByIdOrNull(payment.tutorId)?.name?.hashtag()
         if (addedBy != null && addedBy != payment.tutorId) {
             val addedByName = TutorMapper.findByIdOrNull(addedBy)?.name?.hashtag()
-            append("Оплату принял: $tutorName (внесено $addedByName)")
+            appendLine("Оплату принял: $tutorName (внесено $addedByName)")
         } else {
-            append("Оплату принял: $tutorName")
+            appendLine("Оплату принял: $tutorName")
         }
+        append("Источник: #бот")
     }.trimEnd()
     sendActionUploadPhoto(Config.logChat())
     val photo = MinioService.getBytes(payment.photoReport!!)

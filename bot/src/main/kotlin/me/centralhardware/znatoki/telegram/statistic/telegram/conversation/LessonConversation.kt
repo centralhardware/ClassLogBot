@@ -217,10 +217,11 @@ private suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long
         val tutorName = TutorMapper.findByIdOrNull(service.tutorId)?.name?.hashtag()
         if (addedBy != null && addedBy != service.tutorId) {
             val addedByName = TutorMapper.findByIdOrNull(addedBy)?.name?.hashtag()
-            append("Преподаватель: $tutorName (внесено $addedByName)")
+            appendLine("Преподаватель: $tutorName (внесено $addedByName)")
         } else {
-            append("Преподаватель: $tutorName")
+            appendLine("Преподаватель: $tutorName")
         }
+        append("Источник: #бот")
     }.trimIndent()
 
     val photo = MinioService.getBytes(service.photoReport!!)
