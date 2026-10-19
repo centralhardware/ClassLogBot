@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.service
 
+import kotliquery.Session
 import dev.inmo.kslog.common.KSLog
 import dev.inmo.kslog.common.error
 import kotlinx.serialization.json.JsonArray
@@ -51,6 +52,7 @@ object AuditService {
         source: DataSource,
         studentId: Int? = null,
         subjectId: Long? = null,
+        tx: Session? = null,
     ) {
         runCatching {
             val now = LocalDateTime.now()
@@ -76,7 +78,8 @@ object AuditService {
                         "title" to title,
                         "changes" to changesJson(changes).toString(),
                     ),
-                )
+                ),
+                tx,
             ) { it.int("id") }!!
             listener?.onEntry(AuditEntry(id, userId, action, entityType, entityId.toString(), title, changes, source, now))
         }.onFailure { KSLog.error("AuditService: failed to write '$action' for $entityType $entityId", it) }

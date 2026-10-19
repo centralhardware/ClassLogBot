@@ -7,7 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
-import me.centralhardware.znatoki.telegram.statistic.extensions.inTransaction
+import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyConfig
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyService
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
@@ -50,12 +50,12 @@ object PaymentService {
         val names = WebRepo.studentNames()
         // The payment and its audit entry commit together; the receipt goes if they don't.
         val (id, row) = runCatching {
-            inTransaction {
-                val id = PaymentMapper.insert(payment)
-                val row = WebRepo.payment(id.id)!!
+            transaction { tx ->
+                val id = PaymentMapper.insert(payment, tx)
+                val row = WebRepo.payment(id.id, tx)!!
                 AuditService.log(
                     c.id, "Создано", "payment", id.id, paymentTitle(row, names),
-                    listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")), DataSource.WEB, input.student, input.subject,
+                    listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")), DataSource.WEB, input.student, input.subject, tx,
                 )
                 id to row
             }
@@ -67,17 +67,17 @@ object PaymentService {
         return row.toDto(names)
     }
 
-    fun update(c: Caller, id: Int, patch: PaymentPatch): PaymentDto = inTransaction {
-        val p = WebRepo.payment(id) ?: notFound()
+    fun update(c: Caller, id: Int, patch: PaymentPatch): PaymentDto = transaction { tx ->
+        val p = WebRepo.payment(id, tx) ?: notFound()
         c.editDenied(p.month, p.tutor, c.canPayment)?.let { forbidden(it) }
         val (fields, changes) = diff(c, p, patch)
-        WebRepo.updatePayment(p.id, fields)
+        WebRepo.updatePayment(p.id, fields, tx)
 
         val names = WebRepo.studentNames()
-        val after = WebRepo.payment(p.id)!!
+        val after = WebRepo.payment(p.id, tx)!!
         if (changes.isNotEmpty()) {
             val action = when (patch.deleted?.takeIf { it != p.deleted }) { true -> "Удалено"; false -> "Восстановлено"; null -> "Изменено" }
-            AuditService.log(c.id, action, "payment", p.id, paymentTitle(after, names), changes, DataSource.WEB, p.student, after.subject)
+            AuditService.log(c.id, action, "payment", p.id, paymentTitle(after, names), changes, DataSource.WEB, p.student, after.subject, tx)
             if (p.month != YearMonth.now()) AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "оплата ${paymentTitle(after, names)}", p.month)
         }
         after.toDto(names)

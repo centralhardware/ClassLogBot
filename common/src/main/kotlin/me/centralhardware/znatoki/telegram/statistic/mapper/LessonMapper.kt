@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import kotliquery.Session
 import java.time.LocalDateTime
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.StudentId
@@ -27,8 +28,9 @@ object LessonMapper {
     fun insert(lesson: Lesson) = execute(insertQuery(lesson))
 
     /** Inserts all rows of a (group) lesson atomically. */
-    fun insertAll(lessons: List<Lesson>) = transaction { tx ->
-        lessons.forEach { tx.execute(insertQuery(it)) }
+    fun insertAll(lessons: List<Lesson>, tx: Session? = null) {
+        if (tx != null) lessons.forEach { tx.execute(insertQuery(it)) }
+        else transaction { t -> lessons.forEach { t.execute(insertQuery(it)) } }
     }
 
     private fun insertQuery(lesson: Lesson) =
@@ -110,7 +112,7 @@ object LessonMapper {
             )
         ) { it.parseTime() }
 
-    fun findById(id: LessonId): List<Lesson> =
+    fun findById(id: LessonId, tx: Session? = null): List<Lesson> =
         runList(
             queryOf(
                 """
@@ -119,7 +121,8 @@ object LessonMapper {
                 WHERE id = :id
                 """,
                     mapOf("id" to id.id),
-                )
+                ),
+            tx,
         ) { it.parseTime() }
 
     fun getTodayTimes(tutorId: TutorId): List<Lesson> =
@@ -221,7 +224,7 @@ object LessonMapper {
             )
         ) { it.parseTime() }
 
-    fun setForceGroup(id: LessonId, forceGroup: Boolean) =
+    fun setForceGroup(id: LessonId, forceGroup: Boolean, tx: Session? = null) =
         update(
             queryOf(
                 """
@@ -235,10 +238,11 @@ object LessonMapper {
                         "force_group" to forceGroup,
                         "update_time" to LocalDateTime.now(),
                     ),
-                )
+                ),
+            tx,
         )
 
-    fun setExtraHalfHour(id: LessonId, extraHalfHour: Boolean) =
+    fun setExtraHalfHour(id: LessonId, extraHalfHour: Boolean, tx: Session? = null) =
         update(
             queryOf(
                 """
@@ -252,7 +256,8 @@ object LessonMapper {
                     "extra_half_hour" to extraHalfHour,
                     "update_time" to LocalDateTime.now(),
                 ),
-            )
+            ),
+            tx,
         )
 
     fun setAmount(id: LessonId, amount: me.centralhardware.znatoki.telegram.statistic.entity.Amount) =

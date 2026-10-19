@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram
 
+import kotliquery.Session
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
 import me.centralhardware.znatoki.telegram.statistic.entity.LessonId
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
@@ -18,16 +19,16 @@ object BotAudit {
         StudentMapper.findById(id).let { listOf(it.secondName, it.name).filter(String::isNotBlank).joinToString(" ") }
     }.getOrDefault("#${id.id}")
 
-    fun lesson(userId: Long, action: String, id: LessonId, changes: List<Change>) {
-        val lessons = LessonMapper.findById(id).ifEmpty { return }
+    fun lesson(userId: Long, action: String, id: LessonId, changes: List<Change>, tx: Session? = null) {
+        val lessons = LessonMapper.findById(id, tx).ifEmpty { return }
         val title = lessons.joinToString(", ") { name(it.studentId) } + " · " +
             runCatching { SubjectMapper.getNameById(lessons.first().subjectId) }.getOrDefault("")
-        AuditService.log(userId, action, "lesson", id.id, title, changes, DataSource.BOT, lessons.first().studentId.id, lessons.first().subjectId.id)
+        AuditService.log(userId, action, "lesson", id.id, title, changes, DataSource.BOT, lessons.first().studentId.id, lessons.first().subjectId.id, tx)
     }
 
-    fun payment(userId: Long, action: String, id: PaymentId, payment: Payment, changes: List<Change>) =
+    fun payment(userId: Long, action: String, id: PaymentId, payment: Payment, changes: List<Change>, tx: Session? = null) =
         AuditService.log(userId, action, "payment", id.id, "${name(payment.studentId)} · ${payment.amount.amount} ₽", changes, DataSource.BOT,
-            payment.studentId.id, payment.subjectId.id)
+            payment.studentId.id, payment.subjectId.id, tx)
 
     fun student(userId: Long, action: String, id: StudentId, changes: List<Change>) =
         AuditService.log(userId, action, "student", id.id, name(id), changes, DataSource.BOT, id.id)

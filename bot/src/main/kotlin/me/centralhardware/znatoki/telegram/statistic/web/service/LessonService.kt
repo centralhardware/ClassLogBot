@@ -9,7 +9,8 @@ import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
-import me.centralhardware.znatoki.telegram.statistic.extensions.inTransaction
+import kotliquery.Session
+import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.AuditService
@@ -60,11 +61,11 @@ object LessonService {
         val key = MinioService.upload(photo, LocalDateTime.now()).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить фото. Попробуйте ещё раз.") }
         // The rows, the schedule mark and the audit entry commit together; the photo goes if they don't.
         val (rows, lesson) = runCatching {
-            inTransaction {
-                val rows = save(c, tutor, subject, input, dateTime, key)
-                slot?.let { WebRepo.setMark(it.id, LocalDate.now(), "done", rows.first().id.id) }
+            transaction { tx ->
+                val rows = save(c, tutor, subject, input, dateTime, key, tx)
+                slot?.let { WebRepo.setMark(it.id, LocalDate.now(), "done", rows.first().id.id, tx) }
 
-                val lesson = WebRepo.lesson(rows.first().id.id)!!
+                val lesson = WebRepo.lesson(rows.first().id.id, tx)!!
                 val title = lessonTitle(lesson, names, subjectNames())
                 AuditService.log(
                     c.id, "Создано", "lesson", lesson.id, title,
@@ -75,7 +76,7 @@ object LessonService {
                         slot?.let { Change("из расписания", null, it.time) },
                         Change("дата", null, ruDay(dateTime.toLocalDate()) + " " + dateTime.format(HM)).takeIf { input.date != null && c.isAdmin },
                     ),
-                    DataSource.WEB, input.students.first(), subject.id,
+                    DataSource.WEB, input.students.first(), subject.id, tx,
                 )
                 rows to lesson
             }
@@ -86,51 +87,51 @@ object LessonService {
         return lesson.toDto(names)
     }
 
-    fun update(c: Caller, id: UUID, p: LessonPatch): LessonDto = inTransaction {
-        val l = WebRepo.lesson(id) ?: notFound()
+    fun update(c: Caller, id: UUID, p: LessonPatch): LessonDto = transaction { tx ->
+        val l = WebRepo.lesson(id, tx) ?: notFound()
         c.editDenied(l.month, l.tutor, c.canTime)?.let { forbidden(it) }
         val changes = mutableListOf<Change>()
         var action = "Изменено"
-        p.half?.takeIf { it != l.half }?.let { action = "Полтора часа"; changes += setHalf(c, l, it) }
-        p.forceGroup?.takeIf { it != l.forceGroup }?.let { action = "Тип занятия"; changes += setForceGroup(c, l, it) }
+        p.half?.takeIf { it != l.half }?.let { action = "Полтора часа"; changes += setHalf(c, l, it, tx) }
+        p.forceGroup?.takeIf { it != l.forceGroup }?.let { action = "Тип занятия"; changes += setForceGroup(c, l, it, tx) }
         p.deleted?.takeIf { it != l.deleted }?.let {
-            WebRepo.setLessonDeleted(l.id, it)
+            WebRepo.setLessonDeleted(l.id, it, tx)
             changes += Change("удалено", l.deleted, it); action = if (it) "Удалено" else "Восстановлено"
         }
         if (p.amount != null || p.subject != null || p.tutor != null || p.date != null || p.time != null) {
             if (!c.isAdmin) forbidden("Изменять занятие может только админ.")
-            changes += adminEdit(l, p)
+            changes += adminEdit(l, p, tx)
         }
-        val after = WebRepo.lesson(l.id)!!
+        val after = WebRepo.lesson(l.id, tx)!!
         val names = WebRepo.studentNames()
         if (changes.isNotEmpty()) {
             val title = lessonTitle(after, names, subjectNames())
-            AuditService.log(c.id, if (changes.size > 1) "Изменено" else action, "lesson", l.id, title, changes, DataSource.WEB, l.students.first(), after.subject)
+            AuditService.log(c.id, if (changes.size > 1) "Изменено" else action, "lesson", l.id, title, changes, DataSource.WEB, l.students.first(), after.subject, tx)
             if (l.month != YearMonth.now()) AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "занятие $title", l.month)
         }
         after.toDto(names)
     }
 
     /** Admin "Управление": delete, restore, re-assign, re-price or move several lessons at once. */
-    fun bulk(c: Caller, input: BulkInput): ChangedDto = inTransaction { bulkTx(c, input) }
+    fun bulk(c: Caller, input: BulkInput): ChangedDto = transaction { tx -> bulk(c, input, tx) }
 
-    private fun bulkTx(c: Caller, input: BulkInput): ChangedDto {
+    private fun bulk(c: Caller, input: BulkInput, tx: Session): ChangedDto {
         val names = WebRepo.studentNames()
         val subjects = subjectNames()
         val tutors = TutorMapper.getAll().associate { it.id.id to it.name }
-        val lessons = input.ids.mapNotNull { runCatching { UUID.fromString(it) }.getOrNull()?.let(WebRepo::lesson) }
+        val lessons = input.ids.mapNotNull { runCatching { UUID.fromString(it) }.getOrNull()?.let { id -> WebRepo.lesson(id, tx) } }
         val action = when (input.action) { "delete" -> "Удалено"; "restore" -> "Восстановлено"; else -> "Изменено" }
         var changed = 0
         lessons.forEach { l ->
             val change = when (input.action) {
-                "delete", "restore" -> bulkDelete(l, input.action == "delete")
-                "tutor" -> bulkTutor(l, input.value?.toLongOrNull()?.takeIf { it in tutors } ?: badRequest("Репетитор не найден."), tutors)
-                "price" -> bulkPrice(l, input.value?.toIntOrNull()?.takeIf { Amount.validate(it) } ?: badRequest("Стоимость должна быть больше нуля."))
-                "day" -> bulkDay(l, input.value?.toIntOrNull() ?: badRequest("Укажите день."))
+                "delete", "restore" -> bulkDelete(l, input.action == "delete", tx)
+                "tutor" -> bulkTutor(l, input.value?.toLongOrNull()?.takeIf { it in tutors } ?: badRequest("Репетитор не найден."), tutors, tx)
+                "price" -> bulkPrice(l, input.value?.toIntOrNull()?.takeIf { Amount.validate(it) } ?: badRequest("Стоимость должна быть больше нуля."), tx)
+                "day" -> bulkDay(l, input.value?.toIntOrNull() ?: badRequest("Укажите день."), tx)
                 else -> badRequest("Неизвестное действие.")
             } ?: return@forEach
             changed++
-            AuditService.log(c.id, action, "lesson", l.id, lessonTitle(l, names, subjects), listOf(change), DataSource.WEB, l.students.first(), l.subject)
+            AuditService.log(c.id, action, "lesson", l.id, lessonTitle(l, names, subjects), listOf(change), DataSource.WEB, l.students.first(), l.subject, tx)
         }
         lessons.map { it.month }.distinct().filter { it != YearMonth.now() }
             .forEach { AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "массовое изменение занятий ($changed)", it) }
@@ -166,7 +167,7 @@ object LessonService {
     }
 
     /** Writes one lessons row per student, all sharing the photo [key]. */
-    private fun save(c: Caller, tutor: Tutor, subject: SubjectDto, input: LessonInput, at: LocalDateTime, key: String): List<Lesson> {
+    private fun save(c: Caller, tutor: Tutor, subject: SubjectDto, input: LessonInput, at: LocalDateTime, key: String, tx: Session): List<Lesson> {
         val now = LocalDateTime.now()
         val id = LessonId.random()
         val rows = input.students.distinct().map {
@@ -176,7 +177,7 @@ object LessonService {
                 addedByTutorId = c.tutorId.takeIf { it != tutor.id }, dataSource = DataSource.WEB,
             )
         }
-        LessonMapper.insertAll(rows)
+        LessonMapper.insertAll(rows, tx)
         return rows
     }
 
@@ -185,21 +186,21 @@ object LessonService {
     private fun visible(c: Caller, id: UUID): LessonGroup =
         (WebRepo.lesson(id) ?: notFound()).also { if (!c.seesAll && it.tutor != c.id && it.addedBy != c.id) forbidden() }
 
-    private fun setHalf(c: Caller, l: LessonGroup, value: Boolean): Change {
+    private fun setHalf(c: Caller, l: LessonGroup, value: Boolean, tx: Session): Change {
         if (!c.canExtraHalfHour) forbidden("Нет права ставить полтора часа.")
-        LessonMapper.setExtraHalfHour(LessonId(l.id), value)
+        LessonMapper.setExtraHalfHour(LessonId(l.id), value, tx)
         return Change("полтора часа", l.half, value)
     }
 
-    private fun setForceGroup(c: Caller, l: LessonGroup, value: Boolean): Change {
+    private fun setForceGroup(c: Caller, l: LessonGroup, value: Boolean, tx: Session): Change {
         if (!c.canForceGroup) forbidden("Нет права делать занятие групповым.")
         if (l.students.size > 1) badRequest("В занятии несколько учеников, оно и так групповое.")
-        LessonMapper.setForceGroup(LessonId(l.id), value)
+        LessonMapper.setForceGroup(LessonId(l.id), value, tx)
         return Change("групповое", l.forceGroup, value)
     }
 
     /** Price, subject, tutor, date and time: admins only, in any month. */
-    private fun adminEdit(l: LessonGroup, p: LessonPatch): List<Change> {
+    private fun adminEdit(l: LessonGroup, p: LessonPatch, tx: Session): List<Change> {
         val subjects = subjectNames()
         val tutors = TutorMapper.getAll().associate { it.id.id to it.name }
         val fields = mutableMapOf<String, Any?>()
@@ -224,28 +225,28 @@ object LessonService {
             if (date != l.dateTime.toLocalDate()) changes += Change("дата", ruDay(l.dateTime.toLocalDate()), ruDay(date))
             if (time != l.dateTime.toLocalTime()) changes += Change("время", l.dateTime.format(HM), time.format(HM))
         }
-        WebRepo.setLessonFields(l.id, fields)
+        WebRepo.setLessonFields(l.id, fields, tx)
         return changes
     }
 
     // ---------- bulk ----------
 
-    private fun bulkDelete(l: LessonGroup, deleted: Boolean): Change? =
-        if (l.deleted == deleted) null else { WebRepo.setLessonDeleted(l.id, deleted); Change("удалено", l.deleted, deleted) }
+    private fun bulkDelete(l: LessonGroup, deleted: Boolean, tx: Session): Change? =
+        if (l.deleted == deleted) null else { WebRepo.setLessonDeleted(l.id, deleted, tx); Change("удалено", l.deleted, deleted) }
 
-    private fun bulkTutor(l: LessonGroup, tutor: Long, names: Map<Long, String>): Change? =
-        if (tutor == l.tutor) null else { WebRepo.setLessonFields(l.id, mapOf("tutor_id" to tutor)); Change("репетитор", names[l.tutor], names[tutor]) }
+    private fun bulkTutor(l: LessonGroup, tutor: Long, names: Map<Long, String>, tx: Session): Change? =
+        if (tutor == l.tutor) null else { WebRepo.setLessonFields(l.id, mapOf("tutor_id" to tutor), tx); Change("репетитор", names[l.tutor], names[tutor]) }
 
-    private fun bulkPrice(l: LessonGroup, amount: Int): Change? =
-        if (amount == l.amount) null else { WebRepo.setLessonFields(l.id, mapOf("amount" to amount)); Change("стоимость", l.amount, amount) }
+    private fun bulkPrice(l: LessonGroup, amount: Int, tx: Session): Change? =
+        if (amount == l.amount) null else { WebRepo.setLessonFields(l.id, mapOf("amount" to amount), tx); Change("стоимость", l.amount, amount) }
 
     /** Moves the lesson to another day of its own month, keeping the time. */
-    private fun bulkDay(l: LessonGroup, day: Int): Change? {
+    private fun bulkDay(l: LessonGroup, day: Int, tx: Session): Change? {
         if (day !in 1..l.month.lengthOfMonth()) badRequest("День от 1 до ${l.month.lengthOfMonth()}.")
         val d = l.month.atDay(day)
         if (d.isAfter(LocalDate.now())) badRequest("Дата не может быть в будущем.")
         if (d == l.dateTime.toLocalDate()) return null
-        WebRepo.setLessonFields(l.id, mapOf("date_time" to d.atTime(l.dateTime.toLocalTime())))
+        WebRepo.setLessonFields(l.id, mapOf("date_time" to d.atTime(l.dateTime.toLocalTime())), tx)
         return Change("дата", ruDay(l.dateTime.toLocalDate()), ruDay(d))
     }
 

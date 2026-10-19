@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web
 
+import kotliquery.Session
 import kotliquery.Row
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
@@ -130,8 +131,8 @@ object WebRepo {
         )
     ) { it.toLessonGroup() }
 
-    fun lesson(id: UUID): LessonGroup? = runSingle(
-        queryOf("$LESSON_GROUP_SELECT WHERE id = :id GROUP BY id", mapOf("id" to id))
+    fun lesson(id: UUID, tx: Session? = null): LessonGroup? = runSingle(
+        queryOf("$LESSON_GROUP_SELECT WHERE id = :id GROUP BY id", mapOf("id" to id)), tx,
     ) { it.toLessonGroup() }
 
     fun lessonsOfStudents(ids: Collection<Int>, tutor: Long?, limit: Int): List<LessonGroup> = if (ids.isEmpty()) emptyList() else runList(
@@ -168,14 +169,14 @@ object WebRepo {
         )
     ) { it.int("amount") to it.localDateTime("date_time") }
 
-    fun setLessonFields(id: UUID, fields: Map<String, Any?>) {
+    fun setLessonFields(id: UUID, fields: Map<String, Any?>, tx: Session? = null) {
         if (fields.isEmpty()) return
         val set = fields.keys.joinToString(", ") { "$it = :$it" }
-        update(queryOf("UPDATE lessons SET $set, update_time = now() WHERE id = :id", fields + ("id" to id)))
+        update(queryOf("UPDATE lessons SET $set, update_time = now() WHERE id = :id", fields + ("id" to id)), tx)
     }
 
-    fun setLessonDeleted(id: UUID, deleted: Boolean) =
-        update(queryOf("UPDATE lessons SET is_deleted = :p_d, update_time = now() WHERE id = :id", mapOf("id" to id, "p_d" to deleted)))
+    fun setLessonDeleted(id: UUID, deleted: Boolean, tx: Session? = null) =
+        update(queryOf("UPDATE lessons SET is_deleted = :p_d, update_time = now() WHERE id = :id", mapOf("id" to id, "p_d" to deleted)), tx)
 
     // ---------- payments ----------
 
@@ -198,8 +199,8 @@ object WebRepo {
         )
     ) { it.toPayment() }
 
-    fun payment(id: Int): PaymentRow? =
-        runSingle(queryOf("$PAYMENT_SELECT WHERE id = :id", mapOf("id" to id))) { it.toPayment() }
+    fun payment(id: Int, tx: Session? = null): PaymentRow? =
+        runSingle(queryOf("$PAYMENT_SELECT WHERE id = :id", mapOf("id" to id)), tx) { it.toPayment() }
 
     fun paymentsOfStudents(ids: Collection<Int>, tutor: Long?, limit: Int): List<PaymentRow> = if (ids.isEmpty()) emptyList() else runList(
         queryOf(
@@ -212,10 +213,10 @@ object WebRepo {
         )
     ) { it.toPayment() }
 
-    fun updatePayment(id: Int, fields: Map<String, Any?>) {
+    fun updatePayment(id: Int, fields: Map<String, Any?>, tx: Session? = null) {
         if (fields.isEmpty()) return
         val set = fields.keys.joinToString(", ") { "$it = :$it" }
-        update(queryOf("UPDATE payment SET $set WHERE id = :id", fields + ("id" to id)))
+        update(queryOf("UPDATE payment SET $set WHERE id = :id", fields + ("id" to id)), tx)
     }
 
     // ---------- students ----------
@@ -407,14 +408,15 @@ object WebRepo {
         )
     ) { SlotMarkDto(it.int("slot_id"), it.localDate("date").toString(), it.string("status"), it.uuidOrNull("lesson_id")?.toString()) }
 
-    fun setMark(slot: Int, date: LocalDate, status: String, lesson: UUID?) = update(
+    fun setMark(slot: Int, date: LocalDate, status: String, lesson: UUID?, tx: Session? = null) = update(
         queryOf(
             """
             INSERT INTO schedule_marks (slot_id, date, status, lesson_id) VALUES (:p_s, :p_d, :st, :p_l)
             ON CONFLICT (slot_id, date) DO UPDATE SET status = excluded.status, lesson_id = excluded.lesson_id
             """,
             mapOf("p_s" to slot, "p_d" to date, "st" to status, "p_l" to lesson),
-        )
+        ),
+        tx,
     )
 
     fun clearMark(slot: Int, date: LocalDate) =

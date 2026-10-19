@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.mapper
 
+import kotliquery.Session
 import java.time.LocalDateTime
 import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Payment
@@ -21,7 +22,7 @@ private const val PAYMENT_COLUMNS =
 
 object PaymentMapper {
 
-    fun insert(payment: Payment): PaymentId =
+    fun insert(payment: Payment, tx: Session? = null): PaymentId =
         runSingle(
             queryOf(
                 """
@@ -55,7 +56,8 @@ object PaymentMapper {
                     "addedByTutorId" to payment.addedByTutorId?.id,
                     "dataSource" to payment.dataSource?.value,
                 ),
-            )
+            ),
+            tx,
         ) { row -> PaymentId(row.int("id")) }!!
 
     fun setDelete(id: PaymentId, isDelete: Boolean) =
