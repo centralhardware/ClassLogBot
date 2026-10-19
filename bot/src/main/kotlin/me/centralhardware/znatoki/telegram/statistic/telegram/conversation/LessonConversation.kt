@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
+import me.centralhardware.znatoki.telegram.statistic.web.sendLessonLog
 import me.centralhardware.znatoki.telegram.statistic.service.Change
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
@@ -134,7 +136,7 @@ suspend fun BehaviourContext.createLesson(
             LessonMapper.insertAll(services)
             BotAudit.lesson(message.tutorId().id, "Создано", builder.id, listOf(Change("стоимость", null, builder.amount?.amount), Change("учеников", null, services.size)))
             saved = true
-            sendLog(services, message.userId(), addedBy)
+            sendLessonLog(services, addedBy, DataSource.BOT)
             
             val allowForceGroup = targetTutor.hasForceGroup()
             val allowExtraHalf = targetTutor.hasExtraHalfHour()
@@ -198,38 +200,3 @@ suspend fun BehaviourContext.createLesson(
     }
 }
 
-private suspend fun BehaviourContext.sendLog(lessons: List<Lesson>, userId: Long, addedBy: TutorId? = null) {
-    val service = lessons.first()
-    val keyboard = inlineKeyboard {
-        row { dataButton("Удалить", "timeDelete-${service.id.id}") }
-        row { dataButton("Сделать полтора часа", "extraHalfHourAdd-${service.id.id}") }
-        if (lessons.size == 1) row { dataButton("Сделать групповым занятием", "forceGroupAdd-${service.id.id}") }
-    }
-
-    val log = buildString {
-        appendLine("#занятие")
-        appendLine("Время: ${service.dateTime.formatDateTime()}")
-        appendLine("Предмет: ${SubjectMapper.getNameById(service.subjectId).hashtag()}")
-        appendLine(
-            "ученик: " + lessons.toStudentIds()
-                .joinToString(", ") { "#${StudentMapper.getFioById(it).replace(" ", "_")}" })
-        appendLine("Стоимость: ${service.amount}")
-        val tutorName = TutorMapper.findByIdOrNull(service.tutorId)?.name?.hashtag()
-        if (addedBy != null && addedBy != service.tutorId) {
-            val addedByName = TutorMapper.findByIdOrNull(addedBy)?.name?.hashtag()
-            append("Преподаватель: $tutorName (внесено $addedByName)")
-        } else {
-            append("Преподаватель: $tutorName")
-        }
-    }.trimIndent()
-
-    val photo = MinioService.getBytes(service.photoReport!!)
-        .onFailure { sendTextMessage(Config.logChat(), "Ошибка во время отправки лога") }
-        .getOrThrow()
-    sendPhoto(
-        Config.logChat(),
-        photo.asMultipartFile("Отчёт"),
-        replyMarkup = keyboard,
-        text = log
-    )
-}
