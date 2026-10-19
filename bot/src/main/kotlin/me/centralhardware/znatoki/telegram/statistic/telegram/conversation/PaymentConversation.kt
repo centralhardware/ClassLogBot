@@ -115,7 +115,7 @@ suspend fun BehaviourContext.createPayment(
             Оплата: ${amount}
         """.trimIndent()
 
-        val confirmed = waitConfirmation(chatId, confirmPrompt)
+        val confirmed = waitConfirmation(chatId, confirmPrompt, yes = "да", no = "нет")
         
         if (confirmed) {
             val new = NewPayment(

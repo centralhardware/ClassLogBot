@@ -130,7 +130,7 @@ suspend fun BehaviourContext.createLesson(
             """.trimIndent()
         }
 
-        val confirmed = waitConfirmation(chatId, confirmPrompt)
+        val confirmed = waitConfirmation(chatId, confirmPrompt, yes = "да", no = "нет")
         
         if (confirmed) {
             val new = NewLesson(

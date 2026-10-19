@@ -9,7 +9,7 @@ val ktorVersion: String by rootProject.extra
 dependencies {
     implementation(project(":common"))
 
-    implementation("com.github.centralhardware:ktgbotapi-commons:3f5a8ba0")
+    implementation("com.github.centralhardware:ktgbotapi-commons:2d78d488")
 
     // Web app (Telegram Mini App) served from the bot process
     implementation("io.ktor:ktor-server-core:$ktorVersion")
