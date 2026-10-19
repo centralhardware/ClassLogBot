@@ -9,6 +9,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
+import me.centralhardware.znatoki.telegram.statistic.extensions.inTransaction
 import me.centralhardware.znatoki.telegram.statistic.mapper.LessonMapper
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.AuditService
@@ -56,28 +57,36 @@ object LessonService {
         val slot = input.slot?.let { WebRepo.slot(it, names) }?.also { if (it.tutor != c.id && !c.isAdmin) forbidden() }
         val dateTime = lessonTime(c, input, slot)
 
-        val rows = save(c, tutor, subject, input, dateTime, photo)
-        slot?.let { WebRepo.setMark(it.id, LocalDate.now(), "done", rows.first().id.id) }
+        val key = MinioService.upload(photo, LocalDateTime.now()).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить фото. Попробуйте ещё раз.") }
+        // The rows, the schedule mark and the audit entry commit together; the photo goes if they don't.
+        val (rows, lesson) = runCatching {
+            inTransaction {
+                val rows = save(c, tutor, subject, input, dateTime, key)
+                slot?.let { WebRepo.setMark(it.id, LocalDate.now(), "done", rows.first().id.id) }
 
-        val lesson = WebRepo.lesson(rows.first().id.id)!!
+                val lesson = WebRepo.lesson(rows.first().id.id)!!
+                val title = lessonTitle(lesson, names, subjectNames())
+                AuditService.log(
+                    c.id, "Создано", "lesson", lesson.id, title,
+                    listOfNotNull(
+                        Change("стоимость", null, input.amount),
+                        Change("учеников", null, rows.size),
+                        Change("репетитор", null, tutor.name).takeIf { tutor.id != c.tutorId },
+                        slot?.let { Change("из расписания", null, it.time) },
+                        Change("дата", null, ruDay(dateTime.toLocalDate()) + " " + dateTime.format(HM)).takeIf { input.date != null && c.isAdmin },
+                    ),
+                    DataSource.WEB, input.students.first(), subject.id,
+                )
+                rows to lesson
+            }
+        }.onFailure { MinioService.delete(key) }.getOrThrow()
         val title = lessonTitle(lesson, names, subjectNames())
-        AuditService.log(
-            c.id, "Создано", "lesson", lesson.id, title,
-            listOfNotNull(
-                Change("стоимость", null, input.amount),
-                Change("учеников", null, rows.size),
-                Change("репетитор", null, tutor.name).takeIf { tutor.id != c.tutorId },
-                slot?.let { Change("из расписания", null, it.time) },
-                Change("дата", null, ruDay(dateTime.toLocalDate()) + " " + dateTime.format(HM)).takeIf { input.date != null && c.isAdmin },
-            ),
-            DataSource.WEB, input.students.first(), subject.id,
-        )
         if (lesson.month != YearMonth.now()) AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "добавлено занятие $title", lesson.month)
         Notifications.background { sendLessonLog(rows, c.tutorId.takeIf { it != tutor.id }, DataSource.WEB) }
         return lesson.toDto(names)
     }
 
-    fun update(c: Caller, id: UUID, p: LessonPatch): LessonDto {
+    fun update(c: Caller, id: UUID, p: LessonPatch): LessonDto = inTransaction {
         val l = WebRepo.lesson(id) ?: notFound()
         c.editDenied(l.month, l.tutor, c.canTime)?.let { forbidden(it) }
         val changes = mutableListOf<Change>()
@@ -99,11 +108,13 @@ object LessonService {
             AuditService.log(c.id, if (changes.size > 1) "Изменено" else action, "lesson", l.id, title, changes, DataSource.WEB, l.students.first(), after.subject)
             if (l.month != YearMonth.now()) AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "занятие $title", l.month)
         }
-        return after.toDto(names)
+        after.toDto(names)
     }
 
     /** Admin "Управление": delete, restore, re-assign, re-price or move several lessons at once. */
-    fun bulk(c: Caller, input: BulkInput): ChangedDto {
+    fun bulk(c: Caller, input: BulkInput): ChangedDto = inTransaction { bulkTx(c, input) }
+
+    private fun bulkTx(c: Caller, input: BulkInput): ChangedDto {
         val names = WebRepo.studentNames()
         val subjects = subjectNames()
         val tutors = TutorMapper.getAll().associate { it.id.id to it.name }
@@ -154,10 +165,9 @@ object LessonService {
         return slot?.let { LocalDate.now().atTime(parseTime(it.time) ?: now.toLocalTime()) } ?: now
     }
 
-    /** Uploads the photo and writes one lessons row per student; the photo is removed if the insert fails. */
-    private fun save(c: Caller, tutor: Tutor, subject: SubjectDto, input: LessonInput, at: LocalDateTime, photo: ByteArray): List<Lesson> {
+    /** Writes one lessons row per student, all sharing the photo [key]. */
+    private fun save(c: Caller, tutor: Tutor, subject: SubjectDto, input: LessonInput, at: LocalDateTime, key: String): List<Lesson> {
         val now = LocalDateTime.now()
-        val key = MinioService.upload(photo, now).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить фото. Попробуйте ещё раз.") }
         val id = LessonId.random()
         val rows = input.students.distinct().map {
             Lesson(
@@ -166,7 +176,7 @@ object LessonService {
                 addedByTutorId = c.tutorId.takeIf { it != tutor.id }, dataSource = DataSource.WEB,
             )
         }
-        runCatching { LessonMapper.insertAll(rows) }.onFailure { MinioService.delete(key); throw it }
+        LessonMapper.insertAll(rows)
         return rows
     }
 

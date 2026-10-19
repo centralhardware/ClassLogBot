@@ -7,6 +7,7 @@ import me.centralhardware.znatoki.telegram.statistic.entity.Payment
 import me.centralhardware.znatoki.telegram.statistic.entity.SubjectId
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.entity.toStudentId
+import me.centralhardware.znatoki.telegram.statistic.extensions.inTransaction
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyConfig
 import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyService
 import me.centralhardware.znatoki.telegram.statistic.mapper.PaymentMapper
@@ -46,14 +47,19 @@ object PaymentService {
             amount = Amount(input.amount), subjectId = SubjectId(input.subject),
             photoReport = upload(photo), addedByTutorId = c.tutorId.takeIf { it.id != tutorId }, dataSource = DataSource.WEB,
         )
-        val id = runCatching { PaymentMapper.insert(payment) }.onFailure { MinioService.delete(payment.photoReport!!) }.getOrThrow()
-
         val names = WebRepo.studentNames()
-        val row = WebRepo.payment(id.id)!!
-        AuditService.log(
-            c.id, "Создано", "payment", id.id, paymentTitle(row, names),
-            listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")), DataSource.WEB, input.student, input.subject,
-        )
+        // The payment and its audit entry commit together; the receipt goes if they don't.
+        val (id, row) = runCatching {
+            inTransaction {
+                val id = PaymentMapper.insert(payment)
+                val row = WebRepo.payment(id.id)!!
+                AuditService.log(
+                    c.id, "Создано", "payment", id.id, paymentTitle(row, names),
+                    listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")), DataSource.WEB, input.student, input.subject,
+                )
+                id to row
+            }
+        }.onFailure { MinioService.delete(payment.photoReport!!) }.getOrThrow()
         Notifications.background {
             sendPaymentLog(payment, id, payment.addedByTutorId, DataSource.WEB)
             if (FireflyConfig.enabled) FireflyService.exportPayment(payment.copy(id = id))
@@ -61,7 +67,7 @@ object PaymentService {
         return row.toDto(names)
     }
 
-    fun update(c: Caller, id: Int, patch: PaymentPatch): PaymentDto {
+    fun update(c: Caller, id: Int, patch: PaymentPatch): PaymentDto = inTransaction {
         val p = WebRepo.payment(id) ?: notFound()
         c.editDenied(p.month, p.tutor, c.canPayment)?.let { forbidden(it) }
         val (fields, changes) = diff(c, p, patch)
@@ -74,7 +80,7 @@ object PaymentService {
             AuditService.log(c.id, action, "payment", p.id, paymentTitle(after, names), changes, DataSource.WEB, p.student, after.subject)
             if (p.month != YearMonth.now()) AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "оплата ${paymentTitle(after, names)}", p.month)
         }
-        return after.toDto(names)
+        after.toDto(names)
     }
 
     private fun targetTutor(c: Caller, requested: Long?): Long {

@@ -133,8 +133,10 @@ suspend fun BehaviourContext.createLesson(
             builder.addedByTutorId = if (addedBy != builder.tutorId) addedBy else null
             builder.dataSource = DataSource.BOT
             val services = builder.build()
-            LessonMapper.insertAll(services)
-            BotAudit.lesson(message.tutorId().id, "Создано", builder.id, listOf(Change("стоимость", null, builder.amount?.amount), Change("учеников", null, services.size)))
+            inTransaction {
+                LessonMapper.insertAll(services)
+                BotAudit.lesson(message.tutorId().id, "Создано", builder.id, listOf(Change("стоимость", null, builder.amount?.amount), Change("учеников", null, services.size)))
+            }
             saved = true
             sendLessonLog(services, addedBy, DataSource.BOT)
             
