@@ -97,9 +97,16 @@ object AuditAlerts : AuditListener {
     private val lastAlert = ConcurrentHashMap<String, LocalDateTime>()
     private val fmt = DateTimeFormatter.ofPattern("d.MM, HH:mm")
 
-    fun settings(): AlertsDto = WebRepo.setting(KEY)?.let { runCatching { Json.decodeFromString<AlertsDto>(it) }.getOrNull() } ?: AlertsDto()
+    /** Read once and kept until [save]: every audit entry consults it, a bulk edit makes hundreds. */
+    @Volatile private var cached: AlertsDto? = null
 
-    fun save(a: AlertsDto) = WebRepo.saveSetting(KEY, Json.encodeToString(AlertsDto.serializer(), a))
+    fun settings(): AlertsDto = cached
+        ?: (WebRepo.setting(KEY)?.let { runCatching { Json.decodeFromString<AlertsDto>(it) }.getOrNull() } ?: AlertsDto()).also { cached = it }
+
+    fun save(a: AlertsDto) {
+        WebRepo.saveSetting(KEY, Json.encodeToString(AlertsDto.serializer(), a))
+        cached = a
+    }
 
     override fun onEntry(entry: AuditEntry) {
         val s = settings()
@@ -122,11 +129,20 @@ object AuditAlerts : AuditListener {
 
     private fun recentDeletions(userId: Long, at: LocalDateTime): Int {
         val list = deletions.computeIfAbsent(userId) { mutableListOf() }
-        return synchronized(list) {
+        val count = synchronized(list) {
             list.removeIf { it.isBefore(at.minusMinutes(10)) }
             list.add(at)
             list.size
         }
+        prune(at)
+        return count
+    }
+
+    /** Drops alert timestamps older than the longest window (60 min), so the maps don't grow forever. */
+    private fun prune(now: LocalDateTime) {
+        val cutoff = now.minusMinutes(60)
+        lastAlert.entries.removeIf { it.value.isBefore(cutoff) }
+        deletions.entries.removeIf { (_, list) -> synchronized(list) { list.all { it.isBefore(cutoff) } } }
     }
 
     private fun alert(actorId: Long, text: String) = Notifications.sendTo(Permissions.ADMIN, text, "tab=audit", except = actorId)
