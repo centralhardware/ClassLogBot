@@ -171,11 +171,11 @@ suspend fun BehaviourContext.createLesson(
         } else {
             builder.photoReport?.let { key ->
                 MinioService.delete(key).onFailure {
-                    sendTextMessage(builder.tutorId!!.toChatId(), "Ошибка при удалении фотографии")
+                    sendTextMessage(chatId, "Ошибка при удалении фотографии")
                 }
             }
             sendTextMessage(
-                builder.tutorId!!.toChatId(),
+                chatId,
                 "Отменено",
                 replyMarkup = ReplyKeyboardRemove()
             )
