@@ -31,6 +31,10 @@ class HttpError(val status: HttpStatusCode, override val message: String, val co
 
 fun badRequest(message: String): Nothing = throw HttpError(HttpStatusCode.BadRequest, message)
 fun forbidden(message: String = "Недостаточно прав."): Nothing = throw HttpError(HttpStatusCode.Forbidden, message)
+/** Runs [block], answering 400 with the rule's message when [InvalidRecord] says the input breaks one. */
+inline fun <T> invalidAsBadRequest(block: () -> T): T =
+    try { block() } catch (e: me.centralhardware.znatoki.telegram.statistic.service.InvalidRecord) { badRequest(e.message ?: "Неверные данные.") }
+
 fun notFound(message: String = "Запись не найдена."): Nothing = throw HttpError(HttpStatusCode.NotFound, message)
 
 // ---------- who is calling ----------

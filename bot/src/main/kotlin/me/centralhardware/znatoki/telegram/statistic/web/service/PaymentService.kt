@@ -17,9 +17,12 @@ import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.service.AuditService
 import me.centralhardware.znatoki.telegram.statistic.service.Change
 import me.centralhardware.znatoki.telegram.statistic.service.MinioService
+import me.centralhardware.znatoki.telegram.statistic.service.NewPayment
+import me.centralhardware.znatoki.telegram.statistic.service.PaymentCreator
 import me.centralhardware.znatoki.telegram.statistic.web.*
 import me.centralhardware.znatoki.telegram.statistic.web.http.HttpError
 import me.centralhardware.znatoki.telegram.statistic.web.http.badRequest
+import me.centralhardware.znatoki.telegram.statistic.web.http.invalidAsBadRequest
 import me.centralhardware.znatoki.telegram.statistic.web.http.forbidden
 import me.centralhardware.znatoki.telegram.statistic.web.http.notFound
 import java.time.LocalDateTime
@@ -44,35 +47,15 @@ object PaymentService {
     context(_: Session)
     suspend fun create(c: Caller, input: PaymentInput, photo: ByteArray?): PaymentDto {
         photo ?: badRequest("Приложите чек.")
-        val tutorId = targetTutor(c, input.tutor)
-        validate(input)
-
-        val payment = Payment(
-            dateTime = LocalDateTime.now(), tutorId = TutorId(tutorId), studentId = input.student.toStudentId(),
-            amount = Amount(input.amount), subjectId = SubjectId(input.subject),
-            photoReport = upload(photo), addedByTutorId = c.tutorId.takeIf { it.id != tutorId }, dataSource = DataSource.WEB,
+        val new = NewPayment(
+            tutor = TutorId(targetTutor(c, input.tutor)), student = input.student, subject = SubjectId(input.subject),
+            amount = input.amount, dateTime = LocalDateTime.now(), photoKey = "", enteredBy = c.tutorId, source = DataSource.WEB,
         )
-        val names = WebRepo.studentNames()
-        // The payment and its audit entry commit together; the receipt goes if they don't.
-        val (id, row) = runCatching {
-            transaction {
-                val id = PaymentMapper.insert(payment)
-                val row = WebRepo.payment(id.id)!!
-                AuditService.log(
-                    c.id, "Создано", "payment", id.id, paymentTitle(row, names),
-                    listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")), DataSource.WEB, input.student, input.subject,
-                )
-                id to row
-            }
-        }.onFailure { MinioService.delete(payment.photoReport!!) }.getOrThrow()
-        // Runs after the response, on its own session: the request's is closed by then.
-        Notifications.background {
-            db {
-                sendPaymentLog(payment, id, payment.addedByTutorId, DataSource.WEB)
-                if (FireflyConfig.enabled) FireflyService.exportPayment(payment.copy(id = id))
-            }
-        }
-        return row.toDto(names)
+        // Checked before the upload too, so a rejected form leaves no receipt behind.
+        invalidAsBadRequest { PaymentCreator.validate(new) }
+        val key = MinioService.upload(photo, LocalDateTime.now()).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить чек. Попробуйте ещё раз.") }
+        val (id, _) = invalidAsBadRequest { PaymentCreator.create(Notifications.bot, new.copy(photoKey = key)) }
+        return WebRepo.payment(id.id)!!.toDto(WebRepo.studentNames())
     }
 
     context(_: Session)
@@ -99,16 +82,6 @@ object PaymentService {
         TutorMapper.findByIdOrNull(TutorId(id)) ?: badRequest("Репетитор не найден.")
         return id
     }
-
-    context(_: Session)
-    private fun validate(input: PaymentInput) {
-        if (input.subject !in subjectNames()) badRequest("Предмет не найден.")
-        if (!Amount.validate(input.amount)) badRequest("Сумма должна быть больше нуля.")
-        if (WebRepo.studentNames()[input.student]?.deleted != false) badRequest("Ученик не найден или удалён.")
-    }
-
-    private fun upload(photo: ByteArray): String =
-        MinioService.upload(photo, LocalDateTime.now()).getOrElse { throw HttpError(HttpStatusCode.BadGateway, "Не удалось сохранить чек. Попробуйте ещё раз.") }
 
     /** The columns to update and the audit diff; changing who took the payment is for admins. */
     context(_: Session)

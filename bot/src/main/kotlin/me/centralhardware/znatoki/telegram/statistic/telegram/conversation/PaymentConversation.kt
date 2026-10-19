@@ -3,9 +3,10 @@ package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 import me.centralhardware.znatoki.telegram.statistic.extensions.transaction
 import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
-import me.centralhardware.znatoki.telegram.statistic.web.sendPaymentLog
-import me.centralhardware.znatoki.telegram.statistic.service.Change
-import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
+import me.centralhardware.znatoki.telegram.statistic.service.InvalidRecord
+import me.centralhardware.znatoki.telegram.statistic.service.NewPayment
+import me.centralhardware.znatoki.telegram.statistic.service.PaymentCreator
+import java.time.LocalDateTime
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
 import dev.inmo.kslog.common.error
 import dev.inmo.kslog.common.KSLog
@@ -40,8 +41,6 @@ import me.centralhardware.znatoki.telegram.statistic.telegram.errorOrNull
 import me.centralhardware.znatoki.telegram.statistic.validateAmount
 import me.centralhardware.znatoki.telegram.statistic.validateFio
 import me.centralhardware.znatoki.telegram.statistic.validateTutor
-import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyConfig
-import me.centralhardware.znatoki.telegram.statistic.firefly.FireflyService
 import kotlinx.coroutines.launch
 import me.centralhardware.znatoki.telegram.statistic.extensions.user
 
@@ -115,35 +114,18 @@ suspend fun BehaviourContext.createPayment(
         val confirmed = waitConfirmation(chatId, confirmPrompt)
         
         if (confirmed) {
-            val addedBy = message.tutorId()
-            if (builder.tutorId == null) {
-                builder.tutorId = addedBy
-            }
-            builder.addedByTutorId = if (addedBy != builder.tutorId) addedBy else null
-            builder.dataSource = DataSource.BOT
-            val payment = builder.build()
-            val paymentId = db {
-                transaction {
-                    PaymentMapper.insert(payment).also {
-                        BotAudit.payment(addedBy.id, "Создано", it, payment, listOf(Change("сумма", null, "${payment.amount.amount} ₽")))
-                    }
-                }
-            }
+            val new = NewPayment(
+                tutor = builder.tutorId ?: message.tutorId(), student = builder.studentId!!.id, subject = builder.subjectId!!,
+                amount = builder.amount!!.amount, dateTime = LocalDateTime.now(), photoKey = builder.photoReport!!,
+                enteredBy = message.tutorId(), source = DataSource.BOT,
+            )
+            // The creator removes the receipt itself when the save fails; Firefly failures are retried later.
             saved = true
-            db { sendPaymentLog(payment, paymentId, addedBy, DataSource.BOT) }
-
-            // Export to Firefly III if enabled
-            if (FireflyConfig.enabled) {
-                launch {
-                    val updatedPayment = payment.copy(id = paymentId)
-                    db { FireflyService.exportPayment(updatedPayment) }
-                        .onFailure { error ->
-                            sendTextMessage(
-                                chatId,
-                                "⚠️ Оплата сохранена, но не удалось экспортировать в Firefly: ${error.message}"
-                            )
-                        }
-                }
+            try {
+                db { PaymentCreator.create(bot, new) }
+            } catch (e: InvalidRecord) {
+                sendTextMessage(chatId, "${e.message} Оплата не сохранена.", replyMarkup = ReplyKeyboardRemove())
+                return
             }
 
             sendTextMessage(message.chat, "Сохранено", replyMarkup = ReplyKeyboardRemove())
