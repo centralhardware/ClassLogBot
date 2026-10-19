@@ -55,7 +55,7 @@ object PaymentService {
             listOf(Change("сумма", null, rub(input.amount)), Change("чек", null, "приложен")), DataSource.WEB, input.student, input.subject,
         )
         Notifications.background {
-            sendWebPaymentLog(payment, id, payment.addedByTutorId)
+            sendPaymentLog(payment, id, payment.addedByTutorId, DataSource.WEB)
             if (FireflyConfig.enabled) FireflyService.exportPayment(payment.copy(id = id))
         }
         return row.toDto(names)

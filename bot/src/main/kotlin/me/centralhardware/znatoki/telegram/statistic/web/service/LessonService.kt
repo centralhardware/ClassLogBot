@@ -73,7 +73,7 @@ object LessonService {
             DataSource.WEB, input.students.first(), subject.id,
         )
         if (lesson.month != YearMonth.now()) AuditAlerts.closedMonthEdit(c.id, c.tutor.name, "добавлено занятие $title", lesson.month)
-        Notifications.background { sendWebLessonLog(rows, c.tutorId.takeIf { it != tutor.id }) }
+        Notifications.background { sendLessonLog(rows, c.tutorId.takeIf { it != tutor.id }, DataSource.WEB) }
         return lesson.toDto(names)
     }
 

@@ -1,5 +1,7 @@
 package me.centralhardware.znatoki.telegram.statistic.telegram.conversation
 
+import me.centralhardware.znatoki.telegram.statistic.entity.DataSource
+import me.centralhardware.znatoki.telegram.statistic.web.sendPaymentLog
 import me.centralhardware.znatoki.telegram.statistic.service.Change
 import me.centralhardware.znatoki.telegram.statistic.telegram.BotAudit
 import dev.inmo.tgbotapi.requests.abstracts.asMultipartFile
@@ -121,7 +123,7 @@ suspend fun BehaviourContext.createPayment(
             val paymentId = PaymentMapper.insert(payment)
             BotAudit.payment(addedBy.id, "Создано", paymentId, payment, listOf(Change("сумма", null, "${payment.amount.amount} ₽")))
             saved = true
-            sendLog(payment, paymentId, addedBy)
+            sendPaymentLog(payment, paymentId, addedBy, DataSource.BOT)
 
             // Export to Firefly III if enabled
             if (FireflyConfig.enabled) {
@@ -164,37 +166,3 @@ suspend fun BehaviourContext.createPayment(
     }
 }
 
-private suspend fun BehaviourContext.sendLog(
-    payment: Payment,
-    paymentId: PaymentId,
-    addedBy: TutorId? = null
-) {
-    val keyboard = inlineKeyboard {
-        row { dataButton("Удалить", "paymentDelete-${paymentId.id}") }
-    }
-    val text = buildString {
-        appendLine("#оплата")
-        appendLine("Время: ${payment.dateTime.formatDateTime()}")
-        appendLine("Ученик: ${StudentMapper.findById(payment.studentId).fio().hashtag()}")
-        appendLine("Предмет: ${SubjectMapper.getNameById(payment.subjectId)}")
-        appendLine("Сумма: ${payment.amount.amount}")
-        val tutorName = TutorMapper.findByIdOrNull(payment.tutorId)?.name?.hashtag()
-        if (addedBy != null && addedBy != payment.tutorId) {
-            val addedByName = TutorMapper.findByIdOrNull(addedBy)?.name?.hashtag()
-            appendLine("Оплату принял: $tutorName (внесено $addedByName)")
-        } else {
-            appendLine("Оплату принял: $tutorName")
-        }
-        append("Источник: #бот")
-    }.trimEnd()
-    sendActionUploadPhoto(Config.logChat())
-    val photo = MinioService.getBytes(payment.photoReport!!)
-        .onFailure { sendTextMessage(Config.logChat(), "Ошибка во время отправки лога") }
-        .getOrThrow()
-    sendPhoto(
-        Config.logChat(),
-        photo.asMultipartFile("Отчёт"),
-        replyMarkup = keyboard,
-        text = text,
-    )
-}
