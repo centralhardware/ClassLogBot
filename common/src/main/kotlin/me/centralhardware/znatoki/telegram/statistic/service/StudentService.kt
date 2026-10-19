@@ -7,6 +7,7 @@ import dev.inmo.kslog.common.error
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.fixedRateTimer
 import me.centralhardware.znatoki.telegram.statistic.entity.Student
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.mapper.StudentMapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
@@ -29,10 +30,10 @@ object StudentService {
 
     private val snapshot = AtomicReference<Snapshot?>(null)
 
-    context(_: Session)
+    /** Each rebuild opens its own session: one captured at startup is closed long before the timer fires. */
     fun init() {
         fixedRateTimer(name = "updateLucene", period = 60000L) {
-            runCatching { refresh() }.onFailure { KSLog.error("StudentService: index rebuild failed", it) }
+            runCatching { db { refresh() } }.onFailure { KSLog.error("StudentService: index rebuild failed", it) }
         }
     }
 

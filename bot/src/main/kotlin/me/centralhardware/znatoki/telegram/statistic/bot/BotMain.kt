@@ -29,7 +29,7 @@ import restrictAccess
 @Suppress("DeferredResultUnused")
 suspend fun main() {
     runMigrations()
-    db { StudentService.init() }
+    StudentService.init()
 
     longPolling (
         "ZnatokiStatistic",
