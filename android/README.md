@@ -1,27 +1,31 @@
 # Android app (TWA)
 
 The Android app is a [Trusted Web Activity](https://developer.chrome.com/docs/android/trusted-web-activity):
-it opens the same web frontend the Telegram Mini App uses, full-screen, with no URL bar. There is no separate
-Android code — every web deploy updates the app. Outside Telegram the first screen is the Telegram Login Widget.
-
-## One-time setup
-
-1. **BotFather → /setdomain** for the bot: the site's domain, or the Login Widget refuses to load.
-2. Env on the bot:
-   - `BOT_USERNAME` — the bot's @username (the login screen shows "unavailable" without it);
-   - `ANDROID_CERT_SHA256` — the signing key's SHA-256 fingerprint(s), comma-separated
-     (`AB:CD:…`, from `keytool -list -v -keystore classlog.keystore`); served at `/.well-known/assetlinks.json`.
-     If the app is distributed via Google Play, add Play's app-signing key fingerprint too.
-   - `ANDROID_PACKAGE` — only if the package id differs from `me.centralhardware.classlog`.
+it opens the same web frontend the Telegram Mini App uses, full-screen, with no URL bar. There is no app code
+here beyond [android-browser-helper](https://github.com/GoogleChrome/android-browser-helper)'s launcher, so every
+web deploy updates the app. Outside Telegram the first screen is the Telegram Login Widget.
 
 ## Build
 
+CI (`.github/workflows/android.yml`) builds the APK on every change under `android/` or by hand (Actions → Android APK
+→ Run workflow); builds from `main` are published as GitHub releases `android-1.0.<run>`.
+
+Locally (JDK 17, Android SDK, Gradle 8.11):
+
 ```sh
-npm i -g @bubblewrap/cli
 cd android
-sed -i "s/CLASSLOG_HOST/<the web app's host>/g" twa-manifest.json
-bubblewrap update      # generates the Gradle project from twa-manifest.json (first run creates the keystore)
-bubblewrap build       # → app-release-signed.apk / app-release-bundle.aab
+gradle :app:assembleRelease -Phost=<web app host>     # → app/build/outputs/apk/release/
 ```
 
-Keep `classlog.keystore` out of git: losing it means a new package id for every user.
+## One-time setup
+
+1. **BotFather → /setdomain** for the bot: the web app's domain, or the Login Widget refuses to load.
+2. A signing key, kept out of git (losing it means users must reinstall):
+   `keytool -genkeypair -v -keystore classlog.keystore -alias classlog -keyalg RSA -keysize 2048 -validity 10000`
+3. GitHub repo settings:
+   - variable `CLASSLOG_HOST` — the web app's host, without `https://`;
+   - secrets `ANDROID_KEYSTORE_BASE64` (`base64 -w0 classlog.keystore`) and `ANDROID_KEYSTORE_PASSWORD`.
+4. Env on the bot:
+   - `BOT_USERNAME` — the bot's @username (the login screen shows "unavailable" without it);
+   - `ANDROID_CERT_SHA256` — the key's SHA-256 fingerprint (`keytool -list -v -keystore classlog.keystore`),
+     served at `/.well-known/assetlinks.json`; without it the app opens with a URL bar.

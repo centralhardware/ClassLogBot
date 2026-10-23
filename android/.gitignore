@@ -1,5 +1,7 @@
-# Bubblewrap output and the signing key
-*
-!.gitignore
-!twa-manifest.json
-!README.md
+# Gradle output and signing keys
+.gradle/
+build/
+app/build/
+local.properties
+*.keystore
+*.jks
