@@ -26,12 +26,16 @@ import me.centralhardware.znatoki.telegram.statistic.web.service.*
 
 /**
  * Unauthenticated: the no-access screen's "Запросить доступ" signs its request with its Telegram credential itself;
- * the sign-in screen reads the bot's username; Android checks the TWA's signing key against assetlinks.json.
+ * the sign-in screen outside Telegram runs the sign-in through the bot.
  */
 fun Route.publicRoutes() {
     post("/auth/access-request") { db { call.respond(AppService.requestAccess(call.receive<AuthRequest>().credential)) } }
-    get("/auth/config") { call.respond(AuthConfigDto(WebConfig.botUsername)) }
-    get("/.well-known/assetlinks.json") { call.respond(AppService.assetLinks()) }
+    post("/auth/bot-login") {
+        val bot = WebConfig.botUsername ?: throw HttpError(io.ktor.http.HttpStatusCode.ServiceUnavailable, "Вход через Telegram сейчас недоступен.")
+        val token = BotLogin.start()
+        call.respond(BotLoginDto(token, "https://t.me/$bot?start=${BotLogin.PREFIX}$token"))
+    }
+    get("/auth/bot-login/{token}") { call.respond(BotLoginPollDto(BotLogin.poll(call.parameters["token"] ?: notFound()))) }
     get("/dl/{token}") { Downloads.serve(call, call.parameters["token"] ?: notFound()) }
 }
 

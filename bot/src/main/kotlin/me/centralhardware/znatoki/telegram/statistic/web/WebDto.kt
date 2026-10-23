@@ -8,13 +8,17 @@ data class ErrorDto(val error: String, val code: String? = null)
 
 @Serializable
 data class AuthRequest(val initData: String = "", val platform: String? = null, val login: String? = null) {
-    /** initData inside Telegram, the Login Widget's data outside it. */
-    val credential get() = login?.let { "tlw $it" } ?: "tma $initData"
+    /** initData inside Telegram; outside it the stored sign-in (`tgb …`, or bare Login Widget data from older clients). */
+    val credential get() = login?.let { if (it.startsWith("tgb ") || it.startsWith("tlw ")) it else "tlw $it" } ?: "tma $initData"
 }
 
-/** What the sign-in screen needs before anyone is signed in. */
+/** A pending sign-in through the bot: open [link] in Telegram, then poll with [token]. */
 @Serializable
-data class AuthConfigDto(val botUsername: String?)
+data class BotLoginDto(val token: String, val link: String)
+
+/** The credential once the bot confirmed the sign-in, null while still waiting. */
+@Serializable
+data class BotLoginPollDto(val credential: String? = null)
 
 @Serializable
 data class MeDto(val id: Long, val name: String, val perms: List<String>, val subjects: List<Long>)
