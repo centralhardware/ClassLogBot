@@ -53,6 +53,8 @@ fun main() {
     App.scope.launch {
         try { signIn(); applyHash() } catch (e: ApiError) { blocked = e } catch (e: Throwable) { blocked = ApiError(e.message ?: "Ошибка", 0) }
     }
+    // index.html shows a static header and spinner while the bundle loads; Compose takes over from here.
+    document.getElementById("root")?.innerHTML = ""
     renderComposable(rootElementId = "root") { Root() }
 }
 
@@ -89,6 +91,9 @@ fun Root() {
             val boot = App.boot
             Box("tg-head") {
                 Span({ classes("t") }) { Text("ClassLog"); boot?.let { Span({ classes("sub") }) { Text(it.me.name) } } }
+                Button({ classes("iconbtn"); attr("aria-label", "Размер интерфейса"); attr("style", "display:inline-flex;padding:6px"); onClick { openScale() } }) {
+                    Svg("""<path d="M3 19l5-13 5 13M4.8 14.5h6.4"/><path d="M14.5 19l3.5-9 3.5 9M15.7 16h4.6"/>""", 16)
+                }
                 if (boot != null) Button({ classes("iconbtn"); attr("aria-label", "Поиск"); attr("style", "display:inline-flex;padding:6px"); onClick { openSearch() } }) {
                     Svg("""<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>""", 16)
                 }
@@ -121,6 +126,13 @@ fun Root() {
             }
         }
     }
+}
+
+private fun openScale() = Sheets.open { close ->
+    Title("Размер интерфейса")
+    Seg(UiScale.options, UiScale.value) { UiScale.set(it) }
+    Lock("Сохраняется на этом устройстве.")
+    Actions { Btn("Готово", "primary") { close() } }
 }
 
 @Composable
@@ -164,9 +176,11 @@ private fun AppBody() {
     }
     MainButton()
     val visible = TAB_ICONS.keys.filter { tabVisible(it) }
-    Nav({ classes("tabs"); if (visible.size > 5) classes("dense"); attr("role", "tablist") }) {
+    // Below ~54px a tab's label no longer fits even when dense, so the bar keeps only the icons.
+    val perTab = Viewport.width / visible.size
+    Nav({ classes("tabs"); if (visible.size > 5) classes("dense"); if (perTab < 54) classes("icons"); attr("role", "tablist") }) {
         visible.forEach { t ->
-            Button({ attr("role", "tab"); attr("aria-selected", (t == App.tab).toString()); onClick { App.tab = t } }) {
+            Button({ attr("role", "tab"); attr("aria-selected", (t == App.tab).toString()); attr("title", TAB_TITLES[t]!!); onClick { App.tab = t } }) {
                 Svg(TAB_ICONS[t]!!); Span { Text(TAB_TITLES[t]!!) }
             }
         }

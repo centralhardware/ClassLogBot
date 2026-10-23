@@ -6,7 +6,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
+import kotlinx.browser.document
+import kotlinx.browser.localStorage
 import kotlinx.browser.window
+import org.w3c.dom.HTMLElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -126,3 +129,24 @@ object Sheets {
 }
 
 var viewImage by mutableStateOf<Pair<String, String>?>(null)
+
+/** The user's interface size: a CSS zoom on the whole app, remembered on this device. index.html applies it before the bundle loads. */
+object UiScale {
+    private const val KEY = "ui-scale"
+    val options = listOf(0.85 to "85%", 1.0 to "100%", 1.15 to "115%", 1.3 to "130%", 1.5 to "150%")
+    var value by mutableStateOf(runCatching { localStorage.getItem(KEY)?.toDoubleOrNull() }.getOrNull()?.takeIf { it in 0.5..2.0 } ?: 1.0)
+        private set
+
+    fun set(v: Double) {
+        value = v
+        runCatching { localStorage.setItem(KEY, v.toString()) }
+        document.documentElement.unsafeCast<HTMLElement?>()?.style?.setProperty("--ui-scale", v.toString())
+    }
+}
+
+/** The viewport width in the app's own (zoomed) pixels, for layout choices CSS can't make on its own. */
+object Viewport {
+    private var raw by mutableStateOf(window.innerWidth)
+    val width get() = raw / UiScale.value
+    init { window.addEventListener("resize", { raw = window.innerWidth }) }
+}
