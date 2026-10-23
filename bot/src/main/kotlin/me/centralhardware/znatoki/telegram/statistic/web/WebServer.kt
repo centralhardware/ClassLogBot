@@ -15,6 +15,12 @@ import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.http.content.staticResources
+import io.ktor.server.plugins.compression.Compression
+import io.ktor.server.plugins.compression.gzip
+import io.ktor.server.plugins.compression.deflate
+import io.ktor.server.plugins.compression.minimumSize
+import io.ktor.server.plugins.conditionalheaders.ConditionalHeaders
+import io.ktor.server.http.content.ETagProvider
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -61,6 +67,9 @@ object WebServer {
 
     private fun Application.module() {
         install(ContentNegotiation) { json(json) }
+        // The bundle is ~1.9 MB raw and ~0.5 MB gzipped; ETags turn the no-cache revalidation into a cheap 304.
+        install(Compression) { gzip { minimumSize(1024) }; deflate { minimumSize(1024) } }
+        install(ConditionalHeaders)
         install(StatusPages) {
             exception<HttpError> { call, e -> call.respond(e.status, ErrorDto(e.message, e.code)) }
             exception<SerializationException> { call, e -> call.respond(HttpStatusCode.BadRequest, ErrorDto("Некорректный запрос: ${e.message}")) }
@@ -85,6 +94,8 @@ object WebServer {
                 auditRoutes()
             }
             staticResources("/", "web") {
+                etag(ETagProvider.StrongSha256)
+                exclude { it.path.endsWith(".map") }
                 modify { _, call -> call.response.header(HttpHeaders.CacheControl, "no-cache") }
             }
         }
