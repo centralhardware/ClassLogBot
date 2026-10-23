@@ -7,7 +7,14 @@ import kotlinx.serialization.json.JsonElement
 data class ErrorDto(val error: String, val code: String? = null)
 
 @Serializable
-data class AuthRequest(val initData: String, val platform: String? = null)
+data class AuthRequest(val initData: String = "", val platform: String? = null, val login: String? = null) {
+    /** initData inside Telegram, the Login Widget's data outside it. */
+    val credential get() = login?.let { "tlw $it" } ?: "tma $initData"
+}
+
+/** What the sign-in screen needs before anyone is signed in. */
+@Serializable
+data class AuthConfigDto(val botUsername: String?)
 
 @Serializable
 data class MeDto(val id: Long, val name: String, val perms: List<String>, val subjects: List<Long>)

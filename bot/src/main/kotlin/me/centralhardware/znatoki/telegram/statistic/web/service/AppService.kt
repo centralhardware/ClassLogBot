@@ -1,5 +1,6 @@
 package me.centralhardware.znatoki.telegram.statistic.web.service
 
+import kotlinx.serialization.json.*
 import kotliquery.Session
 import io.ktor.http.HttpStatusCode
 import me.centralhardware.znatoki.telegram.statistic.entity.Permissions
@@ -49,8 +50,8 @@ object AppService {
 
     /** "Запросить доступ" on the no-access screen: tells the admins who is asking, at most once an hour. */
     context(_: Session)
-    fun requestAccess(initData: String): OkDto {
-        val u = InitDataValidator.validate(initData)?.user
+    fun requestAccess(credential: String): OkDto {
+        val u = TelegramAuth.verify(credential)
             ?: throw HttpError(HttpStatusCode.Unauthorized, "Не удалось подтвердить вход через Telegram.", "auth")
         if (accessRequests[u.id]?.isAfter(LocalDateTime.now().minusHours(1)) == true) return OkDto()
         accessRequests[u.id] = LocalDateTime.now()
@@ -66,6 +67,18 @@ object AppService {
             "tab=tutors",
         )
         return OkDto()
+    }
+
+    /** Digital Asset Links: lets the Android TWA signed with ANDROID_CERT_SHA256 open the site without a URL bar. */
+    fun assetLinks(): JsonArray = buildJsonArray {
+        addJsonObject {
+            putJsonArray("relation") { add("delegate_permission/common.handle_all_urls") }
+            putJsonObject("target") {
+                put("namespace", "android_app")
+                put("package_name", WebConfig.androidPackage)
+                putJsonArray("sha256_cert_fingerprints") { WebConfig.androidCertSha256.forEach { add(it) } }
+            }
+        }
     }
 
     /** The lesson photo or payment receipt from MinIO, for the record's card. */

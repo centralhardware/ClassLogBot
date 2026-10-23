@@ -48,18 +48,36 @@ val tg: TgWebApp? get() = window.asDynamic().Telegram?.WebApp.unsafeCast<TgWebAp
 
 class ApiError(message: String, val status: Int, val code: String? = null) : Exception(message)
 
-/** The app's REST client: JSON in and out, Telegram's initData as the credential on every request. */
+/**
+ * The Login Widget's signed fields as a query string, for the app opened outside Telegram (browser, Android TWA).
+ * Kept per device; the server accepts it for 30 days, then the login screen comes back.
+ */
+object Login {
+    private const val KEY = "tg-login"
+    var data: String
+        get() = runCatching { window.localStorage.getItem(KEY) }.getOrNull().orEmpty()
+        set(v) { runCatching { if (v.isEmpty()) window.localStorage.removeItem(KEY) else window.localStorage.setItem(KEY, v) } }
+}
+
+/** The app's REST client: JSON in and out, a Telegram credential on every request. */
 object Api {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
     private val client = HttpClient { install(ContentNegotiation) { json(json) }; expectSuccess = false }
     /** Telegram's signed launch data; the server checks it on every request. */
     val initData: String get() = tg?.initData.orEmpty()
 
+    /** `tma <initData>` inside Telegram, `tlw <login data>` outside it, empty when not signed in. */
+    val credential: String get() = when {
+        initData.isNotEmpty() -> "tma $initData"
+        Login.data.isNotEmpty() -> "tlw ${Login.data}"
+        else -> ""
+    }
+
     suspend fun send(method: HttpMethod, path: String, configure: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
         val res = try {
             client.request(path) {
                 this.method = method
-                header(HttpHeaders.Authorization, "tma $initData")
+                header(HttpHeaders.Authorization, credential)
                 configure(this)
             }
         } catch (e: Throwable) {
@@ -91,7 +109,7 @@ object Api {
                         append(HttpHeaders.ContentDisposition, "filename=\"photo.jpg\"")
                     })
                 },
-            ) { header(HttpHeaders.Authorization, "tma $initData") }
+            ) { header(HttpHeaders.Authorization, credential) }
         } catch (e: Throwable) {
             throw ApiError("Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.", 0)
         }
@@ -100,7 +118,10 @@ object Api {
     }
 }
 
-fun photoUrl(kind: String, id: String) = "/api/photo/$kind/$id?tma=" + js("encodeURIComponent")(Api.initData) as String
+fun photoUrl(kind: String, id: String): String {
+    val (param, value) = if (Api.initData.isNotEmpty()) "tma" to Api.initData else "tlw" to Login.data
+    return "/api/photo/$kind/$id?$param=" + js("encodeURIComponent")(value) as String
+}
 
 /** Opens a generated file: Telegram's downloadFile where available, the browser otherwise. */
 fun download(d: DownloadDto) {
