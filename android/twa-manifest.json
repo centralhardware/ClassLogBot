@@ -1,0 +1,22 @@
+{
+  "packageId": "me.centralhardware.classlog",
+  "host": "CLASSLOG_HOST",
+  "name": "ClassLog",
+  "launcherName": "ClassLog",
+  "display": "standalone",
+  "themeColor": "#2a8bd8",
+  "navigationColor": "#17212b",
+  "backgroundColor": "#e9edf1",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://CLASSLOG_HOST/icons/icon-512.png",
+  "maskableIconUrl": "https://CLASSLOG_HOST/icons/maskable-512.png",
+  "webManifestUrl": "https://CLASSLOG_HOST/manifest.json",
+  "signingKey": { "path": "./classlog.keystore", "alias": "classlog" },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "minSdkVersion": 21,
+  "fallbackType": "customtabs",
+  "orientation": "default",
+  "generatorApp": "bubblewrap-cli"
+}

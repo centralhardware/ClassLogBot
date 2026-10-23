@@ -24,9 +24,14 @@ import me.centralhardware.znatoki.telegram.statistic.web.service.*
  * that depend on the record itself (own record, open month) live in the services.
  */
 
-/** Unauthenticated: the no-access screen's "Запросить доступ" signs its request with initData itself. */
+/**
+ * Unauthenticated: the no-access screen's "Запросить доступ" signs its request with its Telegram credential itself;
+ * the sign-in screen reads the bot's username; Android checks the TWA's signing key against assetlinks.json.
+ */
 fun Route.publicRoutes() {
-    post("/auth/access-request") { db { call.respond(AppService.requestAccess(call.receive<AuthRequest>().initData)) } }
+    post("/auth/access-request") { db { call.respond(AppService.requestAccess(call.receive<AuthRequest>().credential)) } }
+    get("/auth/config") { call.respond(AuthConfigDto(WebConfig.botUsername)) }
+    get("/.well-known/assetlinks.json") { call.respond(AppService.assetLinks()) }
     get("/dl/{token}") { Downloads.serve(call, call.parameters["token"] ?: notFound()) }
 }
 

@@ -1,0 +1,5 @@
+# Bubblewrap output and the signing key
+*
+!.gitignore
+!twa-manifest.json
+!README.md

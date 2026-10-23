@@ -18,7 +18,7 @@ import io.ktor.utils.io.toByteArray
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
 import me.centralhardware.znatoki.telegram.statistic.mapper.TutorMapper
 import me.centralhardware.znatoki.telegram.statistic.web.Caller
-import me.centralhardware.znatoki.telegram.statistic.web.InitDataValidator
+import me.centralhardware.znatoki.telegram.statistic.web.TelegramAuth
 import me.centralhardware.znatoki.telegram.statistic.web.WebServer
 import me.centralhardware.znatoki.telegram.statistic.web.parseMonth
 import java.time.YearMonth
@@ -43,18 +43,21 @@ private val CallerKey = AttributeKey<Caller>("Caller")
 val ApplicationCall.caller: Caller get() = attributes[CallerKey]
 
 /**
- * Every request carries the Mini App's initData (`Authorization: tma <initData>`, or `?tma=` for
- * <img> links); it is checked against the bot token each time and the tutor must have WEB_INTERFACE.
+ * Every request carries a Telegram credential: the Mini App's initData (`Authorization: tma <initData>`)
+ * or, outside Telegram, the Login Widget's data (`Authorization: tlw <data>`); `?tma=` / `?tlw=` for <img> links.
+ * It is checked against the bot token each time and the tutor must have WEB_INTERFACE.
  */
 val InitDataAuth = createRouteScopedPlugin("InitDataAuth") {
     onCall { call ->
-        val raw = call.request.header(HttpHeaders.Authorization)?.takeIf { it.startsWith("tma ") }?.removePrefix("tma ")
-            ?: call.request.queryParameters["tma"]
-        val data = raw?.let { InitDataValidator.validate(it) }
-            ?: throw HttpError(HttpStatusCode.Unauthorized, "Откройте приложение из Telegram-бота.", "auth")
-        val caller = db { Caller.load(data.user.id) } ?: throw HttpError(
+        val q = call.request.queryParameters
+        val credential = call.request.header(HttpHeaders.Authorization)
+            ?: q["tma"]?.let { "tma $it" }
+            ?: q["tlw"]?.let { "tlw $it" }
+        val user = credential?.let { TelegramAuth.verify(it) }
+            ?: throw HttpError(HttpStatusCode.Unauthorized, "Войдите через Telegram.", "auth")
+        val caller = db { Caller.load(user.id) } ?: throw HttpError(
             HttpStatusCode.Forbidden, "Нет доступа к веб-интерфейсу.",
-            if (db { TutorMapper.findByIdOrNull(TutorId(data.user.id)) } == null) "unknown" else "no_web",
+            if (db { TutorMapper.findByIdOrNull(TutorId(user.id)) } == null) "unknown" else "no_web",
         )
         call.attributes.put(CallerKey, caller)
     }

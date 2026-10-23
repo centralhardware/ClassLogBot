@@ -31,6 +31,18 @@ object WebConfig {
 
     /** How old Telegram's initData may be; the app is reopened from the bot after that. */
     const val INIT_DATA_MAX_AGE_SECONDS = 24 * 60 * 60L
+
+    /** How long a Login Widget sign-in lasts outside Telegram before the login screen comes back. */
+    const val LOGIN_MAX_AGE_SECONDS = 30 * 24 * 60 * 60L
+
+    /** The bot's @username, needed by the Login Widget on the sign-in screen. */
+    val botUsername: String? by lazy { System.getenv("BOT_USERNAME")?.removePrefix("@")?.takeIf { it.isNotBlank() } }
+
+    /** Android app (TWA) identity for /.well-known/assetlinks.json; without it the app shows a URL bar. */
+    val androidPackage: String by lazy { System.getenv("ANDROID_PACKAGE") ?: "me.centralhardware.classlog" }
+    val androidCertSha256: List<String> by lazy {
+        System.getenv("ANDROID_CERT_SHA256")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
+    }
 }
 
 /** The Telegram user that signed a Mini App launch, as read from validated initData. */
@@ -48,12 +60,7 @@ data class ValidatedInitData(val user: TelegramUser, val authDate: Long, val has
 object InitDataValidator {
 
     fun validate(initData: String, botToken: String = WebConfig.botToken, now: Long = Instant.now().epochSecond): ValidatedInitData? {
-        val fields = initData.split("&").mapNotNull { pair ->
-            val i = pair.indexOf('=')
-            if (i <= 0) null
-            else URLDecoder.decode(pair.substring(0, i), StandardCharsets.UTF_8) to
-                URLDecoder.decode(pair.substring(i + 1), StandardCharsets.UTF_8)
-        }.toMap()
+        val fields = parseQuery(initData)
         val hash = fields["hash"] ?: return null
         val checkString = fields.filterKeys { it != "hash" }.toSortedMap().entries.joinToString("\n") { "${it.key}=${it.value}" }
 
@@ -78,10 +85,51 @@ object InitDataValidator {
         )
     }
 
-    private fun hmac(key: ByteArray, data: ByteArray): ByteArray =
+    internal fun hmac(key: ByteArray, data: ByteArray): ByteArray =
         Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(key, "HmacSHA256")) }.doFinal(data)
 
-    private fun ByteArray.toHex() = joinToString("") { "%02x".format(it) }
+    internal fun ByteArray.toHex() = joinToString("") { "%02x".format(it) }
+
+    internal fun parseQuery(query: String): Map<String, String> = query.split("&").mapNotNull { pair ->
+        val i = pair.indexOf('=')
+        if (i <= 0) null
+        else URLDecoder.decode(pair.substring(0, i), StandardCharsets.UTF_8) to
+            URLDecoder.decode(pair.substring(i + 1), StandardCharsets.UTF_8)
+    }.toMap()
+}
+
+/**
+ * Checks Telegram Login Widget data, the credential of the app opened outside Telegram (browser, Android TWA),
+ * as described in https://core.telegram.org/widgets/login#checking-authorization:
+ * the hash must be HMAC-SHA256 of the sorted fields, keyed with SHA256(bot token).
+ * The client keeps the widget's fields as a query string and sends them like initData.
+ */
+object LoginWidgetValidator {
+
+    fun validate(data: String, botToken: String = WebConfig.botToken, now: Long = Instant.now().epochSecond): TelegramUser? {
+        val fields = InitDataValidator.parseQuery(data)
+        val hash = fields["hash"] ?: return null
+        val checkString = fields.filterKeys { it != "hash" }.toSortedMap().entries.joinToString("\n") { "${it.key}=${it.value}" }
+
+        val secret = MessageDigest.getInstance("SHA-256").digest(botToken.toByteArray())
+        val expected = with(InitDataValidator) { hmac(secret, checkString.toByteArray()).toHex() }
+        if (!MessageDigest.isEqual(expected.toByteArray(), hash.lowercase().toByteArray())) return null
+
+        val authDate = fields["auth_date"]?.toLongOrNull() ?: return null
+        if (now - authDate > WebConfig.LOGIN_MAX_AGE_SECONDS) return null
+
+        val id = fields["id"]?.toLongOrNull() ?: return null
+        return TelegramUser(id, fields["first_name"] ?: "", fields["last_name"], fields["username"])
+    }
+}
+
+/** The user behind a credential: `tma <initData>` inside Telegram, `tlw <login widget data>` outside it. */
+object TelegramAuth {
+    fun verify(credential: String): TelegramUser? = when {
+        credential.startsWith("tma ") -> InitDataValidator.validate(credential.removePrefix("tma "))?.user
+        credential.startsWith("tlw ") -> LoginWidgetValidator.validate(credential.removePrefix("tlw "))
+        else -> null
+    }
 }
 
 /**
