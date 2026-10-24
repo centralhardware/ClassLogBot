@@ -23,7 +23,7 @@ private var blocked by mutableStateOf<ApiError?>(null)
 
 /**
  * Loads who the user is and what they may do; the Telegram credential itself is the sign-in.
- * Outside Telegram without a (still valid) Login Widget sign-in, it asks for the login screen.
+ * Outside Telegram without a (still valid) sign-in, it asks for the login screen.
  */
 suspend fun signIn() {
     if (Api.credential.isEmpty()) throw ApiError("Войдите через Telegram.", 401, "login")
@@ -145,19 +145,6 @@ private fun openScale() = Sheets.open { close ->
     Actions { Btn("Готово", "primary") { close() } }
 }
 
-/** Signs in with the Login Widget's result and starts the app as if it had been opened from the bot. */
-private fun completeLogin(user: dynamic) {
-    val keys = js("Object.keys")(user).unsafeCast<Array<String>>()
-    Login.data = keys.joinToString("&") { k ->
-        val enc = js("encodeURIComponent")
-        "${enc(k)}=${enc(user[k].toString())}"
-    }
-    blocked = null
-    App.scope.launch {
-        try { signIn(); applyHash() } catch (e: ApiError) { blocked = e } catch (e: Throwable) { blocked = ApiError(e.message ?: "Ошибка", 0) }
-    }
-}
-
 /** Forgets this device's sign-in; only outside Telegram, where the login is the app's own. */
 private fun logout() {
     Login.data = ""
@@ -165,38 +152,42 @@ private fun logout() {
     blocked = ApiError("Войдите через Telegram.", 401, "login")
 }
 
-/** The first screen outside Telegram (browser, Android app): Telegram's Login Widget. */
+/**
+ * The first screen outside Telegram (browser, Android app): sign-in through the bot. The button opens
+ * `t.me/<bot>?start=login_<token>`; once the user presses Start there, polling gets the credential.
+ */
 @Composable
 private fun LoginScreen() {
-    var botUsername by remember { mutableStateOf<String?>(null) }
-    var failed by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        runCatching { Api.get<AuthConfigDto>("/auth/config") }
-            .onSuccess { botUsername = it.botUsername; failed = it.botUsername == null }
-            .onFailure { failed = true }
-    }
+    var waiting by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
     Box("screen") {
         Box("empty", "padding-top:60px") {
             Title("Вход в ClassLog")
             P({ attr("style", "line-height:1.5") }) {
-                Text(if (failed) "Вход через Telegram сейчас недоступен. Откройте приложение из Telegram-бота." else "Войдите через свой Telegram-аккаунт — тот же, что в боте.")
+                Text(error ?: if (waiting) "Нажмите «Старт» в боте и вернитесь сюда." else "Войдите через свой Telegram-аккаунт — тот же, что в боте.")
             }
-            val name = botUsername
-            if (name != null) Div({
-                attr("style", "display:flex;justify-content:center;min-height:48px")
-                ref { el ->
-                    window.asDynamic().onTelegramAuth = { user: dynamic -> completeLogin(user) }
-                    val script = document.createElement("script")
-                    script.setAttribute("src", "https://telegram.org/js/telegram-widget.js?22")
-                    script.setAttribute("data-telegram-login", name)
-                    script.setAttribute("data-size", "large")
-                    script.setAttribute("data-radius", "12")
-                    script.setAttribute("data-request-access", "write")
-                    script.setAttribute("data-onauth", "onTelegramAuth(user)")
-                    el.appendChild(script)
-                    onDispose { el.innerHTML = "" }
+            if (waiting) Spinner()
+            else Btn("Войти через Telegram", "primary", css = "border:0;border-radius:12px;padding:12px 18px;font:700 14px var(--body)") {
+                App.scope.launch {
+                    error = null
+                    val start = try { Api.postEmpty<BotLoginDto>("/auth/bot-login") } catch (e: ApiError) { error = e.message; return@launch }
+                    window.open(start.link, "_blank")
+                    waiting = true
+                    // The token lives 10 minutes on the server.
+                    repeat(300) {
+                        kotlinx.coroutines.delay(2000)
+                        val credential = runCatching { Api.get<BotLoginPollDto>("/auth/bot-login/${start.token}") }.getOrNull()?.credential
+                        if (credential != null) {
+                            Login.data = credential
+                            blocked = null
+                            try { signIn(); applyHash() } catch (e: ApiError) { blocked = e } catch (e: Throwable) { blocked = ApiError(e.message ?: "Ошибка", 0) }
+                            return@launch
+                        }
+                    }
+                    waiting = false
+                    error = "Вход не подтверждён. Попробуйте ещё раз."
                 }
-            }) {} else if (!failed) Spinner()
+            }
         }
     }
 }
@@ -214,7 +205,7 @@ private fun NoAccess(e: ApiError) {
             if ((e.code == "no_web" || e.code == "unknown") && Api.credential.isNotEmpty()) {
                 Btn(if (sent) "Запрос отправлен" else "Запросить доступ", "primary", enabled = !sent, css = "border:0;border-radius:12px;padding:12px 18px;font:700 14px var(--body)") {
                     App.scope.launch {
-                        runCatching { Api.post<OkDto, AuthRequest>("/auth/access-request", AuthRequest(Api.initData, tg?.platform ?: "web", Login.data.takeIf { Api.initData.isEmpty() })) }
+                        runCatching { Api.post<OkDto, AuthRequest>("/auth/access-request", AuthRequest(Api.initData, tg?.platform ?: "web", Login.data.takeIf { Api.initData.isEmpty() && it.isNotEmpty() })) }
                             .onSuccess { sent = true; Toasts.show("Администратор получит запрос в Telegram") }
                             .onFailure { Toasts.show(it.message ?: "Ошибка") }
                     }

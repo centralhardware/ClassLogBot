@@ -49,13 +49,20 @@ val tg: TgWebApp? get() = window.asDynamic().Telegram?.WebApp.unsafeCast<TgWebAp
 class ApiError(message: String, val status: Int, val code: String? = null) : Exception(message)
 
 /**
- * The Login Widget's signed fields as a query string, for the app opened outside Telegram (browser, Android TWA).
- * Kept per device; the server accepts it for 30 days, then the login screen comes back.
+ * Where the API lives: the page's own origin, or `window.CLASSLOG_API` when the frontend is served from elsewhere
+ * (the Android app bundles it and serves it locally).
+ */
+val apiBase: String = (window.asDynamic().CLASSLOG_API as? String).orEmpty()
+
+/**
+ * The sign-in outside Telegram (browser, Android app) as a full credential, `tgb …` from the bot sign-in
+ * (older clients kept bare Login Widget data, read as `tlw …`). Kept per device; the server accepts it for 30 days.
  */
 object Login {
     private const val KEY = "tg-login"
     var data: String
         get() = runCatching { window.localStorage.getItem(KEY) }.getOrNull().orEmpty()
+            .let { if (it.isEmpty() || it.startsWith("tgb ") || it.startsWith("tlw ")) it else "tlw $it" }
         set(v) { runCatching { if (v.isEmpty()) window.localStorage.removeItem(KEY) else window.localStorage.setItem(KEY, v) } }
 }
 
@@ -66,16 +73,12 @@ object Api {
     /** Telegram's signed launch data; the server checks it on every request. */
     val initData: String get() = tg?.initData.orEmpty()
 
-    /** `tma <initData>` inside Telegram, `tlw <login data>` outside it, empty when not signed in. */
-    val credential: String get() = when {
-        initData.isNotEmpty() -> "tma $initData"
-        Login.data.isNotEmpty() -> "tlw ${Login.data}"
-        else -> ""
-    }
+    /** `tma <initData>` inside Telegram, the stored sign-in outside it, empty when not signed in. */
+    val credential: String get() = if (initData.isNotEmpty()) "tma $initData" else Login.data
 
     suspend fun send(method: HttpMethod, path: String, configure: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
         val res = try {
-            client.request(path) {
+            client.request(apiBase + path) {
                 this.method = method
                 header(HttpHeaders.Authorization, credential)
                 configure(this)
@@ -101,7 +104,7 @@ object Api {
     suspend inline fun <reified T> postForm(path: String, data: String, photo: ByteArray): T {
         val res = try {
             HttpClient { install(ContentNegotiation) { json(json) }; expectSuccess = false }.submitFormWithBinaryData(
-                url = path,
+                url = apiBase + path,
                 formData = formData {
                     append("data", data)
                     append("photo", photo, Headers.build {
@@ -119,13 +122,13 @@ object Api {
 }
 
 fun photoUrl(kind: String, id: String): String {
-    val (param, value) = if (Api.initData.isNotEmpty()) "tma" to Api.initData else "tlw" to Login.data
-    return "/api/photo/$kind/$id?$param=" + js("encodeURIComponent")(value) as String
+    val (param, value) = Api.credential.split(" ", limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+    return "$apiBase/api/photo/$kind/$id?$param=" + js("encodeURIComponent")(value) as String
 }
 
 /** Opens a generated file: Telegram's downloadFile where available, the browser otherwise. */
 fun download(d: DownloadDto) {
-    val url = window.location.origin + d.url
+    val url = apiBase.ifEmpty { window.location.origin } + d.url
     val t = tg
     if (t != null && t.isVersionAtLeast("8.0")) {
         val p: dynamic = js("({})"); p.url = url; p.file_name = d.name

@@ -4,18 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ClassLog</title>
-<!-- Outside Telegram the same page is an installable app; the Android build is a TWA over it (see android/). -->
+<!-- Outside Telegram the same page is an installable app; the Android app bundles this build (see android/). -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2a8bd8">
 <link rel="icon" href="icons/icon-192.png">
 <script>try{var s=+localStorage.getItem("ui-scale");if(s>=.5&&s<=2)document.documentElement.style.setProperty("--ui-scale",s)}catch(e){}</script>
 <link rel="stylesheet" href="app.css">
-<!-- Scripts are deferred (they still run in order) and fonts load without blocking first paint; system fonts show until they arrive. -->
+<!-- Scripts are deferred (they still run in order); fonts are bundled and swap in when loaded. -->
 <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 <script src="classlog.js" defer></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="fonts/fonts.css">
 </head>
 <body>
 <div id="root"><div class="wrap"><div class="phone"><div class="tg-head"><span class="t">ClassLog</span></div><div class="screen"><div class="spin"></div></div></div></div></div>

@@ -2,4 +2,9 @@
 <resources>
     <color name="theme">#2a8bd8</color>
     <color name="navigation">#17212b</color>
+
+    <style name="Theme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/theme</item>
+        <item name="android:navigationBarColor">@color/navigation</item>
+    </style>
 </resources>

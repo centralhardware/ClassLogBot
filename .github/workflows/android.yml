@@ -1,12 +1,12 @@
 name: Android APK
 
-# The TWA over the web frontend: built on every change to android/ (or by hand), released from main.
+# The Android app with the web frontend bundled in: built on every change to android/ or web-frontend/ (or by hand), released from main.
 on:
   push:
     branches: [ "main" ]
-    paths: [ "android/**", ".github/workflows/android.yml" ]
+    paths: [ "android/**", "web-frontend/**", ".github/workflows/android.yml" ]
   pull_request:
-    paths: [ "android/**", ".github/workflows/android.yml" ]
+    paths: [ "android/**", "web-frontend/**", ".github/workflows/android.yml" ]
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,10 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
-      # Without the secrets (forks, first run) the APK is debug-signed and Chrome shows a URL bar.
+      - name: Build web frontend
+        run: ./gradlew --no-daemon :web-frontend:jsBrowserDistribution
+
+      # Without the secrets (forks, first run) the APK is debug-signed.
       - name: Decode signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -63,4 +66,4 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/release/*.apk classlog.apk
           gh release create "android-$VERSION_NAME" classlog.apk --target "$GITHUB_SHA" \
-            --title "ClassLog Android $VERSION_NAME" --notes "TWA over https://$CLASSLOG_HOST/"
+            --title "ClassLog Android $VERSION_NAME" --notes "API: https://$CLASSLOG_HOST/"

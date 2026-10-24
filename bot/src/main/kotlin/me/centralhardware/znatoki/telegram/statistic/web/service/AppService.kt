@@ -69,18 +69,6 @@ object AppService {
         return OkDto()
     }
 
-    /** Digital Asset Links: lets the Android TWA signed with ANDROID_CERT_SHA256 open the site without a URL bar. */
-    fun assetLinks(): JsonArray = buildJsonArray {
-        addJsonObject {
-            putJsonArray("relation") { add("delegate_permission/common.handle_all_urls") }
-            putJsonObject("target") {
-                put("namespace", "android_app")
-                put("package_name", WebConfig.androidPackage)
-                putJsonArray("sha256_cert_fingerprints") { WebConfig.androidCertSha256.forEach { add(it) } }
-            }
-        }
-    }
-
     /** The lesson photo or payment receipt from MinIO, for the record's card. */
     context(_: Session)
     fun photo(c: Caller, kind: String, id: String): ByteArray {

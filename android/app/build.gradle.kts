@@ -1,9 +1,35 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
-/** The web app's host (no scheme), e.g. `classlog.example.com`: `-Phost=…` or env CLASSLOG_HOST. */
-val host: String = (findProperty("host") as String?) ?: System.getenv("CLASSLOG_HOST") ?: error("Set -Phost=<web app host> or CLASSLOG_HOST")
+/** The API's host (no scheme), e.g. `classlog.example.com`: `-Phost=…` or env CLASSLOG_HOST. */
+val host: String = (findProperty("host") as String?) ?: System.getenv("CLASSLOG_HOST") ?: error("Set -Phost=<API host> or CLASSLOG_HOST")
+
+/** The web frontend's production build (`./gradlew :web-frontend:jsBrowserDistribution` in the repo root). */
+val webDist = rootDir.resolve("../web-frontend/build/dist/js/productionExecutable")
+
+/**
+ * The frontend bundled into the APK's assets. index.html loses Telegram's Mini App script and the web manifest,
+ * and gains the API's address, so the app loads nothing from the network but API calls.
+ */
+val bundleWeb by tasks.registering(Sync::class) {
+    doFirst { check(webDist.resolve("index.html").exists()) { "No web build at $webDist: run ./gradlew :web-frontend:jsBrowserDistribution in the repo root first" } }
+    inputs.property("host", host)
+    from(webDist) {
+        exclude("**/*.map", "manifest.json")
+        filesMatching("index.html") {
+            filter { line ->
+                when {
+                    "telegram-web-app.js" in line -> """<script>window.CLASSLOG_API="https://$host"</script>"""
+                    "rel=\"manifest\"" in line -> ""
+                    else -> line
+                }
+            }
+        }
+    }
+    into(layout.buildDirectory.dir("generated/web"))
+}
 
 android {
     namespace = "me.centralhardware.classlog"
@@ -15,11 +41,14 @@ android {
         targetSdk = 35
         versionCode = (System.getenv("VERSION_CODE") ?: "1").toInt()
         versionName = System.getenv("VERSION_NAME") ?: "1.0.0"
-        manifestPlaceholders["host"] = host
-        resValue(
-            "string", "asset_statements",
-            """[{ \"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": { \"namespace\": \"web\", \"site\": \"https://$host\" } }]""",
-        )
+        buildConfigField("String", "API_HOST", "\"$host\"")
+    }
+    buildFeatures { buildConfig = true }
+    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/web"))
+    kotlinOptions { jvmTarget = "17" }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     // Release signing comes from env (CI decodes the keystore from a secret); without it the APK is debug-signed.
@@ -40,6 +69,8 @@ android {
     }
 }
 
+tasks.named("preBuild") { dependsOn(bundleWeb) }
+
 dependencies {
-    implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.5.0")
+    implementation("androidx.webkit:webkit:1.12.1")
 }
