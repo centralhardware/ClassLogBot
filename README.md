@@ -24,7 +24,8 @@ I’ll be glad to hear your questions, suggestions, or feedback.
 The image also serves a Telegram Mini App: lessons, schedule, students, payments, monthly
 reports (with hand-in to the director), stats, team and permissions, and an audit log.
 
-- `web-frontend/` — the UI, Compose HTML (Kotlin/JS). Its build is packed into the bot jar under `/web`.
+- `app/` — the UI, Compose Multiplatform: Wasm in the browser (with a JS fallback for webviews without WasmGC), and the
+  native Android app in `androidApp/`. The web build is packed into the bot jar under `/web`.
 - `bot/.../web/` — the Ktor API (`/auth`, `/api/**`) and static hosting, started by `AppMain` before the bot.
 - Sign-in uses Telegram's `initData` (HMAC-checked with `BOT_TOKEN`); access needs `WEB_INTERFACE`.
 - New permissions: `DIRECTOR` (reviews reports, read-only) and `MANAGE_TUTORS`.

@@ -5,6 +5,8 @@ plugins {
     kotlin("plugin.compose") version "2.4.21" apply false
     id("org.jetbrains.compose") version "1.12.2" apply false
     id("com.google.cloud.tools.jib") version "3.5.4" apply false
+    id("com.android.application") version "9.4.1" apply false
+    id("com.android.kotlin.multiplatform.library") version "9.4.1" apply false
 }
 
 group = "me.centralhardware.znatoki.telegram.statistic"
@@ -23,7 +25,7 @@ extra["poiVersion"] = "6.0.0"
 extra["luceneVersion"] = "10.5.2"
 extra["ktorVersion"] = "3.6.0"
 
-// JVM modules; web-frontend is Kotlin Multiplatform (Wasm)
+// JVM modules; app is Kotlin Multiplatform (Compose: web and Android)
 configure(listOf(project(":common"), project(":bot"))) {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
