@@ -41,3 +41,6 @@ build/
 ### Kotlin ###
 .kotlin/
 kotlin-js-store/
+
+### Android ###
+local.properties
