@@ -106,11 +106,19 @@ object WebServer {
             staticResources("/", "web") {
                 etag(ETagProvider.StrongSha256)
                 exclude { it.path.endsWith(".map") }
-                modify { _, call -> call.response.header(HttpHeaders.CacheControl, "no-cache") }
+                // The engine and app .wasm files are named by content hash: cached for good, so Telegram's webview loads
+                // them once per release. Everything else (index.html, loaders) is revalidated against its ETag.
+                modify { url, call ->
+                    val hashed = HASHED.matches(url.path.substringAfterLast('/'))
+                    call.response.header(HttpHeaders.CacheControl, if (hashed) "public, max-age=31536000, immutable" else "no-cache")
+                }
             }
         }
     }
 }
+
+/** Webpack's content-hashed asset names, e.g. `adb725455bc4225501a8.wasm`. */
+private val HASHED = Regex("^[0-9a-f]{20}\\.wasm$")
 
 /**
  * CORS for the Android app only, which serves its bundled frontend from its own origin and calls the API here.

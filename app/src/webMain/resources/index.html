@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClassLog</title>
+<!-- Outside Telegram the same page is an installable app. -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2a8bd8">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  html,body{margin:0;height:100%;background:#f1f4f7;overflow:hidden}
+  @media (prefers-color-scheme: dark){html,body{background:#0f1820}}
+  /* Shown while the bundle loads; Compose draws over the whole page once it starts. */
+  #boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #boot i{width:26px;height:26px;border:3px solid #dfe5eb;border-top-color:#2a8bd8;border-radius:50%;animation:s .8s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="classlog.js" defer></script>
+</head>
+<body>
+<div id="boot"><i></i></div>
+</body>
+</html>

@@ -37,7 +37,7 @@ jobs:
             bot:
               - 'bot/**'
               - 'common/**'
-              - 'web-frontend/**'
+              - 'app/**'
               - 'Dockerfile'
               - 'build.gradle.kts'
               - 'settings.gradle.kts'
@@ -85,11 +85,11 @@ jobs:
           (IFS=,; echo "tags=${TAGS[*]}") >> "$GITHUB_OUTPUT"
 
       - name: Run tests
-        run: ./gradlew --no-daemon test
+        run: ./gradlew --no-daemon -PclasslogAndroid=false test
 
       - name: Build bot image with Jib into the local Docker daemon
         run: |
-          ./gradlew --no-daemon \
+          ./gradlew --no-daemon -PclasslogAndroid=false \
             -Djib.to.image="localhost/jib-build:latest" \
             :bot:jibDockerBuild
 
@@ -158,4 +158,4 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build and test all modules on PRs (no push)
-        run: ./gradlew --no-daemon build
+        run: ./gradlew --no-daemon -PclasslogAndroid=false build
