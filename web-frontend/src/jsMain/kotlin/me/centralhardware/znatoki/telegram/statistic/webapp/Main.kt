@@ -153,7 +153,7 @@ private fun logout() {
 }
 
 /**
- * The first screen outside Telegram (browser, Android app): sign-in through the bot. The button opens
+ * The first screen outside Telegram (browser, installed PWA): sign-in through the bot. The button opens
  * `t.me/<bot>?start=login_<token>`; once the user presses Start there, polling gets the credential.
  */
 @Composable

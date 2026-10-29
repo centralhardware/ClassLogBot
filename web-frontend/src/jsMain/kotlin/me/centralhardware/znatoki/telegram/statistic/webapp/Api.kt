@@ -49,13 +49,7 @@ val tg: TgWebApp? get() = window.asDynamic().Telegram?.WebApp.unsafeCast<TgWebAp
 class ApiError(message: String, val status: Int, val code: String? = null) : Exception(message)
 
 /**
- * Where the API lives: the page's own origin, or `window.CLASSLOG_API` when the frontend is served from elsewhere
- * (the Android app bundles it and serves it locally).
- */
-val apiBase: String = (window.asDynamic().CLASSLOG_API as? String).orEmpty()
-
-/**
- * The sign-in outside Telegram (browser, Android app) as a full credential, `tgb …` from the bot sign-in
+ * The sign-in outside Telegram (browser, installed PWA) as a full credential, `tgb …` from the bot sign-in
  * (older clients kept bare Login Widget data, read as `tlw …`). Kept per device; the server accepts it for 30 days.
  */
 object Login {
@@ -78,7 +72,7 @@ object Api {
 
     suspend fun send(method: HttpMethod, path: String, configure: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
         val res = try {
-            client.request(apiBase + path) {
+            client.request(path) {
                 this.method = method
                 header(HttpHeaders.Authorization, credential)
                 configure(this)
@@ -104,7 +98,7 @@ object Api {
     suspend inline fun <reified T> postForm(path: String, data: String, photo: ByteArray): T {
         val res = try {
             HttpClient { install(ContentNegotiation) { json(json) }; expectSuccess = false }.submitFormWithBinaryData(
-                url = apiBase + path,
+                url = path,
                 formData = formData {
                     append("data", data)
                     append("photo", photo, Headers.build {
@@ -123,12 +117,12 @@ object Api {
 
 fun photoUrl(kind: String, id: String): String {
     val (param, value) = Api.credential.split(" ", limit = 2).let { it[0] to it.getOrElse(1) { "" } }
-    return "$apiBase/api/photo/$kind/$id?$param=" + js("encodeURIComponent")(value) as String
+    return "/api/photo/$kind/$id?$param=" + js("encodeURIComponent")(value) as String
 }
 
 /** Opens a generated file: Telegram's downloadFile where available, the browser otherwise. */
 fun download(d: DownloadDto) {
-    val url = apiBase.ifEmpty { window.location.origin } + d.url
+    val url = window.location.origin + d.url
     val t = tg
     if (t != null && t.isVersionAtLeast("8.0")) {
         val p: dynamic = js("({})"); p.url = url; p.file_name = d.name

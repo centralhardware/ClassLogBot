@@ -37,9 +37,6 @@ object WebConfig {
 
     /** The bot's @username for the sign-in screen: BOT_USERNAME, else what getMe returned at startup. */
     @Volatile var botUsername: String? = System.getenv("BOT_USERNAME")?.removePrefix("@")?.takeIf { it.isNotBlank() }
-
-    /** The Android app serves the bundled frontend from this origin (WebViewAssetLoader) and calls the API cross-origin. */
-    const val ANDROID_APP_HOST = "appassets.androidplatform.net"
 }
 
 /** The Telegram user that signed a Mini App launch, as read from validated initData. */
@@ -121,7 +118,7 @@ object LoginWidgetValidator {
 }
 
 /**
- * Sign-in through the bot, for the Android app and browsers: the app asks for a one-time token, opens
+ * Sign-in through the bot, for browsers and the installed PWA: the page asks for a one-time token, opens
  * `t.me/<bot>?start=login_<token>`, and polls until the bot sees /start with it. The credential it then gets is
  * `tgb <id>.<auth_date>.<hmac>`, signed with a key derived from the bot token and valid for LOGIN_MAX_AGE_SECONDS.
  */
