@@ -1,0 +1,7 @@
+# Gradle output and signing keys
+.gradle/
+build/
+app/build/
+local.properties
+*.keystore
+*.jks

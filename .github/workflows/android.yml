@@ -1,13 +1,12 @@
 name: Android APK
 
-# The native Android app (:androidApp over the shared Compose UI in app/): built on every change to either
-# (or by hand), released from main.
+# The Android app with the web frontend bundled in: built on every change to android/ or web-frontend/ (or by hand), released from main.
 on:
   push:
     branches: [ "main" ]
-    paths: [ "app/**", "androidApp/**", "build.gradle.kts", "settings.gradle.kts", ".github/workflows/android.yml" ]
+    paths: [ "android/**", "web-frontend/**", ".github/workflows/android.yml" ]
   pull_request:
-    paths: [ "app/**", "androidApp/**", "build.gradle.kts", "settings.gradle.kts", ".github/workflows/android.yml" ]
+    paths: [ "android/**", "web-frontend/**", ".github/workflows/android.yml" ]
   workflow_dispatch:
 
 permissions:
@@ -28,11 +27,15 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: '25'
-          cache: gradle
+          java-version: 17
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Build web frontend
+        run: ./gradlew --no-daemon :web-frontend:jsBrowserDistribution
 
       # Without the secrets (forks, first run) the APK is debug-signed.
       - name: Decode signing key
@@ -44,23 +47,23 @@ jobs:
             echo "KEYSTORE_FILE=$RUNNER_TEMP/classlog.keystore" >> "$GITHUB_ENV"
           fi
 
-      # The runner's preinstalled SDK (ANDROID_HOME) switches the Android target on.
       - name: Build APK
+        working-directory: android
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        run: ./gradlew --no-daemon :androidApp:assembleRelease
+        run: gradle --no-daemon :app:assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
           name: classlog-${{ env.VERSION_NAME }}
-          path: androidApp/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/release/*.apk
 
       - name: Release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp androidApp/build/outputs/apk/release/*.apk classlog.apk
+          cp android/app/build/outputs/apk/release/*.apk classlog.apk
           gh release create "android-$VERSION_NAME" classlog.apk --target "$GITHUB_SHA" \
             --title "ClassLog Android $VERSION_NAME" --notes "API: https://$CLASSLOG_HOST/"
