@@ -51,7 +51,7 @@ jib {
         )
     }
 }
-// The Mini App frontend is built from :app and served by the web server from /web.
+// The Mini App frontend is built from :web-frontend and served by the web server from /web.
 tasks.named<ProcessResources>("processResources") {
-    from(project(":app").tasks.named("composeCompatibilityBrowserDistribution")) { into("web"); exclude("**/*.map") }
+    from(project(":web-frontend").tasks.named("jsBrowserDistribution")) { into("web") }
 }
