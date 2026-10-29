@@ -79,7 +79,6 @@ object WebServer {
         // The bundle is ~1.9 MB raw and ~0.5 MB gzipped; ETags turn the no-cache revalidation into a cheap 304.
         install(Compression) { gzip { minimumSize(1024) }; deflate { minimumSize(1024) } }
         install(ConditionalHeaders)
-        install(AndroidAppCors)
         install(StatusPages) {
             exception<HttpError> { call, e -> call.respond(e.status, ErrorDto(e.message, e.code)) }
             exception<SerializationException> { call, e -> call.respond(HttpStatusCode.BadRequest, ErrorDto("Некорректный запрос: ${e.message}")) }
@@ -108,25 +107,6 @@ object WebServer {
                 exclude { it.path.endsWith(".map") }
                 modify { _, call -> call.response.header(HttpHeaders.CacheControl, "no-cache") }
             }
-        }
-    }
-}
-
-/**
- * CORS for the Android app only, which serves its bundled frontend from its own origin and calls the API here.
- * Ktor's CORS plugin is not used: behind the TLS proxy it sees http and would reject the site's own https requests.
- */
-private val AndroidAppCors = createApplicationPlugin("AndroidAppCors") {
-    val origin = "https://${WebConfig.ANDROID_APP_HOST}"
-    onCall { call ->
-        if (call.request.header(HttpHeaders.Origin) != origin) return@onCall
-        call.response.header(HttpHeaders.AccessControlAllowOrigin, origin)
-        call.response.header(HttpHeaders.Vary, HttpHeaders.Origin)
-        if (call.request.httpMethod == HttpMethod.Options) {
-            call.response.header(HttpHeaders.AccessControlAllowMethods, "GET, POST, PUT, PATCH, DELETE")
-            call.response.header(HttpHeaders.AccessControlAllowHeaders, "Authorization, Content-Type")
-            call.response.header(HttpHeaders.AccessControlMaxAge, "86400")
-            call.respond(HttpStatusCode.NoContent)
         }
     }
 }
