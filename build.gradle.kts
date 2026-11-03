@@ -20,7 +20,7 @@ allprojects {
 
 // Shared version variables
 extra["poiVersion"] = "6.0.0"
-extra["luceneVersion"] = "10.5.2"
+extra["luceneVersion"] = "10.6.0"
 extra["ktorVersion"] = "3.6.1"
 
 // JVM modules; web-frontend is Kotlin Multiplatform (Wasm)
