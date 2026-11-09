@@ -12,7 +12,7 @@ dependencies {
     api("com.github.seratch:kotliquery:1.9.1")
     api("org.postgresql:postgresql:42.7.14")
     api("com.zaxxer:HikariCP:7.1.0")
-    api("org.flywaydb:flyway-core:13.12.0")
+    api("org.flywaydb:flyway-core:13.12.1")
     api("org.flywaydb:flyway-database-postgresql:13.12.0")
 
     // Serialization
