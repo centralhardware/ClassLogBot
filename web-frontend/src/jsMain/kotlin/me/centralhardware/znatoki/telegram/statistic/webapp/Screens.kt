@@ -335,7 +335,7 @@ fun StudentRow(s: StudentRowDto) = Box("row" + if (s.deleted) " deleted" else ""
     Box("main") {
         Box("name") { Text(sFio(s)); if (s.status != "active") { Text(" "); Chip(STATUS[s.status]!!.lowercase(), if (s.status == "left") "del" else "half") } }
         Box("meta") {
-            Text((s.cls?.let { "$it класс · " } ?: "") + (s.subjects.joinToString(", ") { App.subj(it).name }.ifEmpty { "занятий ещё не было" }))
+            Text((clsLabel(s.cls) + " · ") + (s.subjects.joinToString(", ") { App.subj(it).name }.ifEmpty { "занятий ещё не было" }))
             if (isLong(s)) { Text(" · "); T(s.lastDate?.let { "последнее ${dayMonth(it)}, ${lastAgo(s)} дн. назад" } ?: "занятий не было", css = "color:var(--warn)") }
             if ((s.balance ?: 0) < 0) { Text(" · "); T("долг ${rub(-s.balance!!)}", css = "color:var(--bad)") }
         }
