@@ -519,7 +519,7 @@ fun openStudentForm(d: StudentDetailDto?) = Sheets.open { close ->
     }
     Sec("Телефоны (необязательно)")
     Box("", "display:grid;gap:8px") {
-        FieldLabel("Ученик"); TextField(phone, "+7 (913) 123-45-67", InputType.Tel, "field num" + if (phoneErr(phone) != null) " bad" else "") { phone = it }
+        FieldLabel(if (adult) "Телефон" else "Ученик"); TextField(phone, "+7 (913) 123-45-67", InputType.Tel, "field num" + if (phoneErr(phone) != null) " bad" else "") { phone = it }
         phoneErr(phone)?.let { Box("ferr") { Text(it) } }
         if (!adult) {
             FieldLabel("Родитель"); TextField(parent, "+7 (923) 123-45-67", InputType.Tel, "field num" + if (phoneErr(parent) != null) " bad" else "") { parent = it }
