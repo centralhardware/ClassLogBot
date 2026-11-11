@@ -122,7 +122,8 @@ object StudentWebService {
     context(_: Session)
     private fun validate(input: StudentInput, except: Int?) {
         if (input.last.isBlank() || input.first.isBlank()) badRequest("Введите фамилию и имя.")
-        if (input.cls == null || !SchoolClass.validate(input.cls)) badRequest("Класс от 1 до 11.")
+        // No class = an adult student.
+        if (input.cls != null && !SchoolClass.validate(input.cls)) badRequest("Класс от 1 до 11.")
         val duplicate = StudentMapper.findAll().any {
             it.id.id != except && it.secondName.trim().equals(input.last, true) && it.name.trim().equals(input.first, true)
         }

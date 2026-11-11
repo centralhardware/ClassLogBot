@@ -266,7 +266,7 @@ private fun AddLesson(pre: LessonPrefill?, close: () -> Unit) {
                         Box("row", onClick = {
                             studentsSel = if (sb.group) (if (s.id in studentsSel) studentsSel - s.id else studentsSel + s.id) else listOf(s.id)
                         }) {
-                            Avatar(s.id, sFio(s)); Box("main") { Box("name") { Text(sFio(s)) }; Box("meta") { Text("${s.cls ?: "—"} класс") } }
+                            Avatar(s.id, sFio(s)); Box("main") { Box("name") { Text(sFio(s)) }; Box("meta") { Text(clsLabel(s.cls)) } }
                             Div { if (s.id in studentsSel) Chip("✓", "grp") }
                         }
                     }
@@ -488,12 +488,16 @@ private fun StatusEditor(s: StudentRowDto, done: () -> Unit) {
 
 @Composable private fun Label(text: String) = Box("", "color:var(--hint);font-size:12px;display:block;margin-top:12px") { Text(text) }
 
+fun clsLabel(cls: Int?) = if (cls == null) "взрослый" else "$cls класс"
+
 fun openStudentForm(d: StudentDetailDto?) = Sheets.open { close ->
     val s = d?.row
     var last by remember { mutableStateOf(s?.last ?: "") }
     var first by remember { mutableStateOf(s?.first ?: "") }
     var middle by remember { mutableStateOf(s?.middle ?: "") }
     var cls by remember { mutableStateOf(s?.cls) }
+    // An adult has no class and no parent: only the name is required.
+    var adult by remember { mutableStateOf(s != null && s.cls == null) }
     var phone by remember { mutableStateOf(d?.phone ?: "") }
     var parent by remember { mutableStateOf(d?.parent ?: "") }
     var source by remember { mutableStateOf(s?.source ?: "") }
@@ -505,14 +509,22 @@ fun openStudentForm(d: StudentDetailDto?) = Sheets.open { close ->
         TextField(first, "Имя") { first = it }
         TextField(middle, "Отчество (необязательно)") { middle = it }
     }
-    Sec("Класс")
-    Box("opts") { (1..11).forEach { i -> Opt(i.toString(), cls == i, css = "min-width:38px") { cls = i } } }
+    Box("opts", "margin-top:12px") {
+        Opt("Школьник", !adult) { adult = false }
+        Opt("Взрослый", adult) { adult = true; cls = null; parent = "" }
+    }
+    if (!adult) {
+        Sec("Класс")
+        Box("opts") { (1..11).forEach { i -> Opt(i.toString(), cls == i, css = "min-width:38px") { cls = i } } }
+    }
     Sec("Телефоны (необязательно)")
     Box("", "display:grid;gap:8px") {
         FieldLabel("Ученик"); TextField(phone, "+7 (913) 123-45-67", InputType.Tel, "field num" + if (phoneErr(phone) != null) " bad" else "") { phone = it }
         phoneErr(phone)?.let { Box("ferr") { Text(it) } }
-        FieldLabel("Родитель"); TextField(parent, "+7 (923) 123-45-67", InputType.Tel, "field num" + if (phoneErr(parent) != null) " bad" else "") { parent = it }
-        phoneErr(parent)?.let { Box("ferr") { Text(it) } }
+        if (!adult) {
+            FieldLabel("Родитель"); TextField(parent, "+7 (923) 123-45-67", InputType.Tel, "field num" + if (phoneErr(parent) != null) " bad" else "") { parent = it }
+            phoneErr(parent)?.let { Box("ferr") { Text(it) } }
+        }
     }
     Sec("Откуда узнали? (необязательно)")
     TextField(source, "Например: от знакомых, 2gis, вывеска") { source = it }
@@ -523,7 +535,7 @@ fun openStudentForm(d: StudentDetailDto?) = Sheets.open { close ->
     }
     val err = when {
         last.isBlank() || first.isBlank() -> "Введите фамилию и имя."
-        cls == null -> "Выберите класс от 1 до 11."
+        !adult && cls == null -> "Выберите класс от 1 до 11."
         phoneErr(phone) != null || phoneErr(parent) != null -> "Проверьте телефоны."
         else -> null
     }
@@ -531,7 +543,7 @@ fun openStudentForm(d: StudentDetailDto?) = Sheets.open { close ->
     Actions {
         Btn("Отмена") { close() }
         Btn(if (s == null) "Добавить" else "Сохранить", "primary", enabled = err == null) {
-            val input = StudentInput(last, first, middle, cls, digits(phone).ifEmpty { null }, digits(parent).ifEmpty { null }, source.ifBlank { null })
+            val input = StudentInput(last, first, middle, if (adult) null else cls, digits(phone).ifEmpty { null }, digits(parent).ifEmpty { null }, source.ifBlank { null })
             App.act {
                 val r: StudentRowDto = if (s == null) Api.post("/api/students", input) else Api.post("/api/students/${s.id}", input, HttpMethod.Put)
                 close(); Toasts.show(if (s == null) "Ученик добавлен, ID ${r.id}" else "Данные ученика сохранены")
@@ -604,7 +616,7 @@ fun openAddPayment() = Sheets.open { close ->
                 Box("group", "margin-top:8px") {
                     all.filter { !it.deleted && (q.isBlank() || sFio(it).lowercase().contains(q.lowercase())) }.forEach { s ->
                         Box("row", onClick = { student = s.id }) {
-                            Avatar(s.id, sFio(s)); Box("main") { Box("name") { Text(sFio(s)) }; Box("meta") { Text("${s.cls ?: "—"} класс") } }
+                            Avatar(s.id, sFio(s)); Box("main") { Box("name") { Text(sFio(s)) }; Box("meta") { Text(clsLabel(s.cls)) } }
                             Div { if (student == s.id) Chip("✓", "grp") }
                         }
                     }
