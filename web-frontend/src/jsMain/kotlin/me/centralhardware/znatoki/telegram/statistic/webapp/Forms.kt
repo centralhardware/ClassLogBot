@@ -30,10 +30,18 @@ import org.w3c.files.get
 /** A picked photo, already shrunk to a JPEG: the bytes to upload and a preview URL. */
 class Photo(val bytes: ByteArray, val url: String)
 
-fun pickPhoto(done: (Photo) -> Unit) {
+/**
+ * Opens the file picker, or the camera straight away when [camera] is set. The input is attached to the page while
+ * it is open: Telegram's Android WebView never fires `change` on a detached input, so the chosen photo was lost.
+ */
+fun pickPhoto(camera: Boolean = false, done: (Photo) -> Unit) {
     val inp = document.createElement("input") as HTMLInputElement
     inp.type = "file"; inp.accept = "image/*"
+    if (camera) inp.setAttribute("capture", "environment")
+    inp.style.display = "none"
+    document.body?.appendChild(inp)
     inp.onchange = {
+        inp.remove()
         inp.files?.get(0)?.let { f ->
             val src = URL.createObjectURL(f)
             val img = org.w3c.dom.Image()
@@ -52,10 +60,15 @@ fun pickPhoto(done: (Photo) -> Unit) {
 }
 
 @Composable
-fun PhotoBox(photo: Photo?, empty: String, onPick: (Photo) -> Unit) =
-    Box("photo" + if (photo != null) " done" else "", onClick = { pickPhoto(onPick) }) {
+fun PhotoBox(photo: Photo?, empty: String, onPick: (Photo) -> Unit) {
+    Box("photo" + if (photo != null) " done" else "", onClick = { pickPhoto(done = onPick) }) {
         if (photo != null) { Img(photo.url, "фото"); Text("Фото приложено · нажмите, чтобы заменить") } else Text(empty)
     }
+    Box("opts", "margin-top:8px") {
+        Btn("📷 Сделать снимок") { pickPhoto(camera = true, done = onPick) }
+        Btn("Выбрать из галереи") { pickPhoto(done = onPick) }
+    }
+}
 
 /** Who the record is for, when the caller may enter lessons or payments for other tutors. */
 @Composable
@@ -237,16 +250,18 @@ private fun AddLesson(pre: LessonPrefill?, close: () -> Unit) {
         1 -> {
             val sb = App.subj(subject!!)
             Title(if (sb.group) "Кто был на занятии?" else "Какой ученик?")
-            TextField(q, "Фильтр по ФИО") { q = it }
+            TextField(q, "Поиск по ФИО") { q = it }
             Show(remote("students") { loadStudents() }) { all ->
                 // A restored draft or a repeated lesson can carry a student who is no longer active: drop them, or they
                 // count towards "Выбрано" without ever showing as ticked.
                 val active = all.filter { !it.deleted && it.status == "active" }
                 val kept = studentsSel.distinct().filter { id -> active.any { it.id == id } }
                 if (kept != studentsSel) studentsSel = kept
-                val list = active.filter { q.isBlank() || sFio(it).lowercase().contains(q.lowercase()) }
+                // Search, not a roster: with an empty query only the already chosen students are shown.
+                val list = if (q.isBlank()) active.filter { it.id in studentsSel }
+                           else active.filter { sFio(it).lowercase().contains(q.trim().lowercase()) }
                 Box("group", "margin-top:8px") {
-                    if (list.isEmpty()) Empty("Никого не нашлось.")
+                    if (list.isEmpty()) Empty(if (q.isBlank()) "Начните вводить ФИО ученика." else "Никого не нашлось.")
                     list.forEach { s ->
                         Box("row", onClick = {
                             studentsSel = if (sb.group) (if (s.id in studentsSel) studentsSel - s.id else studentsSel + s.id) else listOf(s.id)
@@ -269,7 +284,6 @@ private fun AddLesson(pre: LessonPrefill?, close: () -> Unit) {
             if (pre?.from != null) Box("lock", "padding-top:0;margin-bottom:8px") { Text("Повтор занятия от ${pre.from}. Можно вернуться и поменять.") }
             Title("Фотоотчёт")
             PhotoBox(photo, "Нажмите, чтобы приложить фото отчётности") { photo = it }
-            Lock("Откроется камера или галерея.")
         }
         else -> {
             val grp = studentsSel.size > 1
