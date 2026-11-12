@@ -31,8 +31,9 @@ import org.w3c.files.get
 class Photo(val bytes: ByteArray, val url: String)
 
 /**
- * Opens the file picker, or the camera straight away when [camera] is set. The input is attached to the page while
- * it is open: Telegram's Android WebView never fires `change` on a detached input, so the chosen photo was lost.
+ * Opens the file picker. The input is attached to the page while it is open: Telegram's Android WebView never fires
+ * `change` on a detached input, so the chosen photo was lost. [camera] only adds the `capture` hint, which Telegram's
+ * WebView ignores — [takePhoto] is the real camera path.
  */
 fun pickPhoto(camera: Boolean = false, done: (Photo) -> Unit) {
     val inp = document.createElement("input") as HTMLInputElement
@@ -42,21 +43,75 @@ fun pickPhoto(camera: Boolean = false, done: (Photo) -> Unit) {
     document.body?.appendChild(inp)
     inp.onchange = {
         inp.remove()
-        inp.files?.get(0)?.let { f ->
-            val src = URL.createObjectURL(f)
-            val img = org.w3c.dom.Image()
-            img.onload = {
-                val k = minOf(1.0, 2000.0 / maxOf(img.width, img.height))
-                val c = document.createElement("canvas") as HTMLCanvasElement
-                c.width = (img.width * k).toInt(); c.height = (img.height * k).toInt()
-                c.getContext("2d").asDynamic().drawImage(img, 0, 0, c.width, c.height)
-                c.toBlob({ b: Blob? -> URL.revokeObjectURL(src); b?.let { blob -> blobToBytes(blob) { bytes -> done(Photo(bytes, URL.createObjectURL(blob))) } } }, "image/jpeg", 0.85)
-            }
-            img.onerror = { _, _, _, _, _ -> Toasts.show("Не удалось открыть фото"); null }
-            img.src = src
-        }
+        inp.files?.get(0)?.let { f -> shrink(f, done) }
     }
     inp.click()
+}
+
+/** Shrinks an image to at most 2000px and re-encodes it as JPEG. */
+private fun shrink(file: Blob, done: (Photo) -> Unit) {
+    val src = URL.createObjectURL(file)
+    val img = org.w3c.dom.Image()
+    img.onload = {
+        val k = minOf(1.0, 2000.0 / maxOf(img.width, img.height))
+        val c = document.createElement("canvas") as HTMLCanvasElement
+        c.width = (img.width * k).toInt(); c.height = (img.height * k).toInt()
+        c.getContext("2d").asDynamic().drawImage(img, 0, 0, c.width, c.height)
+        URL.revokeObjectURL(src)
+        toPhoto(c, done)
+    }
+    img.onerror = { _, _, _, _, _ -> URL.revokeObjectURL(src); Toasts.show("Не удалось открыть фото"); null }
+    img.src = src
+}
+
+private fun toPhoto(c: HTMLCanvasElement, done: (Photo) -> Unit) =
+    c.toBlob({ b: Blob? -> b?.let { blob -> blobToBytes(blob) { bytes -> done(Photo(bytes, URL.createObjectURL(blob))) } } }, "image/jpeg", 0.85)
+
+/**
+ * In-app camera: a full-screen live preview (rear camera) with a shutter. Telegram's Android WebView ignores
+ * `capture` on file inputs and always opens the gallery, so the camera is driven through getUserMedia instead.
+ * Falls back to the file picker when the camera API is missing or access is denied.
+ */
+fun takePhoto(done: (Photo) -> Unit) {
+    val media = js("navigator.mediaDevices")
+    if (media == null || media.getUserMedia == null) { pickPhoto(camera = true, done = done); return }
+    val constraints = js("({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })")
+    media.getUserMedia(constraints).then({ stream: dynamic ->
+        val overlay = document.createElement("div").asDynamic()
+        overlay.style.cssText = "position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column"
+        val video = document.createElement("video").asDynamic()
+        video.setAttribute("playsinline", ""); video.muted = true; video.autoplay = true
+        video.style.cssText = "flex:1;width:100%;min-height:0;object-fit:contain"
+        video.srcObject = stream
+        val bar = document.createElement("div").asDynamic()
+        bar.style.cssText = "display:flex;justify-content:space-around;align-items:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom))"
+        fun close() { stream.getTracks().forEach { t: dynamic -> t.stop() }; overlay.remove() }
+        fun addButton(label: String, css: String, onClick: () -> Unit) {
+            val b: dynamic = document.createElement("button")
+            b.textContent = label; b.style.cssText = css; b.onclick = { onClick() }; bar.appendChild(b)
+        }
+        val side = "background:none;border:none;color:#fff;font-size:16px;padding:12px;min-width:90px"
+        addButton("Отмена", side) { close() }
+        addButton("", "width:68px;height:68px;border-radius:50%;border:4px solid #fff;background:#fff;box-shadow:inset 0 0 0 3px #000") {
+            val w = video.videoWidth as Int; val h = video.videoHeight as Int
+            if (w == 0 || h == 0) return@addButton
+            val k = minOf(1.0, 2000.0 / maxOf(w, h))
+            val c = document.createElement("canvas") as HTMLCanvasElement
+            c.width = (w * k).toInt(); c.height = (h * k).toInt()
+            c.getContext("2d").asDynamic().drawImage(video, 0, 0, c.width, c.height)
+            close()
+            toPhoto(c, done)
+        }
+        addButton("Галерея", side) { close(); pickPhoto(done = done) }
+        overlay.appendChild(video); overlay.appendChild(bar)
+        document.body?.appendChild(overlay)
+        video.play()
+        null
+    }, { _: dynamic ->
+        Toasts.show("Нет доступа к камере — открываю выбор файла")
+        pickPhoto(camera = true, done = done)
+        null
+    })
 }
 
 @Composable
@@ -65,7 +120,7 @@ fun PhotoBox(photo: Photo?, empty: String, onPick: (Photo) -> Unit) {
         if (photo != null) { Img(photo.url, "фото"); Text("Фото приложено · нажмите, чтобы заменить") } else Text(empty)
     }
     Box("opts", "margin-top:8px") {
-        Btn("📷 Сделать снимок") { pickPhoto(camera = true, done = onPick) }
+        Btn("📷 Сделать снимок") { takePhoto(onPick) }
         Btn("Выбрать из галереи") { pickPhoto(done = onPick) }
     }
 }
