@@ -25,7 +25,7 @@ dependencies {
     api("io.ktor:ktor-client-logging:$ktorVersion")
 
     // Utilities
-    api("io.arrow-kt:arrow-core:2.2.3")
+    api("io.arrow-kt:arrow-core:2.3.0.1")
     api("io.minio:minio:9.0.4")
 
     // Excel
@@ -42,7 +42,7 @@ dependencies {
     api("dev.inmo:krontab:3.1.0")
 
     // Telegram (brings tgbotapi + kslog transitively)
-    api("com.github.centralhardware:ktgbotapi-commons:2d78d488")
+    api("com.github.centralhardware:ktgbotapi-commons:62e73250")
 
     // Test dependencies
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
