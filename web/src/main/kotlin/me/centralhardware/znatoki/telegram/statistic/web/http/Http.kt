@@ -43,9 +43,8 @@ private val CallerKey = AttributeKey<Caller>("Caller")
 val ApplicationCall.caller: Caller get() = attributes[CallerKey]
 
 /**
- * Every request carries a Telegram credential: the Mini App's initData (`Authorization: tma <initData>`)
- * or, outside Telegram, the bot sign-in (`Authorization: tgb <data>`) or older Login Widget data (`tlw <data>`);
- * `?tma=` / `?tgb=` / `?tlw=` for <img> links.
+ * Every request carries a Telegram credential: the Mini App's initData (`Authorization: tma <initData>`),
+ * or `?tma=` for <img> links. The app works only inside Telegram.
  * It is checked against the bot token each time and the tutor must have WEB_INTERFACE.
  */
 val InitDataAuth = createRouteScopedPlugin("InitDataAuth") {
@@ -53,8 +52,6 @@ val InitDataAuth = createRouteScopedPlugin("InitDataAuth") {
         val q = call.request.queryParameters
         val credential = call.request.header(HttpHeaders.Authorization)
             ?: q["tma"]?.let { "tma $it" }
-            ?: q["tgb"]?.let { "tgb $it" }
-            ?: q["tlw"]?.let { "tlw $it" }
         val user = credential?.let { TelegramAuth.verify(it) }
             ?: throw HttpError(HttpStatusCode.Unauthorized, "Войдите через Telegram.", "auth")
         val caller = db { Caller.load(user.id) } ?: throw HttpError(

@@ -9,18 +9,10 @@ import kotlinx.serialization.json.JsonElement
 data class ErrorDto(val error: String, val code: String? = null)
 
 @Serializable
-data class AuthRequest(val initData: String = "", val platform: String? = null, val login: String? = null) {
-    /** initData inside Telegram; outside it the stored sign-in (`tgb …`, or bare Login Widget data from older clients). */
-    val credential get() = login?.let { if (it.startsWith("tgb ") || it.startsWith("tlw ")) it else "tlw $it" } ?: "tma $initData"
+data class AuthRequest(val initData: String = "", val platform: String? = null) {
+    /** The app runs only inside Telegram: initData is the only credential. */
+    val credential get() = "tma $initData"
 }
-
-/** A pending sign-in through the bot: open [link] in Telegram, then poll with [token]. */
-@Serializable
-data class BotLoginDto(val token: String, val link: String)
-
-/** The credential once the bot confirmed the sign-in, null while still waiting. */
-@Serializable
-data class BotLoginPollDto(val credential: String? = null)
 
 @Serializable
 data class MeDto(val id: Long, val name: String, val perms: List<String>, val subjects: List<Long>)

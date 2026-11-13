@@ -25,18 +25,11 @@ import javax.crypto.spec.SecretKeySpec
 object WebConfig {
     val port: Int by lazy { System.getenv("WEB_PORT")?.toIntOrNull() ?: 8080 }
 
-    val enabled: Boolean by lazy { System.getenv("WEB_ENABLED")?.lowercase() != "false" }
-
     val botToken: String by lazy { System.getenv("BOT_TOKEN") ?: error("BOT_TOKEN is not set") }
 
     /** How old Telegram's initData may be; the app is reopened from the bot after that. */
     const val INIT_DATA_MAX_AGE_SECONDS = 24 * 60 * 60L
 
-    /** How long a sign-in outside Telegram (bot or Login Widget) lasts before the login screen comes back. */
-    const val LOGIN_MAX_AGE_SECONDS = 30 * 24 * 60 * 60L
-
-    /** The bot's @username for the sign-in screen: BOT_USERNAME, else what getMe returned at startup. */
-    @Volatile var botUsername: String? = System.getenv("BOT_USERNAME")?.removePrefix("@")?.takeIf { it.isNotBlank() }
 }
 
 /** The Telegram user that signed a Mini App launch, as read from validated initData. */
@@ -92,87 +85,10 @@ object InitDataValidator {
     }.toMap()
 }
 
-/**
- * Checks Telegram Login Widget data, the credential of browsers signed in before the bot sign-in replaced the widget,
- * as described in https://core.telegram.org/widgets/login#checking-authorization:
- * the hash must be HMAC-SHA256 of the sorted fields, keyed with SHA256(bot token).
- * The client keeps the widget's fields as a query string and sends them like initData.
- */
-object LoginWidgetValidator {
-
-    fun validate(data: String, botToken: String = WebConfig.botToken, now: Long = Instant.now().epochSecond): TelegramUser? {
-        val fields = InitDataValidator.parseQuery(data)
-        val hash = fields["hash"] ?: return null
-        val checkString = fields.filterKeys { it != "hash" }.toSortedMap().entries.joinToString("\n") { "${it.key}=${it.value}" }
-
-        val secret = MessageDigest.getInstance("SHA-256").digest(botToken.toByteArray())
-        val expected = with(InitDataValidator) { hmac(secret, checkString.toByteArray()).toHex() }
-        if (!MessageDigest.isEqual(expected.toByteArray(), hash.lowercase().toByteArray())) return null
-
-        val authDate = fields["auth_date"]?.toLongOrNull() ?: return null
-        if (now - authDate > WebConfig.LOGIN_MAX_AGE_SECONDS) return null
-
-        val id = fields["id"]?.toLongOrNull() ?: return null
-        return TelegramUser(id, fields["first_name"] ?: "", fields["last_name"], fields["username"])
-    }
-}
-
-/**
- * Sign-in through the bot, for browsers and the installed PWA: the page asks for a one-time token, opens
- * `t.me/<bot>?start=login_<token>`, and polls until the bot sees /start with it. The credential it then gets is
- * `tgb <id>.<auth_date>.<hmac>`, signed with a key derived from the bot token and valid for LOGIN_MAX_AGE_SECONDS.
- */
-object BotLogin {
-    const val PREFIX = "login_"
-    private const val TOKEN_TTL_SECONDS = 10 * 60L
-
-    private class Pending(val created: Long, @Volatile var user: TelegramUser? = null)
-
-    private val pending = java.util.concurrent.ConcurrentHashMap<String, Pending>()
-
-    fun start(now: Long = Instant.now().epochSecond): String {
-        pending.entries.removeIf { now - it.value.created > TOKEN_TTL_SECONDS }
-        return UUID.randomUUID().toString().replace("-", "").also { pending[it] = Pending(now) }
-    }
-
-    /** The bot saw /start login_<token> from [user]; false when the token is unknown or expired. */
-    fun confirm(token: String, user: TelegramUser, now: Long = Instant.now().epochSecond): Boolean {
-        val p = pending[token]?.takeIf { now - it.created <= TOKEN_TTL_SECONDS } ?: return false
-        p.user = user
-        return true
-    }
-
-    /** The credential once the bot confirmed [token] (handed out once), null while waiting. */
-    fun poll(token: String, now: Long = Instant.now().epochSecond, botToken: String = WebConfig.botToken): String? {
-        val user = pending[token]?.user ?: return null
-        pending.remove(token)
-        return "tgb " + sign(user.id, now, botToken)
-    }
-
-    fun sign(userId: Long, authDate: Long, botToken: String = WebConfig.botToken): String {
-        val body = "$userId.$authDate"
-        return "$body." + with(InitDataValidator) { hmac(key(botToken), body.toByteArray()).toHex() }
-    }
-
-    fun validate(data: String, botToken: String = WebConfig.botToken, now: Long = Instant.now().epochSecond): TelegramUser? {
-        val parts = data.split(".")
-        if (parts.size != 3) return null
-        val id = parts[0].toLongOrNull() ?: return null
-        val authDate = parts[1].toLongOrNull() ?: return null
-        if (!MessageDigest.isEqual(sign(id, authDate, botToken).toByteArray(), data.lowercase().toByteArray())) return null
-        if (now - authDate > WebConfig.LOGIN_MAX_AGE_SECONDS) return null
-        return TelegramUser(id, "", null, null)
-    }
-
-    private fun key(botToken: String) = InitDataValidator.hmac("ClassLogBotLogin".toByteArray(), botToken.toByteArray())
-}
-
-/** The user behind a credential: `tma <initData>` inside Telegram, `tlw <login widget data>` or `tgb <bot login>` outside it. */
+/** The user behind a credential: `tma <initData>`, the Mini App's launch data. The app works only inside Telegram. */
 object TelegramAuth {
     fun verify(credential: String): TelegramUser? = when {
         credential.startsWith("tma ") -> InitDataValidator.validate(credential.removePrefix("tma "))?.user
-        credential.startsWith("tlw ") -> LoginWidgetValidator.validate(credential.removePrefix("tlw "))
-        credential.startsWith("tgb ") -> BotLogin.validate(credential.removePrefix("tgb "))
         else -> null
     }
 }

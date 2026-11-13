@@ -6,6 +6,9 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondText
+import kotliquery.queryOf
+import me.centralhardware.znatoki.telegram.statistic.extensions.execute
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -29,13 +32,9 @@ import me.centralhardware.znatoki.telegram.statistic.web.service.*
  * the sign-in screen outside Telegram runs the sign-in through the bot.
  */
 fun Route.publicRoutes() {
+    // Container healthcheck: answers once the server is up and the database is reachable.
+    get("/health") { db { execute(queryOf("SELECT 1")) }; call.respondText("OK") }
     post("/auth/access-request") { db { call.respond(AppService.requestAccess(call.receive<AuthRequest>().credential)) } }
-    post("/auth/bot-login") {
-        val bot = WebConfig.botUsername ?: throw HttpError(io.ktor.http.HttpStatusCode.ServiceUnavailable, "Вход через Telegram сейчас недоступен.")
-        val token = BotLogin.start()
-        call.respond(BotLoginDto(token, "https://t.me/$bot?start=${BotLogin.PREFIX}$token"))
-    }
-    get("/auth/bot-login/{token}") { call.respond(BotLoginPollDto(BotLogin.poll(call.parameters["token"] ?: notFound()))) }
     get("/dl/{token}") { Downloads.serve(call, call.parameters["token"] ?: notFound()) }
 }
 

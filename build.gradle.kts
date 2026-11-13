@@ -24,7 +24,7 @@ extra["luceneVersion"] = "10.6.0"
 extra["ktorVersion"] = "3.6.1"
 
 // JVM modules; web-frontend is Kotlin Multiplatform (Wasm)
-configure(listOf(project(":common"), project(":bot"))) {
+configure(listOf(project(":common"), project(":bot"), project(":web"))) {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
     tasks.withType<Test>().configureEach {

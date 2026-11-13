@@ -24,7 +24,6 @@ import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.request.header
 import io.ktor.server.request.httpMethod
 import io.ktor.http.HttpMethod
-import dev.inmo.tgbotapi.extensions.api.bot.getMe
 import io.ktor.server.http.content.ETagProvider
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -53,25 +52,17 @@ import java.time.LocalDateTime
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-/** The Mini App's server: static frontend from /web, the API under /api, run inside the bot process. */
+/** The Mini App's server: static frontend from /web, the API under /api. Runs as its own process (WebMain). */
 object WebServer {
 
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
 
-    fun start(bot: TelegramBot) {
-        if (!WebConfig.enabled) {
-            KSLog.info("WebServer: disabled by WEB_ENABLED=false")
-            return
-        }
+    fun start(bot: TelegramBot, wait: Boolean = true) {
         Notifications.bot = bot
-        if (WebConfig.botUsername == null) CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            runCatching { WebConfig.botUsername = bot.getMe().username?.withoutAt }
-                .onFailure { KSLog.error("WebServer: getMe failed, sign-in outside Telegram is unavailable", it) }
-        }
         AuditService.listener = AuditAlerts
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { Reminders.run() }
-        embeddedServer(CIO, port = WebConfig.port) { module() }.start(wait = false)
         KSLog.info("WebServer: listening on :${WebConfig.port}")
+        embeddedServer(CIO, port = WebConfig.port) { module() }.start(wait = wait)
     }
 
     private fun Application.module() {
