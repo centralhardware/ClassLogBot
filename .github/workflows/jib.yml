@@ -20,6 +20,7 @@ jobs:
     outputs:
       common: ${{ steps.filter.outputs.common }}
       bot: ${{ steps.filter.outputs.bot }}
+      web: ${{ steps.filter.outputs.web }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -36,6 +37,13 @@ jobs:
               - 'gradle/**'
             bot:
               - 'bot/**'
+              - 'common/**'
+              - 'Dockerfile'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle/**'
+            web:
+              - 'web/**'
               - 'common/**'
               - 'web-frontend/**'
               - 'Dockerfile'
@@ -133,6 +141,96 @@ jobs:
             exit 0
           else
             echo "Coolify bot deploy trigger failed with HTTP $http_code" >&2
+            exit 1
+          fi
+
+  # Сборка и публикация веб-модуля
+  build-web:
+    needs: changes
+    if: |
+      github.event_name == 'push' &&
+      (needs.changes.outputs.web == 'true' || needs.changes.outputs.common == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Compute image name and tags
+        id: meta
+        shell: bash
+        run: |
+          REPO_LOWER="${GITHUB_REPOSITORY,,}"
+          BASE_IMAGE="ghcr.io/${REPO_LOWER}"
+          echo "image=$BASE_IMAGE" >> "$GITHUB_OUTPUT"
+
+          # Теги (без двоеточия, только имена тегов)
+          TAGS=("web-latest" "web-sha-${GITHUB_SHA::7}")
+
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAGS+=("web-$GITHUB_REF_NAME")
+          fi
+
+          (IFS=,; echo "tags=${TAGS[*]}") >> "$GITHUB_OUTPUT"
+
+      - name: Build web image with Jib into the local Docker daemon
+        run: |
+          ./gradlew --no-daemon \
+            -Djib.to.image="localhost/jib-build:latest" \
+            :web:jibDockerBuild
+
+      - name: Add HEALTHCHECK layer and push
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          TAGS:  ${{ steps.meta.outputs.tags }}
+          REGISTRY_USERNAME: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          echo "$REGISTRY_PASSWORD" | docker login ghcr.io -u "$REGISTRY_USERNAME" --password-stdin
+          IFS=',' read -ra TAG_LIST <<< "$TAGS"
+          TAG_ARGS=()
+          for tag in "${TAG_LIST[@]}"; do TAG_ARGS+=(-t "$IMAGE:$tag"); done
+          # Jib cannot emit a HEALTHCHECK instruction, so it is added on top of the Jib image.
+          docker build --build-arg BASE_IMAGE=localhost/jib-build:latest --build-arg HEALTH_PORT=8080 "${TAG_ARGS[@]}" - < Dockerfile
+          for tag in "${TAG_LIST[@]}"; do docker push "$IMAGE:$tag"; done
+
+      - name: Trigger Coolify deployment for web
+        env:
+          COOLIFY_WEB_DEPLOY_HOOK_URL: ${{ secrets.COOLIFY_WEB_DEPLOY_HOOK_URL }}
+          COOLIFY_WEB_DEPLOY_BEARER_TOKEN: ${{ secrets.COOLIFY_DEPLOY_BEARER_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -z "$COOLIFY_WEB_DEPLOY_HOOK_URL" ]]; then
+            echo "Coolify web deploy hook URL is not set. Skip Coolify deploy. Provide secrets.COOLIFY_WEB_DEPLOY_HOOK_URL to enable."
+            exit 0
+          fi
+          echo "Triggering Coolify web deployment via webhook..."
+          AUTH_HEADER=()
+          if [[ -n "$COOLIFY_WEB_DEPLOY_BEARER_TOKEN" ]]; then
+            echo "Using Bearer authorization for Coolify trigger."
+            AUTH_HEADER=(-H "Authorization: Bearer $COOLIFY_WEB_DEPLOY_BEARER_TOKEN")
+          fi
+          http_code=$(curl -fsS -o /tmp/coolify_resp.txt -w "%{http_code}" -X POST "${AUTH_HEADER[@]}" "$COOLIFY_WEB_DEPLOY_HOOK_URL") || true
+          echo "Coolify response (HTTP $http_code):"
+          cat /tmp/coolify_resp.txt || true
+          if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
+            echo "Coolify web deploy trigger succeeded."
+            exit 0
+          else
+            echo "Coolify web deploy trigger failed with HTTP $http_code" >&2
             exit 1
           fi
 

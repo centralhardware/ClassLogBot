@@ -9,6 +9,7 @@ import kotliquery.queryOf
 import me.centralhardware.znatoki.telegram.statistic.entity.Permissions
 import me.centralhardware.znatoki.telegram.statistic.entity.Tutor
 import me.centralhardware.znatoki.telegram.statistic.entity.TutorId
+import me.centralhardware.znatoki.telegram.statistic.extensions.db
 import me.centralhardware.znatoki.telegram.statistic.extensions.runList
 import me.centralhardware.znatoki.telegram.statistic.extensions.runSingle
 import me.centralhardware.znatoki.telegram.statistic.extensions.update
@@ -24,8 +25,6 @@ import javax.crypto.spec.SecretKeySpec
 
 object WebConfig {
     val port: Int by lazy { System.getenv("WEB_PORT")?.toIntOrNull() ?: 8080 }
-
-    val enabled: Boolean by lazy { System.getenv("WEB_ENABLED")?.lowercase() != "false" }
 
     val botToken: String by lazy { System.getenv("BOT_TOKEN") ?: error("BOT_TOKEN is not set") }
 
@@ -126,27 +125,37 @@ object BotLogin {
     const val PREFIX = "login_"
     private const val TOKEN_TTL_SECONDS = 10 * 60L
 
-    private class Pending(val created: Long, @Volatile var user: TelegramUser? = null)
+    /*
+     * Tokens live in the bot_login table: the web app creates and polls them, the bot process confirms
+     * them. Each call opens its own session, as callers on both sides hold none.
+     */
 
-    private val pending = java.util.concurrent.ConcurrentHashMap<String, Pending>()
-
-    fun start(now: Long = Instant.now().epochSecond): String {
-        pending.entries.removeIf { now - it.value.created > TOKEN_TTL_SECONDS }
-        return UUID.randomUUID().toString().replace("-", "").also { pending[it] = Pending(now) }
-    }
+    fun start(now: Long = Instant.now().epochSecond): String =
+        UUID.randomUUID().toString().replace("-", "").also { token ->
+            db {
+                update(queryOf("DELETE FROM bot_login WHERE created_at < :cutoff", mapOf("cutoff" to now - TOKEN_TTL_SECONDS)))
+                update(queryOf("INSERT INTO bot_login (token, created_at) VALUES (:t, :now)", mapOf("t" to token, "now" to now)))
+            }
+        }
 
     /** The bot saw /start login_<token> from [user]; false when the token is unknown or expired. */
-    fun confirm(token: String, user: TelegramUser, now: Long = Instant.now().epochSecond): Boolean {
-        val p = pending[token]?.takeIf { now - it.created <= TOKEN_TTL_SECONDS } ?: return false
-        p.user = user
-        return true
+    fun confirm(token: String, user: TelegramUser, now: Long = Instant.now().epochSecond): Boolean = db {
+        update(
+            queryOf(
+                "UPDATE bot_login SET user_id = :u WHERE token = :t AND created_at >= :cutoff",
+                mapOf("u" to user.id, "t" to token, "cutoff" to now - TOKEN_TTL_SECONDS),
+            )
+        ) > 0
     }
 
     /** The credential once the bot confirmed [token] (handed out once), null while waiting. */
     fun poll(token: String, now: Long = Instant.now().epochSecond, botToken: String = WebConfig.botToken): String? {
-        val user = pending[token]?.user ?: return null
-        pending.remove(token)
-        return "tgb " + sign(user.id, now, botToken)
+        val userId = db {
+            runSingle(
+                queryOf("DELETE FROM bot_login WHERE token = :t AND user_id IS NOT NULL RETURNING user_id", mapOf("t" to token))
+            ) { it.long("user_id") }
+        } ?: return null
+        return "tgb " + sign(userId, now, botToken)
     }
 
     fun sign(userId: Long, authDate: Long, botToken: String = WebConfig.botToken): String {

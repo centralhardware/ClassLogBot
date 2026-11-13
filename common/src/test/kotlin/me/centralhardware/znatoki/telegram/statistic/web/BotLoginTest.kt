@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import me.centralhardware.znatoki.telegram.statistic.TestDatabase
 
 class BotLoginTest {
     private val token = "123:abc"
@@ -21,6 +23,7 @@ class BotLoginTest {
 
     @Test
     fun `token is confirmed by the bot once and then handed out once`() {
+        dbAvailable()
         val t = BotLogin.start(now = 0)
         assertNull(BotLogin.poll(t, now = 1, botToken = token))
         assertFalse(BotLogin.confirm("unknown", user, now = 1))
@@ -31,7 +34,13 @@ class BotLoginTest {
 
     @Test
     fun `expired token cannot be confirmed`() {
+        dbAvailable()
         val t = BotLogin.start(now = 0)
         assertFalse(BotLogin.confirm(t, user, now = 11 * 60))
+    }
+
+    private fun dbAvailable() {
+        assumeTrue(TestDatabase.dockerAvailable, "Docker is not available")
+        TestDatabase.start()
     }
 }

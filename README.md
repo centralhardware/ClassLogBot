@@ -21,17 +21,22 @@ I’ll be glad to hear your questions, suggestions, or feedback.
 
 ### Web app (Telegram Mini App)
 
-The image also serves a Telegram Mini App: lessons, schedule, students, payments, monthly
+A separate image serves a Telegram Mini App: lessons, schedule, students, payments, monthly
 reports (with hand-in to the director), stats, team and permissions, and an audit log.
 
-- `web-frontend/` — the UI, Compose HTML (Kotlin/JS). Its build is packed into the bot jar under `/web`.
-- `bot/.../web/` — the Ktor API (`/auth`, `/api/**`) and static hosting, started by `AppMain` before the bot.
+The project builds two images from one repo, sharing the database and `common/`:
+
+- `ghcr.io/<repo>:bot-latest` — `bot/`, the Telegram bot (`AppMain`), healthcheck on `:8081/health`.
+- `ghcr.io/<repo>:web-latest` — `web/`, the Ktor API (`/auth`, `/api/**`) and static hosting (`WebMain`),
+  healthcheck on `:8080/health`. It sends Telegram messages with `BOT_TOKEN` but never polls updates.
+- `web-frontend/` — the UI, Compose HTML (Kotlin/JS). Its build is packed into the web jar under `/web`.
+- Both images run the Flyway migrations at startup; both need the same database, MinIO and `BOT_TOKEN` settings.
+- "Sign in via the bot" tokens live in the `bot_login` table, since the web creates them and the bot confirms them.
 - Sign-in uses Telegram's `initData` (HMAC-checked with `BOT_TOKEN`); access needs `WEB_INTERFACE`.
 - New permissions: `DIRECTOR` (reviews reports, read-only) and `MANAGE_TUTORS`.
 
 | Variable | Meaning | Default |
 |---|---|---|
 | `WEB_PORT` | Port of the web server | `8080` |
-| `WEB_ENABLED` | `false` runs the bot only | `true` |
 
 Set the bot's menu button in BotFather (Bot Settings → Menu Button) to the app's https address. That opens the app, and the web server reads the same address for the buttons in its messages.

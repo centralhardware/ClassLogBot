@@ -153,8 +153,9 @@ object LessonService {
     /** Now; the slot's time for a lesson entered from the schedule; any past date for an admin. */
     private fun lessonTime(c: Caller, input: LessonInput, slot: SlotDto?): LocalDateTime {
         val now = LocalDateTime.now()
-        if (c.isAdmin && input.date != null) {
-            val d = parseDate(input.date)
+        val date = input.date
+        if (c.isAdmin && date != null) {
+            val d = parseDate(date)
             if (d.isAfter(LocalDate.now())) badRequest("Дата не может быть в будущем.")
             return d.atTime(parseTime(input.time) ?: now.toLocalTime().withSecond(0).withNano(0))
         }
