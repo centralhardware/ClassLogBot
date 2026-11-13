@@ -24,7 +24,6 @@ import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.request.header
 import io.ktor.server.request.httpMethod
 import io.ktor.http.HttpMethod
-import dev.inmo.tgbotapi.extensions.api.bot.getMe
 import io.ktor.server.http.content.ETagProvider
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -60,10 +59,6 @@ object WebServer {
 
     fun start(bot: TelegramBot, wait: Boolean = true) {
         Notifications.bot = bot
-        if (WebConfig.botUsername == null) CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            runCatching { WebConfig.botUsername = bot.getMe().username?.withoutAt }
-                .onFailure { KSLog.error("WebServer: getMe failed, sign-in outside Telegram is unavailable", it) }
-        }
         AuditService.listener = AuditAlerts
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { Reminders.run() }
         KSLog.info("WebServer: listening on :${WebConfig.port}")

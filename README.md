@@ -31,8 +31,7 @@ The project builds two images from one repo, sharing the database and `common/`:
   healthcheck on `:8080/health`. It sends Telegram messages with `BOT_TOKEN` but never polls updates.
 - `web-frontend/` — the UI, Compose HTML (Kotlin/JS). Its build is packed into the web jar under `/web`.
 - Both images run the Flyway migrations at startup; both need the same database, MinIO and `BOT_TOKEN` settings.
-- "Sign in via the bot" tokens live in the `bot_login` table, since the web creates them and the bot confirms them.
-- Sign-in uses Telegram's `initData` (HMAC-checked with `BOT_TOKEN`); access needs `WEB_INTERFACE`.
+- Sign-in uses Telegram's `initData` (HMAC-checked with `BOT_TOKEN`); access needs `WEB_INTERFACE`. The app works only inside Telegram — there is no sign-in from a plain browser.
 - New permissions: `DIRECTOR` (reviews reports, read-only) and `MANAGE_TUTORS`.
 
 | Variable | Meaning | Default |

@@ -48,18 +48,6 @@ val tg: TgWebApp? get() = window.asDynamic().Telegram?.WebApp.unsafeCast<TgWebAp
 
 class ApiError(message: String, val status: Int, val code: String? = null) : Exception(message)
 
-/**
- * The sign-in outside Telegram (browser, installed PWA) as a full credential, `tgb …` from the bot sign-in
- * (older clients kept bare Login Widget data, read as `tlw …`). Kept per device; the server accepts it for 30 days.
- */
-object Login {
-    private const val KEY = "tg-login"
-    var data: String
-        get() = runCatching { window.localStorage.getItem(KEY) }.getOrNull().orEmpty()
-            .let { if (it.isEmpty() || it.startsWith("tgb ") || it.startsWith("tlw ")) it else "tlw $it" }
-        set(v) { runCatching { if (v.isEmpty()) window.localStorage.removeItem(KEY) else window.localStorage.setItem(KEY, v) } }
-}
-
 /** The app's REST client: JSON in and out, a Telegram credential on every request. */
 object Api {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
@@ -67,8 +55,8 @@ object Api {
     /** Telegram's signed launch data; the server checks it on every request. */
     val initData: String get() = tg?.initData.orEmpty()
 
-    /** `tma <initData>` inside Telegram, the stored sign-in outside it, empty when not signed in. */
-    val credential: String get() = if (initData.isNotEmpty()) "tma $initData" else Login.data
+    /** `tma <initData>`; empty when the page is opened outside Telegram. */
+    val credential: String get() = if (initData.isNotEmpty()) "tma $initData" else ""
 
     suspend fun send(method: HttpMethod, path: String, configure: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
         val res = try {

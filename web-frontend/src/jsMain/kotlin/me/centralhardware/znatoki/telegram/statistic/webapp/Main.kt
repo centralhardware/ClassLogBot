@@ -22,16 +22,12 @@ import org.jetbrains.compose.web.renderComposable
 private var blocked by mutableStateOf<ApiError?>(null)
 
 /**
- * Loads who the user is and what they may do; the Telegram credential itself is the sign-in.
- * Outside Telegram without a (still valid) sign-in, it asks for the login screen.
+ * Loads who the user is and what they may do; Telegram's initData is the sign-in.
+ * Opened outside Telegram, it shows the screen that points to the bot.
  */
 suspend fun signIn() {
-    if (Api.credential.isEmpty()) throw ApiError("Войдите через Telegram.", 401, "login")
-    val boot: BootDto = try { Api.get("/api/boot") } catch (e: ApiError) {
-        if (e.code != "auth" || Api.initData.isNotEmpty()) throw e
-        Login.data = ""
-        throw ApiError("Вход истёк, войдите ещё раз.", 401, "login")
-    }
+    if (Api.credential.isEmpty()) throw ApiError("Откройте приложение из бота в Telegram.", 401, "login")
+    val boot: BootDto = Api.get("/api/boot")
     App.boot = boot
     if (App.month.isEmpty()) App.month = boot.today.substring(0, 7)
     if (App.who == "me" && boot.caps.seesAll) App.who = "all"
@@ -101,9 +97,6 @@ fun Root() {
                 Button({ classes("iconbtn"); attr("aria-label", "Размер интерфейса"); attr("style", "display:inline-flex;padding:6px"); onClick { openScale() } }) {
                     Svg("""<path d="M3 19l5-13 5 13M4.8 14.5h6.4"/><path d="M14.5 19l3.5-9 3.5 9M15.7 16h4.6"/>""", 16)
                 }
-                if (tg?.initData.isNullOrEmpty() && Login.data.isNotEmpty()) Button({ classes("iconbtn"); attr("aria-label", "Выйти"); attr("style", "display:inline-flex;padding:6px"); onClick { logout() } }) {
-                    Svg("""<path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h10"/>""", 16)
-                }
                 if (boot != null) Button({ classes("iconbtn"); attr("aria-label", "Поиск"); attr("style", "display:inline-flex;padding:6px"); onClick { openSearch() } }) {
                     Svg("""<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>""", 16)
                 }
@@ -145,56 +138,20 @@ private fun openScale() = Sheets.open { close ->
     Actions { Btn("Готово", "primary") { close() } }
 }
 
-/** Forgets this device's sign-in; only outside Telegram, where the login is the app's own. */
-private fun logout() {
-    Login.data = ""
-    App.boot = null
-    blocked = ApiError("Войдите через Telegram.", 401, "login")
-}
-
-/**
- * The first screen outside Telegram (browser, installed PWA): sign-in through the bot. The button opens
- * `t.me/<bot>?start=login_<token>`; once the user presses Start there, polling gets the credential.
- */
+/** The first screen when the page is opened outside Telegram: the app works only as the bot's Mini App. */
 @Composable
-private fun LoginScreen() {
-    var waiting by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+private fun OpenInTelegram() {
     Box("screen") {
         Box("empty", "padding-top:60px") {
-            Title("Вход в ClassLog")
-            P({ attr("style", "line-height:1.5") }) {
-                Text(error ?: if (waiting) "Нажмите «Старт» в боте и вернитесь сюда." else "Войдите через свой Telegram-аккаунт — тот же, что в боте.")
-            }
-            if (waiting) Spinner()
-            else Btn("Войти через Telegram", "primary", css = "border:0;border-radius:12px;padding:12px 18px;font:700 14px var(--body)") {
-                App.scope.launch {
-                    error = null
-                    val start = try { Api.postEmpty<BotLoginDto>("/auth/bot-login") } catch (e: ApiError) { error = e.message; return@launch }
-                    window.open(start.link, "_blank")
-                    waiting = true
-                    // The token lives 10 minutes on the server.
-                    repeat(300) {
-                        kotlinx.coroutines.delay(2000)
-                        val credential = runCatching { Api.get<BotLoginPollDto>("/auth/bot-login/${start.token}") }.getOrNull()?.credential
-                        if (credential != null) {
-                            Login.data = credential
-                            blocked = null
-                            try { signIn(); applyHash() } catch (e: ApiError) { blocked = e } catch (e: Throwable) { blocked = ApiError(e.message ?: "Ошибка", 0) }
-                            return@launch
-                        }
-                    }
-                    waiting = false
-                    error = "Вход не подтверждён. Попробуйте ещё раз."
-                }
-            }
+            Title("ClassLog")
+            P({ attr("style", "line-height:1.5") }) { Text("Приложение работает только внутри Telegram. Откройте его кнопкой меню в боте.") }
         }
     }
 }
 
 @Composable
 private fun NoAccess(e: ApiError) {
-    if (e.code == "login") return LoginScreen()
+    if (e.code == "login") return OpenInTelegram()
     var sent by remember { mutableStateOf(false) }
     Box("screen") {
         Box("empty", "padding-top:60px") {
@@ -205,7 +162,7 @@ private fun NoAccess(e: ApiError) {
             if ((e.code == "no_web" || e.code == "unknown") && Api.credential.isNotEmpty()) {
                 Btn(if (sent) "Запрос отправлен" else "Запросить доступ", "primary", enabled = !sent, css = "border:0;border-radius:12px;padding:12px 18px;font:700 14px var(--body)") {
                     App.scope.launch {
-                        runCatching { Api.post<OkDto, AuthRequest>("/auth/access-request", AuthRequest(Api.initData, tg?.platform ?: "web", Login.data.takeIf { Api.initData.isEmpty() && it.isNotEmpty() })) }
+                        runCatching { Api.post<OkDto, AuthRequest>("/auth/access-request", AuthRequest(Api.initData, tg?.platform ?: "web")) }
                             .onSuccess { sent = true; Toasts.show("Администратор получит запрос в Telegram") }
                             .onFailure { Toasts.show(it.message ?: "Ошибка") }
                     }

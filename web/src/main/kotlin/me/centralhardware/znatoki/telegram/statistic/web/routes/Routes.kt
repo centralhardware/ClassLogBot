@@ -35,12 +35,6 @@ fun Route.publicRoutes() {
     // Container healthcheck: answers once the server is up and the database is reachable.
     get("/health") { db { execute(queryOf("SELECT 1")) }; call.respondText("OK") }
     post("/auth/access-request") { db { call.respond(AppService.requestAccess(call.receive<AuthRequest>().credential)) } }
-    post("/auth/bot-login") {
-        val bot = WebConfig.botUsername ?: throw HttpError(io.ktor.http.HttpStatusCode.ServiceUnavailable, "Вход через Telegram сейчас недоступен.")
-        val token = BotLogin.start()
-        call.respond(BotLoginDto(token, "https://t.me/$bot?start=${BotLogin.PREFIX}$token"))
-    }
-    get("/auth/bot-login/{token}") { call.respond(BotLoginPollDto(BotLogin.poll(call.parameters["token"] ?: notFound()))) }
     get("/dl/{token}") { Downloads.serve(call, call.parameters["token"] ?: notFound()) }
 }
 
