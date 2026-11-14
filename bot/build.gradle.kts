@@ -7,9 +7,7 @@ plugins {
 dependencies {
     implementation(project(":common"))
 
-    implementation("com.github.centralhardware:ktgbotapi-commons:62e73250")
-    // tgbotapi 37 defaults to the ktor Java engine; nothing else brings it
-    runtimeOnly("io.ktor:ktor-client-java:${rootProject.extra["ktorVersion"]}")
+    implementation("com.github.centralhardware:ktgbotapi-commons:6018de0c")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
