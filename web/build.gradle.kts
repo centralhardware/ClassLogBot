@@ -8,6 +8,8 @@ val ktorVersion: String by rootProject.extra
 
 dependencies {
     implementation(project(":common"))
+    // tgbotapi 37 defaults to the ktor Java engine; ktgbotapi-commons excludes it
+    runtimeOnly("io.ktor:ktor-client-java:$ktorVersion")
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
