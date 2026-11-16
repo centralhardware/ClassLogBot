@@ -10,6 +10,7 @@ import me.centralhardware.znatoki.telegram.statistic.service.AuditService
 import me.centralhardware.znatoki.telegram.statistic.service.Change
 import me.centralhardware.znatoki.telegram.statistic.web.*
 import me.centralhardware.znatoki.telegram.statistic.web.http.badRequest
+import me.centralhardware.znatoki.telegram.statistic.web.http.forbidden
 import me.centralhardware.znatoki.telegram.statistic.web.http.notFound
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -110,14 +111,20 @@ object SubmissionService {
     context(_: Session)
     fun submit(c: Caller, input: SubmitInput): SubmissionDto {
         val month = parseMonth(input.month) ?: badRequest("Неверный месяц.")
-        val prev = WebRepo.submission(c.id, month.toString())
+        val tutorId = input.tutor ?: c.id
+        val forOther = tutorId != c.id
+        if (forOther && !c.actsForOthers) forbidden("Нет права сдавать отчёт за других.")
+        val tutorName = if (forOther) load(tutorId, month).first else c.tutor.name
+        val prev = WebRepo.submission(tutorId, month.toString())
         if (prev != null && prev.status != "returned") badRequest("Отчёт уже сдан.")
-        val s = SubmissionDto(c.id, month.toString(), "submitted", input.note?.trim()?.takeIf { it.isNotEmpty() }, null, LocalDateTime.now().toString())
+        val s = SubmissionDto(tutorId, month.toString(), "submitted", input.note?.trim()?.takeIf { it.isNotEmpty() }, null, LocalDateTime.now().toString())
         WebRepo.saveSubmission(s, null)
-        log(c, "Отчёт сдан", c.id, c.tutor.name, month, listOf(Change("статус", prev?.let { STATUS_TITLE[it.status] } ?: "черновик", "на проверке")))
+        log(c, "Отчёт сдан", tutorId, tutorName, month, listOf(Change("статус", prev?.let { STATUS_TITLE[it.status] } ?: "черновик", "на проверке")))
+        if (forOther) Notifications.send(tutorId, "📄 ${c.tutor.name} сдал(а) за вас отчёт за ${monthTitle(month).lowercase()}.", "tab=report")
         Notifications.sendTo(
             Permissions.DIRECTOR,
-            "📄 ${c.tutor.name} сдал(а) отчёт за ${monthTitle(month).lowercase()}." + (s.note?.let { "\nКомментарий: $it" } ?: ""),
+            (if (forOther) "📄 ${c.tutor.name} сдал(а) отчёт $tutorName за ${monthTitle(month).lowercase()}." else "📄 ${c.tutor.name} сдал(а) отчёт за ${monthTitle(month).lowercase()}.") +
+                (s.note?.let { "\nКомментарий: $it" } ?: ""),
             "tab=report&month=$month",
         )
         return s

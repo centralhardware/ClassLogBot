@@ -819,7 +819,7 @@ fun openPreview(tutor: Long, month: String, subjects: List<Long>) = Sheets.open 
 
 fun openSubmit(rep: ReportDto) = Sheets.open { close ->
     var note by remember { mutableStateOf("") }
-    Title("Сдать отчёт директору?")
+    Title(if (rep.tutor == App.me) "Сдать отчёт директору?" else "Сдать отчёт ${App.tutorShort(rep.tutor)} директору?")
     Box("summary") {
         SummaryRow("Месяц", monthName(rep.month))
         SummaryRow("Предметы", rep.subjects.joinToString(", ") { App.subj(it.subject).name }.ifEmpty { "—" })
@@ -831,7 +831,7 @@ fun openSubmit(rep: ReportDto) = Sheets.open { close ->
     Lock("Директор сразу получит уведомление в Telegram и доступ к занятиям, оплатам и фотоотчётам за этот месяц." + if (rep.month == App.currentMonth) " Месяц ещё не закончился: после сдачи изменения будут видны директору как правки." else "")
     Actions {
         Btn("Отмена") { close() }
-        Btn("Сдать", "primary") { App.act("Отчёт сдан директору") { Api.post<SubmissionDto, SubmitInput>("/api/report/submit", SubmitInput(rep.month, note)); close() } }
+        Btn("Сдать", "primary") { App.act("Отчёт сдан директору") { Api.post<SubmissionDto, SubmitInput>("/api/report/submit", SubmitInput(rep.month, note, rep.tutor.takeIf { it != App.me })); close() } }
     }
 }
 

@@ -120,8 +120,8 @@ fun ApplicationCall.tutorScope(): Long? {
     }
 }
 
-/** `?tutor=` for a single tutor's report: anyone for admins and the director, yourself otherwise. */
-fun ApplicationCall.reportTutor(): Long = caller.let { c -> if (c.seesAll) query("tutor")?.toLongOrNull() ?: c.id else c.id }
+/** `?tutor=` for a single tutor's report: anyone for admins, the director and tutors who enter data for others, yourself otherwise. */
+fun ApplicationCall.reportTutor(): Long = caller.let { c -> if (c.seesAll || c.actsForOthers) query("tutor")?.toLongOrNull() ?: c.id else c.id }
 
 /** A multipart form: the JSON `data` field decoded as [T], plus the `photo` file if any. */
 class Form<T>(val data: T, val photo: ByteArray?)
