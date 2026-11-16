@@ -205,7 +205,7 @@ data class SubmissionDto(
 )
 
 @Serializable
-data class SubmitInput(val month: String, val note: String? = null)
+data class SubmitInput(val month: String, val note: String? = null, val tutor: Long? = null)
 
 @Serializable
 data class ReturnInput(val comment: String)

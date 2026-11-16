@@ -414,17 +414,17 @@ fun ReportTab() {
 @Composable
 fun ReportSwitch() = Seg(listOf("report" to (if (App.caps.director) "Отчёты" else "Отчёт"), "stats" to "Итоги"), ReportView.view) { ReportView.view = it }
 
-fun reportTutor() = if (App.caps.admin && App.who != "all" && App.who != "me") App.who.toLong() else App.me
+fun reportTutor() = if ((App.caps.admin || App.actsForOthers) && App.who != "all" && App.who != "me") App.who.toLong() else App.me
 
 @Composable
 fun ReportScreen() {
     val rt = reportTutor()
     val m = viewMonth()
     Title("Отчёт за месяц"); ReportSwitch()
-    if (App.caps.admin) Seg(App.teaching().map { (if (it.id == App.me) "me" else it.id.toString()) to App.tutorShort(it.id) }, if (rt == App.me) "me" else rt.toString()) { App.who = it }
+    if (App.caps.admin || App.actsForOthers) Seg(App.teaching().map { (if (it.id == App.me) "me" else it.id.toString()) to App.tutorShort(it.id) }, if (rt == App.me) "me" else rt.toString()) { App.who = it }
     MonthBar()
     Show(remote(rt, m, "rep") { Api.get<ReportDto>("/api/report?tutor=$rt&month=$m") }) { rep ->
-        if (rt == App.me && App.caps.time) StatusCard(rep)
+        if ((rt == App.me && App.caps.time) || (rt != App.me && App.actsForOthers)) StatusCard(rep)
         val pay = App.caps.readPayments
         rep.subjects.forEach { sb ->
             Box("sec", "display:flex;justify-content:space-between;align-items:center") {

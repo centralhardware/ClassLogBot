@@ -113,6 +113,8 @@ class Caller(val tutor: Tutor) {
     val canClient = !isDirector && (Permissions.ADD_CLIENT in perms || isAdmin)
     val canTimeForOthers = canTime && (Permissions.ADD_TIME_FOR_OTHERS in perms || isAdmin)
     val canPaymentForOthers = canPayment && (Permissions.ADD_PAYMENT_FOR_OTHERS in perms || isAdmin)
+    /** Whoever may enter lessons or payments for another tutor may also open and hand in that tutor's report. */
+    val actsForOthers = canTimeForOthers || canPaymentForOthers
     val canForceGroup = !isDirector && (Permissions.FORCE_GROUP in perms || isAdmin)
     val canExtraHalfHour = !isDirector && (Permissions.EXTRA_HALF_HOUR in perms || isAdmin)
     val canManageTutors = Permissions.MANAGE_TUTORS in perms || isAdmin

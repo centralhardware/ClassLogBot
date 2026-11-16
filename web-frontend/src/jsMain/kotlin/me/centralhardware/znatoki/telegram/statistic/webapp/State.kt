@@ -59,6 +59,7 @@ object App {
     val currentMonth get() = b.today.substring(0, 7)
     val seesAll get() = caps.seesAll
     val money get() = caps.seesAll
+    val actsForOthers get() = caps.timeForOthers || caps.paymentForOthers
 
     fun subj(id: Long) = b.subjects.find { it.id == id } ?: SubjectDto(id, "#$id", false)
     fun tutorName(id: Long) = b.tutors.find { it.id == id }?.name ?: "#$id"
