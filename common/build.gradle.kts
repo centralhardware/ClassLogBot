@@ -13,7 +13,7 @@ dependencies {
     api("org.postgresql:postgresql:42.7.14")
     api("com.zaxxer:HikariCP:7.1.0")
     api("org.flywaydb:flyway-core:13.13.0")
-    api("org.flywaydb:flyway-database-postgresql:13.12.2")
+    api("org.flywaydb:flyway-database-postgresql:13.13.0")
 
     // Serialization
     api("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
